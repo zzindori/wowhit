@@ -42,8 +42,8 @@ export const apps: App[] = [
   { slug: 'qr-scanner', name: 'qr_scanner', category: 'flutter', description: 'QR 스캐너' },
 
   // Web 앱
-  { slug: 'bbangway', name: 'BBangWay', category: 'web', description: '베이커리 빵 인식 관리자', api: ['Gemini'], webUrl: 'https://zzindori.github.io/BBangWay/' },
-  { slug: 'postest', name: 'posTest', category: 'web', description: '베이커리 POS 연습 앱', webUrl: 'https://zzindori.github.io/posTest/' },
+  { slug: 'bbangway', name: 'BBangWay', category: 'web', description: '베이커리 빵 인식 관리자', api: ['Gemini'], iconUrl: '/apps/bbangway/icon.png', webUrl: 'https://zzindori.github.io/BBangWay/' },
+  { slug: 'postest', name: 'posTest', category: 'web', description: '베이커리 POS 연습 앱', iconUrl: '/apps/postest/icon.png', webUrl: 'https://zzindori.github.io/posTest/' },
 
   // 기타
   { slug: 'bbibbiwatch', name: 'BBiBBi', category: 'other', description: '워치 앱', platform: 'Android Watch', api: ['Firebase'] }

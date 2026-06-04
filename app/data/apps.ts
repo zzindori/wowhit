@@ -13,6 +13,7 @@ export interface App {
   webUrl?: string
   apkUrl?: string
   youtubeUrl?: string
+  shorts?: string[]
   storeReleased?: boolean
 }
 
@@ -43,7 +44,8 @@ export const apps: App[] = [
     ],
     androidUrl: 'https://play.google.com/store/apps/details?id=com.menuway.app&hl=ko',
     iosUrl: 'https://apps.apple.com/kr/app/menuway/id6758591797',
-    youtubeUrl: 'https://www.youtube.com/@zzindori/shorts'
+    youtubeUrl: 'https://www.youtube.com/@zzindori/shorts',
+    shorts: ['D_w3q4XwCa4', 'gTf98JexFGo', 'ss76szvONxo', '0DK2QBaTMac']
   },
   { slug: 'onbidway', name: 'onbidWay', category: 'flutter', description: '온비드(공매) 정보 앱', iconUrl: '/apps/onbidway/icon.png' },
   { slug: 'pingway', name: 'pingWay', category: 'flutter', description: '알림/메시지 앱', api: ['Firebase'], iconUrl: '/apps/pingway/icon.png' },

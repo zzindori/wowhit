@@ -30,6 +30,8 @@ const links = computed(() => {
   return result
 })
 
+const selectedShort = ref<string | null>(null)
+
 useSeoMeta({ title: `${app.name} — wowhit` })
 </script>
 
@@ -80,7 +82,7 @@ useSeoMeta({ title: `${app.name} — wowhit` })
         <p v-else class="text-lg text-muted">{{ app.description }}</p>
       </div>
 
-      <div v-if="links.length" class="flex flex-wrap gap-3">
+      <div v-if="links.length" class="flex flex-wrap gap-3 mb-10">
         <UButton
           v-for="link in links"
           :key="link.label"
@@ -88,7 +90,7 @@ useSeoMeta({ title: `${app.name} — wowhit` })
         />
       </div>
 
-      <div v-else>
+      <div v-else class="mb-10">
         <UAlert
           icon="i-lucide-clock"
           title="출시 준비 중"
@@ -97,6 +99,44 @@ useSeoMeta({ title: `${app.name} — wowhit` })
           variant="subtle"
         />
       </div>
+
+      <!-- 쇼츠 갤러리 -->
+      <div v-if="app.shorts?.length">
+        <h2 class="text-lg font-semibold mb-3">YouTube 쇼츠</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <button
+            v-for="id in app.shorts"
+            :key="id"
+            class="relative rounded-xl overflow-hidden aspect-[9/16] cursor-pointer group"
+            @click="selectedShort = id"
+          >
+            <img
+              :src="`https://img.youtube.com/vi/${id}/hqdefault.jpg`"
+              :alt="`쇼츠 ${id}`"
+              class="w-full h-full object-cover"
+            />
+            <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <UIcon name="i-lucide-play-circle" class="size-12 text-white" />
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
   </UPageSection>
+
+  <!-- 쇼츠 모달 -->
+  <UModal v-model:open="selectedShort" :ui="{ content: 'max-w-sm p-0 overflow-hidden' }">
+    <template #content>
+      <div class="relative aspect-[9/16] w-full">
+        <iframe
+          v-if="selectedShort"
+          :src="`https://www.youtube.com/embed/${selectedShort}?autoplay=1`"
+          class="absolute inset-0 w-full h-full"
+          frameborder="0"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+        />
+      </div>
+    </template>
+  </UModal>
 </template>

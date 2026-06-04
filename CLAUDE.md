@@ -17,18 +17,28 @@
 - `app/app.vue` — 전체 레이아웃 (헤더, 푸터)
 
 ## APK 업로드 방법
+파일명을 앱 이름으로 복사한 뒤 업로드한다 (다운로드 시 파일명이 앱명으로 표시되도록).
 ```bash
-gh release create [앱명]-v1.0.0 ./app-release.apk \
+cp /path/to/app-release.apk /tmp/앱이름.apk
+gh release create [앱명]-v1.0.0 /tmp/앱이름.apk \
   --repo zzindori/wowhit-releases \
   --title "[앱명] v1.0.0" \
   --notes "설명"
 ```
 업로드 후 `apps.ts`의 해당 앱 `apkUrl` 필드에 아래 URL 형식으로 추가:
 ```
-https://github.com/zzindori/wowhit-releases/releases/download/[태그]/app-release.apk
+https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름.apk
 ```
 
 ## 작업 히스토리
+
+### 2026-06-05
+- BBangWay, posTest 아이콘 추가
+- MenuWay에 YouTube 쇼츠 링크 추가 (https://www.youtube.com/@zzindori/shorts)
+- `qr_scanner` → `codeWay`로 이름/설명/아이콘 정리 (프로젝트 위치: workspace/qr_scanner/)
+- CODI:D APK 파일명 `app-release.apk` → `CODI_D.apk` 로 재업로드
+- APK 업로드 규칙 수정: 앱 이름으로 복사 후 업로드
+- `dayLOg`, `MakeImg` 앱 미등록 상태 (설명 필요)
 
 ### 2026-06-04
 - Nuxt 스타터 템플릿 기반으로 포트폴리오 사이트 초기 구성

@@ -39,6 +39,18 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 - CODI:D APK 파일명 `app-release.apk` → `CODI_D.apk` 로 재업로드
 - APK 업로드 규칙 수정: 앱 이름으로 복사 후 업로드
 - `dayLOg`, `MakeImg` 앱 미등록 상태 (설명 필요)
+- 앱 아이콘 추가 (12개 Flutter + 2개 Web)
+- menuWay 상세 페이지 강화: 스크린샷 갤러리, YouTube 쇼츠 썸네일+모달 플레이어, 전문 설명
+- menuWay → `menuWay` 이름 수정, 전문 설명/태그라인 추가
+- itNe 웹앱 연결: https://itneapp.web.app/
+- codeWay 웹앱 연결: https://zzindori.github.io/codeWay/
+- txtFit 앱 추가 (웹앱 + APK, 아이콘)
+- APK 전체 업로드 (careWay, farmGuide, igoMoya, itNe, shotWay, codeWay)
+- onBidWay 아이콘 교체 + Flutter 빌드 아이콘 적용 (flutter_launcher_icons)
+- careWay 아이콘 교체 + Flutter 빌드 아이콘 적용
+- YL Company 로고를 푸터에 추가 (public/apps/ylcompany.png)
+- shotWay 설명 수정: 실시간 찍은 사진 공유 앱
+- 아이콘 처리 규칙: 비정사각형 이미지는 Python PIL로 center crop → 1024x1024 변환 후 사용
 
 ### 2026-06-04
 - Nuxt 스타터 템플릿 기반으로 포트폴리오 사이트 초기 구성

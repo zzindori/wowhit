@@ -53,7 +53,7 @@ export const apps: App[] = [
     slug: 'shotway',
     name: 'shotWay',
     category: 'flutter',
-    description: '실시간 카메라 공유 앱',
+    description: '실시간 찍은 사진 공유 앱',
     longDescription: `누군가 사진을 찍으면, 방에 함께한 모두의 핸드폰에 알림이 옵니다. 바로 그 사진이요.\n\n같은 공간이라면 QR 코드 한 번이면 연결됩니다. 멀리 있다면 6자리 숫자만 알려주면 돼요. 번호 교환도, 친구 추가도, 앱 설치도 필요 없습니다.\n\n아이폰이든 안드로이드든 상관없이 쓸 수 있고, 완전 무료입니다. 광고도 없어요.`,
     api: ['Firebase', 'Supabase'],
     iconUrl: '/apps/shotway/icon.png',

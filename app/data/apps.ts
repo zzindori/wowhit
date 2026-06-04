@@ -24,7 +24,7 @@ export const apps: App[] = [
   { slug: 'farmguide', name: 'farmGuide', category: 'flutter', description: '스마트 농업 경영 앱 (토지/작물 등록~수익정산)', iconUrl: '/apps/farmguide/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/farmguide-v1.0.0/farmGuide.apk' },
   { slug: 'gateflow', name: 'gateFlow', category: 'flutter', description: '공항 동선 오케스트레이터 & 출국 스트레스 제거 비서', iconUrl: '/apps/gateflow/icon.png' },
   { slug: 'igomoya', name: 'igoMoya', category: 'flutter', description: '궁금한 것 찍으면 바로 AI 설명 + 타임라인 사진 정리', api: ['Gemini'], iconUrl: '/apps/igomoya/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v1.0.0/igoMoya.apk' },
-  { slug: 'itne', name: 'itNe', category: 'flutter', description: '냉장고 식재료 관리 + 남은 재료로만 AI 레시피 추천', iconUrl: '/apps/itne/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.0.0/itNe.apk' },
+  { slug: 'itne', name: 'itNe', category: 'flutter', description: '냉장고 식재료 관리 + 남은 재료로만 AI 레시피 추천', iconUrl: '/apps/itne/icon.png', webUrl: 'https://itneapp.web.app/', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.0.0/itNe.apk' },
   { slug: 'joa', name: 'JoA', category: 'flutter', description: 'AI 이미지 생성 앱', api: ['Grok (xAI)'], iconUrl: '/apps/joa/icon.png' },
   {
     slug: 'menuway',

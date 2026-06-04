@@ -39,9 +39,12 @@ useSeoMeta({
 
     <UFooter>
       <template #left>
-        <div class="text-sm text-muted space-y-0.5">
-          <p>© {{ new Date().getFullYear() }} wowHit. All rights reserved.</p>
-          <p>Powered by YL Company (Yoon &amp; Lee) | 사업자등록번호: 515-68-00370</p>
+        <div class="flex items-center gap-3">
+          <img src="/apps/ylcompany.png" alt="YL Company" class="size-8 rounded-lg" />
+          <div class="text-sm text-muted space-y-0.5">
+            <p>© {{ new Date().getFullYear() }} wowHit. All rights reserved.</p>
+            <p>Powered by YL Company (Yoon &amp; Lee) | 사업자등록번호: 515-68-00370</p>
+          </div>
         </div>
       </template>
     </UFooter>

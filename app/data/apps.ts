@@ -25,7 +25,18 @@ export const apps: App[] = [
   { slug: 'igomoya', name: 'igoMoya', category: 'flutter', description: '궁금한 것 찍으면 바로 AI 설명 + 타임라인 사진 정리', api: ['Gemini'], iconUrl: '/apps/igomoya/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v1.0.0/igoMoya.apk' },
   { slug: 'itne', name: 'itNe', category: 'flutter', description: '냉장고 식재료 관리 + 남은 재료로만 AI 레시피 추천', iconUrl: '/apps/itne/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.0.0/itNe.apk' },
   { slug: 'joa', name: 'JoA', category: 'flutter', description: 'AI 이미지 생성 앱', api: ['Grok (xAI)'], iconUrl: '/apps/joa/icon.png' },
-  { slug: 'menuway', name: 'menuWay', category: 'flutter', description: '메뉴 관리 MVP', storeReleased: true, iconUrl: '/apps/menuway/icon.png', androidUrl: 'https://play.google.com/store/apps/details?id=com.menuway.app&hl=ko', iosUrl: 'https://apps.apple.com/kr/app/menuway/id6758591797', youtubeUrl: 'https://www.youtube.com/@zzindori/shorts' },
+  {
+    slug: 'menuway',
+    name: 'menuWay',
+    category: 'flutter',
+    description: '해외 메뉴판을 찍으면 음식을 이해할 수 있게 설명해주는 AI 여행 앱',
+    longDescription: `여행 가면 누구나 한 번쯤 겪는 순간.\n번역은 되지만, 어떤 음식인지 이해하기 어려울 때가 있습니다.\n\nmenuWay는 메뉴판을 촬영하면 메뉴 이름과 설명을 함께 제공합니다.\n\n단순 번역이 아니라,\n음식을 이해할 수 있도록 돕는 앱입니다.\n\n이제 주문 앞에서 멈추지 마세요.\n\nTranslate. Order. Enjoy.`,
+    storeReleased: true,
+    iconUrl: '/apps/menuway/icon.png',
+    androidUrl: 'https://play.google.com/store/apps/details?id=com.menuway.app&hl=ko',
+    iosUrl: 'https://apps.apple.com/kr/app/menuway/id6758591797',
+    youtubeUrl: 'https://www.youtube.com/@zzindori/shorts'
+  },
   { slug: 'onbidway', name: 'onbidWay', category: 'flutter', description: '온비드(공매) 정보 앱', iconUrl: '/apps/onbidway/icon.png' },
   { slug: 'pingway', name: 'pingWay', category: 'flutter', description: '알림/메시지 앱', api: ['Firebase'], iconUrl: '/apps/pingway/icon.png' },
   {

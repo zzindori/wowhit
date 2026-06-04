@@ -62,7 +62,7 @@ export const apps: App[] = [
     storeReleased: false
   },
   { slug: 'talkway', name: 'talkWay', category: 'flutter', description: '실시간 화자분리 자막 앱 (청각장애인용)', iconUrl: '/apps/talkway/icon.png' },
-  { slug: 'txtfit', name: 'txtFit', category: 'flutter', description: 'Knox 환경 텍스트 분할 · 정제 유틸리티', iconUrl: '/apps/txtfit/icon.png' },
+  { slug: 'txtfit', name: 'txtFit', category: 'flutter', description: '텍스트 분할 · 정제 유틸리티', iconUrl: '/apps/txtfit/icon.png' },
   { slug: 'codeway', name: 'codeWay', category: 'flutter', description: '멀티 QR 스캔으로 대용량 텍스트 수신 · SHA256 무결성 검증', iconUrl: '/apps/codeway/icon.png', webUrl: 'https://zzindori.github.io/codeWay/', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codeway-v1.0.0/codeWay.apk' },
 
   // Web 앱

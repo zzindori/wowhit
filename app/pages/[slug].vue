@@ -39,7 +39,8 @@ useSeoMeta({ title: `${app.name} — wowhit` })
       </NuxtLink>
 
       <div class="flex items-center gap-3 mb-2">
-        <UIcon :name="meta.icon" class="text-primary size-8" />
+        <img v-if="app.iconUrl" :src="app.iconUrl" :alt="app.name" class="size-14 rounded-2xl object-cover shrink-0" />
+        <UIcon v-else :name="meta.icon" class="text-primary size-8" />
         <h1 class="text-3xl font-bold">{{ app.name }}</h1>
       </div>
 

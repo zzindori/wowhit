@@ -6,6 +6,8 @@ export interface App {
   longDescription?: string
   api?: string[]
   platform?: string
+  iconUrl?: string
+  screenshots?: string[]
   androidUrl?: string
   iosUrl?: string
   webUrl?: string
@@ -15,16 +17,16 @@ export interface App {
 
 export const apps: App[] = [
   // Flutter 앱
-  { slug: 'careway', name: 'careWay', category: 'flutter', description: '부모님 복지 혜택 매니저' },
-  { slug: 'codi-d', name: 'CODI:D', category: 'flutter', description: 'AI 패션 코디네이터', api: ['Gemini', 'Grok'], apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.0/app-release.apk' },
-  { slug: 'farmguide', name: 'farmGuide', category: 'flutter', description: '스마트 농업 경영 앱 (토지/작물 등록~수익정산)' },
-  { slug: 'gateflow', name: 'gateFlow', category: 'flutter', description: '공항 동선 오케스트레이터 & 출국 스트레스 제거 비서' },
-  { slug: 'igomoya', name: 'igoMoya', category: 'flutter', description: '궁금한 것 찍으면 바로 AI 설명 + 타임라인 사진 정리', api: ['Gemini'] },
-  { slug: 'itne', name: 'itNe', category: 'flutter', description: '냉장고 식재료 관리 + 남은 재료로만 AI 레시피 추천' },
-  { slug: 'joa', name: 'JoA', category: 'flutter', description: 'AI 이미지 생성 앱', api: ['Grok (xAI)'] },
-  { slug: 'menuway', name: 'menuway', category: 'flutter', description: '메뉴 관리 MVP', storeReleased: true, androidUrl: 'https://play.google.com/store/apps/details?id=com.menuway.app&hl=ko', iosUrl: 'https://apps.apple.com/kr/app/menuway/id6758591797' },
-  { slug: 'onbidway', name: 'onbidWay', category: 'flutter', description: '온비드(공매) 정보 앱' },
-  { slug: 'pingway', name: 'pingWay', category: 'flutter', description: '알림/메시지 앱', api: ['Firebase'] },
+  { slug: 'careway', name: 'careWay', category: 'flutter', description: '부모님 복지 혜택 매니저', iconUrl: '/apps/careway/icon.png' },
+  { slug: 'codi-d', name: 'CODI:D', category: 'flutter', description: 'AI 패션 코디네이터', api: ['Gemini', 'Grok'], iconUrl: '/apps/codi-d/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.0/app-release.apk' },
+  { slug: 'farmguide', name: 'farmGuide', category: 'flutter', description: '스마트 농업 경영 앱 (토지/작물 등록~수익정산)', iconUrl: '/apps/farmguide/icon.png' },
+  { slug: 'gateflow', name: 'gateFlow', category: 'flutter', description: '공항 동선 오케스트레이터 & 출국 스트레스 제거 비서', iconUrl: '/apps/gateflow/icon.png' },
+  { slug: 'igomoya', name: 'igoMoya', category: 'flutter', description: '궁금한 것 찍으면 바로 AI 설명 + 타임라인 사진 정리', api: ['Gemini'], iconUrl: '/apps/igomoya/icon.png' },
+  { slug: 'itne', name: 'itNe', category: 'flutter', description: '냉장고 식재료 관리 + 남은 재료로만 AI 레시피 추천', iconUrl: '/apps/itne/icon.png' },
+  { slug: 'joa', name: 'JoA', category: 'flutter', description: 'AI 이미지 생성 앱', api: ['Grok (xAI)'], iconUrl: '/apps/joa/icon.png' },
+  { slug: 'menuway', name: 'menuway', category: 'flutter', description: '메뉴 관리 MVP', storeReleased: true, iconUrl: '/apps/menuway/icon.png', androidUrl: 'https://play.google.com/store/apps/details?id=com.menuway.app&hl=ko', iosUrl: 'https://apps.apple.com/kr/app/menuway/id6758591797' },
+  { slug: 'onbidway', name: 'onbidWay', category: 'flutter', description: '온비드(공매) 정보 앱', iconUrl: '/apps/onbidway/icon.png' },
+  { slug: 'pingway', name: 'pingWay', category: 'flutter', description: '알림/메시지 앱', api: ['Firebase'], iconUrl: '/apps/pingway/icon.png' },
   {
     slug: 'shotway',
     name: 'shotWay',
@@ -32,10 +34,11 @@ export const apps: App[] = [
     description: '실시간 카메라 공유 앱',
     longDescription: `누군가 사진을 찍으면, 방에 함께한 모두의 핸드폰에 알림이 옵니다. 바로 그 사진이요.\n\n같은 공간이라면 QR 코드 한 번이면 연결됩니다. 멀리 있다면 6자리 숫자만 알려주면 돼요. 번호 교환도, 친구 추가도, 앱 설치도 필요 없습니다.\n\n아이폰이든 안드로이드든 상관없이 쓸 수 있고, 완전 무료입니다. 광고도 없어요.`,
     api: ['Firebase', 'Supabase'],
+    iconUrl: '/apps/shotway/icon.png',
     webUrl: 'https://shotway-5f153.web.app',
     storeReleased: false
   },
-  { slug: 'talkway', name: 'talkWay', category: 'flutter', description: '실시간 화자분리 자막 앱 (청각장애인용)' },
+  { slug: 'talkway', name: 'talkWay', category: 'flutter', description: '실시간 화자분리 자막 앱 (청각장애인용)', iconUrl: '/apps/talkway/icon.png' },
   { slug: 'qr-scanner', name: 'qr_scanner', category: 'flutter', description: 'QR 스캐너' },
 
   // Web 앱

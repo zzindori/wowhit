@@ -24,6 +24,9 @@ const links = computed(() => {
   if (app.apkUrl) {
     result.push({ label: 'Android 직접 설치', icon: 'i-simple-icons-android', to: app.apkUrl, color: 'neutral' as const, variant: 'outline' as const })
   }
+  if (app.youtubeUrl) {
+    result.push({ label: 'YouTube 쇼츠', icon: 'i-simple-icons-youtube', to: app.youtubeUrl, target: '_blank', color: 'error' as const, variant: 'subtle' as const })
+  }
   return result
 })
 

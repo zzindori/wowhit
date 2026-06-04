@@ -60,6 +60,19 @@ useSeoMeta({ title: `${app.name} — wowhit` })
         />
       </div>
 
+      <!-- 스크린샷 갤러리 -->
+      <div v-if="app.screenshots?.length" class="mb-8 -mx-4 px-4 overflow-x-auto">
+        <div class="flex gap-3 w-max">
+          <img
+            v-for="(src, i) in app.screenshots"
+            :key="i"
+            :src="src"
+            :alt="`${app.name} 스크린샷 ${i + 1}`"
+            class="h-96 w-auto rounded-2xl object-cover shadow-md shrink-0"
+          />
+        </div>
+      </div>
+
       <div class="mb-8">
         <template v-if="app.longDescription">
           <p v-for="(line, i) in app.longDescription.split('\n\n')" :key="i" class="text-base text-muted mb-3 last:mb-0">{{ line }}</p>

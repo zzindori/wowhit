@@ -33,6 +33,14 @@ export const apps: App[] = [
     longDescription: `여행 가면 누구나 한 번쯤 겪는 순간.\n번역은 되지만, 어떤 음식인지 이해하기 어려울 때가 있습니다.\n\nmenuWay는 메뉴판을 촬영하면 메뉴 이름과 설명을 함께 제공합니다.\n\n단순 번역이 아니라,\n음식을 이해할 수 있도록 돕는 앱입니다.\n\n이제 주문 앞에서 멈추지 마세요.\n\nTranslate. Order. Enjoy.`,
     storeReleased: true,
     iconUrl: '/apps/menuway/icon.png',
+    screenshots: [
+      '/apps/menuway/MenuWay_iOS_01.png',
+      '/apps/menuway/MenuWay_iOS_02.png',
+      '/apps/menuway/MenuWay_iOS_03.png',
+      '/apps/menuway/MenuWay_iOS_04.png',
+      '/apps/menuway/MenuWay_iOS_05.png',
+      '/apps/menuway/MenuWay_LAST.png'
+    ],
     androidUrl: 'https://play.google.com/store/apps/details?id=com.menuway.app&hl=ko',
     iosUrl: 'https://apps.apple.com/kr/app/menuway/id6758591797',
     youtubeUrl: 'https://www.youtube.com/@zzindori/shorts'

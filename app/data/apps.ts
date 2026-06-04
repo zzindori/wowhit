@@ -40,7 +40,7 @@ export const apps: App[] = [
     storeReleased: false
   },
   { slug: 'talkway', name: 'talkWay', category: 'flutter', description: '실시간 화자분리 자막 앱 (청각장애인용)', iconUrl: '/apps/talkway/icon.png' },
-  { slug: 'qr-scanner', name: 'qr_scanner', category: 'flutter', description: 'QR 스캐너' },
+  { slug: 'codeway', name: 'codeWay', category: 'flutter', description: '멀티 QR 스캔으로 대용량 텍스트 전송 · SHA256 무결성 검증', iconUrl: '/apps/codeway/icon.png' },
 
   // Web 앱
   { slug: 'bbangway', name: 'BBangWay', category: 'web', description: '베이커리 빵 인식 관리자', api: ['Gemini'], iconUrl: '/apps/bbangway/icon.png', webUrl: 'https://zzindori.github.io/BBangWay/' },

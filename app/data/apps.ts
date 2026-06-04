@@ -16,7 +16,7 @@ export interface App {
 export const apps: App[] = [
   // Flutter 앱
   { slug: 'careway', name: 'careWay', category: 'flutter', description: '부모님 복지 혜택 매니저' },
-  { slug: 'codi-d', name: 'CODI_D', category: 'flutter', description: 'AI 패션 코디네이터', api: ['Gemini', 'Grok'] },
+  { slug: 'codi-d', name: 'CODI_D', category: 'flutter', description: 'AI 패션 코디네이터', api: ['Gemini', 'Grok'], apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.0/CODI_D.apk' },
   { slug: 'farmguide', name: 'farmGuide', category: 'flutter', description: '스마트 농업 경영 앱 (토지/작물 등록~수익정산)' },
   { slug: 'gateflow', name: 'gateFlow', category: 'flutter', description: '공항 동선 오케스트레이터 & 출국 스트레스 제거 비서' },
   { slug: 'igomoya', name: 'igoMoya', category: 'flutter', description: '카메라 분할/캡처/저장/슬라이스' },

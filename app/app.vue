@@ -13,9 +13,9 @@ useHead({
 
 useSeoMeta({
   title: 'wowhit',
-  description: 'Flutter · Web · Watch 앱 개발 포트폴리오',
-  ogTitle: 'wowhit',
-  ogDescription: 'Flutter · Web · Watch 앱 개발 포트폴리오'
+  description: 'App · Web · Watch 앱 개발 포트폴리오',
+  ogTitle: 'wowHit',
+  ogDescription: 'App · Web · Watch 앱 개발 포트폴리오'
 })
 </script>
 

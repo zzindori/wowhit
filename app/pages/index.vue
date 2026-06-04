@@ -20,8 +20,8 @@ function getDirectLinks(app: (typeof apps)[0]) {
 <template>
   <div>
     <UPageHero
-      title="wowhit"
-      description="Flutter · Web · Watch 앱 개발 포트폴리오"
+      title="wowHit"
+      description="App · Web · Watch 앱 개발 포트폴리오"
     />
 
     <UPageSection

@@ -12,7 +12,7 @@ function getDirectLinks(app: (typeof apps)[0]) {
   if (app.androidUrl) links.push({ icon: 'i-simple-icons-googleplay', label: 'Play', to: app.androidUrl })
   if (app.iosUrl) links.push({ icon: 'i-simple-icons-appstore', label: 'App Store', to: app.iosUrl })
   if (app.webUrl) links.push({ icon: 'i-lucide-globe', label: 'Web', to: app.webUrl })
-  if (app.apkUrl) links.push({ icon: 'i-lucide-download', label: 'APK', to: app.apkUrl })
+  if (app.apkUrl) links.push({ icon: 'i-simple-icons-android', label: 'Android 설치', to: app.apkUrl })
   return links
 }
 </script>

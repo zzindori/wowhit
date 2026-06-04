@@ -22,7 +22,7 @@ const links = computed(() => {
     result.push({ label: '웹앱 열기', icon: 'i-lucide-globe', to: app.webUrl, target: '_blank', color: 'primary' as const })
   }
   if (app.apkUrl) {
-    result.push({ label: 'APK 다운로드', icon: 'i-lucide-download', to: app.apkUrl, color: 'neutral' as const, variant: 'outline' as const })
+    result.push({ label: 'Android 직접 설치', icon: 'i-simple-icons-android', to: app.apkUrl, color: 'neutral' as const, variant: 'outline' as const })
   }
   return result
 })

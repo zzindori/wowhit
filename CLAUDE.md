@@ -1,5 +1,8 @@
 # wowhit 포트폴리오 사이트
 
+## Claude에게
+이 프로젝트에서 작업을 마칠 때마다 반드시 아래 **작업 히스토리** 섹션에 날짜와 작업 내용을 추가하고 `git push`까지 완료할 것. 사용자가 요청하지 않아도 자동으로 수행한다.
+
 ## 프로젝트 개요
 - **URL**: https://wowhit.vercel.app (Vercel 자동 배포, main 브랜치 push 시 갱신)
 - **GitHub**: https://github.com/zzindori/wowhit

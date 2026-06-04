@@ -18,14 +18,14 @@ export interface App {
 
 export const apps: App[] = [
   // Flutter 앱
-  { slug: 'careway', name: 'careWay', category: 'flutter', description: '부모님 복지 혜택 매니저', iconUrl: '/apps/careway/icon.png' },
+  { slug: 'careway', name: 'careWay', category: 'flutter', description: '부모님 복지 혜택 매니저', iconUrl: '/apps/careway/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.0.0/careWay.apk' },
   { slug: 'codi-d', name: 'CODI:D', category: 'flutter', description: 'AI 패션 코디네이터', api: ['Gemini', 'Grok'], iconUrl: '/apps/codi-d/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.0/CODI_D.apk' },
-  { slug: 'farmguide', name: 'farmGuide', category: 'flutter', description: '스마트 농업 경영 앱 (토지/작물 등록~수익정산)', iconUrl: '/apps/farmguide/icon.png' },
+  { slug: 'farmguide', name: 'farmGuide', category: 'flutter', description: '스마트 농업 경영 앱 (토지/작물 등록~수익정산)', iconUrl: '/apps/farmguide/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/farmguide-v1.0.0/farmGuide.apk' },
   { slug: 'gateflow', name: 'gateFlow', category: 'flutter', description: '공항 동선 오케스트레이터 & 출국 스트레스 제거 비서', iconUrl: '/apps/gateflow/icon.png' },
-  { slug: 'igomoya', name: 'igoMoya', category: 'flutter', description: '궁금한 것 찍으면 바로 AI 설명 + 타임라인 사진 정리', api: ['Gemini'], iconUrl: '/apps/igomoya/icon.png' },
-  { slug: 'itne', name: 'itNe', category: 'flutter', description: '냉장고 식재료 관리 + 남은 재료로만 AI 레시피 추천', iconUrl: '/apps/itne/icon.png' },
+  { slug: 'igomoya', name: 'igoMoya', category: 'flutter', description: '궁금한 것 찍으면 바로 AI 설명 + 타임라인 사진 정리', api: ['Gemini'], iconUrl: '/apps/igomoya/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v1.0.0/igoMoya.apk' },
+  { slug: 'itne', name: 'itNe', category: 'flutter', description: '냉장고 식재료 관리 + 남은 재료로만 AI 레시피 추천', iconUrl: '/apps/itne/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.0.0/itNe.apk' },
   { slug: 'joa', name: 'JoA', category: 'flutter', description: 'AI 이미지 생성 앱', api: ['Grok (xAI)'], iconUrl: '/apps/joa/icon.png' },
-  { slug: 'menuway', name: 'menuway', category: 'flutter', description: '메뉴 관리 MVP', storeReleased: true, iconUrl: '/apps/menuway/icon.png', androidUrl: 'https://play.google.com/store/apps/details?id=com.menuway.app&hl=ko', iosUrl: 'https://apps.apple.com/kr/app/menuway/id6758591797', youtubeUrl: 'https://www.youtube.com/@zzindori/shorts' },
+  { slug: 'menuway', name: 'menuway', category: 'flutter', description: '메뉴 관리 MVP', storeReleased: true, iconUrl: '/apps/menuway/icon.png', androidUrl: 'https://play.google.com/store/apps/details?id=com.menuway.app&hl=ko', iosUrl: 'https://apps.apple.com/kr/app/menuway/id6758591797', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/menuway-v1.0.0/menuway.apk', youtubeUrl: 'https://www.youtube.com/@zzindori/shorts' },
   { slug: 'onbidway', name: 'onbidWay', category: 'flutter', description: '온비드(공매) 정보 앱', iconUrl: '/apps/onbidway/icon.png' },
   { slug: 'pingway', name: 'pingWay', category: 'flutter', description: '알림/메시지 앱', api: ['Firebase'], iconUrl: '/apps/pingway/icon.png' },
   {
@@ -37,6 +37,7 @@ export const apps: App[] = [
     api: ['Firebase', 'Supabase'],
     iconUrl: '/apps/shotway/icon.png',
     webUrl: 'https://shotway-5f153.web.app',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/shotway-v1.0.0/shotWay.apk',
     storeReleased: false
   },
   { slug: 'talkway', name: 'talkWay', category: 'flutter', description: '실시간 화자분리 자막 앱 (청각장애인용)', iconUrl: '/apps/talkway/icon.png' },

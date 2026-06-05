@@ -19,7 +19,7 @@ export interface App {
 
 export const apps: App[] = [
   // Flutter 앱
-  { slug: 'careway', name: 'careWay', category: 'flutter', description: '부모님 복지 혜택 매니저', iconUrl: '/apps/careway/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.0.0/careWay.apk' },
+  { slug: 'careway', name: 'careWay', category: 'flutter', description: '부모님 복지 혜택 매니저', iconUrl: '/apps/careway/icon.png', webUrl: 'https://careway-jet.vercel.app', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.0.0/careWay.apk' },
   { slug: 'codi-d', name: 'CODI:D', category: 'flutter', description: 'AI 패션 코디네이터', api: ['Gemini', 'Grok'], iconUrl: '/apps/codi-d/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.0/CODI_D.apk' },
   { slug: 'farmguide', name: 'farmGuide', category: 'flutter', description: '스마트 농업 경영 앱 (토지/작물 등록~수익정산)', iconUrl: '/apps/farmguide/icon.png', apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/farmguide-v1.0.0/farmGuide.apk' },
   { slug: 'gateflow', name: 'gateFlow', category: 'flutter', description: '공항 동선 오케스트레이터 & 출국 스트레스 제거 비서', iconUrl: '/apps/gateflow/icon.png' },

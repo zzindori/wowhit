@@ -33,6 +33,9 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 ## 작업 히스토리
 
 ### 2026-06-05
+- JoA release APK 빌드 및 GitHub 릴리스 업로드 (joa-v1.0.0), apkUrl 연결
+
+
 - BBangWay, posTest 아이콘 추가
 - MenuWay에 YouTube 쇼츠 링크 추가 (https://www.youtube.com/@zzindori/shorts)
 - `qr_scanner` → `codeWay`로 이름/설명/아이콘 정리 (프로젝트 위치: workspace/qr_scanner/)

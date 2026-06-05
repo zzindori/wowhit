@@ -60,14 +60,14 @@ useSeoMeta({ title: `${app.name} — wowhit` })
       </div>
 
       <!-- 스크린샷 갤러리 -->
-      <div v-if="app.screenshots?.length" class="mb-8 -mx-4 px-4 overflow-x-auto">
-        <div class="flex gap-3 w-max">
+      <div v-if="app.screenshots?.length" class="mb-8 overflow-hidden">
+        <div class="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
           <img
             v-for="(src, i) in app.screenshots"
             :key="i"
             :src="src"
             :alt="`${app.name} 스크린샷 ${i + 1}`"
-            class="h-96 w-auto rounded-2xl object-cover shadow-md shrink-0"
+            class="h-64 sm:h-80 w-auto rounded-2xl object-cover shadow-md shrink-0 snap-start"
           />
         </div>
       </div>

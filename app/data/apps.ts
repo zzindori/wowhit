@@ -88,6 +88,7 @@ export const apps: App[] = [
     longDescription: `내가 상상한 이미지를 바로 만들어보고 싶다면.\n\nJoA는 xAI의 Grok 이미지 생성 모델을 활용합니다. 풍경, 인물 등 카테고리와 세부 옵션을 선택하면 9:16 세로 이미지가 바로 생성됩니다.\n\n현재 날씨를 반영한 이미지 생성도 가능합니다. 맑은 날, 흐린 날, 눈 오는 날의 분위기가 이미지에 자연스럽게 담깁니다.\n\n생성된 이미지는 히스토리로 저장되어 언제든 다시 볼 수 있습니다.`,
     api: ['Grok (xAI)'],
     iconUrl: '/apps/joa/icon.png',
+    webUrl: 'https://web-tau-nine-22.vercel.app',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0/JoA.apk'
   },
   {

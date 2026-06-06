@@ -32,6 +32,9 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 
 ## 작업 히스토리
 
+### 2026-06-06
+- JoA 웹앱 URL 추가 (https://web-tau-nine-22.vercel.app)
+
 ### 2026-06-05
 - JoA release APK 빌드 및 GitHub 릴리스 업로드 (joa-v1.0.0), apkUrl 연결
 - 상세 페이지 스크린샷 갤러리 모바일 overflow 수정 (페이지 가로 밀림 방지, 이미지 높이 축소, snap scroll 추가)

@@ -32,6 +32,10 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 
 ## 작업 히스토리
 
+### 2026-06-07
+- JoA 스크린샷 갤러리 6장 추가 (public/apps/joa/)
+- JoA longDescription에 Android APK 설치/삭제 방법 안내 추가
+
 ### 2026-06-06
 - JoA 웹앱 URL 추가 (https://web-tau-nine-22.vercel.app)
 

@@ -30,7 +30,7 @@ export const apps: App[] = [
     api: ['Gemini', 'Supabase'],
     iconUrl: '/apps/careway/icon.png',
     webUrl: 'https://careway-jet.vercel.app',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.0.0/careWay.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.0.0.1/careWay.apk',
     version: '1.0.0'
   },
   {
@@ -41,7 +41,7 @@ export const apps: App[] = [
     longDescription: `옷은 많은데 뭘 입을지 모르겠다면, CODI:D에게 맡기세요.\n\n카메라로 옷을 찍으면 AI가 분석하고, 어울리는 코디를 직접 이미지로 생성해줍니다. Gemini로 스타일을 분석하고 Grok으로 코디 이미지를 만들어냅니다.\n\nMLKit 기반 체형·얼굴 분석으로 내 몸에 맞는 스타일을 추천합니다. 코디를 쌓아갈수록 나만의 패션 아바타가 진화합니다.\n\n옷장이 스타일리스트가 되는 앱.`,
     api: ['Gemini', 'Grok'],
     iconUrl: '/apps/codi-d/icon.png',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.0/CODI_D.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.0.1/CODI_D.apk',
     version: '1.0.0'
   },
   {
@@ -52,7 +52,7 @@ export const apps: App[] = [
     longDescription: `농사는 기억에만 의존하기엔 너무 복잡합니다.\n\nfarmGuide는 토지 등록부터 작물 선택, 파종·수확 일정 관리, 인력 기록, 수익 정산까지 농업 경영 전 과정을 하나의 앱에서 관리합니다.\n\n네이버 지도 기반으로 농지를 직접 선택하고 관리할 수 있습니다. 수확이 끝나면 차트로 수익과 비용을 한눈에 확인할 수 있습니다.\n\n농부를 위한 스마트 경영 도우미.`,
     api: ['Supabase', 'Naver Maps'],
     iconUrl: '/apps/farmguide/icon.png',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/farmguide-v1.0.0/farmGuide.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/farmguide-v1.0.0.1/farmGuide.apk',
     version: '1.0.0'
   },
   {
@@ -72,7 +72,7 @@ export const apps: App[] = [
     longDescription: `길을 걷다, 음식을 보다, 궁금한 게 생기는 순간.\n\nigoMoya는 카메라를 대면 AI가 바로 설명해줍니다. 분할 화면으로 찍는 순간 결과를 바로 확인할 수 있습니다.\n\n찍은 사진들은 위치와 시간순으로 타임라인에 정리됩니다. 오늘 어디서 무엇을 봤는지 기억하고 싶을 때 꺼내보세요.\n\n궁금함을 바로 해결하는 AI 카메라 메모.`,
     api: ['Gemini'],
     iconUrl: '/apps/igomoya/icon.png',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v0.1.0/igoMoya.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v0.1.0.1/igoMoya.apk',
     version: '0.1.0'
   },
   {
@@ -103,7 +103,7 @@ export const apps: App[] = [
       '/apps/joa/Screenshot_20260607_170008.jpg'
     ],
     webUrl: 'https://web-tau-nine-22.vercel.app',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0/JoA.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0.3/JoA.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13625209650',
     version: '1.0.0'
   },

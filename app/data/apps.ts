@@ -95,12 +95,11 @@ export const apps: App[] = [
     api: ['Gemini'],
     iconUrl: '/apps/joa/icon.png',
     screenshots: [
-      '/apps/joa/Screenshot_20260607_000707.jpg',
-      '/apps/joa/Screenshot_20260607_000938.jpg',
-      '/apps/joa/Screenshot_20260607_000943.jpg',
-      '/apps/joa/Screenshot_20260607_000949.jpg',
-      '/apps/joa/Screenshot_20260607_000955.jpg',
-      '/apps/joa/Screenshot_20260607_001003.jpg'
+      '/apps/joa/Screenshot_20260607_165645.jpg',
+      '/apps/joa/Screenshot_20260607_165650.jpg',
+      '/apps/joa/Screenshot_20260607_165702.jpg',
+      '/apps/joa/Screenshot_20260607_165859.jpg',
+      '/apps/joa/Screenshot_20260607_170008.jpg'
     ],
     webUrl: 'https://web-tau-nine-22.vercel.app',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0/JoA.apk',

@@ -31,7 +31,7 @@ export const apps: App[] = [
     iconUrl: '/apps/careway/icon.png',
     webUrl: 'https://careway-jet.vercel.app',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.0.0.1/careWay.apk',
-    version: '1.0.0'
+    version: '1.0.0+1'
   },
   {
     slug: 'codi-d',
@@ -42,7 +42,7 @@ export const apps: App[] = [
     api: ['Gemini', 'Grok'],
     iconUrl: '/apps/codi-d/icon.png',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.0.1/CODI_D.apk',
-    version: '1.0.0'
+    version: '1.0.0+1'
   },
   {
     slug: 'farmguide',
@@ -53,7 +53,7 @@ export const apps: App[] = [
     api: ['Supabase', 'Naver Maps'],
     iconUrl: '/apps/farmguide/icon.png',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/farmguide-v1.0.0.1/farmGuide.apk',
-    version: '1.0.0'
+    version: '1.0.0+1'
   },
   {
     slug: 'gateflow',
@@ -73,7 +73,7 @@ export const apps: App[] = [
     api: ['Gemini'],
     iconUrl: '/apps/igomoya/icon.png',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v0.1.0.1/igoMoya.apk',
-    version: '0.1.0'
+    version: '0.1.0+1'
   },
   {
     slug: 'itne',
@@ -85,7 +85,7 @@ export const apps: App[] = [
     iconUrl: '/apps/itne/icon.png',
     webUrl: 'https://itneapp.web.app/',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.0.0.1/itNe.apk',
-    version: '1.0.0'
+    version: '1.0.0+1'
   },
   {
     slug: 'joa',
@@ -105,7 +105,7 @@ export const apps: App[] = [
     webUrl: 'https://web-tau-nine-22.vercel.app',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0.3/JoA.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13625209650',
-    version: '1.0.0'
+    version: '1.0.0+3'
   },
   {
     slug: 'menuway',
@@ -157,7 +157,7 @@ export const apps: App[] = [
     iconUrl: '/apps/shotway/icon.png',
     webUrl: 'https://shotway-5f153.web.app',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/shotway-v1.0.0/shotWay.apk',
-    version: '1.0.0',
+    version: '1.0.0+3',
     storeReleased: false
   },
   {

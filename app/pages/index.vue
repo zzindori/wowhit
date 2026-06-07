@@ -51,6 +51,7 @@ function getDirectLinks(app: (typeof apps)[0]) {
                   color="success"
                   variant="subtle"
                 />
+                <span v-if="app.version" class="text-xs text-muted">v{{ app.version }}</span>
               </div>
               <p class="text-sm text-muted mt-1">{{ app.description }}</p>
               <div v-if="app.api?.length" class="flex flex-wrap gap-1 mt-2">

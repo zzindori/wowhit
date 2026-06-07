@@ -12,6 +12,7 @@ export interface App {
   iosUrl?: string
   webUrl?: string
   apkUrl?: string
+  version?: string
   youtubeUrl?: string
   shorts?: string[]
   storeReleased?: boolean
@@ -28,7 +29,8 @@ export const apps: App[] = [
     api: ['Gemini', 'Supabase'],
     iconUrl: '/apps/careway/icon.png',
     webUrl: 'https://careway-jet.vercel.app',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.0.0/careWay.apk'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.0.0/careWay.apk',
+    version: '1.0.0'
   },
   {
     slug: 'codi-d',
@@ -38,7 +40,8 @@ export const apps: App[] = [
     longDescription: `옷은 많은데 뭘 입을지 모르겠다면, CODI:D에게 맡기세요.\n\n카메라로 옷을 찍으면 AI가 분석하고, 어울리는 코디를 직접 이미지로 생성해줍니다. Gemini로 스타일을 분석하고 Grok으로 코디 이미지를 만들어냅니다.\n\nMLKit 기반 체형·얼굴 분석으로 내 몸에 맞는 스타일을 추천합니다. 코디를 쌓아갈수록 나만의 패션 아바타가 진화합니다.\n\n옷장이 스타일리스트가 되는 앱.`,
     api: ['Gemini', 'Grok'],
     iconUrl: '/apps/codi-d/icon.png',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.0/CODI_D.apk'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.0/CODI_D.apk',
+    version: '1.0.0'
   },
   {
     slug: 'farmguide',
@@ -48,7 +51,8 @@ export const apps: App[] = [
     longDescription: `농사는 기억에만 의존하기엔 너무 복잡합니다.\n\nfarmGuide는 토지 등록부터 작물 선택, 파종·수확 일정 관리, 인력 기록, 수익 정산까지 농업 경영 전 과정을 하나의 앱에서 관리합니다.\n\n네이버 지도 기반으로 농지를 직접 선택하고 관리할 수 있습니다. 수확이 끝나면 차트로 수익과 비용을 한눈에 확인할 수 있습니다.\n\n농부를 위한 스마트 경영 도우미.`,
     api: ['Supabase', 'Naver Maps'],
     iconUrl: '/apps/farmguide/icon.png',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/farmguide-v1.0.0/farmGuide.apk'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/farmguide-v1.0.0/farmGuide.apk',
+    version: '1.0.0'
   },
   {
     slug: 'gateflow',
@@ -67,7 +71,8 @@ export const apps: App[] = [
     longDescription: `길을 걷다, 음식을 보다, 궁금한 게 생기는 순간.\n\nigoMoya는 카메라를 대면 AI가 바로 설명해줍니다. 분할 화면으로 찍는 순간 결과를 바로 확인할 수 있습니다.\n\n찍은 사진들은 위치와 시간순으로 타임라인에 정리됩니다. 오늘 어디서 무엇을 봤는지 기억하고 싶을 때 꺼내보세요.\n\n궁금함을 바로 해결하는 AI 카메라 메모.`,
     api: ['Gemini'],
     iconUrl: '/apps/igomoya/icon.png',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v1.0.0/igoMoya.apk'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v0.1.0/igoMoya.apk',
+    version: '0.1.0'
   },
   {
     slug: 'itne',
@@ -78,7 +83,8 @@ export const apps: App[] = [
     api: ['Gemini', 'MLKit'],
     iconUrl: '/apps/itne/icon.png',
     webUrl: 'https://itneapp.web.app/',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.0.0/itNe.apk'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.0.0/itNe.apk',
+    version: '1.0.0'
   },
   {
     slug: 'joa',
@@ -97,7 +103,8 @@ export const apps: App[] = [
       '/apps/joa/Screenshot_20260607_001003.jpg'
     ],
     webUrl: 'https://web-tau-nine-22.vercel.app',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0/JoA.apk'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0/JoA.apk',
+    version: '1.0.0'
   },
   {
     slug: 'menuway',
@@ -149,6 +156,7 @@ export const apps: App[] = [
     iconUrl: '/apps/shotway/icon.png',
     webUrl: 'https://shotway-5f153.web.app',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/shotway-v1.0.0/shotWay.apk',
+    version: '1.0.0',
     storeReleased: false
   },
   {
@@ -168,7 +176,8 @@ export const apps: App[] = [
     longDescription: `긴 텍스트를 AI 채팅에 붙여넣으면 글자 수 제한에 막힐 때가 있습니다.\n\ntxtFit은 두 가지 기능을 제공합니다. 긴 텍스트를 원하는 글자 수 단위로 나눠 [1/3], [2/3] 형식으로 순서대로 복사할 수 있는 분할 기능, 그리고 나눠진 블럭들을 다시 깔끔하게 이어붙이는 결합 기능입니다.\n\n분할 헤더가 자동으로 붙고, 반대로 제거하는 것도 가능합니다.\n\n글자 수 제한을 넘어, 내 텍스트를 내 마음대로.`,
     iconUrl: '/apps/txtfit/icon.png',
     webUrl: 'https://zzindori.github.io/TxtFit-web/',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/txtfit-v1.0.0/txtFit.apk'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/txtfit-v1.0.0/txtFit.apk',
+    version: '1.0.0'
   },
   {
     slug: 'codeway',
@@ -178,7 +187,8 @@ export const apps: App[] = [
     longDescription: `파일 전송 없이 텍스트를 전달하고 싶을 때.\n\ncodeWay는 대용량 텍스트를 QR 코드 여러 장으로 분할해 전송하고, 수신 측에서 순서대로 스캔해 원문을 복원합니다. SHA256 해시 검증으로 데이터 무결성을 보장합니다.\n\n앱 설치 없이 웹 버전으로도 동작합니다. 인터넷 연결이 없는 환경에서도 안전하게 텍스트를 전달할 수 있습니다.\n\n보안이 필요한 텍스트 전달에 적합한 멀티 QR 유틸리티.`,
     iconUrl: '/apps/codeway/icon.png',
     webUrl: 'https://zzindori.github.io/codeWay/',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codeway-v1.0.0/codeWay.apk'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codeway-v1.0.0/codeWay.apk',
+    version: '1.0.0'
   },
 
   // Web 앱

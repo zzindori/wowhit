@@ -48,6 +48,7 @@ useSeoMeta({ title: `${app.name} — wowhit` })
 
       <div class="flex flex-wrap gap-2 mb-6">
         <UBadge :label="meta.label" variant="subtle" />
+        <UBadge v-if="app.version" :label="`v${app.version}`" variant="outline" color="neutral" />
         <UBadge v-if="app.platform" :label="app.platform" variant="outline" />
         <UBadge v-if="app.storeReleased" label="스토어 출시" color="success" variant="subtle" />
         <UBadge

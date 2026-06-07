@@ -32,6 +32,14 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 
 ## 작업 히스토리
 
+### 2026-06-08
+- Firebase (itneapp 프로젝트) 기반 댓글 시스템 추가
+  - `app/plugins/firebase.client.ts`: Firebase 초기화 플러그인
+  - `app/composables/useComments.ts`: wowhit_comments 컬렉션 CRUD (fetchComments, addComment, formatDate)
+  - `app/pages/[slug].vue`: 댓글 섹션 UI (닉네임+내용 입력폼, 목록, 로딩 스피너)
+  - firebase 패키지 추가 (package.json)
+  - Firestore 보안 규칙 필요: wowhit_comments 공개 읽기/쓰기 허용
+
 ### 2026-06-07
 - 앱 버전 표시 추가 (메인 카드 + 상세 페이지 배지), apps.ts version 필드 추가
 - APK 자동 업로드 스크립트 (upload-apk.sh): pubspec.yaml 빌드번호까지 체크, apps.ts apkUrl+version 자동 수정, git push까지 자동화

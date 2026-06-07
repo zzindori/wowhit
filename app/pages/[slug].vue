@@ -31,6 +31,17 @@ const links = computed(() => {
 })
 
 const selectedShort = ref<string | null>(null)
+const shortModalOpen = ref(false)
+function openShort(id: string) { selectedShort.value = id; shortModalOpen.value = true }
+
+const { comments, loading: commentsLoading, submitting, error: commentError, addComment, formatDate } = useComments(app.slug)
+const newAuthor = ref('')
+const newContent = ref('')
+
+async function handleSubmit() {
+  const ok = await addComment(newAuthor.value, newContent.value)
+  if (ok) newContent.value = ''
+}
 
 useSeoMeta({ title: `${app.name} — wowhit` })
 </script>
@@ -102,14 +113,14 @@ useSeoMeta({ title: `${app.name} — wowhit` })
       </div>
 
       <!-- 쇼츠 갤러리 -->
-      <div v-if="app.shorts?.length">
+      <div v-if="app.shorts?.length" class="mb-10">
         <h2 class="text-lg font-semibold mb-3">YouTube 쇼츠</h2>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button
             v-for="id in app.shorts"
             :key="id"
             class="relative rounded-xl overflow-hidden aspect-[9/16] cursor-pointer group"
-            @click="selectedShort = id"
+            @click="openShort(id)"
           >
             <img
               :src="`https://img.youtube.com/vi/${id}/hqdefault.jpg`"
@@ -122,11 +133,54 @@ useSeoMeta({ title: `${app.name} — wowhit` })
           </button>
         </div>
       </div>
+
+      <!-- 댓글 -->
+      <div>
+        <h2 class="text-lg font-semibold mb-4">댓글</h2>
+
+        <!-- 작성 폼 -->
+        <div class="bg-elevated rounded-2xl p-4 mb-6 space-y-3">
+          <UInput v-model="newAuthor" placeholder="닉네임 (최대 20자)" maxlength="20" />
+          <UTextarea v-model="newContent" placeholder="댓글을 입력하세요 (최대 300자)" maxlength="300" :rows="3" />
+          <div class="flex justify-between items-center">
+            <p v-if="commentError" class="text-sm text-red-500">{{ commentError }}</p>
+            <span v-else />
+            <UButton
+              label="등록"
+              icon="i-lucide-send"
+              :loading="submitting"
+              :disabled="!newAuthor.trim() || !newContent.trim()"
+              @click="handleSubmit"
+            />
+          </div>
+        </div>
+
+        <!-- 댓글 목록 -->
+        <div v-if="commentsLoading" class="flex justify-center py-8">
+          <UIcon name="i-lucide-loader-circle" class="size-6 animate-spin text-muted" />
+        </div>
+        <div v-else-if="comments.length === 0" class="text-center text-muted text-sm py-8">
+          첫 번째 댓글을 남겨보세요!
+        </div>
+        <div v-else class="space-y-3">
+          <div
+            v-for="comment in comments"
+            :key="comment.id"
+            class="bg-elevated rounded-xl p-4"
+          >
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-medium text-sm">{{ comment.author }}</span>
+              <span class="text-xs text-muted">{{ formatDate(comment.createdAt) }}</span>
+            </div>
+            <p class="text-sm text-muted whitespace-pre-wrap">{{ comment.content }}</p>
+          </div>
+        </div>
+      </div>
     </div>
   </UPageSection>
 
   <!-- 쇼츠 모달 -->
-  <UModal v-model:open="selectedShort" :ui="{ content: 'max-w-sm p-0 overflow-hidden' }">
+  <UModal v-model:open="shortModalOpen" :ui="{ content: 'max-w-sm p-0 overflow-hidden' }">
     <template #content>
       <div class="relative aspect-[9/16] w-full">
         <iframe

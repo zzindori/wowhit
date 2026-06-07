@@ -24,6 +24,9 @@ const links = computed(() => {
   if (app.apkUrl) {
     result.push({ label: 'Android 직접 설치', icon: 'i-simple-icons-android', to: app.apkUrl, color: 'neutral' as const, variant: 'outline' as const })
   }
+  if (app.purchaseUrl) {
+    result.push({ label: '이용권 구매', icon: 'i-lucide-shopping-cart', to: app.purchaseUrl, target: '_blank', color: 'warning' as const })
+  }
   return result
 })
 

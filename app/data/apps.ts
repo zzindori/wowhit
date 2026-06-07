@@ -12,6 +12,7 @@ export interface App {
   iosUrl?: string
   webUrl?: string
   apkUrl?: string
+  purchaseUrl?: string
   version?: string
   youtubeUrl?: string
   shorts?: string[]
@@ -103,6 +104,7 @@ export const apps: App[] = [
     ],
     webUrl: 'https://web-tau-nine-22.vercel.app',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0/JoA.apk',
+    purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13625209650',
     version: '1.0.0'
   },
   {

@@ -13,6 +13,7 @@ function getDirectLinks(app: (typeof apps)[0]) {
   if (app.iosUrl) links.push({ icon: 'i-simple-icons-appstore', label: 'App Store', to: app.iosUrl })
   if (app.webUrl) links.push({ icon: 'i-lucide-globe', label: 'Web', to: app.webUrl })
   if (app.apkUrl) links.push({ icon: 'i-simple-icons-android', label: 'Android 설치', to: app.apkUrl })
+  if (app.purchaseUrl) links.push({ icon: 'i-lucide-shopping-cart', label: '이용권 구매', to: app.purchaseUrl, highlight: true })
   return links
 }
 </script>
@@ -67,7 +68,7 @@ function getDirectLinks(app: (typeof apps)[0]) {
           </NuxtLink>
 
           <!-- 직접 링크 버튼 -->
-          <div v-if="getDirectLinks(app).length" class="flex gap-2 pt-2 border-t border-default">
+          <div v-if="getDirectLinks(app).length" class="flex flex-wrap gap-2 pt-2 border-t border-default">
             <UButton
               v-for="link in getDirectLinks(app)"
               :key="link.label"
@@ -76,8 +77,8 @@ function getDirectLinks(app: (typeof apps)[0]) {
               :to="link.to"
               target="_blank"
               size="xs"
-              variant="subtle"
-              color="neutral"
+              :variant="link.highlight ? 'subtle' : 'subtle'"
+              :color="link.highlight ? 'warning' : 'neutral'"
             />
           </div>
         </UCard>

@@ -33,6 +33,11 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 ## 작업 히스토리
 
 ### 2026-06-07
+- 앱 버전 표시 추가 (메인 카드 + 상세 페이지 배지), apps.ts version 필드 추가
+- APK 자동 업로드 스크립트 (upload-apk.sh): pubspec.yaml 빌드번호까지 체크, apps.ts apkUrl+version 자동 수정, git push까지 자동화
+- APK 파일 변경 감지 자동 실행 스크립트 (watch-apk.sh): inotifywait 기반, tmux 세션에서 상시 실행
+- API Key → QR 변환 페이지 추가 (/qr), 헤더 메뉴 연결
+- JoA 상세 페이지 대폭 업데이트: 스크린샷 교체(5장), 아이콘 교체, API Gemini로 변경, 상세설명 전면 재작성 (무료체험/BYOK/이용권/멀티기기 안내), 이용권 구매 링크 추가 (네이버 스마트스토어)
 - JoA 스크린샷 갤러리 6장 추가 (public/apps/joa/)
 - JoA longDescription에 Android APK 설치/삭제 방법 안내 추가
 

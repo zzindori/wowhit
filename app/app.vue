@@ -29,6 +29,10 @@ useSeoMeta({
       </template>
 
       <template #right>
+        <NuxtLink to="/qr" class="text-sm text-muted hover:text-default flex items-center gap-1.5">
+          <UIcon name="i-lucide-scan-qr-code" class="size-4" />
+          QR 변환
+        </NuxtLink>
         <UColorModeButton />
       </template>
     </UHeader>

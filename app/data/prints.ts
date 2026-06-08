@@ -144,9 +144,9 @@ export const prints: Print[] = [
 
 export const featuredPrintSlugs = [
   'yamaha-xv1600-roadstar',
-  'coffee-takeout-truck',
-  'f1-helmet-collection',
-  'doosan-bears-keychain',
+  'honda-z50j',
+  'kymco-ak550',
+  'honda-z50j-inspired',
   'honda-cub-c100',
 ]
 

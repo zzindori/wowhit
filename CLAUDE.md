@@ -55,13 +55,14 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 ## 작업 히스토리
 
 ### 2026-06-09
+- 메인 3D 대표 이미지를 바이크 5종만 노출 (`featuredPrintSlugs`)
 - MakerWorld 버튼 라벨 `MakerWorld @jinsukYoon` → `MakerWorld`
 - 3D 명칭 수정: 시카고/Boston → 두산 베어스 (script 키링, 헬로키티 키링, 토큰)
   - 이미지 파일명 정리: `doosan-bears-token.jpg`, `doosan-bears-script-keychain.jpg`, `hellokitty-doosan-bears-keychain.jpg`
 - 3D 갤러리 전면 정리 (총 15개, 4카테고리)
   - 바이크 5 · 디오라마 1(커피 트럭 +갤러리 2장) · 프라모델 4 · 키링 5
   - `public/prints/` 이미지 slug 파일명으로 정리
-  - `/3d` 카테고리별 섹션, 메인은 `featuredPrintSlugs` 대표 5개만
+  - `/3d` 카테고리별 섹션, 메인은 `featuredPrintSlugs` 바이크 5개만
   - 문구: `Bambu Lab · 프라모델 · 디오라마` (A1 mini 제거), `/3d` 「작품」 제목 제거
   - 메인 3D 섹션 위치: 앱 목록 맨 아래
 - 오토바이 썸네일 5장 연결 (`prints.ts` imageUrl)

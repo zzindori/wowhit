@@ -27,62 +27,6 @@ function getDirectLinks(app: (typeof apps)[0]) {
     />
 
     <UPageSection
-      title="3D Printing"
-      :ui="{ container: 'py-8' }"
-    >
-      <div class="flex items-center justify-between gap-4 mb-4">
-        <p class="text-sm text-muted">
-          Bambu Lab A1 mini · 바이크 미니어처
-        </p>
-        <UButton
-          label="전체 보기"
-          to="/3d"
-          variant="subtle"
-          size="sm"
-          icon="i-lucide-arrow-right"
-          trailing
-        />
-      </div>
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <a
-          v-for="print in prints"
-          :key="print.slug"
-          :href="print.makerWorldUrl"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="group rounded-xl border border-default overflow-hidden hover:border-primary/50 transition-colors"
-        >
-          <div class="aspect-square bg-gradient-to-br from-primary/10 to-default flex items-center justify-center">
-            <img
-              v-if="print.imageUrl"
-              :src="print.imageUrl"
-              :alt="print.name"
-              class="w-full h-full object-cover"
-            >
-            <UIcon
-              v-else
-              name="i-lucide-box"
-              class="size-8 text-primary/40"
-            />
-          </div>
-          <p class="text-xs font-medium p-2 truncate group-hover:text-primary transition-colors">
-            {{ print.name }}
-          </p>
-        </a>
-      </div>
-      <div class="mt-4">
-        <UButton
-          label="MakerWorld @jinsukYoon"
-          :to="makerWorldProfile"
-          target="_blank"
-          variant="outline"
-          size="sm"
-          icon="i-lucide-external-link"
-        />
-      </div>
-    </UPageSection>
-
-    <UPageSection
       v-for="group in categories"
       :key="group.key"
       :title="group.label"
@@ -160,6 +104,62 @@ function getDirectLinks(app: (typeof apps)[0]) {
             />
           </div>
         </UCard>
+      </div>
+    </UPageSection>
+
+    <UPageSection
+      title="3D Printing"
+      :ui="{ container: 'py-8' }"
+    >
+      <div class="flex items-center justify-between gap-4 mb-4">
+        <p class="text-sm text-muted">
+          Bambu Lab A1 mini · 바이크 미니어처
+        </p>
+        <UButton
+          label="전체 보기"
+          to="/3d"
+          variant="subtle"
+          size="sm"
+          icon="i-lucide-arrow-right"
+          trailing
+        />
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <a
+          v-for="print in prints"
+          :key="print.slug"
+          :href="print.makerWorldUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="group rounded-xl border border-default overflow-hidden hover:border-primary/50 transition-colors"
+        >
+          <div class="aspect-square bg-gradient-to-br from-primary/10 to-default flex items-center justify-center">
+            <img
+              v-if="print.imageUrl"
+              :src="print.imageUrl"
+              :alt="print.name"
+              class="w-full h-full object-cover"
+            >
+            <UIcon
+              v-else
+              name="i-lucide-box"
+              class="size-8 text-primary/40"
+            />
+          </div>
+          <p class="text-xs font-medium p-2 truncate group-hover:text-primary transition-colors">
+            {{ print.name }}
+          </p>
+        </a>
+      </div>
+      <div class="mt-4">
+        <UButton
+          label="MakerWorld @jinsukYoon"
+          :to="makerWorldProfile"
+          target="_blank"
+          variant="outline"
+          size="sm"
+          icon="i-lucide-external-link"
+        />
       </div>
     </UPageSection>
   </div>

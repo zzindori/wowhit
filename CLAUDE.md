@@ -33,6 +33,19 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 ## 작업 히스토리
 
 ### 2026-06-08
+- 댓글 POST 요청을 form 인코딩으로 변경해 CORS preflight 우회 (회사 방화벽 대응)
+  - `app/composables/useComments.ts`: `application/x-www-form-urlencoded` 사용, URLSearchParams로 body 직렬화
+  - 홈서버 API `index.js`에 `express.urlencoded()` 미들웨어 추가, 요청 로그 강화
+- 댓글 API 홈서버 구축 (Firebase → 집 리눅스 미니PC + SQLite)
+  - Cloudflare Tunnel로 포트포워딩 없이 외부 공개 (api.wowhit.org)
+  - Express + better-sqlite3 REST API (GET/POST /api/comments/:appSlug)
+  - fnm Node.js v24 기반 systemd 서비스 (wowhit-api.service)
+  - `app/composables/useComments.ts` Firebase → REST API 전면 재작성
+  - `app/plugins/firebase.client.ts` 삭제, firebase 패키지 제거
+- wowhit.org 도메인 구입 (Cloudflare, $8.5/yr), Vercel 커스텀 도메인 연결
+  - wowhit.org, www.wowhit.org → wowhit.vercel.app 동시 접속 가능
+  - 앱 subdomain (careway/itne/joa 등.wowhit.org) Cloudflare Tunnel → 홈서버 redirect 서버(3002)
+  - `app/data/apps.ts` 웹앱 URL 전부 appname.wowhit.org 형식으로 변경
 - Firebase (itneapp 프로젝트) 기반 댓글 시스템 추가
   - `app/plugins/firebase.client.ts`: Firebase 초기화 플러그인
   - `app/composables/useComments.ts`: wowhit_comments 컬렉션 CRUD (fetchComments, addComment, formatDate)

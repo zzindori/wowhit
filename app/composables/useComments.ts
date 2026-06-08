@@ -21,6 +21,7 @@ export function useComments(appSlug: string) {
   const comments = ref<Comment[]>([])
   const loading = ref(false)
   const submitting = ref(false)
+  const deleting = ref(false)
   const error = ref<string | null>(null)
 
   async function fetchComments() {
@@ -61,6 +62,28 @@ export function useComments(appSlug: string) {
     }
   }
 
+  async function deleteComment(id: number, password: string): Promise<boolean> {
+    if (!password.trim()) return false
+    deleting.value = true
+    error.value = null
+    try {
+      await $fetch(`/api/comments/${appSlug}/${id}`, {
+        method: 'DELETE',
+        body: { password },
+      })
+      await fetchComments()
+      return true
+    }
+    catch (e) {
+      error.value = '삭제에 실패했습니다. 관리자 암호를 확인해주세요.'
+      console.error(e)
+      return false
+    }
+    finally {
+      deleting.value = false
+    }
+  }
+
   function formatDate(dateStr: string): string {
     const date = new Date(dateStr)
     const now = new Date()
@@ -74,5 +97,5 @@ export function useComments(appSlug: string) {
 
   onMounted(fetchComments)
 
-  return { comments, loading, submitting, error, addComment, formatDate }
+  return { comments, loading, submitting, deleting, error, addComment, deleteComment, formatDate }
 }

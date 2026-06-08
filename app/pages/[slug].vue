@@ -37,11 +37,50 @@ function openShort(id: string) {
   shortModalOpen.value = true
 }
 
-const { comments, loading: commentsLoading, submitting, error: commentError, addComment, formatDate } = useComments(app.slug)
+const { comments, loading: commentsLoading, submitting, deleting, error: commentError, addComment, deleteComment, formatDate } = useComments(app.slug)
 const newAuthor = ref('')
 const newContent = ref('')
 const replyingTo = ref<{ id: number, author: string } | null>(null)
 const replyContent = ref('')
+
+const deleteTarget = ref<{ id: number, author: string, isReply: boolean } | null>(null)
+const deleteModalOpen = ref(false)
+const deletePassword = ref('')
+const deleteError = ref<string | null>(null)
+
+let longPressTimer: ReturnType<typeof setTimeout> | null = null
+const LONG_PRESS_MS = 600
+
+function startLongPress(target: { id: number, author: string, isReply: boolean }) {
+  cancelLongPress()
+  longPressTimer = setTimeout(() => {
+    deleteTarget.value = target
+    deletePassword.value = ''
+    deleteError.value = null
+    deleteModalOpen.value = true
+    longPressTimer = null
+  }, LONG_PRESS_MS)
+}
+
+function cancelLongPress() {
+  if (longPressTimer) clearTimeout(longPressTimer)
+  longPressTimer = null
+}
+
+function closeDeleteModal() {
+  deleteModalOpen.value = false
+  deleteTarget.value = null
+  deletePassword.value = ''
+  deleteError.value = null
+}
+
+async function confirmDelete() {
+  if (!deleteTarget.value) return
+  deleteError.value = null
+  const ok = await deleteComment(deleteTarget.value.id, deletePassword.value)
+  if (ok) closeDeleteModal()
+  else deleteError.value = commentError.value
+}
 
 async function handleSubmit() {
   const ok = await addComment(newAuthor.value, newContent.value)
@@ -256,14 +295,23 @@ useSeoMeta({ title: `${app.name} — wowhit` })
               :key="comment.id"
               class="flex flex-col gap-1"
             >
-              <!-- 최상위 댓글 -->
-              <div class="flex items-baseline gap-2">
-                <span class="text-sm font-medium">{{ comment.author }}</span>
-                <span class="text-xs text-muted">{{ formatDate(comment.created_at) }}</span>
+              <!-- 최상위 댓글 (길게 누르면 삭제) -->
+              <div
+                class="rounded-lg -mx-2 px-2 py-1 select-none touch-manipulation cursor-default"
+                @pointerdown="startLongPress({ id: comment.id, author: comment.author, isReply: false })"
+                @pointerup="cancelLongPress"
+                @pointerleave="cancelLongPress"
+                @pointercancel="cancelLongPress"
+                @contextmenu.prevent
+              >
+                <div class="flex items-baseline gap-2">
+                  <span class="text-sm font-medium">{{ comment.author }}</span>
+                  <span class="text-xs text-muted">{{ formatDate(comment.created_at) }}</span>
+                </div>
+                <p class="text-sm text-muted whitespace-pre-wrap leading-relaxed">
+                  {{ comment.content }}
+                </p>
               </div>
-              <p class="text-sm text-muted whitespace-pre-wrap leading-relaxed">
-                {{ comment.content }}
-              </p>
               <button
                 class="text-xs text-muted hover:text-default w-fit"
                 @click="openReply(comment)"
@@ -281,13 +329,22 @@ useSeoMeta({ title: `${app.name} — wowhit` })
                   :key="reply.id"
                   class="flex flex-col gap-0.5"
                 >
-                  <div class="flex items-baseline gap-2">
-                    <span class="text-sm font-medium">{{ reply.author }}</span>
-                    <span class="text-xs text-muted">{{ formatDate(reply.created_at) }}</span>
+                  <div
+                    class="rounded-lg -mx-2 px-2 py-1 select-none touch-manipulation cursor-default"
+                    @pointerdown="startLongPress({ id: reply.id, author: reply.author, isReply: true })"
+                    @pointerup="cancelLongPress"
+                    @pointerleave="cancelLongPress"
+                    @pointercancel="cancelLongPress"
+                    @contextmenu.prevent
+                  >
+                    <div class="flex items-baseline gap-2">
+                      <span class="text-sm font-medium">{{ reply.author }}</span>
+                      <span class="text-xs text-muted">{{ formatDate(reply.created_at) }}</span>
+                    </div>
+                    <p class="text-sm text-muted whitespace-pre-wrap leading-relaxed">
+                      <span class="text-primary font-medium">{{ mentionPart(reply.content).mention }}</span>{{ mentionPart(reply.content).rest }}
+                    </p>
                   </div>
-                  <p class="text-sm text-muted whitespace-pre-wrap leading-relaxed">
-                    <span class="text-primary font-medium">{{ mentionPart(reply.content).mention }}</span>{{ mentionPart(reply.content).rest }}
-                  </p>
                   <button
                     class="text-xs text-muted hover:text-default w-fit"
                     @click="openReply(reply)"
@@ -407,6 +464,59 @@ useSeoMeta({ title: `${app.name} — wowhit` })
         </div>
       </div>
     </UPageSection>
+
+    <!-- 댓글 삭제 모달 -->
+    <UModal
+      v-model:open="deleteModalOpen"
+      :ui="{ content: 'max-w-sm' }"
+    >
+      <template #content>
+        <div class="p-5 space-y-4">
+          <div>
+            <h3 class="text-base font-semibold">
+              댓글 삭제
+            </h3>
+            <p class="text-sm text-muted mt-1">
+              <template v-if="deleteTarget">
+                <span class="font-medium text-default">{{ deleteTarget.author }}</span>님의
+                {{ deleteTarget.isReply ? '답글' : '댓글' }}을 삭제합니다.
+                <template v-if="!deleteTarget.isReply">
+                  답글이 있으면 함께 삭제됩니다.
+                </template>
+              </template>
+            </p>
+          </div>
+          <UInput
+            v-model="deletePassword"
+            type="password"
+            placeholder="관리자 암호"
+            autocomplete="current-password"
+            @keydown.enter.prevent="confirmDelete"
+          />
+          <p
+            v-if="deleteError"
+            class="text-xs text-red-500"
+          >
+            {{ deleteError }}
+          </p>
+          <div class="flex justify-end gap-2">
+            <UButton
+              label="취소"
+              variant="ghost"
+              color="neutral"
+              @click="closeDeleteModal"
+            />
+            <UButton
+              label="삭제"
+              color="error"
+              :loading="deleting"
+              :disabled="!deletePassword.trim()"
+              @click="confirmDelete"
+            />
+          </div>
+        </div>
+      </template>
+    </UModal>
 
     <!-- 쇼츠 모달 -->
     <UModal

@@ -33,6 +33,10 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 ## 작업 히스토리
 
 ### 2026-06-08
+- 댓글 삭제: 길게 누르기(600ms) → 관리자 암호 입력 → 삭제 (원댓글 삭제 시 답글도 함께)
+  - 홈서버 API `DELETE /api/comments/:slug/:id`, 암호는 `wowhit-api/.env`의 `WOWHIT_ADMIN_PASSWORD`
+  - Vercel 프록시 `server/api/comments/[slug]/[id].ts`
+- 대댓글 순서 버그 수정: root_id 미보정 답글이 최상위로 분리되던 문제 (API backfill + parent_id 기준 분류)
 - 대댓글 기능 추가: DB root_id 컬럼, 답글에도 답글 가능, 모두 한 칸 들여쓰기 표시, @멘션 강조
 - api.wowhit.org DNS CNAME 재등록 (--overwrite-dns)으로 터널 라우팅 복구, 522 에러 해결
 - Vercel 서버 프록시로 hairpin NAT 문제 해결 (집 공유기가 loopback NAT 미지원)

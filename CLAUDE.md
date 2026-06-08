@@ -33,7 +33,7 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 ## 작업 히스토리
 
 ### 2026-06-08
-- 대댓글 기능 추가: DB parent_id 컬럼, API 중첩 구조 반환, UI 답글 버튼 + @멘션 강조
+- 대댓글 기능 추가: DB root_id 컬럼, 답글에도 답글 가능, 모두 한 칸 들여쓰기 표시, @멘션 강조
 - api.wowhit.org DNS CNAME 재등록 (--overwrite-dns)으로 터널 라우팅 복구, 522 에러 해결
 - Vercel 서버 프록시로 hairpin NAT 문제 해결 (집 공유기가 loopback NAT 미지원)
   - `server/api/comments/[slug].ts` 추가: Vercel이 대신 api.wowhit.org 호출

@@ -201,75 +201,76 @@ useSeoMeta({ title: `${app.name} — wowhit` })
         </div>
 
         <!-- 댓글 -->
-        <div>
-          <h2 class="text-lg font-semibold mb-4">
+        <div class="mt-12 pt-8 border-t border-default">
+          <h2 class="text-base font-semibold text-muted mb-6 uppercase tracking-wider">
             댓글
           </h2>
-
-          <!-- 작성 폼 -->
-          <div class="bg-elevated rounded-2xl p-4 mb-6 space-y-3">
-            <UInput
-              v-model="newAuthor"
-              placeholder="닉네임 (최대 20자)"
-              maxlength="20"
-            />
-            <UTextarea
-              v-model="newContent"
-              placeholder="댓글을 입력하세요 (최대 300자)"
-              maxlength="300"
-              :rows="3"
-            />
-            <div class="flex justify-between items-center">
-              <p
-                v-if="commentError"
-                class="text-sm text-red-500"
-              >
-                {{ commentError }}
-              </p>
-              <span v-else />
-              <UButton
-                label="등록"
-                icon="i-lucide-send"
-                :loading="submitting"
-                :disabled="!newAuthor.trim() || !newContent.trim()"
-                @click="handleSubmit"
-              />
-            </div>
-          </div>
 
           <!-- 댓글 목록 -->
           <div
             v-if="commentsLoading"
-            class="flex justify-center py-8"
+            class="flex justify-center py-10"
           >
             <UIcon
               name="i-lucide-loader-circle"
-              class="size-6 animate-spin text-muted"
+              class="size-5 animate-spin text-muted"
             />
           </div>
           <div
             v-else-if="comments.length === 0"
-            class="text-center text-muted text-sm py-8"
+            class="text-sm text-muted py-6"
           >
-            첫 번째 댓글을 남겨보세요!
+            아직 댓글이 없어요.
           </div>
           <div
             v-else
-            class="space-y-3"
+            class="space-y-4 mb-8"
           >
             <div
               v-for="comment in comments"
               :key="comment.id"
-              class="bg-elevated rounded-xl p-4"
+              class="flex flex-col gap-1"
             >
-              <div class="flex items-center justify-between mb-1">
-                <span class="font-medium text-sm">{{ comment.author }}</span>
+              <div class="flex items-baseline gap-2">
+                <span class="text-sm font-medium">{{ comment.author }}</span>
                 <span class="text-xs text-muted">{{ formatDate(comment.createdAt) }}</span>
               </div>
-              <p class="text-sm text-muted whitespace-pre-wrap">
+              <p class="text-sm text-muted whitespace-pre-wrap leading-relaxed">
                 {{ comment.content }}
               </p>
             </div>
+          </div>
+
+          <!-- 작성 폼 -->
+          <div class="space-y-3 pt-6 border-t border-default">
+            <div class="flex gap-2">
+              <UInput
+                v-model="newAuthor"
+                placeholder="닉네임"
+                maxlength="20"
+                class="w-32 shrink-0"
+              />
+              <UInput
+                v-model="newContent"
+                placeholder="댓글을 남겨주세요"
+                maxlength="300"
+                class="flex-1"
+                @keydown.enter.prevent="handleSubmit"
+              />
+              <UButton
+                icon="i-lucide-send"
+                :loading="submitting"
+                :disabled="!newAuthor.trim() || !newContent.trim()"
+                variant="subtle"
+                @click="handleSubmit"
+              />
+            </div>
+            <p
+              v-if="commentError"
+              class="text-xs text-red-500"
+            >
+              {{ commentError }}
+            </p>
           </div>
         </div>
       </div>

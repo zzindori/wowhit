@@ -1,5 +1,3 @@
-const API_BASE = 'https://api.wowhit.org'
-
 export interface Comment {
   id: number
   author: string
@@ -15,8 +13,9 @@ export function useComments(appSlug: string) {
 
   async function fetchComments() {
     loading.value = true
+    error.value = null
     try {
-      const data = await $fetch<Comment[]>(`${API_BASE}/api/comments/${appSlug}`)
+      const data = await $fetch<Comment[]>(`/api/comments/${appSlug}`)
       comments.value = data
     } catch (e) {
       error.value = '댓글을 불러오지 못했습니다.'
@@ -31,10 +30,9 @@ export function useComments(appSlug: string) {
     submitting.value = true
     error.value = null
     try {
-      await $fetch(`${API_BASE}/api/comments/${appSlug}`, {
+      await $fetch(`/api/comments/${appSlug}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ author: author.trim(), content: content.trim() }).toString()
+        body: { author: author.trim(), content: content.trim() },
       })
       await fetchComments()
       return true

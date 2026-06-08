@@ -17,7 +17,7 @@ function openGallery(print: (typeof prints)[0]) {
 
 useSeoMeta({
   title: '3D Printing — wowhit',
-  description: 'Bambu Lab 3D 프린팅 — MakerWorld @jinsukYoon',
+  description: 'Bambu Lab 3D 프린팅 — MakerWorld',
 })
 </script>
 

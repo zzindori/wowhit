@@ -151,7 +151,7 @@ function getDirectLinks(app: (typeof apps)[0]) {
       </div>
       <div class="mt-4">
         <UButton
-          label="MakerWorld @jinsukYoon"
+          label="MakerWorld"
           :to="makerWorldProfile"
           target="_blank"
           variant="outline"

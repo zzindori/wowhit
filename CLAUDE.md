@@ -55,7 +55,7 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 ## 작업 히스토리
 
 ### 2026-06-09
-- 3D 명칭 수정: 시카고/Boston → 두산 베어스 (script 키링, 헬로키티 키링, 토큰)
+- 3D 명칭 수정: 시카고/Boston → 두산베어즈 (script 키링, 헬로키티 키링, 토큰)
   - 이미지 파일명 정리: `doosan-bears-token.jpg`, `doosan-bears-script-keychain.jpg`, `hellokitty-doosan-bears-keychain.jpg`
 - 3D 갤러리 전면 정리 (총 15개, 4카테고리)
   - 바이크 5 · 디오라마 1(커피 트럭 +갤러리 2장) · 프라모델 4 · 키링 5

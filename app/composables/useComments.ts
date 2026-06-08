@@ -4,6 +4,7 @@ export interface Reply {
   content: string
   created_at: string
   parent_id: number
+  root_id: number
 }
 
 export interface Comment {
@@ -12,6 +13,7 @@ export interface Comment {
   content: string
   created_at: string
   parent_id: null
+  root_id: null
   replies: Reply[]
 }
 

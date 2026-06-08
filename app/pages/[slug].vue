@@ -48,9 +48,9 @@ async function handleSubmit() {
   if (ok) newContent.value = ''
 }
 
-function openReply(comment: { id: number, author: string }) {
-  replyingTo.value = comment
-  replyContent.value = `@${comment.author} `
+function openReply(target: { id: number, author: string }) {
+  replyingTo.value = target
+  replyContent.value = `@${target.author} `
 }
 
 function closeReply() {
@@ -62,6 +62,13 @@ async function handleReply() {
   if (!replyingTo.value) return
   const ok = await addComment(newAuthor.value, replyContent.value, replyingTo.value.id)
   if (ok) closeReply()
+}
+
+function mentionPart(content: string) {
+  if (!content.startsWith('@')) return { mention: '', rest: content }
+  const spaceIdx = content.indexOf(' ')
+  if (spaceIdx === -1) return { mention: '', rest: content }
+  return { mention: content.slice(0, spaceIdx + 1), rest: content.slice(spaceIdx + 1) }
 }
 
 useSeoMeta({ title: `${app.name} — wowhit` })
@@ -249,7 +256,7 @@ useSeoMeta({ title: `${app.name} — wowhit` })
               :key="comment.id"
               class="flex flex-col gap-1"
             >
-              <!-- 댓글 본문 -->
+              <!-- 최상위 댓글 -->
               <div class="flex items-baseline gap-2">
                 <span class="text-sm font-medium">{{ comment.author }}</span>
                 <span class="text-xs text-muted">{{ formatDate(comment.created_at) }}</span>
@@ -264,65 +271,103 @@ useSeoMeta({ title: `${app.name} — wowhit` })
                 답글
               </button>
 
-              <!-- 대댓글 목록 -->
+              <!-- 답글 목록 (모두 한 칸 들여쓰기) -->
               <div
-                v-if="comment.replies.length > 0"
+                v-if="comment.replies.length > 0 || replyingTo?.id === comment.id"
                 class="mt-2 ml-4 pl-3 border-l-2 border-default space-y-3"
               >
                 <div
                   v-for="reply in comment.replies"
                   :key="reply.id"
-                  class="flex flex-col gap-1"
+                  class="flex flex-col gap-0.5"
                 >
                   <div class="flex items-baseline gap-2">
                     <span class="text-sm font-medium">{{ reply.author }}</span>
                     <span class="text-xs text-muted">{{ formatDate(reply.created_at) }}</span>
                   </div>
                   <p class="text-sm text-muted whitespace-pre-wrap leading-relaxed">
-                    <span
-                      v-if="reply.content.startsWith('@')"
-                      class="text-primary font-medium"
-                    >{{ reply.content.split(' ')[0] }} </span>{{ reply.content.startsWith('@') ? reply.content.slice(reply.content.indexOf(' ') + 1) : reply.content }}
+                    <span class="text-primary font-medium">{{ mentionPart(reply.content).mention }}</span>{{ mentionPart(reply.content).rest }}
                   </p>
+                  <button
+                    class="text-xs text-muted hover:text-default w-fit"
+                    @click="openReply(reply)"
+                  >
+                    답글
+                  </button>
+                  <!-- 이 답글에 달린 답글 폼 -->
+                  <div
+                    v-if="replyingTo?.id === reply.id"
+                    class="mt-1"
+                  >
+                    <div class="flex gap-2">
+                      <UInput
+                        v-model="newAuthor"
+                        placeholder="닉네임"
+                        maxlength="20"
+                        class="w-24 shrink-0"
+                        size="sm"
+                      />
+                      <UInput
+                        v-model="replyContent"
+                        placeholder="답글을 입력하세요"
+                        maxlength="300"
+                        class="flex-1"
+                        size="sm"
+                        @keydown.enter.prevent="handleReply"
+                      />
+                      <UButton
+                        icon="i-lucide-send"
+                        size="sm"
+                        :loading="submitting"
+                        :disabled="!newAuthor.trim() || !replyContent.trim()"
+                        variant="subtle"
+                        @click="handleReply"
+                      />
+                      <UButton
+                        icon="i-lucide-x"
+                        size="sm"
+                        variant="ghost"
+                        color="neutral"
+                        @click="closeReply"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <!-- 답글 입력 폼 -->
-              <div
-                v-if="replyingTo?.id === comment.id"
-                class="mt-2 ml-4 pl-3 border-l-2 border-primary"
-              >
-                <div class="flex gap-2">
-                  <UInput
-                    v-model="newAuthor"
-                    placeholder="닉네임"
-                    maxlength="20"
-                    class="w-24 shrink-0"
-                    size="sm"
-                  />
-                  <UInput
-                    v-model="replyContent"
-                    placeholder="답글을 입력하세요"
-                    maxlength="300"
-                    class="flex-1"
-                    size="sm"
-                    @keydown.enter.prevent="handleReply"
-                  />
-                  <UButton
-                    icon="i-lucide-send"
-                    size="sm"
-                    :loading="submitting"
-                    :disabled="!newAuthor.trim() || !replyContent.trim()"
-                    variant="subtle"
-                    @click="handleReply"
-                  />
-                  <UButton
-                    icon="i-lucide-x"
-                    size="sm"
-                    variant="ghost"
-                    color="neutral"
-                    @click="closeReply"
-                  />
+                <!-- 최상위 댓글에 달린 답글 폼 -->
+                <div v-if="replyingTo?.id === comment.id">
+                  <div class="flex gap-2">
+                    <UInput
+                      v-model="newAuthor"
+                      placeholder="닉네임"
+                      maxlength="20"
+                      class="w-24 shrink-0"
+                      size="sm"
+                    />
+                    <UInput
+                      v-model="replyContent"
+                      placeholder="답글을 입력하세요"
+                      maxlength="300"
+                      class="flex-1"
+                      size="sm"
+                      @keydown.enter.prevent="handleReply"
+                    />
+                    <UButton
+                      icon="i-lucide-send"
+                      size="sm"
+                      :loading="submitting"
+                      :disabled="!newAuthor.trim() || !replyContent.trim()"
+                      variant="subtle"
+                      @click="handleReply"
+                    />
+                    <UButton
+                      icon="i-lucide-x"
+                      size="sm"
+                      variant="ghost"
+                      color="neutral"
+                      @click="closeReply"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

@@ -127,11 +127,11 @@ export const prints: Print[] = [
     imageUrl: '/prints/hellokitty-doosan-bears-keychain.jpg',
   },
   {
-    slug: 'boston-token',
-    name: 'Boston Token',
-    description: 'Boston 로고 3D 프린트 토큰',
+    slug: 'doosan-bears-token',
+    name: 'Doosan Bears Token',
+    description: '두산 베어스 로고 3D 프린트 토큰',
     category: 'accessory',
-    imageUrl: '/prints/boston-token.jpg',
+    imageUrl: '/prints/doosan-bears-token.jpg',
   },
   {
     slug: 'mini-baseball-cap',

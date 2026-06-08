@@ -1,23 +1,13 @@
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  addDoc,
-  serverTimestamp,
-  type Firestore
-} from 'firebase/firestore'
+const API_BASE = 'https://api.wowhit.org'
 
 export interface Comment {
-  id: string
+  id: number
   author: string
   content: string
-  createdAt: Date
+  created_at: string
 }
 
 export function useComments(appSlug: string) {
-  const { $db } = useNuxtApp() as { $db: Firestore }
   const comments = ref<Comment[]>([])
   const loading = ref(false)
   const submitting = ref(false)
@@ -26,18 +16,8 @@ export function useComments(appSlug: string) {
   async function fetchComments() {
     loading.value = true
     try {
-      const q = query(
-        collection($db, 'wowhit_comments'),
-        where('appSlug', '==', appSlug),
-        orderBy('createdAt', 'desc')
-      )
-      const snap = await getDocs(q)
-      comments.value = snap.docs.map(doc => ({
-        id: doc.id,
-        author: doc.data().author as string,
-        content: doc.data().content as string,
-        createdAt: doc.data().createdAt?.toDate?.() ?? new Date()
-      }))
+      const data = await $fetch<Comment[]>(`${API_BASE}/api/comments/${appSlug}`)
+      comments.value = data
     } catch (e) {
       error.value = '댓글을 불러오지 못했습니다.'
       console.error(e)
@@ -49,12 +29,11 @@ export function useComments(appSlug: string) {
   async function addComment(author: string, content: string): Promise<boolean> {
     if (!author.trim() || !content.trim()) return false
     submitting.value = true
+    error.value = null
     try {
-      await addDoc(collection($db, 'wowhit_comments'), {
-        appSlug,
-        author: author.trim().slice(0, 20),
-        content: content.trim().slice(0, 300),
-        createdAt: serverTimestamp()
+      await $fetch(`${API_BASE}/api/comments/${appSlug}`, {
+        method: 'POST',
+        body: { author: author.trim(), content: content.trim() }
       })
       await fetchComments()
       return true
@@ -67,7 +46,8 @@ export function useComments(appSlug: string) {
     }
   }
 
-  function formatDate(date: Date): string {
+  function formatDate(dateStr: string): string {
+    const date = new Date(dateStr)
     const now = new Date()
     const diff = Math.floor((now.getTime() - date.getTime()) / 1000)
     if (diff < 60) return '방금 전'

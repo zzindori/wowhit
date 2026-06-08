@@ -233,7 +233,7 @@ useSeoMeta({ title: `${app.name} — wowhit` })
             >
               <div class="flex items-baseline gap-2">
                 <span class="text-sm font-medium">{{ comment.author }}</span>
-                <span class="text-xs text-muted">{{ formatDate(comment.createdAt) }}</span>
+                <span class="text-xs text-muted">{{ formatDate(comment.created_at) }}</span>
               </div>
               <p class="text-sm text-muted whitespace-pre-wrap leading-relaxed">
                 {{ comment.content }}

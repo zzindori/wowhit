@@ -33,7 +33,8 @@ export function useComments(appSlug: string) {
     try {
       await $fetch(`${API_BASE}/api/comments/${appSlug}`, {
         method: 'POST',
-        body: { author: author.trim(), content: content.trim() }
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ author: author.trim(), content: content.trim() }).toString()
       })
       await fetchComments()
       return true

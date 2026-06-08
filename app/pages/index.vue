@@ -113,7 +113,7 @@ function getDirectLinks(app: (typeof apps)[0]) {
     >
       <div class="flex items-center justify-between gap-4 mb-4">
         <p class="text-sm text-muted">
-          Bambu Lab A1 mini · 바이크 미니어처
+          Bambu Lab A1 mini · 프라모델 · 디오라마
         </p>
         <UButton
           label="전체 보기"

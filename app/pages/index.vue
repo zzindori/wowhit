@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { apps, categoryMeta } from '~/data/apps'
-import { makerWorldProfile, prints } from '~/data/prints'
+import { getFeaturedPrints, makerWorldProfile } from '~/data/prints'
+
+const featuredPrints = getFeaturedPrints()
 
 const categories = (['flutter', 'web', 'other'] as const).map(key => ({
   key,
@@ -125,31 +127,27 @@ function getDirectLinks(app: (typeof apps)[0]) {
         />
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <a
-          v-for="print in prints"
+        <component
+          :is="print.makerWorldUrl ? 'a' : 'NuxtLink'"
+          v-for="print in featuredPrints"
           :key="print.slug"
           :href="print.makerWorldUrl"
-          target="_blank"
-          rel="noopener noreferrer"
+          :to="print.makerWorldUrl ? undefined : '/3d'"
+          :target="print.makerWorldUrl ? '_blank' : undefined"
+          :rel="print.makerWorldUrl ? 'noopener noreferrer' : undefined"
           class="group rounded-xl border border-default overflow-hidden hover:border-primary/50 transition-colors"
         >
-          <div class="aspect-square bg-gradient-to-br from-primary/10 to-default flex items-center justify-center">
+          <div class="aspect-square bg-gradient-to-br from-primary/10 to-default">
             <img
-              v-if="print.imageUrl"
               :src="print.imageUrl"
               :alt="print.name"
               class="w-full h-full object-cover"
             >
-            <UIcon
-              v-else
-              name="i-lucide-box"
-              class="size-8 text-primary/40"
-            />
           </div>
           <p class="text-xs font-medium p-2 truncate group-hover:text-primary transition-colors">
             {{ print.name }}
           </p>
-        </a>
+        </component>
       </div>
       <div class="mt-4">
         <UButton

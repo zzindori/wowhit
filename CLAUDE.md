@@ -33,6 +33,8 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 ## 작업 히스토리
 
 ### 2026-06-08
+- 3D Printing 섹션 추가: MakerWorld @jinsukYoon 작품 5개 (바이크 미니어처)
+  - `app/data/prints.ts`, `/3d` 갤러리 페이지, 메인·헤더 링크
 - 댓글 삭제: 길게 누르기(600ms) → 관리자 암호 입력 → 삭제 (원댓글 삭제 시 답글도 함께)
   - 홈서버 API `DELETE /api/comments/:slug/:id`, 암호는 `wowhit-api/.env`의 `WOWHIT_ADMIN_PASSWORD`
   - Vercel 프록시 `server/api/comments/[slug]/[id].ts`

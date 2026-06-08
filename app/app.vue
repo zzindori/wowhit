@@ -29,8 +29,24 @@ useSeoMeta({
       </template>
 
       <template #right>
-        <NuxtLink to="/qr" class="text-sm text-muted hover:text-default flex items-center gap-1.5">
-          <UIcon name="i-lucide-scan-qr-code" class="size-4" />
+        <NuxtLink
+          to="/3d"
+          class="text-sm text-muted hover:text-default flex items-center gap-1.5"
+        >
+          <UIcon
+            name="i-lucide-box"
+            class="size-4"
+          />
+          3D
+        </NuxtLink>
+        <NuxtLink
+          to="/qr"
+          class="text-sm text-muted hover:text-default flex items-center gap-1.5"
+        >
+          <UIcon
+            name="i-lucide-scan-qr-code"
+            class="size-4"
+          />
           QR 변환
         </NuxtLink>
         <UColorModeButton />
@@ -44,7 +60,11 @@ useSeoMeta({
     <UFooter>
       <template #left>
         <div class="flex items-center gap-3">
-          <img src="/apps/ylcompany.png" alt="YL Company" class="size-8 rounded-lg" />
+          <img
+            src="/apps/ylcompany.png"
+            alt="YL Company"
+            class="size-8 rounded-lg"
+          >
           <div class="text-sm text-muted space-y-0.5">
             <p>© {{ new Date().getFullYear() }} wowHit. All rights reserved.</p>
             <p>Powered by YL Company (Yoon &amp; Lee) | 사업자등록번호: 515-68-00370</p>

@@ -24,7 +24,9 @@ function clearAll() {
 async function copyToClipboard() {
   await navigator.clipboard.writeText(input.value)
   copied.value = true
-  setTimeout(() => { copied.value = false }, 1500)
+  setTimeout(() => {
+    copied.value = false
+  }, 1500)
 }
 
 watch(input, () => {
@@ -37,8 +39,12 @@ watch(input, () => {
   <UPageSection>
     <div class="max-w-lg mx-auto">
       <div class="mb-8">
-        <h1 class="text-2xl font-bold mb-1">API Key → QR 변환</h1>
-        <p class="text-sm text-muted">긴 API 키를 QR 코드로 변환해 앱/웹앱에서 스캔하세요.</p>
+        <h1 class="text-2xl font-bold mb-1">
+          API Key → QR 변환
+        </h1>
+        <p class="text-sm text-muted">
+          긴 API 키를 QR 코드로 변환해 앱/웹앱에서 스캔하세요.
+        </p>
       </div>
 
       <div class="space-y-4">
@@ -75,11 +81,20 @@ watch(input, () => {
         </div>
 
         <!-- QR 코드 -->
-        <div v-if="qrDataUrl" class="flex flex-col items-center gap-4 pt-4">
+        <div
+          v-if="qrDataUrl"
+          class="flex flex-col items-center gap-4 pt-4"
+        >
           <div class="bg-white p-4 rounded-2xl shadow-md inline-block">
-            <img :src="qrDataUrl" alt="QR Code" class="w-64 h-64" />
+            <img
+              :src="qrDataUrl"
+              alt="QR Code"
+              class="w-64 h-64"
+            >
           </div>
-          <p class="text-xs text-muted text-center">앱/웹앱에서 이 QR 코드를 스캔하면 API 키가 자동 입력됩니다.</p>
+          <p class="text-xs text-muted text-center">
+            앱/웹앱에서 이 QR 코드를 스캔하면 API 키가 자동 입력됩니다.
+          </p>
           <UButton
             icon="i-lucide-download"
             label="QR 이미지 저장"

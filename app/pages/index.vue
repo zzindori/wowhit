@@ -39,9 +39,21 @@ function getDirectLinks(app: (typeof apps)[0]) {
           :ui="{ body: 'flex-1 flex flex-col gap-3' }"
         >
           <!-- 상세설명으로 이동 -->
-          <NuxtLink :to="`/${app.slug}`" class="flex items-start gap-3 flex-1 hover:opacity-80 transition-opacity">
-            <img v-if="app.iconUrl" :src="app.iconUrl" :alt="app.name" class="size-10 rounded-xl shrink-0 object-cover" />
-            <UIcon v-else :name="group.icon" class="text-primary mt-0.5 shrink-0 size-5" />
+          <NuxtLink
+            :to="`/${app.slug}`"
+            class="flex items-start gap-3 flex-1 hover:opacity-80 transition-opacity"
+          >
+            <img
+              v-if="app.iconUrl"
+              :src="app.iconUrl"
+              :alt="app.name"
+              class="size-10 rounded-xl shrink-0 object-cover"
+            >
+            <UIcon
+              v-else
+              :name="group.icon"
+              class="text-primary mt-0.5 shrink-0 size-5"
+            />
             <div class="min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
                 <h3 class="font-semibold">{{ app.name }}</h3>
@@ -52,10 +64,16 @@ function getDirectLinks(app: (typeof apps)[0]) {
                   color="success"
                   variant="subtle"
                 />
-                <span v-if="app.version" class="text-xs text-muted">v{{ app.version }}</span>
+                <span
+                  v-if="app.version"
+                  class="text-xs text-muted"
+                >v{{ app.version }}</span>
               </div>
               <p class="text-sm text-muted mt-1">{{ app.description }}</p>
-              <div v-if="app.api?.length" class="flex flex-wrap gap-1 mt-2">
+              <div
+                v-if="app.api?.length"
+                class="flex flex-wrap gap-1 mt-2"
+              >
                 <UBadge
                   v-for="a in app.api"
                   :key="a"
@@ -68,7 +86,10 @@ function getDirectLinks(app: (typeof apps)[0]) {
           </NuxtLink>
 
           <!-- 직접 링크 버튼 -->
-          <div v-if="getDirectLinks(app).length" class="flex flex-wrap gap-2 pt-2 border-t border-default">
+          <div
+            v-if="getDirectLinks(app).length"
+            class="flex flex-wrap gap-2 pt-2 border-t border-default"
+          >
             <UButton
               v-for="link in getDirectLinks(app)"
               :key="link.label"

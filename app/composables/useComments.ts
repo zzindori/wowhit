@@ -6,7 +6,7 @@ import {
   getDocs,
   addDoc,
   serverTimestamp,
-  type Firestore,
+  type Firestore
 } from 'firebase/firestore'
 
 export interface Comment {
@@ -29,21 +29,19 @@ export function useComments(appSlug: string) {
       const q = query(
         collection($db, 'wowhit_comments'),
         where('appSlug', '==', appSlug),
-        orderBy('createdAt', 'desc'),
+        orderBy('createdAt', 'desc')
       )
       const snap = await getDocs(q)
       comments.value = snap.docs.map(doc => ({
         id: doc.id,
         author: doc.data().author as string,
         content: doc.data().content as string,
-        createdAt: doc.data().createdAt?.toDate?.() ?? new Date(),
+        createdAt: doc.data().createdAt?.toDate?.() ?? new Date()
       }))
-    }
-    catch (e) {
+    } catch (e) {
       error.value = '댓글을 불러오지 못했습니다.'
       console.error(e)
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -56,17 +54,15 @@ export function useComments(appSlug: string) {
         appSlug,
         author: author.trim().slice(0, 20),
         content: content.trim().slice(0, 300),
-        createdAt: serverTimestamp(),
+        createdAt: serverTimestamp()
       })
       await fetchComments()
       return true
-    }
-    catch (e) {
+    } catch (e) {
       error.value = '댓글 등록에 실패했습니다.'
       console.error(e)
       return false
-    }
-    finally {
+    } finally {
       submitting.value = false
     }
   }

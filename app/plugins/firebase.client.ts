@@ -7,7 +7,7 @@ const firebaseConfig = {
   projectId: 'itneapp',
   storageBucket: 'itneapp.firebasestorage.app',
   messagingSenderId: '231435424889',
-  appId: '1:231435424889:web:e6b37b8cb3d070eea330a8',
+  appId: '1:231435424889:web:e6b37b8cb3d070eea330a8'
 }
 
 export default defineNuxtPlugin(() => {

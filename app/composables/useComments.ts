@@ -1,8 +1,18 @@
+export interface Reply {
+  id: number
+  author: string
+  content: string
+  created_at: string
+  parent_id: number
+}
+
 export interface Comment {
   id: number
   author: string
   content: string
   created_at: string
+  parent_id: null
+  replies: Reply[]
 }
 
 export function useComments(appSlug: string) {
@@ -17,30 +27,34 @@ export function useComments(appSlug: string) {
     try {
       const data = await $fetch<Comment[]>(`/api/comments/${appSlug}`)
       comments.value = data
-    } catch (e) {
+    }
+    catch (e) {
       error.value = '댓글을 불러오지 못했습니다.'
       console.error(e)
-    } finally {
+    }
+    finally {
       loading.value = false
     }
   }
 
-  async function addComment(author: string, content: string): Promise<boolean> {
+  async function addComment(author: string, content: string, parentId?: number): Promise<boolean> {
     if (!author.trim() || !content.trim()) return false
     submitting.value = true
     error.value = null
     try {
       await $fetch(`/api/comments/${appSlug}`, {
         method: 'POST',
-        body: { author: author.trim(), content: content.trim() },
+        body: { author: author.trim(), content: content.trim(), parent_id: parentId },
       })
       await fetchComments()
       return true
-    } catch (e) {
+    }
+    catch (e) {
       error.value = '댓글 등록에 실패했습니다.'
       console.error(e)
       return false
-    } finally {
+    }
+    finally {
       submitting.value = false
     }
   }

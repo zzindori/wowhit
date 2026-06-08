@@ -40,10 +40,28 @@ function openShort(id: string) {
 const { comments, loading: commentsLoading, submitting, error: commentError, addComment, formatDate } = useComments(app.slug)
 const newAuthor = ref('')
 const newContent = ref('')
+const replyingTo = ref<{ id: number, author: string } | null>(null)
+const replyContent = ref('')
 
 async function handleSubmit() {
   const ok = await addComment(newAuthor.value, newContent.value)
   if (ok) newContent.value = ''
+}
+
+function openReply(comment: { id: number, author: string }) {
+  replyingTo.value = comment
+  replyContent.value = `@${comment.author} `
+}
+
+function closeReply() {
+  replyingTo.value = null
+  replyContent.value = ''
+}
+
+async function handleReply() {
+  if (!replyingTo.value) return
+  const ok = await addComment(newAuthor.value, replyContent.value, replyingTo.value.id)
+  if (ok) closeReply()
 }
 
 useSeoMeta({ title: `${app.name} — wowhit` })
@@ -224,13 +242,14 @@ useSeoMeta({ title: `${app.name} — wowhit` })
           </div>
           <div
             v-else
-            class="space-y-4 mb-8"
+            class="space-y-5 mb-8"
           >
             <div
               v-for="comment in comments"
               :key="comment.id"
               class="flex flex-col gap-1"
             >
+              <!-- 댓글 본문 -->
               <div class="flex items-baseline gap-2">
                 <span class="text-sm font-medium">{{ comment.author }}</span>
                 <span class="text-xs text-muted">{{ formatDate(comment.created_at) }}</span>
@@ -238,10 +257,78 @@ useSeoMeta({ title: `${app.name} — wowhit` })
               <p class="text-sm text-muted whitespace-pre-wrap leading-relaxed">
                 {{ comment.content }}
               </p>
+              <button
+                class="text-xs text-muted hover:text-default w-fit"
+                @click="openReply(comment)"
+              >
+                답글
+              </button>
+
+              <!-- 대댓글 목록 -->
+              <div
+                v-if="comment.replies.length > 0"
+                class="mt-2 ml-4 pl-3 border-l-2 border-default space-y-3"
+              >
+                <div
+                  v-for="reply in comment.replies"
+                  :key="reply.id"
+                  class="flex flex-col gap-1"
+                >
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-sm font-medium">{{ reply.author }}</span>
+                    <span class="text-xs text-muted">{{ formatDate(reply.created_at) }}</span>
+                  </div>
+                  <p class="text-sm text-muted whitespace-pre-wrap leading-relaxed">
+                    <span
+                      v-if="reply.content.startsWith('@')"
+                      class="text-primary font-medium"
+                    >{{ reply.content.split(' ')[0] }} </span>{{ reply.content.startsWith('@') ? reply.content.slice(reply.content.indexOf(' ') + 1) : reply.content }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- 답글 입력 폼 -->
+              <div
+                v-if="replyingTo?.id === comment.id"
+                class="mt-2 ml-4 pl-3 border-l-2 border-primary"
+              >
+                <div class="flex gap-2">
+                  <UInput
+                    v-model="newAuthor"
+                    placeholder="닉네임"
+                    maxlength="20"
+                    class="w-24 shrink-0"
+                    size="sm"
+                  />
+                  <UInput
+                    v-model="replyContent"
+                    placeholder="답글을 입력하세요"
+                    maxlength="300"
+                    class="flex-1"
+                    size="sm"
+                    @keydown.enter.prevent="handleReply"
+                  />
+                  <UButton
+                    icon="i-lucide-send"
+                    size="sm"
+                    :loading="submitting"
+                    :disabled="!newAuthor.trim() || !replyContent.trim()"
+                    variant="subtle"
+                    @click="handleReply"
+                  />
+                  <UButton
+                    icon="i-lucide-x"
+                    size="sm"
+                    variant="ghost"
+                    color="neutral"
+                    @click="closeReply"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- 작성 폼 -->
+          <!-- 댓글 작성 폼 -->
           <div class="space-y-3 pt-6 border-t border-default">
             <div class="flex gap-2">
               <UInput

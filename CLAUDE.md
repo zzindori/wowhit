@@ -33,6 +33,9 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 ## 작업 히스토리
 
 ### 2026-06-08
+- Vercel 서버 프록시로 hairpin NAT 문제 해결 (집 공유기가 loopback NAT 미지원)
+  - `server/api/comments/[slug].ts` 추가: Vercel이 대신 api.wowhit.org 호출
+  - `app/composables/useComments.ts`: API 경로를 `/api/comments/...` (상대경로)로 변경
 - 댓글 POST 요청을 form 인코딩으로 변경해 CORS preflight 우회 (회사 방화벽 대응)
   - `app/composables/useComments.ts`: `application/x-www-form-urlencoded` 사용, URLSearchParams로 body 직렬화
   - 홈서버 API `index.js`에 `express.urlencoded()` 미들웨어 추가, 요청 로그 강화

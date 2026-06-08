@@ -3,7 +3,7 @@ import { makerWorldProfile, prints } from '~/data/prints'
 
 useSeoMeta({
   title: '3D Printing — wowhit',
-  description: 'Bambu Lab로 제작한 3D 프린팅 작품 — MakerWorld @jinsukYoon',
+  description: 'Bambu Lab 3D 프린팅 — MakerWorld @jinsukYoon',
 })
 </script>
 
@@ -23,10 +23,7 @@ useSeoMeta({
       ]"
     />
 
-    <UPageSection
-      title="작품"
-      :ui="{ container: 'py-8' }"
-    >
+    <UPageSection :ui="{ container: 'py-8' }">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <UCard
           v-for="print in prints"

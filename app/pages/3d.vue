@@ -3,7 +3,7 @@ import { makerWorldProfile, prints } from '~/data/prints'
 
 useSeoMeta({
   title: '3D Printing — wowhit',
-  description: 'Bambu Lab A1 mini로 제작한 3D 프린팅 작품 — MakerWorld @jinsukYoon',
+  description: 'Bambu Lab로 제작한 3D 프린팅 작품 — MakerWorld @jinsukYoon',
 })
 </script>
 
@@ -11,7 +11,7 @@ useSeoMeta({
   <div>
     <UPageHero
       title="3D Printing"
-      description="Bambu Lab A1 mini · 프라모델 · 디오라마"
+      description="Bambu Lab · 프라모델 · 디오라마"
       :links="[
         {
           label: 'MakerWorld 프로필',

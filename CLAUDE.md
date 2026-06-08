@@ -33,6 +33,10 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 ## 작업 히스토리
 
 ### 2026-06-08
+- 앱 subdomain redirect Cloudflare로 이전 (집 서버 불필요)
+  - Redirect Rules 10개 등록, DNS를 터널 CNAME → A 192.0.2.1(proxied)로 변경
+  - cloudflared ingress에서 앱 subdomain 제거 (api.wowhit.org만 터널 유지)
+  - wowhit-redirect.service 비활성화
 - 3D Printing 섹션 추가: MakerWorld @jinsukYoon 작품 5개 (바이크 미니어처)
   - `app/data/prints.ts`, `/3d` 갤러리 페이지, 메인·헤더 링크
 - 댓글 삭제: 길게 누르기(600ms) → 관리자 암호 입력 → 삭제 (원댓글 삭제 시 답글도 함께)

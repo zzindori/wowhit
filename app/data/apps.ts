@@ -42,8 +42,8 @@ export const apps: App[] = [
     api: ['Gemini', 'Grok'],
     iconUrl: '/apps/codi-d/icon.png',
     webUrl: 'https://codi-d.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.0.1/CODI_D.apk',
-    version: '1.0.0+1'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.1.2/CODI_D.apk',
+    version: '1.0.1+2'
   },
   {
     slug: 'farmguide',
@@ -73,8 +73,8 @@ export const apps: App[] = [
     longDescription: `길을 걷다, 음식을 보다, 궁금한 게 생기는 순간.\n\nigoMoya는 카메라를 대면 AI가 바로 설명해줍니다. 분할 화면으로 찍는 순간 결과를 바로 확인할 수 있습니다.\n\n찍은 사진들은 위치와 시간순으로 타임라인에 정리됩니다. 오늘 어디서 무엇을 봤는지 기억하고 싶을 때 꺼내보세요.\n\n궁금함을 바로 해결하는 AI 카메라 메모.`,
     api: ['Gemini'],
     iconUrl: '/apps/igomoya/icon.png',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v0.1.0.1/igoMoya.apk',
-    version: '0.1.0+1'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v0.1.1.2/igoMoya.apk',
+    version: '0.1.1+2'
   },
   {
     slug: 'itne',
@@ -85,8 +85,8 @@ export const apps: App[] = [
     api: ['Gemini', 'MLKit'],
     iconUrl: '/apps/itne/icon.png',
     webUrl: 'https://itne.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.0.0.1/itNe.apk',
-    version: '1.0.0+1'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.0.1.2/itNe.apk',
+    version: '1.0.1+2'
   },
   {
     slug: 'joa',

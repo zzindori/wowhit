@@ -3,7 +3,7 @@ import {
   makerWorldProfile,
   printCategories,
   printCategoryMeta,
-  prints,
+  prints
 } from '~/data/prints'
 
 const selectedPrint = ref<(typeof prints)[0] | null>(null)
@@ -17,7 +17,7 @@ function openGallery(print: (typeof prints)[0]) {
 
 useSeoMeta({
   title: '3D Printing — wowhit',
-  description: 'Bambu Lab 3D 프린팅 — MakerWorld',
+  description: 'Bambu Lab 3D 프린팅 — MakerWorld'
 })
 </script>
 
@@ -32,8 +32,8 @@ useSeoMeta({
           icon: 'i-lucide-external-link',
           to: makerWorldProfile,
           target: '_blank',
-          color: 'primary',
-        },
+          color: 'primary'
+        }
       ]"
     />
 

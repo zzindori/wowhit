@@ -12,13 +12,13 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     const params: Record<string, string> = {
       author: body.author,
-      content: body.content,
+      content: body.content
     }
     if (body.parent_id) params.parent_id = String(body.parent_id)
     return $fetch(`${HOME_API}/api/comments/${slug}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams(params).toString(),
+      body: new URLSearchParams(params).toString()
     })
   }
 

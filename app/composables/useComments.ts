@@ -30,12 +30,10 @@ export function useComments(appSlug: string) {
     try {
       const data = await $fetch<Comment[]>(`/api/comments/${appSlug}`)
       comments.value = data
-    }
-    catch (e) {
+    } catch (e) {
       error.value = '댓글을 불러오지 못했습니다.'
       console.error(e)
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -47,17 +45,15 @@ export function useComments(appSlug: string) {
     try {
       await $fetch(`/api/comments/${appSlug}`, {
         method: 'POST',
-        body: { author: author.trim(), content: content.trim(), parent_id: parentId },
+        body: { author: author.trim(), content: content.trim(), parent_id: parentId }
       })
       await fetchComments()
       return true
-    }
-    catch (e) {
+    } catch (e) {
       error.value = '댓글 등록에 실패했습니다.'
       console.error(e)
       return false
-    }
-    finally {
+    } finally {
       submitting.value = false
     }
   }
@@ -69,17 +65,15 @@ export function useComments(appSlug: string) {
     try {
       await $fetch(`/api/comments/${appSlug}/${id}`, {
         method: 'DELETE',
-        body: { password },
+        body: { password }
       })
       await fetchComments()
       return true
-    }
-    catch (e) {
+    } catch (e) {
       error.value = '삭제에 실패했습니다. 관리자 암호를 확인해주세요.'
       console.error(e)
       return false
-    }
-    finally {
+    } finally {
       deleting.value = false
     }
   }

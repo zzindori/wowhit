@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     return $fetch(`${HOME_API}/api/comments/${slug}/${id}`, {
       method: 'DELETE',
-      body: { password: body.password },
+      body: { password: body.password }
     })
   }
 

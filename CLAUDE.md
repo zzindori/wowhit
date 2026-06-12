@@ -54,6 +54,19 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 
 ## 작업 히스토리
 
+### 2026-06-12
+- 디지털 비서 프로필 이미지 추가 (한국인 여성, 세상에서 가장 아름다운 컨셉)
+  - `public/digital-assistant-profiles/` 폴더 생성 및 업로드
+    - profile-01.jpg (기본)
+    - profile-02.jpg (아름다움 극대화)
+    - profile-03.jpg (우아한 헤어/스타일 변형)
+  - preview.html (미리보기 페이지) + README.md 포함
+  - apps.ts에는 등록하지 않음 (사용자 요청 — 포트폴리오 메인에 프로젝트 카드로 노출 X)
+  - Vercel 배포 후 웹 주소:
+    - https://wowhit.vercel.app/digital-assistant-profiles/preview.html
+    - https://wowhit.org/digital-assistant-profiles/preview.html
+  - 로컬에서도 `pnpm dev` 후 /digital-assistant-profiles/preview.html 로 확인 가능
+
 ### 2026-06-09
 - 메인 3D 대표 이미지를 바이크 5종만 노출 (`featuredPrintSlugs`)
 - MakerWorld 버튼 라벨 `MakerWorld @jinsukYoon` → `MakerWorld`

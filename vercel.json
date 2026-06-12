@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "digi.wowhit.org"
+        }
+      ],
+      "destination": "/digi/:path*"
+    }
+  ]
+}

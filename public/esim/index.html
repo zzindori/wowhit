@@ -52,6 +52,50 @@
     .site-header h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
     .site-header p { font-size: 13px; opacity: 0.85; }
 
+    /* ===== MAIN TABS ===== */
+    .main-tabs-wrap {
+      background: white;
+      border-bottom: 1px solid var(--gray-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .main-tabs {
+      display: flex;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .main-tab {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 14px 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-text);
+      cursor: pointer;
+      font-family: inherit;
+      text-align: center;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .main-tab.active {
+      color: var(--red);
+      border-bottom-color: var(--red);
+    }
+    .main-tab .tab-num {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      opacity: 0.5;
+      margin-bottom: 2px;
+    }
+    .main-tab.active .tab-num { opacity: 1; }
+
+    .main-panel { display: none; }
+    .main-panel.active { display: block; }
+
     /* ===== CONTAINER ===== */
     .wrap {
       max-width: 560px;
@@ -84,6 +128,7 @@
     .alert.warn { background: var(--yellow); border-left: 4px solid var(--yellow-border); }
     .alert.info { background: var(--blue); border-left: 4px solid var(--blue-text); }
     .alert.success { background: var(--green); border-left: 4px solid var(--green-text); }
+    .alert.danger { background: #fff0f2; border-left: 4px solid var(--red); }
 
     /* ===== iOS VERSION TABS ===== */
     .ios-tabs {
@@ -204,6 +249,7 @@
       flex-shrink: 0; margin-top: 1px;
     }
     .step-n.gray { background: #6b7280; }
+    .step-n.blue { background: #1d4ed8; }
     .step-body { flex: 1; }
     .step-body strong { display: block; margin-bottom: 3px; }
     .step-body .sub { font-size: 12px; color: var(--gray-text); margin-top: 3px; }
@@ -213,6 +259,12 @@
       font-size: 12px; margin-top: 6px;
     }
     .step-body .tip::before { content: "💡 "; }
+    .step-body .tip-warn {
+      background: var(--yellow); color: #92400e;
+      border-radius: 6px; padding: 6px 10px;
+      font-size: 12px; margin-top: 6px;
+    }
+    .step-body .tip-warn::before { content: "⚠️ "; }
 
     /* ===== PHONE SCREENSHOT ===== */
     .screen-wrap {
@@ -311,9 +363,30 @@
   <p>韓国旅行前に完了させてください</p>
 </header>
 
+<!-- ===== MAIN TABS ===== -->
+<div class="main-tabs-wrap">
+  <div class="main-tabs">
+    <button class="main-tab active" onclick="switchMain('pre')">
+      <span class="tab-num">STEP 1</span>
+      出発前インストール
+    </button>
+    <button class="main-tab" onclick="switchMain('activate')">
+      <span class="tab-num">STEP 2</span>
+      到着後の開通
+    </button>
+    <button class="main-tab" onclick="switchMain('postuse')">
+      <span class="tab-num">STEP 3</span>
+      使用完了後
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!--  STEP 1: 出発前インストール                                    -->
+<!-- ============================================================ -->
+<div id="main-pre" class="main-panel active">
 <div class="wrap">
 
-  <!-- ====== 事前確認 ====== -->
   <div class="sec-label">事前確認事項</div>
 
   <div class="alert warn">
@@ -345,7 +418,6 @@
     </div>
   </div>
 
-  <!-- ====== iOS バージョン タブ ====== -->
   <div class="sec-label" style="margin-top:36px;">お使いのiOSバージョンを選択</div>
 
   <div class="ios-tabs">
@@ -354,14 +426,10 @@
   </div>
   <p class="ios-tab-hint">設定 → 一般 → 情報 → iOSバージョンで確認できます</p>
 
-  <!-- ============================================================ -->
-  <!--  iOS 17.4 以降 (v2)                                         -->
-  <!-- ============================================================ -->
+  <!-- iOS 17.4 以降 (v2) -->
   <div id="panel-v2" class="ios-panel active">
 
-    <!-- STEP 1 -->
     <div class="sec-label">STEP 1 ― eSIMインストール</div>
-
     <div class="card">
       <div class="card-title">
         <span class="badge badge-red">方法①</span>
@@ -423,9 +491,7 @@
       </ul>
     </div>
 
-    <!-- STEP 2 -->
     <div class="sec-label">STEP 2 ― eSIMの有効化</div>
-
     <div class="card">
       <ul class="steps">
         <li>
@@ -446,9 +512,7 @@
       </ul>
     </div>
 
-    <!-- STEP 3 -->
     <div class="sec-label">STEP 3 ― 料金プランのラベルと回線設定</div>
-
     <div class="card">
       <ul class="steps">
         <li>
@@ -469,9 +533,7 @@
       </ul>
     </div>
 
-    <!-- STEP 4 -->
     <div class="sec-label">STEP 4 ― インストール確認</div>
-
     <div class="card">
       <ul class="steps">
         <li>
@@ -499,15 +561,10 @@
 
   </div><!-- /panel-v2 -->
 
-
-  <!-- ============================================================ -->
-  <!--  iOS 17.4 以前 (v1)                                         -->
-  <!-- ============================================================ -->
+  <!-- iOS 17.4 以前 (v1) -->
   <div id="panel-v1" class="ios-panel">
 
-    <!-- STEP 1 -->
     <div class="sec-label">STEP 1 ― eSIMを追加</div>
-
     <div class="card">
       <ul class="steps">
         <li>
@@ -528,9 +585,7 @@
       </ul>
     </div>
 
-    <!-- STEP 2 -->
     <div class="sec-label">STEP 2 ― QRコードの処理</div>
-
     <div class="card">
       <div class="card-title">
         <span class="badge badge-red">方法①</span>
@@ -552,9 +607,7 @@
       </div>
     </div>
 
-    <!-- STEP 3 -->
     <div class="sec-label">STEP 3 ― 回線ラベルと使用回線の設定</div>
-
     <div class="card">
       <ul class="steps">
         <li>
@@ -592,9 +645,7 @@
       </ul>
     </div>
 
-    <!-- STEP 4 -->
     <div class="sec-label">STEP 4 ― インストール確認</div>
-
     <div class="card">
       <ul class="steps">
         <li>
@@ -621,10 +672,7 @@
 
   </div><!-- /panel-v1 -->
 
-
-  <!-- ====== 完了チェック ====== -->
   <div class="sec-label">インストール完了チェックリスト</div>
-
   <div class="card" style="border:2px solid #bbf7d0; background:var(--green);">
     <ul class="checklist">
       <li>eSIMが正常にインストールされていることを確認した</li>
@@ -633,9 +681,215 @@
     </ul>
   </div>
 
-  <!-- ====== カスタマーサポート ====== -->
-  <div class="sec-label">カスタマーサポート</div>
+</div><!-- /wrap -->
+</div><!-- /main-pre -->
 
+
+<!-- ============================================================ -->
+<!--  STEP 2: 到着後の開通                                         -->
+<!-- ============================================================ -->
+<div id="main-activate" class="main-panel">
+<div class="wrap">
+
+  <div class="sec-label">到着前の確認事項</div>
+
+  <div class="alert warn">
+    <span class="icon">📵</span>
+    <div class="body">
+      <strong>メイン回線のデータローミングをOFFに</strong>
+      <span>既存SIMのデータローミング <strong>OFF</strong>・データ自動切替え <strong>OFF</strong> を確認してください。</span>
+    </div>
+  </div>
+  <div class="alert warn">
+    <span class="icon">📶</span>
+    <div class="body">
+      <strong>現地でのeSIM追加もネットワーク必須</strong>
+      <span>到着後に初めてインストールする場合は、Wi-Fiまたは現地ネットワーク環境が必要です。</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: eSIM有効化 -->
+  <div class="sec-label" style="margin-top:28px;">STEP 1 ― eSIMを有効化する</div>
+
+  <div class="card">
+    <div class="card-title">📱 設定 → モバイル通信 → モバイルデータ通信</div>
+    <ul class="steps">
+      <li>
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <strong>サブ（eSIM）を選択 → 「モバイルデータ通信の切り替えを許可」をOFF</strong>
+          <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/activate/v2/cellular_secondary_data_off.png" alt="サブeSIM データ切替OFF" /></div>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <strong>メイン回線（既存SIM）→「データローミング」をOFF</strong>
+          <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/activate/v2/cellular_main_data_off.png" alt="メイン回線 ローミングOFF" /></div>
+          <div class="tip-warn">メイン回線でローミングをONにすると国内キャリアからローミング料金が発生します</div>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">3</div>
+        <div class="step-body">
+          <strong>サブ（eSIM）→「データローミング」をON</strong>
+          <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/activate/v2/cellular_secondary_data_on.png" alt="サブeSIM ローミングON" /></div>
+          <div class="tip">ローカル網商品の場合はデータローミング <strong>OFF</strong> のままにしてください</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- STEP 2: データ使用不可時 -->
+  <div class="sec-label">STEP 2 ― データが使えない場合の対処</div>
+
+  <div class="card">
+    <div class="card-title">
+      <span class="badge badge-red">対処①</span>
+      APN手動設定
+    </div>
+    <div class="path-box">
+      設定 <span class="arr">›</span> モバイル通信 <span class="arr">›</span> eSIM料金プランを選択<br>
+      <span class="arr">›</span> モバイルデータ通信ネットワーク
+    </div>
+    <ul class="steps" style="margin-top:12px;">
+      <li>
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <strong>「モバイルデータ通信ネットワーク」を開く</strong>
+          <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/activate/v2/apn_cellular_data_network.png" alt="データ通信ネットワーク" /></div>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">2</div>
+        <div class="step-body">
+          <strong>APN情報を入力</strong>
+          <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/activate/v2/apn_cellular_data_apn.png" alt="APN入力" /></div>
+          <div class="tip">APN情報はマイページ → 購入履歴 → 商品を選択 → 商品詳細ページで確認できます</div>
+        </div>
+      </li>
+    </ul>
+
+    <div class="method-divider">それでも繋がらない場合</div>
+
+    <div class="card-title">
+      <span class="badge badge-gray">対処②</span>
+      通信事業者を手動設定
+    </div>
+    <div class="path-box">
+      設定 <span class="arr">›</span> モバイル通信 <span class="arr">›</span> eSIM料金プランを選択<br>
+      <span class="arr">›</span> ネットワーク選択
+    </div>
+    <ul class="steps" style="margin-top:12px;">
+      <li>
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <strong>「自動」をOFFにして、通信事業者を直接選択</strong>
+          <div class="screens-2">
+            <img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/activate/v2/manual_network.png" alt="ネットワーク選択" />
+            <img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/activate/v2/manual_network_auto_off.png" alt="自動OFF" />
+          </div>
+          <div class="tip">利用可能な通信事業者は商品詳細ページで確認できます</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="sec-label">開通完了チェックリスト</div>
+  <div class="card" style="border:2px solid #bfdbfe; background:var(--blue);">
+    <ul class="checklist">
+      <li>メイン回線（既存SIM）のデータローミングをOFFにした</li>
+      <li>サブ（eSIM）のデータローミングをONにした</li>
+      <li>データ通信がeSIM経由で正常に繋がっている</li>
+    </ul>
+  </div>
+
+</div><!-- /wrap -->
+</div><!-- /main-activate -->
+
+
+<!-- ============================================================ -->
+<!--  STEP 3: 使用完了後                                          -->
+<!-- ============================================================ -->
+<div id="main-postuse" class="main-panel">
+<div class="wrap">
+
+  <div class="alert danger" style="margin-top:8px;">
+    <span class="icon">🚨</span>
+    <div class="body">
+      <strong>必ず使用期間終了・帰国後に削除してください</strong>
+      <span>一度削除すると<strong>再インストールはできません</strong>。使用期間中は削除しないでください。</span>
+    </div>
+  </div>
+
+  <div class="alert info" style="margin-top:8px;">
+    <span class="icon">✈️</span>
+    <div class="body">
+      <strong>飛行機着陸後、機内モードを解除すると自動で国内キャリアに接続</strong>
+      <span>特別な操作は不要です。</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: eSIM無効化 -->
+  <div class="sec-label" style="margin-top:28px;">STEP 1 ― eSIMを無効化する</div>
+
+  <div class="card">
+    <div class="path-box">
+      設定 <span class="arr">›</span> モバイル通信 <span class="arr">›</span> eSIM料金プランを選択
+    </div>
+    <ul class="steps" style="margin-top:12px;">
+      <li>
+        <div class="step-n">1</div>
+        <div class="step-body">
+          <strong>「この回線をオンにする」トグルをOFFにする</strong>
+          <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/post-use/cellular_esim_select_off.png" alt="eSIM OFF" /></div>
+          <div class="tip">既存SIMが有効な場合は自動的に切り替わります。<br>既存SIMがOFFの場合はメイン回線を手動でONにしてください。</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- STEP 2: eSIM削除 -->
+  <div class="sec-label">STEP 2 ― eSIMを削除する（任意）</div>
+
+  <div class="card">
+    <div class="alert warn" style="border-radius:8px; margin-bottom:14px;">
+      <span class="icon">⚠️</span>
+      <div class="body"><strong>削除すると再インストール不可</strong><span>　同じeSIMを再度使うことはできません。</span></div>
+    </div>
+
+    <div class="card-title">
+      <span class="badge badge-red">手順①</span>
+      eSIMを削除
+    </div>
+    <div class="path-box">
+      設定 <span class="arr">›</span> モバイル通信 <span class="arr">›</span>「オフ」状態のeSIMを選択<br>
+      <span class="arr">›</span> <span class="tap">eSIMを削除</span> をタップ
+    </div>
+
+    <div class="method-divider">または</div>
+
+    <div class="card-title">
+      <span class="badge badge-gray">手順②</span>
+      連絡先を更新して削除
+    </div>
+    <div class="path-box">
+      設定 <span class="arr">›</span> モバイル通信 <span class="arr">›</span>「SIMなし」状態のプランを選択<br>
+      <span class="arr">›</span> <span class="tap-gray">連絡先を更新</span> をタップ
+    </div>
+    <p style="font-size:13px; color:var(--gray-text); margin-top:8px;">eSIMの連絡先が既存SIMに移行され、eSIMが削除されます。</p>
+  </div>
+
+  <div class="sec-label">完了チェックリスト</div>
+  <div class="card" style="border:2px solid #bbf7d0; background:var(--green);">
+    <ul class="checklist">
+      <li>飛行機着陸後、機内モードを解除した</li>
+      <li>国内キャリアに正常に接続されている</li>
+      <li>eSIMを「OFF」に設定した（または削除した）</li>
+    </ul>
+  </div>
+
+  <div class="sec-label">カスタマーサポート</div>
   <div class="support-card">
     <div class="label">お問い合わせ（韓国語のみ）</div>
     <div class="tel">1566-9070</div>
@@ -644,6 +898,7 @@
   </div>
 
 </div><!-- /wrap -->
+</div><!-- /main-postuse -->
 
 <footer>
   ドシラクeSIM公式ガイドを日本語に翻訳したものです。<br>
@@ -651,6 +906,20 @@
 </footer>
 
 <script>
+  function switchMain(tab) {
+    document.querySelectorAll('.main-tab').forEach(function(btn, i) {
+      btn.classList.toggle('active',
+        (tab === 'pre' && i === 0) ||
+        (tab === 'activate' && i === 1) ||
+        (tab === 'postuse' && i === 2)
+      );
+    });
+    document.getElementById('main-pre').classList.toggle('active', tab === 'pre');
+    document.getElementById('main-activate').classList.toggle('active', tab === 'activate');
+    document.getElementById('main-postuse').classList.toggle('active', tab === 'postuse');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   function switchTab(ver) {
     document.querySelectorAll('.ios-tab').forEach(function(btn, i) {
       btn.classList.toggle('active', (ver === 'v2' && i === 0) || (ver === 'v1' && i === 1));

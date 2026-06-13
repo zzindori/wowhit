@@ -54,6 +54,12 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 
 ## 작업 히스토리
 
+### 2026-06-13
+- ドシラクeSIM 일본어 가이드 페이지 추가 (`app/pages/esim.vue`)
+  - URL: wowhit.org/esim
+  - 일본 친구에게 eSIM 등록 방법 공유용 (헤더 nav 미포함)
+  - 사전확인 4가지 → STEP 1 설치(방법① 앱/웹 바로설치, 방법② QR 수동) → STEP 2 유효화 → STEP 3 회선설정 → STEP 4 확인 → 고객센터
+
 ### 2026-06-12
 - 디지털 비서 프로필 이미지 추가 (한국인 여성, 세상에서 가장 아름다운 컨셉)
   - `public/digital-assistant-profiles/` 폴더 생성 및 업로드

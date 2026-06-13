@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ドシラクeSIM インストールガイド（iPhone）</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #e8445a;
+      --red-light: #fff0f2;
+      --red-dark: #c0392b;
+      --yellow: #fff8e1;
+      --yellow-border: #f59e0b;
+      --green: #f0fdf4;
+      --green-text: #16a34a;
+      --blue: #eff6ff;
+      --blue-text: #1d4ed8;
+      --gray-bg: #f5f7fa;
+      --gray-card: #ffffff;
+      --gray-border: #e8ecf0;
+      --gray-text: #6b7280;
+      --text: #111827;
+    }
+
+    body {
+      font-family: -apple-system, 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', sans-serif;
+      background: var(--gray-bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    /* ===== HEADER ===== */
+    .site-header {
+      background: linear-gradient(135deg, #e8445a 0%, #c0392b 100%);
+      color: white;
+      text-align: center;
+      padding: 40px 20px 32px;
+    }
+    .site-header .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+    .site-header h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .site-header p { font-size: 13px; opacity: 0.85; }
+
+    /* ===== CONTAINER ===== */
+    .wrap {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    /* ===== SECTION LABEL ===== */
+    .sec-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gray-text);
+      margin: 32px 0 12px;
+    }
+
+    /* ===== ALERT BOXES ===== */
+    .alert {
+      display: flex;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .alert .icon { font-size: 18px; flex-shrink: 0; line-height: 1.4; }
+    .alert .body strong { display: block; font-size: 13px; margin-bottom: 2px; }
+    .alert .body span { font-size: 13px; color: #555; }
+    .alert.warn { background: var(--yellow); border-left: 4px solid var(--yellow-border); }
+    .alert.info { background: var(--blue); border-left: 4px solid var(--blue-text); }
+    .alert.success { background: var(--green); border-left: 4px solid var(--green-text); }
+
+    /* ===== iOS VERSION TABS ===== */
+    .ios-tabs {
+      display: flex;
+      background: white;
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+      margin-bottom: 4px;
+    }
+    .ios-tab {
+      flex: 1;
+      border: none;
+      background: transparent;
+      border-radius: 9px;
+      padding: 10px 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-text);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      text-align: center;
+    }
+    .ios-tab.active {
+      background: var(--red);
+      color: white;
+      box-shadow: 0 2px 8px rgba(232,68,90,0.35);
+    }
+    .ios-tab-hint {
+      font-size: 11px;
+      color: var(--gray-text);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .ios-panel { display: none; }
+    .ios-panel.active { display: block; }
+
+    /* ===== CARD ===== */
+    .card {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-red { background: var(--red); color: white; }
+    .badge-gray { background: #e5e7eb; color: #374151; }
+    .badge-green { background: #dcfce7; color: var(--green-text); }
+
+    /* ===== PATH BOX ===== */
+    .path-box {
+      background: var(--gray-bg);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #444;
+      line-height: 1.8;
+      margin: 8px 0;
+    }
+    .path-box .arr { color: var(--red); font-weight: 700; }
+    .path-box .tap {
+      display: inline-block;
+      background: var(--red);
+      color: white;
+      border-radius: 5px;
+      padding: 1px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+    .path-box .tap-gray {
+      display: inline-block;
+      background: #374151;
+      color: white;
+      border-radius: 5px;
+      padding: 1px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
+    /* ===== STEP LIST ===== */
+    .steps { list-style: none; }
+    .steps li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 14px;
+    }
+    .steps li:last-child { border-bottom: none; padding-bottom: 0; }
+    .step-n {
+      min-width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--red);
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .step-n.gray { background: #6b7280; }
+    .step-body { flex: 1; }
+    .step-body strong { display: block; margin-bottom: 3px; }
+    .step-body .sub { font-size: 12px; color: var(--gray-text); margin-top: 3px; }
+    .step-body .tip {
+      background: var(--blue); color: var(--blue-text);
+      border-radius: 6px; padding: 6px 10px;
+      font-size: 12px; margin-top: 6px;
+    }
+    .step-body .tip::before { content: "💡 "; }
+
+    /* ===== PHONE SCREENSHOT ===== */
+    .screen-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0 4px;
+    }
+    .screen-wrap img {
+      width: 180px;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      display: block;
+    }
+    .screen-caption {
+      text-align: center;
+      font-size: 11px;
+      color: var(--gray-text);
+      margin-bottom: 8px;
+    }
+
+    /* 2-up screenshots */
+    .screens-2 {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 10px 0 4px;
+    }
+    .screens-2 img {
+      width: calc(50% - 6px);
+      max-width: 160px;
+      border-radius: 18px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    /* ===== DIVIDER BETWEEN METHODS ===== */
+    .method-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0;
+      color: var(--gray-text);
+      font-size: 12px;
+    }
+    .method-divider::before,
+    .method-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e5e7eb;
+    }
+
+    /* ===== CHECKLIST ===== */
+    .checklist { list-style: none; }
+    .checklist li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 14px;
+      padding: 6px 0;
+    }
+    .checklist li::before {
+      content: "✅";
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ===== SUPPORT ===== */
+    .support-card {
+      background: #1a1a2e;
+      color: white;
+      border-radius: 14px;
+      padding: 24px 20px;
+      text-align: center;
+    }
+    .support-card .label { font-size: 12px; opacity: 0.5; margin-bottom: 8px; }
+    .support-card .tel { font-size: 32px; font-weight: 800; color: var(--red); letter-spacing: 2px; }
+    .support-card .hours { font-size: 13px; margin-top: 10px; opacity: 0.6; }
+    .support-card .note { font-size: 11px; margin-top: 4px; opacity: 0.4; }
+
+    /* ===== FOOTER ===== */
+    footer {
+      text-align: center;
+      font-size: 11px;
+      color: #aaa;
+      padding: 16px 20px 40px;
+      line-height: 1.8;
+    }
+    footer a { color: var(--red); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="chip">📱 iPhone（iOS）</div>
+  <h1>ドシラクeSIM<br>インストールガイド</h1>
+  <p>韓国旅行前に完了させてください</p>
+</header>
+
+<div class="wrap">
+
+  <!-- ====== 事前確認 ====== -->
+  <div class="sec-label">事前確認事項</div>
+
+  <div class="alert warn">
+    <span class="icon">📋</span>
+    <div class="body">
+      <strong>商品ページでインストール可否を確認</strong>
+      <span>各商品の詳細ページで「インストール基準（事前インストール可否）」を必ず確認してください。</span>
+    </div>
+  </div>
+  <div class="alert warn">
+    <span class="icon">📅</span>
+    <div class="body">
+      <strong>到着後インストールが必要な商品に注意</strong>
+      <span>インストール即日から日数がカウントされる商品は、韓国到着後にインストールしてください。</span>
+    </div>
+  </div>
+  <div class="alert warn">
+    <span class="icon">📶</span>
+    <div class="body">
+      <strong>Wi-Fi環境でインストールしてください</strong>
+      <span>eSIMの追加はWi-Fiなどのネットワーク環境でのみ可能です。</span>
+    </div>
+  </div>
+  <div class="alert warn">
+    <span class="icon">✈️</span>
+    <div class="body">
+      <strong>出国前に既存回線を確認</strong>
+      <span>データローミング <strong>OFF</strong>・データ自動切替え <strong>OFF</strong> になっているか確認してください。</span>
+    </div>
+  </div>
+
+  <!-- ====== iOS バージョン タブ ====== -->
+  <div class="sec-label" style="margin-top:36px;">お使いのiOSバージョンを選択</div>
+
+  <div class="ios-tabs">
+    <button class="ios-tab active" onclick="switchTab('v2')">iOS 17.4 以降</button>
+    <button class="ios-tab" onclick="switchTab('v1')">iOS 17.4 以前</button>
+  </div>
+  <p class="ios-tab-hint">設定 → 一般 → 情報 → iOSバージョンで確認できます</p>
+
+  <!-- ============================================================ -->
+  <!--  iOS 17.4 以降 (v2)                                         -->
+  <!-- ============================================================ -->
+  <div id="panel-v2" class="ios-panel active">
+
+    <!-- STEP 1 -->
+    <div class="sec-label">STEP 1 ― eSIMインストール</div>
+
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-red">方法①</span>
+        アプリ / ウェブからバロ設置（推奨）
+      </div>
+
+      <p style="font-size:13px; font-weight:600; color:#555; margin-bottom:6px;">🌐 ウェブサイトの場合</p>
+      <div class="path-box">
+        マイページ <span class="arr">›</span> 購入履歴 <span class="arr">›</span> eSIM詳細<br>
+        <span class="arr">›</span> インストール情報(QR) 詳細表示<br>
+        <span class="arr">›</span> <span class="tap">バロ設置</span> をタップ
+      </div>
+
+      <p style="font-size:13px; font-weight:600; color:#555; margin: 14px 0 6px;">📱 アプリの場合</p>
+      <div class="path-box">
+        私のeSIM <span class="arr">›</span> QRを見る<br>
+        <span class="arr">›</span> QRコードの下の <span class="tap">バロ設置</span> をタップ
+      </div>
+
+      <div class="screen-wrap" style="margin-top:14px;">
+        <img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v2/qr_esim_app.png" alt="バロ設置 アプリ画面" />
+      </div>
+
+      <div class="alert info" style="margin-top:10px; border-radius:8px;">
+        <span class="icon">👤</span>
+        <div class="body"><span>非会員の方は注文番号と携帯電話番号（またはメールアドレス）で照会できます。</span></div>
+      </div>
+
+      <div class="method-divider">または</div>
+
+      <div class="card-title">
+        <span class="badge badge-gray">方法②</span>
+        QRコードで手動インストール
+      </div>
+
+      <ul class="steps">
+        <li>
+          <div class="step-n">1</div>
+          <div class="step-body">
+            <strong>設定 → モバイル通信 → 「eSIMを追加」をタップ</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v2/cellular_esim.png" alt="eSIMを追加" /></div>
+            <div class="tip">ネットワーク環境（Wi-Fiなど）でのみ追加できます</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-n">2</div>
+          <div class="step-body">
+            <strong>「その他のオプション」をタップ</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v2/esim_options.png" alt="その他のオプション" /></div>
+          </div>
+        </li>
+        <li>
+          <div class="step-n">3</div>
+          <div class="step-body">
+            <strong>「QRコードを使用」をタップし、ドシラクのQRコードを読み取る</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v2/cellular_qr_code.png" alt="QRコードを使用" /></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="sec-label">STEP 2 ― eSIMの有効化</div>
+
+    <div class="card">
+      <ul class="steps">
+        <li>
+          <div class="step-n">1</div>
+          <div class="step-body">
+            <strong>有効化のポップアップが表示されたら「有効化」をタップ</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v2/esim_activation.png" alt="有効化" /></div>
+          </div>
+        </li>
+        <li>
+          <div class="step-n">2</div>
+          <div class="step-body">
+            <strong>有効化の準備画面が表示されたら「続ける」をタップ</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v2/esim_activation_continue.png" alt="続ける" /></div>
+            <div class="tip">eSIMのインストールまで約1分かかります</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="sec-label">STEP 3 ― 料金プランのラベルと回線設定</div>
+
+    <div class="card">
+      <ul class="steps">
+        <li>
+          <div class="step-n">1</div>
+          <div class="step-body">
+            <strong>eSIMを使用する場所として「海外」を選択</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v2/esim_qr_location.png" alt="海外を選択" /></div>
+          </div>
+        </li>
+        <li>
+          <div class="step-n">2</div>
+          <div class="step-body">
+            <strong>購入した料金プランを選択</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v2/esim_qr_plan.png" alt="料金プランを選択" /></div>
+            <div class="tip">データ専用商品 → 「データのみ」<br>通話・SMS可能商品 → 「音声とデータ」</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="sec-label">STEP 4 ― インストール確認</div>
+
+    <div class="card">
+      <ul class="steps">
+        <li>
+          <div class="step-n">1</div>
+          <div class="step-body">
+            <strong>正常にインストールされているか確認し、eSIMを「OFF」に設定する</strong>
+            <p style="font-size:13px; color:#555; margin-top:4px;">韓国到着まで使用しないようにOFFにしておきます</p>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v2/cellular_esim_select_off.png" alt="eSIM OFF" /></div>
+          </div>
+        </li>
+        <li>
+          <div class="step-n gray">!</div>
+          <div class="step-body">
+            <strong>「有効化中」のまま表示される場合</strong>
+            <div class="screens-2">
+              <img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/popup/activate_ban.png" alt="有効化中" />
+              <img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/popup/ios_activate_pop_img.png" alt="有効化中ポップアップ" />
+            </div>
+            <div class="tip">「有効化中」や「読み込み中」が続いても<strong>2時間以内</strong>に完了します</div>
+            <p style="font-size:12px; color:var(--gray-text); margin-top:8px;">2時間経過後もまだ有効化中の場合は、既存のメインSIMをOFFにしてから再起動してください。<br>それでも現地到着後は正常に使用できます。</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div><!-- /panel-v2 -->
+
+
+  <!-- ============================================================ -->
+  <!--  iOS 17.4 以前 (v1)                                         -->
+  <!-- ============================================================ -->
+  <div id="panel-v1" class="ios-panel">
+
+    <!-- STEP 1 -->
+    <div class="sec-label">STEP 1 ― eSIMを追加</div>
+
+    <div class="card">
+      <ul class="steps">
+        <li>
+          <div class="step-n">1</div>
+          <div class="step-body">
+            <strong>設定 → モバイル通信 → 「eSIMを追加」をタップ</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v1/cellular_esim.png" alt="eSIMを追加" /></div>
+            <div class="tip">ネットワーク環境（Wi-Fiなど）でのみ追加できます</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-n">2</div>
+          <div class="step-body">
+            <strong>「QRコードを使用」をタップ</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v1/cellular_qr_code.png" alt="QRコードを使用" /></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="sec-label">STEP 2 ― QRコードの処理</div>
+
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-red">方法①</span>
+        QRコード画像をスキャン
+      </div>
+      <p style="font-size:14px; margin-bottom:8px;">メール・SMSで受け取ったQRコード画像をカメラでスキャン</p>
+      <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v1/cellular_qr_scan.png" alt="QRスキャン" /></div>
+
+      <div class="method-divider">QRスキャンができない場合</div>
+
+      <div class="card-title">
+        <span class="badge badge-gray">方法②</span>
+        アクティベーションコードを直接入力
+      </div>
+      <p style="font-size:14px; margin-bottom:8px;">「SM-DP+アドレス・アクティベーションコード」を直接入力</p>
+      <div class="screens-2">
+        <img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v1/cellular_qr_details.png" alt="詳細を入力" />
+        <img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v1/activation_code.png" alt="アクティベーションコード" />
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="sec-label">STEP 3 ― 回線ラベルと使用回線の設定</div>
+
+    <div class="card">
+      <ul class="steps">
+        <li>
+          <div class="step-n">1</div>
+          <div class="step-body">
+            <strong>モバイル通信プランのラベルを設定</strong>
+            <div class="path-box" style="margin-top:6px;">
+              既存SIM → <span class="tap-gray">メイン</span>&nbsp;&nbsp;eSIM → <span class="tap">サブ</span>
+            </div>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v1/cellular_plan_label.png" alt="ラベル設定" /></div>
+          </div>
+        </li>
+        <li>
+          <div class="step-n">2</div>
+          <div class="step-body">
+            <strong>デフォルト回線（通話/メッセージ）→ メイン（既存SIM）を選択</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v1/call_message_main.png" alt="デフォルト回線" /></div>
+          </div>
+        </li>
+        <li>
+          <div class="step-n">3</div>
+          <div class="step-body">
+            <strong>iMessage・FaceTime → メイン（既存SIM）を選択</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v1/imessage_main.png" alt="iMessage設定" /></div>
+          </div>
+        </li>
+        <li>
+          <div class="step-n">4</div>
+          <div class="step-body">
+            <strong>モバイルデータ通信 → メイン（既存SIM）を選択</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/pre-install/v1/cellular_main_data_off.png" alt="データ通信設定" /></div>
+            <div class="tip">韓国到着後はサブ（eSIM）に切り替えてください</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="sec-label">STEP 4 ― インストール確認</div>
+
+    <div class="card">
+      <ul class="steps">
+        <li>
+          <div class="step-n">1</div>
+          <div class="step-body">
+            <strong>正常にインストールされているか確認し、eSIMを「OFF」に設定する</strong>
+            <div class="screen-wrap"><img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/iOS/post-use/cellular_esim_select_off.png" alt="eSIM OFF" /></div>
+          </div>
+        </li>
+        <li>
+          <div class="step-n gray">!</div>
+          <div class="step-body">
+            <strong>「有効化中」のまま表示される場合</strong>
+            <div class="screens-2">
+              <img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/popup/activate_ban.png" alt="有効化中" />
+              <img src="https://wmstgbb001.blob.core.windows.net/wm-images/inbound.web/Install/KR/popup/ios_activate_pop_img.png" alt="有効化中ポップアップ" />
+            </div>
+            <div class="tip">「有効化中」や「読み込み中」が続いても<strong>2時間以内</strong>に完了します</div>
+            <p style="font-size:12px; color:var(--gray-text); margin-top:8px;">2時間経過後もまだ有効化中の場合は、既存のメインSIMをOFFにしてから再起動してください。</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div><!-- /panel-v1 -->
+
+
+  <!-- ====== 完了チェック ====== -->
+  <div class="sec-label">インストール完了チェックリスト</div>
+
+  <div class="card" style="border:2px solid #bbf7d0; background:var(--green);">
+    <ul class="checklist">
+      <li>eSIMが正常にインストールされていることを確認した</li>
+      <li>インストールしたeSIMを「<strong>OFF</strong>」に設定した</li>
+      <li>韓国到着後、eSIMを「<strong>ON</strong>」にして使用する</li>
+    </ul>
+  </div>
+
+  <!-- ====== カスタマーサポート ====== -->
+  <div class="sec-label">カスタマーサポート</div>
+
+  <div class="support-card">
+    <div class="label">お問い合わせ（韓国語のみ）</div>
+    <div class="tel">1566-9070</div>
+    <div class="hours">📅 平日 09:00 〜 18:00</div>
+    <div class="note">昼休み 12:00〜13:00 · 土日祝日は対応不可</div>
+  </div>
+
+</div><!-- /wrap -->
+
+<footer>
+  ドシラクeSIM公式ガイドを日本語に翻訳したものです。<br>
+  最新情報は <a href="https://dosirakesim.com" target="_blank">dosirakesim.com</a> をご確認ください。
+</footer>
+
+<script>
+  function switchTab(ver) {
+    document.querySelectorAll('.ios-tab').forEach(function(btn, i) {
+      btn.classList.toggle('active', (ver === 'v2' && i === 0) || (ver === 'v1' && i === 1));
+    });
+    document.getElementById('panel-v2').classList.toggle('active', ver === 'v2');
+    document.getElementById('panel-v1').classList.toggle('active', ver === 'v1');
+  }
+</script>
+
+</body>
+</html>

@@ -55,10 +55,12 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 ## 작업 히스토리
 
 ### 2026-06-13
-- ドシラクeSIM 일본어 가이드 페이지 추가 (`app/pages/esim.vue`)
-  - URL: wowhit.org/esim
-  - 일본 친구에게 eSIM 등록 방법 공유용 (헤더 nav 미포함)
-  - 사전확인 4가지 → STEP 1 설치(방법① 앱/웹 바로설치, 방법② QR 수동) → STEP 2 유효화 → STEP 3 회선설정 → STEP 4 확인 → 고객센터
+- ドシラクeSIM 일본어 가이드 추가 (`public/esim/index.html`)
+  - URL: wowhit.org/esim (wowhit Nuxt 앱과 완전 무관한 독립 정적 HTML)
+  - 일본 친구에게 eSIM 등록 방법 공유용
+  - iOS 17.4 이후(v2) / iOS 17.4 이전(v1) 탭 전환
+  - 도시락eSIM 원본 스크린샷 이미지(CDN URL) 전부 포함
+  - 사전확인 → STEP 1~4 전 단계 → 완료 체크리스트 → 고객센터
 
 ### 2026-06-12
 - 디지털 비서 프로필 이미지 추가 (한국인 여성, 세상에서 가장 아름다운 컨셉)

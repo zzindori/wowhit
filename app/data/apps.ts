@@ -85,8 +85,8 @@ export const apps: App[] = [
     api: ['Gemini', 'MLKit'],
     iconUrl: '/apps/itne/icon.png',
     webUrl: 'https://itne.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.0.1.2/itNe.apk',
-    version: '1.0.1+2'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.0.2.3/itNe.apk',
+    version: '1.0.2+3'
   },
   {
     slug: 'joa',
@@ -104,9 +104,9 @@ export const apps: App[] = [
       '/apps/joa/Screenshot_20260607_170008.jpg'
     ],
     webUrl: 'https://joa.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0.3/JoA.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0.6/JoA.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13625209650',
-    version: '1.0.0+3'
+    version: '1.0.0+6'
   },
   {
     slug: 'menuway',

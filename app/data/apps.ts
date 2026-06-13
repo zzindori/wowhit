@@ -85,8 +85,8 @@ export const apps: App[] = [
     api: ['Gemini', 'MLKit'],
     iconUrl: '/apps/itne/icon.png',
     webUrl: 'https://itne.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.1.1.5/itNe.apk',
-    version: '1.1.1+5'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.1.2.6/itNe.apk',
+    version: '1.1.2+6'
   },
   {
     slug: 'joa',

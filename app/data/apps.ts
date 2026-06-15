@@ -104,9 +104,9 @@ export const apps: App[] = [
       '/apps/joa/Screenshot_20260607_170008.jpg'
     ],
     webUrl: 'https://joa.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0.6/JoA.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0.7/JoA.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13625209650',
-    version: '1.0.0+6'
+    version: '1.0.0+7'
   },
   {
     slug: 'menuway',

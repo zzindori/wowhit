@@ -93,7 +93,7 @@ export const apps: App[] = [
     name: 'JoA',
     category: 'flutter',
     description: 'AI 이미지 생성 앱',
-    longDescription: `복잡한 설정 없이, 버튼 몇 번으로 만드는 자연스러운 한국인 옷핏 레퍼런스.\n\nJoA는 Google Gemini 이미지 생성 모델을 활용합니다. 카테고리(남/여/풍경), 연령, 체형, 스타일, 날씨 무드를 선택하면 9:16 세로 이미지가 바로 생성됩니다. 현재 날씨를 반영한 이미지 생성도 가능하며, 생성된 이미지는 히스토리로 저장됩니다.\n\n앱 설치 없이 Android, iPhone, PC 브라우저 어디서든 동일하게 사용할 수 있습니다.\n\n가입이나 로그인 없이 5장을 무료로 먼저 체험해볼 수 있습니다.\n\n이용권을 구매하면 하루 30장 생성 권한이 매일 자정에 자동 충전됩니다. 30일 기준 최대 900장이며, 미사용 분은 다음 날로 이월되지 않습니다. 인증 코드는 스마트폰, PC 등 여러 기기에서 동시에 사용할 수 있지만, 하루 30장 카운트는 기기 구분 없이 공유됩니다.\n\nGemini API Key를 직접 발급받아 앱 설정에 입력하는 방법으로도 이용할 수 있습니다. 이 경우 이용권 구매 없이 사용할 수 있지만, Google API 사용량에 따라 구글에 직접 요금이 부과됩니다. API Key는 이 사이트의 QR 변환 메뉴를 활용하면 스캔으로 간편하게 입력할 수 있습니다.\n\nAndroid 설치는 위 직접 설치 버튼으로 APK를 다운로드한 후 파일을 열어 설치합니다. 처음 설치 시 알 수 없는 앱 설치 허용 설정이 필요할 수 있습니다. 삭제는 아이콘을 길게 누르거나 설정 앱에서 제거할 수 있습니다.`,
+    longDescription: `복잡한 설정 없이, 버튼 몇 번으로 만드는 자연스러운 한국인 옷핏 레퍼런스.\n\nJoA는 Google Gemini 이미지 생성 모델을 활용합니다. 남자·여자 카테고리, 연령, 체형, 스타일, 날씨 무드를 선택하면 9:16 세로 이미지가 바로 생성됩니다. 현재 날씨를 반영한 이미지 생성도 가능하며, 생성된 이미지는 히스토리로 저장됩니다.\n\n앱 설치 없이 Android, iPhone, PC 브라우저 어디서든 동일하게 사용할 수 있습니다.\n\n가입이나 로그인 없이 5장을 무료로 먼저 체험해볼 수 있습니다.\n\n이용권을 구매하면 하루 30장 생성 권한이 매일 자정에 자동 충전됩니다. 30일 기준 최대 900장이며, 미사용 분은 다음 날로 이월되지 않습니다. 인증 코드는 스마트폰, PC 등 여러 기기에서 동시에 사용할 수 있지만, 하루 30장 카운트는 기기 구분 없이 공유됩니다.\n\nGemini API Key를 직접 발급받아 앱 설정에 입력하는 방법으로도 이용할 수 있습니다. 이 경우 이용권 구매 없이 사용할 수 있지만, Google API 사용량에 따라 구글에 직접 요금이 부과됩니다. API Key는 이 사이트의 QR 변환 메뉴를 활용하면 스캔으로 간편하게 입력할 수 있습니다.\n\nAndroid 설치는 위 직접 설치 버튼으로 APK를 다운로드한 후 파일을 열어 설치합니다. 처음 설치 시 알 수 없는 앱 설치 허용 설정이 필요할 수 있습니다. 삭제는 아이콘을 길게 누르거나 설정 앱에서 제거할 수 있습니다.`,
     api: ['Gemini'],
     iconUrl: '/apps/joa/icon.png',
     screenshots: [
@@ -104,9 +104,9 @@ export const apps: App[] = [
       '/apps/joa/Screenshot_20260607_170008.jpg'
     ],
     webUrl: 'https://joa.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0.7/JoA.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0.9/JoA.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13625209650',
-    version: '1.0.0+7'
+    version: '1.0.0+9'
   },
   {
     slug: 'menuway',

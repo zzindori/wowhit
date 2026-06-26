@@ -20,7 +20,74 @@ export interface App {
 }
 
 export const apps: App[] = [
-  // Flutter 앱
+  // Flutter 앱 — 완성도 순
+  {
+    slug: 'menuway',
+    name: 'menuWay',
+    category: 'flutter',
+    description: '해외 메뉴판을 찍으면 음식을 이해할 수 있게 설명해주는 AI 여행 앱',
+    longDescription: `여행 가면 누구나 한 번쯤 겪는 순간.\n번역은 되지만, 어떤 음식인지 이해하기 어려울 때가 있습니다.\n\nmenuWay는 메뉴판을 촬영하면 메뉴 이름과 설명을 함께 제공합니다.\n\n단순 번역이 아니라,\n음식을 이해할 수 있도록 돕는 앱입니다.\n\n이제 주문 앞에서 멈추지 마세요.\n\nTranslate. Order. Enjoy.`,
+    storeReleased: true,
+    iconUrl: '/apps/menuway/icon.png',
+    screenshots: [
+      '/apps/menuway/MenuWay_iOS_01.png',
+      '/apps/menuway/MenuWay_iOS_02.png',
+      '/apps/menuway/MenuWay_iOS_03.png',
+      '/apps/menuway/MenuWay_iOS_04.png',
+      '/apps/menuway/MenuWay_iOS_05.png',
+      '/apps/menuway/MenuWay_LAST.png'
+    ],
+    androidUrl: 'https://play.google.com/store/apps/details?id=com.menuway.app&hl=ko',
+    iosUrl: 'https://apps.apple.com/kr/app/menuway/id6758591797',
+    youtubeUrl: 'https://www.youtube.com/@zzindori/shorts',
+    shorts: ['D_w3q4XwCa4', 'gTf98JexFGo', 'ss76szvONxo', '0DK2QBaTMac']
+  },
+  {
+    slug: 'shotway',
+    name: 'shotWay',
+    category: 'flutter',
+    description: '실시간 찍은 사진 공유 앱',
+    longDescription: `누군가 사진을 찍으면, 방에 함께한 모두의 핸드폰에 알림이 옵니다. 바로 그 사진이요.\n\n같은 공간이라면 QR 코드 한 번이면 연결됩니다. 멀리 있다면 6자리 숫자만 알려주면 돼요. 번호 교환도, 친구 추가도, 앱 설치도 필요 없습니다.\n\n아이폰이든 안드로이드든 상관없이 쓸 수 있고, 완전 무료입니다. 광고도 없어요.`,
+    api: ['Firebase', 'Supabase'],
+    iconUrl: '/apps/shotway/icon.png',
+    webUrl: 'https://shotway.wowhit.org',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/shotway-v1.0.0/shotWay.apk',
+    version: '1.0.0+3',
+    storeReleased: false
+  },
+  {
+    slug: 'joa',
+    name: 'JoA',
+    category: 'flutter',
+    description: 'AI 이미지 생성 앱',
+    longDescription: `복잡한 설정 없이, 버튼 몇 번으로 만드는 자연스러운 한국인 옷핏 레퍼런스.\n\nJoA는 Google Gemini 이미지 생성 모델을 활용합니다. 남자·여자 카테고리, 연령, 체형, 스타일, 날씨 무드를 선택하면 9:16 세로 이미지가 바로 생성됩니다. 현재 날씨를 반영한 이미지 생성도 가능하며, 생성된 이미지는 히스토리로 저장됩니다.\n\n앱 설치 없이 Android, iPhone, PC 브라우저 어디서든 동일하게 사용할 수 있습니다.\n\n가입이나 로그인 없이 5장을 무료로 먼저 체험해볼 수 있습니다.\n\n이용권을 구매하면 하루 30장 생성 권한이 매일 자정에 자동 충전됩니다. 30일 기준 최대 900장이며, 미사용 분은 다음 날로 이월되지 않습니다. 인증 코드는 스마트폰, PC 등 여러 기기에서 동시에 사용할 수 있지만, 하루 30장 카운트는 기기 구분 없이 공유됩니다.\n\nGemini API Key를 직접 발급받아 앱 설정에 입력하는 방법으로도 이용할 수 있습니다. 이 경우 이용권 구매 없이 사용할 수 있지만, Google API 사용량에 따라 구글에 직접 요금이 부과됩니다. API Key는 이 사이트의 QR 변환 메뉴를 활용하면 스캔으로 간편하게 입력할 수 있습니다.\n\nAndroid 설치는 위 직접 설치 버튼으로 APK를 다운로드한 후 파일을 열어 설치합니다. 처음 설치 시 알 수 없는 앱 설치 허용 설정이 필요할 수 있습니다. 삭제는 아이콘을 길게 누르거나 설정 앱에서 제거할 수 있습니다.`,
+    api: ['Gemini'],
+    iconUrl: '/apps/joa/icon.png',
+    screenshots: [
+      '/apps/joa/Screenshot_20260607_165645.jpg',
+      '/apps/joa/Screenshot_20260607_165650.jpg',
+      '/apps/joa/Screenshot_20260607_165702.jpg',
+      '/apps/joa/Screenshot_20260607_165859.jpg',
+      '/apps/joa/Screenshot_20260607_170008.jpg'
+    ],
+    webUrl: 'https://joa.wowhit.org',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0.9/JoA.apk',
+    purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13625209650',
+    version: '1.0.0+9'
+  },
+  {
+    slug: 'itne',
+    name: 'itNe',
+    category: 'flutter',
+    description: '냉장고 식재료 관리 + 남은 재료로만 AI 레시피 추천',
+    longDescription: `냉장고 문을 열고 "이걸로 뭘 만들지?" 고민한 적 있으신가요?\n\nitNe는 냉장고 속 식재료를 사진으로 찍으면 자동으로 인식하고 목록을 만들어줍니다. 그리고 남은 재료로만 만들 수 있는 레시피를 AI가 추천해줍니다.\n\n없는 재료를 사러 나가지 않아도 됩니다. 있는 것만으로 충분합니다.\n\n냉장고를 요리사로 만드는 앱.`,
+    api: ['Gemini', 'MLKit'],
+    iconUrl: '/apps/itne/icon.png',
+    webUrl: 'https://itne.wowhit.org',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.4.1.26/app-release.apk',
+    purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13644369839',
+    version: '1.4.1+26'
+  },
   {
     slug: 'careway',
     name: 'careWay',
@@ -77,59 +144,6 @@ export const apps: App[] = [
     version: '0.1.1+2'
   },
   {
-    slug: 'itne',
-    name: 'itNe',
-    category: 'flutter',
-    description: '냉장고 식재료 관리 + 남은 재료로만 AI 레시피 추천',
-    longDescription: `냉장고 문을 열고 "이걸로 뭘 만들지?" 고민한 적 있으신가요?\n\nitNe는 냉장고 속 식재료를 사진으로 찍으면 자동으로 인식하고 목록을 만들어줍니다. 그리고 남은 재료로만 만들 수 있는 레시피를 AI가 추천해줍니다.\n\n없는 재료를 사러 나가지 않아도 됩니다. 있는 것만으로 충분합니다.\n\n냉장고를 요리사로 만드는 앱.`,
-    api: ['Gemini', 'MLKit'],
-    iconUrl: '/apps/itne/icon.png',
-    webUrl: 'https://itne.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.4.0.25/app-release.apk',
-    version: '1.4.0+25'
-  },
-  {
-    slug: 'joa',
-    name: 'JoA',
-    category: 'flutter',
-    description: 'AI 이미지 생성 앱',
-    longDescription: `복잡한 설정 없이, 버튼 몇 번으로 만드는 자연스러운 한국인 옷핏 레퍼런스.\n\nJoA는 Google Gemini 이미지 생성 모델을 활용합니다. 남자·여자 카테고리, 연령, 체형, 스타일, 날씨 무드를 선택하면 9:16 세로 이미지가 바로 생성됩니다. 현재 날씨를 반영한 이미지 생성도 가능하며, 생성된 이미지는 히스토리로 저장됩니다.\n\n앱 설치 없이 Android, iPhone, PC 브라우저 어디서든 동일하게 사용할 수 있습니다.\n\n가입이나 로그인 없이 5장을 무료로 먼저 체험해볼 수 있습니다.\n\n이용권을 구매하면 하루 30장 생성 권한이 매일 자정에 자동 충전됩니다. 30일 기준 최대 900장이며, 미사용 분은 다음 날로 이월되지 않습니다. 인증 코드는 스마트폰, PC 등 여러 기기에서 동시에 사용할 수 있지만, 하루 30장 카운트는 기기 구분 없이 공유됩니다.\n\nGemini API Key를 직접 발급받아 앱 설정에 입력하는 방법으로도 이용할 수 있습니다. 이 경우 이용권 구매 없이 사용할 수 있지만, Google API 사용량에 따라 구글에 직접 요금이 부과됩니다. API Key는 이 사이트의 QR 변환 메뉴를 활용하면 스캔으로 간편하게 입력할 수 있습니다.\n\nAndroid 설치는 위 직접 설치 버튼으로 APK를 다운로드한 후 파일을 열어 설치합니다. 처음 설치 시 알 수 없는 앱 설치 허용 설정이 필요할 수 있습니다. 삭제는 아이콘을 길게 누르거나 설정 앱에서 제거할 수 있습니다.`,
-    api: ['Gemini'],
-    iconUrl: '/apps/joa/icon.png',
-    screenshots: [
-      '/apps/joa/Screenshot_20260607_165645.jpg',
-      '/apps/joa/Screenshot_20260607_165650.jpg',
-      '/apps/joa/Screenshot_20260607_165702.jpg',
-      '/apps/joa/Screenshot_20260607_165859.jpg',
-      '/apps/joa/Screenshot_20260607_170008.jpg'
-    ],
-    webUrl: 'https://joa.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0.9/JoA.apk',
-    purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13625209650',
-    version: '1.0.0+9'
-  },
-  {
-    slug: 'menuway',
-    name: 'menuWay',
-    category: 'flutter',
-    description: '해외 메뉴판을 찍으면 음식을 이해할 수 있게 설명해주는 AI 여행 앱',
-    longDescription: `여행 가면 누구나 한 번쯤 겪는 순간.\n번역은 되지만, 어떤 음식인지 이해하기 어려울 때가 있습니다.\n\nmenuWay는 메뉴판을 촬영하면 메뉴 이름과 설명을 함께 제공합니다.\n\n단순 번역이 아니라,\n음식을 이해할 수 있도록 돕는 앱입니다.\n\n이제 주문 앞에서 멈추지 마세요.\n\nTranslate. Order. Enjoy.`,
-    storeReleased: true,
-    iconUrl: '/apps/menuway/icon.png',
-    screenshots: [
-      '/apps/menuway/MenuWay_iOS_01.png',
-      '/apps/menuway/MenuWay_iOS_02.png',
-      '/apps/menuway/MenuWay_iOS_03.png',
-      '/apps/menuway/MenuWay_iOS_04.png',
-      '/apps/menuway/MenuWay_iOS_05.png',
-      '/apps/menuway/MenuWay_LAST.png'
-    ],
-    androidUrl: 'https://play.google.com/store/apps/details?id=com.menuway.app&hl=ko',
-    iosUrl: 'https://apps.apple.com/kr/app/menuway/id6758591797',
-    youtubeUrl: 'https://www.youtube.com/@zzindori/shorts',
-    shorts: ['D_w3q4XwCa4', 'gTf98JexFGo', 'ss76szvONxo', '0DK2QBaTMac']
-  },
-  {
     slug: 'onbidway',
     name: 'onbidWay',
     category: 'flutter',
@@ -147,19 +161,6 @@ export const apps: App[] = [
     longDescription: `받은 메일함은 넘치고, 캘린더는 정리되지 않은 채 하루가 지나갑니다.\n\npingWay는 Gmail과 Google Calendar를 AI로 연결합니다. Gemini가 받은 메일을 자동으로 분류하고, 중요한 일정을 정리해줍니다.\n\nFire기반 푸시 알림으로 중요한 소식을 놓치지 않습니다. 메일과 일정이 하나의 앱에서 AI 비서처럼 작동합니다.\n\n흩어진 알림을 하나로.`,
     api: ['Gemini', 'Firebase', 'Gmail', 'Google Calendar'],
     iconUrl: '/apps/pingway/icon.png'
-  },
-  {
-    slug: 'shotway',
-    name: 'shotWay',
-    category: 'flutter',
-    description: '실시간 찍은 사진 공유 앱',
-    longDescription: `누군가 사진을 찍으면, 방에 함께한 모두의 핸드폰에 알림이 옵니다. 바로 그 사진이요.\n\n같은 공간이라면 QR 코드 한 번이면 연결됩니다. 멀리 있다면 6자리 숫자만 알려주면 돼요. 번호 교환도, 친구 추가도, 앱 설치도 필요 없습니다.\n\n아이폰이든 안드로이드든 상관없이 쓸 수 있고, 완전 무료입니다. 광고도 없어요.`,
-    api: ['Firebase', 'Supabase'],
-    iconUrl: '/apps/shotway/icon.png',
-    webUrl: 'https://shotway.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/shotway-v1.0.0/shotWay.apk',
-    version: '1.0.0+3',
-    storeReleased: false
   },
   {
     slug: 'talkway',

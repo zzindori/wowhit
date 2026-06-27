@@ -84,9 +84,9 @@ export const apps: App[] = [
     api: ['Gemini', 'MLKit'],
     iconUrl: '/apps/itne/icon.png',
     webUrl: 'https://itne.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.5.2.29/app-release.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.5.3.30/app-release.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13644369839',
-    version: '1.5.2+29'
+    version: '1.5.3+30'
   },
   {
     slug: 'careway',

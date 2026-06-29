@@ -47,9 +47,13 @@ export const apps: App[] = [
     name: 'shotWay',
     category: 'flutter',
     description: '실시간 찍은 사진 공유 앱',
-    longDescription: `누군가 사진을 찍으면, 방에 함께한 모두의 핸드폰에 알림이 옵니다. 바로 그 사진이요.\n\n같은 공간이라면 QR 코드 한 번이면 연결됩니다. 멀리 있다면 6자리 숫자만 알려주면 돼요. 번호 교환도, 친구 추가도, 앱 설치도 필요 없습니다.\n\n아이폰이든 안드로이드든 상관없이 쓸 수 있고, 완전 무료입니다. 광고도 없어요.`,
+    longDescription: `누군가 사진을 찍으면, 방에 함께한 모두의 핸드폰에 알림이 옵니다. 바로 그 사진이요.\n\n같은 공간이라면 QR 코드 한 번이면 연결됩니다. 멀리 있다면 6자리 숫자만 알려주면 돼요. 번호 교환도, 친구 추가도, 앱 설치도 필요 없습니다.\n\n아이폰이든 안드로이드든 상관없이 쓸 수 있고, 완전 무료입니다. 광고도 없어요.\n\n📸 실시간 공유\n사진을 찍는 즉시 같은 방에 있는 모든 사람의 핸드폰으로 푸시 알림이 전송됩니다. 여행, 행사, 워크숍에서 한 사람이 찍은 사진을 모두가 바로 받아볼 수 있습니다. 사진은 클라우드에 안전하게 보관되며, 방에 있는 누구나 자유롭게 다운로드할 수 있습니다.\n\n🔗 연결方式\n같은 공간에서는 QR 코드로, 멀리 있는 사람은 6자리 코드로 연결됩니다. 복잡한 회원가입도, 친구 추가도 없습니다. 방을 만든 사람이 코드를 공유하면 끝입니다.\n\n🔄 크로스 플랫폼\niPhone과 Android 모두 동일한 경험으로 사용할 수 있습니다. 웹 버전도 제공되어 PC에서도 사진을 확인할 수 있습니다.\n\n💰 완전 무료\n광고도, 인앱 결제도, 구독료도 없습니다. 사진 공유는 누구에게나 자유로워야 한다고 생각합니다.`,
     api: ['Firebase', 'Supabase'],
     iconUrl: '/apps/shotway/icon.png',
+    screenshots: [
+      '/apps/shotway/shotWay01.jpg',
+      '/apps/shotway/shotWay02.png'
+    ],
     webUrl: 'https://shotway.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/shotway-v1.0.0/shotWay.apk',
     version: '1.0.0+3',
@@ -80,9 +84,17 @@ export const apps: App[] = [
     name: 'itNe',
     category: 'flutter',
     description: '냉장고 식재료 관리 + 남은 재료로만 AI 레시피 추천',
-    longDescription: `냉장고 문을 열고 "이걸로 뭘 만들지?" 고민한 적 있으신가요?\n\nitNe는 냉장고 속 식재료를 사진으로 찍으면 자동으로 인식하고 목록을 만들어줍니다. 그리고 남은 재료로만 만들 수 있는 레시피를 AI가 추천해줍니다.\n\n없는 재료를 사러 나가지 않아도 됩니다. 있는 것만으로 충분합니다.\n\n냉장고를 요리사로 만드는 앱.`,
+    longDescription: `냉장고 문을 열고 "이걸로 뭘 만들지?" 고민한 적 있으신가요?\n\nitNe는 냉장고 속 식재료를 사진으로 찍으면 자동으로 인식하고 목록을 만들어줍니다. 그리고 남은 재료로만 만들 수 있는 레시피를 AI가 추천해줍니다.\n\n없는 재료를 사러 나가지 않아도 됩니다. 있는 것만으로 충분합니다.\n\n냉장고를 요리사로 만드는 앱.\n\n📸 식재료 자동 인식\nML Kit 기반 이미지 인식으로 식재료 사진을 찍으면 AI가 자동으로 무슨 재료인지 분류합니다. 양파, 당근, 애호박 같은 기본 채소부터 각종 양념과 소스류까지 폭넓게 인식합니다. 잘못 인식된 재료는 직접 수정할 수 있어 정확도를 계속 높여갈 수 있습니다.\n\n🗂 냉장고 목록 관리\n인식된 식재료는 카테고리(채소·과일·육류·해산물·유제품·양념·기타)별로 정리됩니다. 유통기한을 직접 입력하면 임박한 순서대로 정렬되며, 유통기한이 지난 재료는 자동으로 강조 표시됩니다. 소진한 재료는 스와이프로 빠르게 삭제할 수 있습니다.\n\n🍳 AI 레시피 추천\n현재 냉장고에 있는 재료만으로 만들 수 있는 요리를 Gemini AI가 추천합니다. 재료 소진 우선순위(유통기한 임박)를 반영하고, 한국식·중식·양식·일식 등 카테고리별 필터도 지원합니다. 각 레시피에는 조리 시간, 난이도, 필요 재료, 단계별 조리법이 포함됩니다.\n\n📱 크로스 플랫폼 지원\nAndroid APK 설치부터 웹 브라우저 접속까지 자유롭게 선택할 수 있습니다. 모든 데이터는 클라우드에 동기화되어 기기를 바꿔도 이어서 사용할 수 있습니다.\n\n💳 이용권\n무료 체험 후 네이버 스마트스토어에서 이용권을 구매하면 무제한 이용 가능합니다.`,
     api: ['Gemini', 'MLKit'],
     iconUrl: '/apps/itne/icon.png',
+    screenshots: [
+      '/apps/itne/itne_01.jpg',
+      '/apps/itne/itne_02.jpg',
+      '/apps/itne/itne_03.jpg',
+      '/apps/itne/itne_04.jpg',
+      '/apps/itne/itne_05.jpg',
+      '/apps/itne/itne_06.jpg'
+    ],
     webUrl: 'https://itne.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.5.5.32/app-release.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13644369839',
@@ -105,9 +117,18 @@ export const apps: App[] = [
     name: 'CODI:D',
     category: 'flutter',
     description: 'AI 패션 코디네이터',
-    longDescription: `옷은 많은데 뭘 입을지 모르겠다면, CODI:D에게 맡기세요.\n\n카메라로 옷을 찍으면 AI가 분석하고, 어울리는 코디를 직접 이미지로 생성해줍니다. Gemini로 스타일을 분석하고 Imagen으로 코디 이미지를 만들어냅니다.\n\n체형별 마네킹(슬림·커브·상하체 비만·플러스 사이즈 등)으로 내 몸에 맞는 스타일을 추천합니다. 코디를 쌓아갈수록 나만의 패션 아바타가 진화합니다.\n\n웹 데이터 영구 보존(IndexedDB), iOS 홈 화면 추가 지원.\n\n옷장이 스타일리스트가 되는 앱.`,
+    longDescription: `옷은 많은데 뭘 입을지 모르겠다면, CODI:D에게 맡기세요.\n\n카메라로 옷을 찍으면 AI가 분석하고, 어울리는 코디를 직접 이미지로 생성해줍니다. Gemini로 스타일을 분석하고 Imagen으로 코디 이미지를 만들어냅니다.\n\n체형별 마네킹(슬림·커브·상하체 비만·플러스 사이즈 등)으로 내 몸에 맞는 스타일을 추천합니다. 코디를 쌓아갈수록 나만의 패션 아바타가 진화합니다.\n\n웹 데이터 영구 보존(IndexedDB), iOS 홈 화면 추가 지원.\n\n옷장이 스타일리스트가 되는 앱.\n\n👗 AI 코디 생성\n옷장에 있는 아이템을 하나씩 촬영해 등록하세요. CODI:D가 각 아이템의 스타일·색상·소재·계절감을 분석하고, 서로 어울리는 조합을 찾아냅니다. 상의·하의·아우터·신발·액세서리까지 풀코디 이미지를 Imagen이 생성해줍니다. '오늘 뭐 입지?' 고민은 이제 CODI:D가 대신합니다.\n\n🧍 체형 맞춤 마네킹\n내 몸에 맞는 코디가 진짜 코디입니다. 슬림, 커브핏, 상체비만, 하체비만, 플러스 사이즈까지 — CODI:D는 다양한 체형 마네킹에 옷을 입혀 보여줍니다. 내 체형과 비슷한 마네킹을 선택하면, 실제로 입었을 때 어떤 느낌일지 미리 확인할 수 있습니다.\n\n🔄 스타일 진화\n코디를 생성할 때마다 AI가 내 취향을 학습합니다. 자주 선택하는 색감, 선호하는 핏, 즐겨 입는 스타일을 파악해 점점 더 나에게 맞는 코디를 제안합니다. 마치 나만의 패션 어시스턴트를 키워가는 기분입니다.\n\n📱 어디서나 접근\nFlutter로 제작되어 Android, iOS, 웹 브라우저 어디서든 동일한 경험을 제공합니다. 웹 버전은 IndexedDB를 활용해 생성된 코디 이미지를 브라우저에 영구 저장하며, iOS에서는 홈 화면에 추가해 네이티브 앱처럼 사용할 수 있습니다.`,
     api: ['Gemini', 'Imagen'],
     iconUrl: '/apps/codi-d/icon.png',
+    screenshots: [
+      '/apps/codi-d/codi_d01.jpg',
+      '/apps/codi-d/codi_d02.jpg',
+      '/apps/codi-d/codi_d03.jpg',
+      '/apps/codi-d/codi_d04.jpg',
+      '/apps/codi-d/codi_d05.jpg',
+      '/apps/codi-d/codi_d06.jpg',
+      '/apps/codi-d/codi_d07.jpg'
+    ],
     webUrl: 'https://codi-d.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.5.6/CODI_D.apk',
     version: '1.0.5+6'

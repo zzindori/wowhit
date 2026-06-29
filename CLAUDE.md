@@ -54,6 +54,13 @@ https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름
 
 ## 작업 히스토리
 
+### 2026-06-29
+- shotWay, itNe, CODI:D 상세 페이지 JoA 수준으로 전면 강화
+  - shotWay: 스크린샷 2장 + 상세 설명 (실시간 공유/연결방식/크로스플랫폼/완전무료)
+  - itNe: 스크린샷 6장 + 상세 설명 (자동인식/냉장고관리/AI레시피/크로스플랫폼/이용권)
+  - CODI:D: 스크린샷 7장 + 상세 설명 (AI코디생성/체형맞춤마네킹/스타일진화/어디서나접근)
+  - 이미지는 digi.wowhit.org에 앱별로 업로드 후 public/apps/로 복사
+
 ### 2026-06-13
 - ドシラクeSIM 일본어 가이드 추가 (`public/esim/index.html`)
   - URL: wowhit.org/esim (wowhit Nuxt 앱과 완전 무관한 독립 정적 HTML)

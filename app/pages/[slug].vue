@@ -26,7 +26,7 @@ const links = computed(() => {
   }
   if (app.purchaseUrl) {
     const isCredit = app.purchaseLabel === '크레딧 구매'
-    result.push({ label: app.purchaseLabel || '이용권 구매', icon: isCredit ? 'i-lucide-coins' : 'i-lucide-shopping-cart', to: app.purchaseUrl, target: '_blank', color: isCredit ? 'primary' as const : 'warning' as const })
+    result.push({ label: app.purchaseLabel || '이용권 구매', icon: isCredit ? 'i-lucide-coins' : 'i-lucide-shopping-cart', to: app.purchaseUrl, target: '_blank', color: 'warning' as const })
   }
   return result
 })

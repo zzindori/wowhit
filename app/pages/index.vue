@@ -111,7 +111,7 @@ function getDirectLinks(app: (typeof apps)[0]) {
               target="_blank"
               size="xs"
               :variant="link.highlight ? 'subtle' : 'subtle'"
-              :color="link.isCredit ? 'primary' : link.highlight ? 'warning' : 'neutral'"
+              :color="link.highlight ? 'warning' : 'neutral'"
             />
           </div>
         </UCard>

@@ -105,12 +105,12 @@ export const apps: App[] = [
     name: 'CODI:D',
     category: 'flutter',
     description: 'AI 패션 코디네이터',
-    longDescription: `옷은 많은데 뭘 입을지 모르겠다면, CODI:D에게 맡기세요.\n\n카메라로 옷을 찍으면 AI가 분석하고, 어울리는 코디를 직접 이미지로 생성해줍니다. Gemini로 스타일을 분석하고 Grok으로 코디 이미지를 만들어냅니다.\n\nMLKit 기반 체형·얼굴 분석으로 내 몸에 맞는 스타일을 추천합니다. 코디를 쌓아갈수록 나만의 패션 아바타가 진화합니다.\n\n옷장이 스타일리스트가 되는 앱.`,
-    api: ['Gemini', 'Grok'],
+    longDescription: `옷은 많은데 뭘 입을지 모르겠다면, CODI:D에게 맡기세요.\n\n카메라로 옷을 찍으면 AI가 분석하고, 어울리는 코디를 직접 이미지로 생성해줍니다. Gemini로 스타일을 분석하고 Imagen으로 코디 이미지를 만들어냅니다.\n\n체형별 마네킹(슬림·커브·상하체 비만·플러스 사이즈 등)으로 내 몸에 맞는 스타일을 추천합니다. 코디를 쌓아갈수록 나만의 패션 아바타가 진화합니다.\n\n웹 데이터 영구 보존(IndexedDB), iOS 홈 화면 추가 지원.\n\n옷장이 스타일리스트가 되는 앱.`,
+    api: ['Gemini', 'Imagen'],
     iconUrl: '/apps/codi-d/icon.png',
     webUrl: 'https://codi-d.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.1.2/CODI_D.apk',
-    version: '1.0.1+2'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.5.6/CODI_D.apk',
+    version: '1.0.5+6'
   },
   {
     slug: 'farmguide',

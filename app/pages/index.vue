@@ -16,7 +16,16 @@ function getDirectLinks(app: (typeof apps)[0]) {
   if (app.iosUrl) links.push({ icon: 'i-simple-icons-appstore', label: 'App Store', to: app.iosUrl })
   if (app.webUrl) links.push({ icon: 'i-lucide-globe', label: 'Web', to: app.webUrl })
   if (app.apkUrl) links.push({ icon: 'i-simple-icons-android', label: 'Android 설치', to: app.apkUrl })
-  if (app.purchaseUrl) links.push({ icon: 'i-lucide-shopping-cart', label: '이용권 구매', to: app.purchaseUrl, highlight: true })
+  if (app.purchaseUrl) {
+    const isCredit = app.purchaseLabel === '크레딧 구매'
+    links.push({
+      icon: isCredit ? 'i-lucide-coins' : 'i-lucide-shopping-cart',
+      label: app.purchaseLabel || '이용권 구매',
+      to: app.purchaseUrl,
+      highlight: true,
+      isCredit
+    })
+  }
   return links
 }
 </script>
@@ -102,7 +111,7 @@ function getDirectLinks(app: (typeof apps)[0]) {
               target="_blank"
               size="xs"
               :variant="link.highlight ? 'subtle' : 'subtle'"
-              :color="link.highlight ? 'warning' : 'neutral'"
+              :color="link.isCredit ? 'primary' : link.highlight ? 'warning' : 'neutral'"
             />
           </div>
         </UCard>

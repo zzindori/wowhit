@@ -86,7 +86,7 @@ export const apps: App[] = [
     webUrl: 'https://itne.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.5.5.32/app-release.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13644369839',
-    version: '1.5.5+32'
+    version: '1.5.6+33'
   },
   {
     slug: 'careway',

@@ -102,18 +102,6 @@ export const apps: App[] = [
     version: '1.5.6+33'
   },
   {
-    slug: 'careway',
-    name: 'careWay',
-    category: 'flutter',
-    description: '부모님 복지 혜택 매니저',
-    longDescription: `복지 혜택은 찾기 어렵고, 찾아도 신청은 더 복잡합니다.\n\ncareWay는 부모님의 나이, 지역, 상황을 입력하면 받을 수 있는 복지 서비스를 자동으로 찾아줍니다. AI가 전국 공공데이터를 분석해 부모님께 맞는 혜택을 추천하고 분류합니다.\n\n신청 상태도 함께 관리됩니다. 어떤 서비스를 신청했는지, 어떤 게 아직 남아있는지 한눈에 볼 수 있습니다.\n\n부모님 복지, 이제 자녀가 직접 챙겨드릴 수 있습니다.`,
-    api: ['Gemini', 'Supabase'],
-    iconUrl: '/apps/careway/icon.png',
-    webUrl: 'https://careway.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.0.0.1/careWay.apk',
-    version: '1.0.0+1'
-  },
-  {
     slug: 'codi-d',
     name: 'CODI:D',
     category: 'flutter',
@@ -135,6 +123,18 @@ export const apps: App[] = [
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13646465925',
     purchaseLabel: '크레딧 구매',
     version: '1.0.5+6'
+  },
+  {
+    slug: 'careway',
+    name: 'careWay',
+    category: 'flutter',
+    description: '부모님 복지 혜택 매니저',
+    longDescription: `복지 혜택은 찾기 어렵고, 찾아도 신청은 더 복잡합니다.\n\ncareWay는 부모님의 나이, 지역, 상황을 입력하면 받을 수 있는 복지 서비스를 자동으로 찾아줍니다. AI가 전국 공공데이터를 분석해 부모님께 맞는 혜택을 추천하고 분류합니다.\n\n신청 상태도 함께 관리됩니다. 어떤 서비스를 신청했는지, 어떤 게 아직 남아있는지 한눈에 볼 수 있습니다.\n\n부모님 복지, 이제 자녀가 직접 챙겨드릴 수 있습니다.`,
+    api: ['Gemini', 'Supabase'],
+    iconUrl: '/apps/careway/icon.png',
+    webUrl: 'https://careway.wowhit.org',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.0.0.1/careWay.apk',
+    version: '1.0.0+1'
   },
   {
     slug: 'farmguide',

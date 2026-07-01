@@ -133,8 +133,8 @@ export const apps: App[] = [
     api: ['Gemini', 'Supabase'],
     iconUrl: '/apps/careway/icon.png',
     webUrl: 'https://careway.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.1.0.7/careWay.apk',
-    version: '1.1.0+7'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.1.0.8/careWay.apk',
+    version: '1.1.0+8'
   },
   {
     slug: 'farmguide',

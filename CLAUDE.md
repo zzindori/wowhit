@@ -39,20 +39,39 @@
 5. 메인 대표 노출은 `featuredPrintSlugs` 배열 수정
 
 ## APK 업로드 방법
-파일명을 앱 이름으로 복사한 뒤 업로드한다 (다운로드 시 파일명이 앱명으로 표시되도록).
+
+### 태그 규칙
+`{appname-lowercase}-v{version}.{build}` (예: `careway-v1.1.1.16`, `itne-v1.5.5.32`)
+
+### 업로드 절차
+1. 각 앱에서 `flutter build apk --release`
+2. APK를 앱 이름으로 복사: `cp app-release.apk /tmp/앱이름.apk`
+3. wowhit-releases에 릴리스 생성:
 ```bash
-cp /path/to/app-release.apk /tmp/앱이름.apk
-gh release create [앱명]-v1.0.0 /tmp/앱이름.apk \
+gh release create [앱명소문자]-v[버전].[빌드] /tmp/앱이름.apk \
   --repo zzindori/wowhit-releases \
-  --title "[앱명] v1.0.0" \
-  --notes "설명"
+  --title "[앱명] v[버전].[빌드]" \
+  --notes "변경 사항 설명"
 ```
-업로드 후 `apps.ts`의 해당 앱 `apkUrl` 필드에 아래 URL 형식으로 추가:
+4. `apps.ts`의 해당 앱 `apkUrl`과 `version` 업데이트:
 ```
-https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름.apk
+apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/[태그]/앱이름.apk'
+version: 'x.y.z+build'
 ```
+5. `git push` → Vercel 자동 배포
+
+### 주의
+- **절대 APK를 소스 repo에 커밋하지 않는다** (용량 초과 + private repo는 다운로드 404)
+- wowhit-releases는 공개(public) repo — private이면 릴리스 assets 다운로드 불가
+- 기존 릴리스 교체 시: `gh release delete {old-tag} --repo zzindori/wowhit-releases --yes`
 
 ## 작업 히스토리
+
+### 2026-07-03
+- careWay v1.1.1+16 APK + 웹 업데이트
+  - APK: wowhit-releases에 `careway-v1.1.1.16` 릴리스 생성, `careWay.apk` 업로드
+  - 웹: Vercel 자동 배포 (careway.wowhit.org)
+  - apps.ts: apkUrl, version 업데이트
 
 ### 2026-06-29
 - shotWay, itNe, CODI:D 상세 페이지 JoA 수준으로 전면 강화

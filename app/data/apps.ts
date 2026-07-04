@@ -129,9 +129,19 @@ export const apps: App[] = [
     name: 'careWay',
     category: 'flutter',
     description: '부모님 복지 혜택 매니저',
-    longDescription: `복지 혜택은 찾기 어렵고, 찾아도 신청은 더 복잡합니다.\n\ncareWay는 부모님의 나이, 지역, 상황을 입력하면 받을 수 있는 복지 서비스를 자동으로 찾아줍니다. AI가 전국 공공데이터를 분석해 부모님께 맞는 혜택을 추천하고 분류합니다.\n\n신청 상태도 함께 관리됩니다. 어떤 서비스를 신청했는지, 어떤 게 아직 남아있는지 한눈에 볼 수 있습니다.\n\n부모님 복지, 이제 자녀가 직접 챙겨드릴 수 있습니다.`,
+    longDescription: `복지 혜택은 찾기 어렵고, 찾아도 신청은 더 복잡합니다.\n\ncareWay는 부모님의 나이, 지역, 건강 상태를 등록하면 받을 수 있는 복지 서비스를 자동으로 찾아줍니다. 중앙부처 복지 API와 전국 지자체 홈페이지를 함께 수집하고, AI가 부모님 프로필과 대조해 우선 확인·검토 후·알아두기 세 단계로 분류해줍니다.\n\n찾는 것에서 끝나지 않고, 신청 진행 상황과 서류까지 가족이 함께 관리할 수 있습니다.\n\n부모님 복지, 이제 자녀가 직접 챙겨드릴 수 있습니다.\n\n🎯 맞춤 혜택 자동 매칭\n부모님의 나이·지역·요양등급·독거 여부 같은 태그를 등록하면, AI가 전국 복지 서비스 중 실제로 해당되는 것만 우선 확인/검토 후/알아두기로 나눠 보여줍니다. 서비스마다 AI 요약과 해당 사유 태그가 함께 표시돼 왜 추천됐는지 바로 이해할 수 있습니다.\n\n👨‍👩‍👧 가족 공유\nQR 코드나 6자리 코드 하나로 부모님 프로필을 가족에게 공유할 수 있습니다. 회원가입 없이도 형제자매가 같은 혜택 목록과 신청 현황을 함께 확인합니다.\n\n📋 신청 진행 관리\n관심 있는 혜택을 저장됨 → 준비 중 → 신청 완료 단계로 관리하고, 가족끼리 진행 메모를 타임라인으로 남길 수 있습니다. "서류받아랏", "오케?" 같은 짧은 메모만으로도 누가 어디까지 했는지 공유됩니다.\n\n📁 서류 보관함\n신청에 필요한 서류를 사진으로 찍어 부모님별로 보관합니다. 스캔된 서류는 신청 항목에 바로 첨부하거나 다운로드할 수 있어, 매번 서류를 다시 찾을 필요가 없습니다.`,
     api: ['Gemini', 'Supabase'],
     iconUrl: '/apps/careway/icon.png',
+    screenshots: [
+      '/apps/careway/careway_01.jpg',
+      '/apps/careway/careway_02.jpg',
+      '/apps/careway/careway_03.jpg',
+      '/apps/careway/careway_04.jpg',
+      '/apps/careway/careway_05.jpg',
+      '/apps/careway/careway_06.jpg',
+      '/apps/careway/careway_07.jpg',
+      '/apps/careway/careway_08.jpg'
+    ],
     webUrl: 'https://careway.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.2.0.17/careWay.apk',
     version: '1.2.0+17'

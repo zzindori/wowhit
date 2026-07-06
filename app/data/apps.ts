@@ -270,6 +270,7 @@ export const apps: App[] = [
     description: '6자리 코드로 빠르고 간편하게 파일 전송',
     longDescription: `복잡한 설정 없이 6자리 코드만으로 파일을 주고받는 전송 앱.\n\n보내는 사람이 파일을 선택하면 6자리 코드와 QR이 생성됩니다. 받는 사람이 코드를 입력하거나 QR을 스캔하면 실시간으로 파일이 전송됩니다.\n\n• 최대 100MB\n• 3분 코드 만료\n• 다운로드 완료 즉시 서버에서 삭제\n• Web + Android 지원`,
     platform: 'Flutter · Web',
+    iconUrl: '/apps/anyway/icon.png',
     webUrl: 'https://anyway.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/anyway-v1.0.0/anyWay.apk',
     version: '1.0.0',

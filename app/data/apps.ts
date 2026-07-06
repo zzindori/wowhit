@@ -262,6 +262,18 @@ export const apps: App[] = [
     longDescription: `손목 위에서 알림을 주고받는 스마트워치 앱.\n\nBBiBBi는 Android Wear OS용 앱입니다. 방을 만들거나 코드로 방에 입장해 연결된 사람들과 간단한 신호를 주고받을 수 있습니다.\n\nFirebase 기반 푸시로 상대방이 신호를 보내면 즉시 진동으로 알려줍니다.\n\n말 없이 손목으로 연결되는 신호 앱.`,
     platform: 'Android Watch',
     api: ['Firebase']
+  },
+  {
+    slug: 'anyway',
+    name: 'anyWay',
+    category: 'flutter',
+    description: '6자리 코드로 빠르고 간편하게 파일 전송',
+    longDescription: `복잡한 설정 없이 6자리 코드만으로 파일을 주고받는 전송 앱.\n\n보내는 사람이 파일을 선택하면 6자리 코드와 QR이 생성됩니다. 받는 사람이 코드를 입력하거나 QR을 스캔하면 실시간으로 파일이 전송됩니다.\n\n• 최대 100MB\n• 3분 코드 만료\n• 다운로드 완료 즉시 서버에서 삭제\n• Web + Android 지원`,
+    platform: 'Flutter · Web',
+    webUrl: 'https://anyway.wowhit.org',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/anyway-v1.0.0/anyWay.apk',
+    version: '1.0.0',
+    storeReleased: false
   }
 ]
 

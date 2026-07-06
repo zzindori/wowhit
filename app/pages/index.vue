@@ -76,6 +76,22 @@ function getDirectLinks(app: (typeof apps)[0]) {
                   color="success"
                   variant="subtle"
                 />
+                <UBadge
+                  v-if="app.pricingModel === 'free'"
+                  label="무료"
+                  icon="i-lucide-badge-check"
+                  size="xs"
+                  color="success"
+                  variant="outline"
+                />
+                <UBadge
+                  v-if="app.pricingModel === 'ads'"
+                  label="광고 시청"
+                  icon="i-lucide-tv"
+                  size="xs"
+                  color="neutral"
+                  variant="outline"
+                />
                 <span
                   v-if="app.version"
                   class="text-xs text-muted"

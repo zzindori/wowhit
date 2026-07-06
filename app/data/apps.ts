@@ -14,6 +14,7 @@ export interface App {
   apkUrl?: string
   purchaseUrl?: string
   purchaseLabel?: string
+  pricingModel?: 'free' | 'ads'
   version?: string
   youtubeUrl?: string
   shorts?: string[]
@@ -29,6 +30,7 @@ export const apps: App[] = [
     description: '해외 메뉴판을 찍으면 음식을 이해할 수 있게 설명해주는 AI 여행 앱',
     longDescription: `여행 가면 누구나 한 번쯤 겪는 순간.\n번역은 되지만, 어떤 음식인지 이해하기 어려울 때가 있습니다.\n\nmenuWay는 메뉴판을 촬영하면 메뉴 이름과 설명을 함께 제공합니다.\n\n단순 번역이 아니라,\n음식을 이해할 수 있도록 돕는 앱입니다.\n\n이제 주문 앞에서 멈추지 마세요.\n\nTranslate. Order. Enjoy.`,
     storeReleased: true,
+    pricingModel: 'ads',
     iconUrl: '/apps/menuway/icon.png',
     screenshots: [
       '/apps/menuway/MenuWay_iOS_01.png',
@@ -57,6 +59,7 @@ export const apps: App[] = [
     ],
     webUrl: 'https://shotway.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/shotway-v1.0.0/shotWay.apk',
+    pricingModel: 'free',
     version: '1.0.0+3',
     storeReleased: false
   },
@@ -144,6 +147,7 @@ export const apps: App[] = [
     ],
     webUrl: 'https://careway.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.2.0.17/careWay.apk',
+    pricingModel: 'free',
     version: '1.2.0+17'
   },
   {

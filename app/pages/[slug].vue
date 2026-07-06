@@ -169,6 +169,20 @@ useSeoMeta({ title: `${app.name} — wowhit` })
             variant="subtle"
           />
           <UBadge
+            v-if="app.pricingModel === 'free'"
+            label="무료"
+            icon="i-lucide-badge-check"
+            color="success"
+            variant="outline"
+          />
+          <UBadge
+            v-if="app.pricingModel === 'ads'"
+            label="광고 시청"
+            icon="i-lucide-tv"
+            color="neutral"
+            variant="outline"
+          />
+          <UBadge
             v-for="a in app.api"
             :key="a"
             :label="a"

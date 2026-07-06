@@ -92,6 +92,14 @@ function getDirectLinks(app: (typeof apps)[0]) {
                   color="neutral"
                   variant="outline"
                 />
+                <UBadge
+                  v-if="app.purchaseUrl"
+                  label="AI 유료"
+                  icon="i-lucide-sparkles"
+                  size="xs"
+                  color="warning"
+                  variant="outline"
+                />
                 <span
                   v-if="app.version"
                   class="text-xs text-muted"

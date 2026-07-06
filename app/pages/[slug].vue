@@ -183,6 +183,13 @@ useSeoMeta({ title: `${app.name} — wowhit` })
             variant="outline"
           />
           <UBadge
+            v-if="app.purchaseUrl"
+            label="AI 유료"
+            icon="i-lucide-sparkles"
+            color="warning"
+            variant="outline"
+          />
+          <UBadge
             v-for="a in app.api"
             :key="a"
             :label="a"

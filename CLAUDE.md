@@ -17,7 +17,8 @@
 - `app/pages/[slug].vue` — 앱 상세 페이지 (댓글 포함)
 - `app/pages/3d.vue` — 3D Printing 갤러리 (카테고리별 섹션)
 - `app/components/AppLogo.vue` — 헤더 로고
-- `app/app.vue` — 전체 레이아웃 (헤더: 3D·QR, 푸터)
+- `app/app.vue` — 전체 레이아웃 (헤더: 이용 안내·3D·QR, 푸터)
+- `app/pages/guide.vue` — 이용 안내 페이지 (홈 화면 추가, 이용권/API키 사용법, Gemini 가격)
 - `public/prints/` — 3D 작품 썸네일 이미지 (slug 파일명 권장)
 - `server/api/comments/` — 댓글 Vercel 프록시 → api.wowhit.org
 
@@ -66,6 +67,14 @@ version: 'x.y.z+build'
 - 기존 릴리스 교체 시: `gh release delete {old-tag} --repo zzindori/wowhit-releases --yes`
 
 ## 작업 히스토리
+
+### 2026-07-06
+- 이용 안내 페이지 신규 추가 (`/guide`)
+  - 홈 화면에 추가(PWA 설치) Android(Chrome)/iPhone(Safari) 탭별 단계 안내
+  - 이용권·크레딧 구매 vs Gemini API 키 직접 사용 비교, API 키 발급 절차
+  - Gemini 2.5 Flash Image/Imagen 4/텍스트 모델 대략적 가격표 (출처: ai.google.dev/gemini-api/docs/pricing)
+  - 앱별 이용권 구매 링크(JoA/itNe/CODI:D), FAQ 아코디언
+  - 헤더에 "이용 안내" 메뉴 추가
 
 ### 2026-07-03
 - careWay v1.1.1+16 APK + 웹 업데이트

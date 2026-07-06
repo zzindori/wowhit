@@ -30,6 +30,16 @@ useSeoMeta({
 
       <template #right>
         <NuxtLink
+          to="/guide"
+          class="text-sm text-muted hover:text-default flex items-center gap-1.5"
+        >
+          <UIcon
+            name="i-lucide-book-open-text"
+            class="size-4"
+          />
+          이용 안내
+        </NuxtLink>
+        <NuxtLink
           to="/3d"
           class="text-sm text-muted hover:text-default flex items-center gap-1.5"
         >

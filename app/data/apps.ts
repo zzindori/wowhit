@@ -146,9 +146,9 @@ export const apps: App[] = [
       '/apps/careway/careway_08.jpg'
     ],
     webUrl: 'https://careway.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.2.1.18/careWay.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/careway-v1.2.2.19/careWay.apk',
     pricingModel: 'free',
-    version: '1.2.1+18'
+    version: '1.2.2+19'
   },
   {
     slug: 'farmguide',

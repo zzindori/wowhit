@@ -68,6 +68,13 @@ version: 'x.y.z+build'
 
 ## 작업 히스토리
 
+### 2026-07-06 (추가)
+- 앱 카드 무료/광고 시청 배지 추가
+  - `apps.ts`에 `pricingModel?: 'free' | 'ads'` 필드 추가
+  - menuWay: `ads` (google_mobile_ads 사용 확인), shotWay·careWay: `free`
+  - 나머지 앱은 미표시 (이용권/크레딧 구매는 기존 purchaseUrl 버튼으로 구분됨)
+  - 메인 카드(`index.vue`)와 상세 페이지(`[slug].vue`) 배지 영역에 표시
+
 ### 2026-07-06
 - 이용 안내 페이지 신규 추가 (`/guide`)
   - 홈 화면에 추가(PWA 설치) Android(Chrome)/iPhone(Safari) 탭별 단계 안내

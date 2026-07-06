@@ -164,6 +164,56 @@ const faqs = [
         </UTabs>
       </section>
 
+      <!-- 1-1. Android APK 직접 설치 -->
+      <section>
+        <h2 class="text-xl font-bold mb-1 flex items-center gap-2">
+          <UIcon
+            name="i-simple-icons-android"
+            class="size-5 text-primary"
+          />
+          Android 직접 설치(APK) 시 나오는 안내들
+        </h2>
+        <p class="text-sm text-muted mb-6">
+          아직 Google Play에 정식 출시하지 않은 앱(JoA, itNe, CODI:D, careWay 등)은
+          "Android 직접 설치" 버튼으로 APK 파일을 내려받아 설치합니다. Play 스토어를
+          거치지 않다 보니 중간에 낯선 확인창이 여러 번 뜨는데, 전부 정상적인 절차입니다.
+        </p>
+        <ol class="space-y-4 text-sm">
+          <li class="flex gap-3">
+            <span class="shrink-0 size-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">1</span>
+            <div>
+              <p><strong>다운로드 경고</strong> — "이 파일 형식은 기기에 손상을 줄 수 있습니다" 같은 문구가 뜨면 <strong>"다운로드"</strong> 또는 <strong>"무시하고 다운로드"</strong>를 눌러 계속 진행합니다.</p>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <span class="shrink-0 size-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">2</span>
+            <div>
+              <p><strong>출처를 알 수 없는 앱 차단</strong> — "이 출처의 앱 설치가 차단되었습니다"라는 화면이 뜨면 <strong>"설정"</strong>을 누른 뒤, 사용 중인 브라우저(Chrome, 삼성 인터넷 등)의 <strong>"이 출처 허용"</strong> 토글을 켜고 뒤로 돌아와 다시 설치를 시도합니다. 한 번 허용해두면 다음 설치부터는 다시 묻지 않습니다.</p>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <span class="shrink-0 size-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">3</span>
+            <div>
+              <p><strong>Play 프로텍트 경고</strong> — "알 수 없는 앱입니다", "이 앱은 확인되지 않았습니다" 같은 경고가 뜰 수 있습니다. <strong>"세부정보"</strong>를 펼쳐 <strong>"무시하고 설치"</strong>를 선택하면 진행됩니다. 이는 Play 스토어에 등록되지 않은 APK 전체에 공통으로 뜨는 안내이며, 악성 코드 여부와는 무관합니다.</p>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <span class="shrink-0 size-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">4</span>
+            <div>
+              <p><strong>설치 완료</strong> — 설치가 끝나면 <strong>"열기"</strong>를 눌러 바로 실행하거나, 홈 화면/앱 서랍에서 아이콘을 찾아 실행합니다.</p>
+            </div>
+          </li>
+        </ol>
+        <UAlert
+          icon="i-lucide-shield-check"
+          color="neutral"
+          variant="subtle"
+          title="삭제는 언제든 간단하게"
+          description="홈 화면 아이콘을 길게 눌러 '삭제' 또는 '앱 정보 > 제거'를 선택하면 됩니다. 설정 앱 > 앱 목록에서도 동일하게 제거할 수 있습니다."
+          class="mt-4"
+        />
+      </section>
+
       <!-- 2. 이용 방법 두 가지 -->
       <section>
         <h2 class="text-xl font-bold mb-1 flex items-center gap-2">

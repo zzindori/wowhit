@@ -44,6 +44,26 @@ const newContent = ref('')
 const replyingTo = ref<{ id: number, author: string } | null>(null)
 const replyContent = ref('')
 
+// 소스코드 표시
+const sourceCode = ref<string | null>(null)
+const sourceLoading = ref(false)
+const sourceCopied = ref(false)
+
+if (app.sourceCodeUrl) {
+  sourceLoading.value = true
+  useFetch(app.sourceCodeUrl, { baseURL: '' }).then(({ data }) => {
+    if (data.value) sourceCode.value = data.value as string
+    sourceLoading.value = false
+  })
+}
+
+function copySource() {
+  if (!sourceCode.value) return
+  navigator.clipboard.writeText(sourceCode.value)
+  sourceCopied.value = true
+  setTimeout(() => { sourceCopied.value = false }, 2000)
+}
+
 const deleteTarget = ref<{ id: number, author: string, isReply: boolean } | null>(null)
 const deleteModalOpen = ref(false)
 const deletePassword = ref('')
@@ -230,6 +250,40 @@ useSeoMeta({ title: `${app.name} — wowhit` })
           >
             {{ app.description }}
           </p>
+        </div>
+
+        <!-- 소스코드 -->
+        <div
+          v-if="app.sourceCodeUrl"
+          class="mb-10"
+        >
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">
+              소스코드
+            </h2>
+            <UButton
+              v-if="sourceCode"
+              :icon="sourceCopied ? 'i-lucide-check' : 'i-lucide-copy'"
+              :label="sourceCopied ? '복사됨' : '전체 복사'"
+              :color="sourceCopied ? 'success' : 'neutral'"
+              variant="outline"
+              size="sm"
+              @click="copySource"
+            />
+          </div>
+          <div
+            v-if="sourceLoading"
+            class="flex justify-center py-10"
+          >
+            <UIcon
+              name="i-lucide-loader-circle"
+              class="size-5 animate-spin text-muted"
+            />
+          </div>
+          <pre
+            v-else-if="sourceCode"
+            class="bg-gray-950 text-gray-300 rounded-xl p-4 overflow-auto text-xs leading-relaxed max-h-96 border border-gray-800 font-mono whitespace-pre select-all"
+          ><code>{{ sourceCode }}</code></pre>
         </div>
 
         <div

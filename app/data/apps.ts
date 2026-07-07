@@ -19,6 +19,7 @@ export interface App {
   youtubeUrl?: string
   shorts?: string[]
   storeReleased?: boolean
+  sourceCodeUrl?: string
 }
 
 export const apps: App[] = [
@@ -251,6 +252,16 @@ export const apps: App[] = [
     longDescription: `베이커리 POS 기기 사용이 처음이라면 실수가 걱정됩니다.\n\nposTest는 실제 POS 화면과 동일한 환경에서 연습할 수 있는 시뮬레이터입니다. 상품을 선택하고 결제하는 기본 흐름을 반복 연습할 수 있습니다.\n\n퀴즈 모드에서는 상품명을 맞추는 타이머 도전이 가능합니다. 점수가 쌓이면 랭킹에 기록됩니다.\n\n출근 전 5분, POS 완벽 적응.`,
     iconUrl: '/apps/postest/icon.png',
     webUrl: 'https://postest.wowhit.org'
+  },
+  {
+    slug: 'qrmaker',
+    name: 'qrMaker',
+    category: 'web',
+    description: '대용량 텍스트를 여러 QR 코드로 분할 생성하는 오프라인 유틸리티',
+    longDescription: `긴 텍스트나 소스코드를 QR 코드로 전송해야 할 때, 한 장으로는 용량 제한 때문에 불가능합니다.\n\nqrMaker는 입력된 텍스트를 UTF-8 바이트 기준으로 자동 분할해 여러 개의 QR 코드로 생성합니다. SHA256 해시를 QR 헤더에 포함해 수신 측에서 무결성을 검증할 수 있습니다.\n\n📱 오프라인 동작\n인터넷 연결 없이 브라우저에서 바로 작동합니다. file:// 프로토콜에서도 실행 가능해 로컬 파일로 저장해두면 언제든 사용할 수 있습니다.\n\n🔀 멀티 QR 분할\n한 청크당 약 1,474바이트까지 담을 수 있어, 10KB 텍스트는 약 7개의 QR 코드로 나뉩니다. 각 QR에는 [인덱스/전체:해시] 헤더가 붙어 codeWay 같은 멀티 QR 스캐너로 순서대로 읽으면 원문이 복원됩니다.\n\n🖥 반응형 QR 뷰어\n생성된 QR 코드는 전용 뷰어 탭에서 확인할 수 있습니다. 윈도우 크기에 맞춰 QR이 정사각형을 유지하며 자동 조절되고, 키보드 화살표로 QR을 넘길 수 있습니다.\n\n🔒 완전한 오프라인\n외부 CDN, API 호출 없이 SHA256 순수 JS 구현과 QR 인코더가 내장되어 있습니다. 네트워크가 차단된 환경에서도 안전하게 동작합니다.`,
+    iconUrl: '/apps/qrmaker/icon.png',
+    webUrl: 'https://qrmaker.wowhit.org',
+    sourceCodeUrl: '/apps/qrmaker/index.html'
   },
 
   // 기타

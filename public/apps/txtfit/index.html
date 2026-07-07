@@ -463,7 +463,15 @@ function runClean() {
       continue;
     }
 
-    if (metaPattern.test(probe)) continue;
+    if (metaPattern.test(probe)) {
+      // 메타 줄이 분할 헤더 바로 앞이면, 그 앞의 빈 줄은 메시지 구분용 여백일 뿐
+      // 실제 단락 구분이 아니므로 함께 제거 (분할 경계마다 빈 줄이 끼는 문제 방지)
+      const nextProbe = (i + 1 < lines.length) ? lines[i + 1].trim() : '';
+      if (partHeaderPattern.test(nextProbe)) {
+        while (cleaned.length && cleaned[cleaned.length - 1] === '') cleaned.pop();
+      }
+      continue;
+    }
 
     if (partHeaderPattern.test(probe)) {
       // findLastIndex 폴리필 (ES2023 미지원 구형 브라우저/WebView 대응)

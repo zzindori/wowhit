@@ -219,7 +219,8 @@ export const apps: App[] = [
     iconUrl: '/apps/txtfit/icon.png',
     webUrl: 'https://txtfit.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/txtfit-v1.0.0/txtFit.apk',
-    version: '1.0.0'
+    version: '1.0.0',
+    sourceCodeUrl: '/apps/txtfit/index.html'
   },
   {
     slug: 'codeway',

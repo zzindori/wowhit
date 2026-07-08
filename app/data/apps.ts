@@ -218,7 +218,7 @@ export const apps: App[] = [
     longDescription: `긴 텍스트를 AI 채팅에 붙여넣으면 글자 수 제한에 막힐 때가 있습니다.\n\ntxtFit은 두 가지 기능을 제공합니다. 긴 텍스트를 원하는 글자 수 단위로 나눠 [1/3], [2/3] 형식으로 순서대로 복사할 수 있는 분할 기능, 그리고 나눠진 블럭들을 다시 깔끔하게 이어붙이는 결합 기능입니다.\n\n분할 헤더가 자동으로 붙고, 반대로 제거하는 것도 가능합니다.\n\n글자 수 제한을 넘어, 내 텍스트를 내 마음대로.`,
     iconUrl: '/apps/txtfit/icon.png',
     webUrl: 'https://txtfit.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/txtfit-v1.0.0/txtFit.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/txtfit-v1.0.1/txtFit.apk',
     version: '1.0.1',
     sourceCodeUrl: '/apps/txtfit/index.html'
   },

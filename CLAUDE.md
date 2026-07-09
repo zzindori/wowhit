@@ -68,6 +68,11 @@ version: 'x.y.z+build'
 
 ## 작업 히스토리
 
+### 2026-07-09
+- bibleWay 포트폴리오 추가 (아이콘 + 앱 데이터)
+  - 자료실(digi.wowhit.org)에서 bibleWay (1).png 아이콘 가져와 1024x1024 리사이즈
+  - `apps.ts`에 bibleWay 항목 추가: Flutter, 개역한글 성경 읽기 + AI(DeepSeek) 해설
+
 ### 2026-07-07
 - talkWay 아이콘 교체: Flutter 앱 실제 아이콘 (xxxhdpi) → 1024x1024 업스케일 적용
 

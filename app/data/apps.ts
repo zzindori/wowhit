@@ -241,7 +241,10 @@ export const apps: App[] = [
     description: '개역한글 성경 읽기 + AI 해설',
     longDescription: `성경을 읽다 보면 낯선 인물, 지명, 표현이 나올 때가 많습니다.\n\nbibleWay는 개역한글 성경을 읽으면서 궁금한 절을 터치하면 AI가 바로 해설해주는 앱입니다. Gemini AI가 쉬운 말 풀이, 현대어 재진술, 한줄 요약, 화자/청자 정보까지 알려줍니다.\n\n통독 진행률과 N회독 카운트로 꾸준한 읽기 습관을 도와줍니다. 사도신경과 주기도문도 새번역/전통 버전으로 함께 볼 수 있습니다.\n\nAI 해설은 최초 조회 시 생성되어 캐싱되므로, 같은 절을 다시 볼 때는 즉시 표시됩니다. Supabase로 여러 기기에서 읽기 진도를 동기화할 수 있습니다.\n\n말씀을 더 깊이 이해하고 싶은 분들을 위한 AI 성경 읽기 도우미.`,
     api: ['Gemini', 'Supabase'],
-    iconUrl: '/apps/bibleway/icon.png'
+    iconUrl: '/apps/bibleway/icon.png',
+    webUrl: 'https://bibleway.wowhit.org',
+    pricingModel: 'free',
+    version: '1.0.0+1'
   },
 
   // Web 앱

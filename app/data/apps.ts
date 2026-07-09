@@ -210,7 +210,10 @@ export const apps: App[] = [
     description: '실시간 화자분리 자막 앱 (청각장애인용)',
     longDescription: `소리가 잘 들리지 않는 환경에서도 대화를 이어갈 수 있어야 합니다.\n\ntalkWay는 실시간으로 주변 소리를 인식해 자막으로 변환합니다. Google STT와 Naver CLOVA 두 엔진을 지원해 인식 정확도를 높였습니다.\n\n화자 분리 기능으로 누가 말하는지도 구분할 수 있습니다. 회의, 강의, 일상 대화 어디서든 자막이 따라옵니다.\n\n청각 장애인과 소음이 심한 환경을 위한 실시간 자막 앱.`,
     api: ['Google STT', 'Naver CLOVA'],
-    iconUrl: '/apps/talkway/icon.png'
+    iconUrl: '/apps/talkway/icon.png',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/talkway-v1.0.0%2B1/app-release.apk',
+    version: '1.0.0+1',
+    storeReleased: false
   },
   {
     slug: 'txtfit',

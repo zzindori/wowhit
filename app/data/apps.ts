@@ -170,7 +170,8 @@ export const apps: App[] = [
       '/apps/farmguide/farmguide_03.jpg',
       '/apps/farmguide/farmguide_04.jpg',
       '/apps/farmguide/farmguide_05.jpg',
-      '/apps/farmguide/farmguide_06.jpg'
+      '/apps/farmguide/farmguide_06.jpg',
+      '/apps/farmguide/farmguide_07.jpg'
     ],
     webUrl: 'https://farmway.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/farmguide-v1.0.0.1/farmGuide.apk',

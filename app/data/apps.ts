@@ -29,9 +29,9 @@ export const apps: App[] = [
     name: 'menuWay',
     category: 'flutter',
     description: '해외 메뉴판을 찍으면 음식을 이해할 수 있게 설명해주는 AI 여행 앱',
-    longDescription: `여행 가면 누구나 한 번쯤 겪는 순간.\n번역은 되지만, 어떤 음식인지 이해하기 어려울 때가 있습니다.\n\nmenuWay는 메뉴판을 촬영하면 메뉴 이름과 설명을 함께 제공합니다.\n\n단순 번역이 아니라,\n음식을 이해할 수 있도록 돕는 앱입니다.\n\n이제 주문 앞에서 멈추지 마세요.\n\nTranslate. Order. Enjoy.`,
+    longDescription: `여행 가면 누구나 한 번쯤 겪는 순간.\n번역은 되지만, 어떤 음식인지 이해하기 어려울 때가 있습니다.\n\nmenuWay는 메뉴판을 촬영하면 메뉴 이름과 설명을 함께 제공합니다.\n\n단순 번역이 아니라,\n음식을 이해할 수 있도록 돕는 앱입니다.\n\n이제 주문 앞에서 멈추지 마세요.\n\nTranslate. Order. Enjoy.\n\nGoogle Play / App Store 버전은 광고가 포함되어 있습니다. 광고 없이 쓰고 싶다면 APK 직접 설치나 웹앱을 이용하세요 — 설치 시 5회는 무료로 체험할 수 있고, 이후에는 본인의 Gemini API 키를 등록(BYOK)하거나 스마트스토어에서 크레딧을 구매해 계속 사용할 수 있습니다.\n\nAndroid 직접 설치는 위 버튼으로 APK를 다운로드한 후 파일을 열어 설치합니다. 처음 설치 시 알 수 없는 앱 설치 허용 설정이 필요할 수 있습니다.`,
+    api: ['Gemini'],
     storeReleased: true,
-    pricingModel: 'ads',
     iconUrl: '/apps/menuway/icon.png',
     screenshots: [
       '/apps/menuway/MenuWay_iOS_01.png',
@@ -43,24 +43,12 @@ export const apps: App[] = [
     ],
     androidUrl: 'https://play.google.com/store/apps/details?id=com.menuway.app&hl=ko',
     iosUrl: 'https://apps.apple.com/kr/app/menuway/id6758591797',
-    purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13657566636',
-    purchaseLabel: '크레딧 구매',
-    youtubeUrl: 'https://www.youtube.com/@zzindori/shorts',
-    shorts: ['D_w3q4XwCa4', 'gTf98JexFGo', 'ss76szvONxo', '0DK2QBaTMac']
-  },
-  {
-    slug: 'menuwayall',
-    name: 'MenuWay All',
-    category: 'flutter',
-    description: '광고 없는 menuWay — 해외 메뉴판 AI 설명 앱 (APK 직접배포)',
-    longDescription: `menuWay의 광고 없는 버전입니다.\n\n스토어 심사나 광고 없이, APK 직접 설치 또는 웹앱으로 바로 사용할 수 있습니다.\n\n설치 시 5회는 무료로 체험할 수 있고, 이후에는 본인의 Gemini API 키를 등록(BYOK)하거나 스마트스토어에서 크레딧을 구매해 계속 사용할 수 있습니다.\n\nAndroid 설치는 위 직접 설치 버튼으로 APK를 다운로드한 후 파일을 열어 설치합니다. 처음 설치 시 알 수 없는 앱 설치 허용 설정이 필요할 수 있습니다.`,
-    api: ['Gemini'],
-    iconUrl: '/apps/menuwayall/icon.png',
     webUrl: 'https://menuway.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/menuwayall-v1.0.2%2B10/app-release.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13657566636',
     purchaseLabel: '크레딧 구매',
-    pricingModel: 'free',
+    youtubeUrl: 'https://www.youtube.com/@zzindori/shorts',
+    shorts: ['D_w3q4XwCa4', 'gTf98JexFGo', 'ss76szvONxo', '0DK2QBaTMac'],
     version: '1.0.2+10'
   },
   {

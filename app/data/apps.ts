@@ -56,6 +56,7 @@ export const apps: App[] = [
     longDescription: `menuWay의 광고 없는 버전입니다.\n\n스토어 심사나 광고 없이, APK 직접 설치 또는 웹앱으로 바로 사용할 수 있습니다.\n\n설치 시 5회는 무료로 체험할 수 있고, 이후에는 본인의 Gemini API 키를 등록(BYOK)하거나 스마트스토어에서 크레딧을 구매해 계속 사용할 수 있습니다.\n\nAndroid 설치는 위 직접 설치 버튼으로 APK를 다운로드한 후 파일을 열어 설치합니다. 처음 설치 시 알 수 없는 앱 설치 허용 설정이 필요할 수 있습니다.`,
     api: ['Gemini'],
     iconUrl: '/apps/menuwayall/icon.png',
+    webUrl: 'https://menuway.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/menuwayall-v1.0.2%2B10/app-release.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13657566636',
     purchaseLabel: '크레딧 구매',

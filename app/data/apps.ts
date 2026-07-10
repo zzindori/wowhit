@@ -44,7 +44,7 @@ export const apps: App[] = [
     androidUrl: 'https://play.google.com/store/apps/details?id=com.menuway.app&hl=ko',
     iosUrl: 'https://apps.apple.com/kr/app/menuway/id6758591797',
     webUrl: 'https://menuway.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/menuwayall-v1.0.2%2B10/app-release.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/menuwayall-v1.0.3%2B11/app-release.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13657566636',
     purchaseLabel: '크레딧 구매',
     youtubeUrl: 'https://www.youtube.com/@zzindori/shorts',

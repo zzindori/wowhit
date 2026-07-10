@@ -158,12 +158,21 @@ export const apps: App[] = [
   },
   {
     slug: 'farmguide',
-    name: 'farmGuide',
+    name: 'farmWay',
     category: 'flutter',
     description: '스마트 농업 경영 앱 (토지/작물 등록~수익정산)',
-    longDescription: `농사는 기억에만 의존하기엔 너무 복잡합니다.\n\nfarmGuide는 토지 등록부터 작물 선택, 파종·수확 일정 관리, 인력 기록, 수익 정산까지 농업 경영 전 과정을 하나의 앱에서 관리합니다.\n\n네이버 지도 기반으로 농지를 직접 선택하고 관리할 수 있습니다. 수확이 끝나면 차트로 수익과 비용을 한눈에 확인할 수 있습니다.\n\n농부를 위한 스마트 경영 도우미.`,
+    longDescription: `농사는 기억에만 의존하기엔 너무 복잡합니다.\n\nfarmWay는 토지 등록부터 작물 선택, 파종·수확 일정 관리, 인력 기록, 수익 정산까지 농업 경영 전 과정을 하나의 앱에서 관리합니다.\n\n네이버 지도 지적도를 직접 탭해서 내 농지를 등록하고, 심은 작물의 파종일부터 수확예정일까지 진행률로 확인할 수 있습니다. 날씨와 연동된 병해충 위험 경보로 미리 대비하고, 수확이 끝나면 차트로 수익과 비용을 한눈에 확인할 수 있습니다.\n\n농부를 위한 스마트 경영 도우미.\n\n🗺️ 지적도 기반 토지 등록\n네이버 지도의 지적도 레이어에서 내 땅을 직접 탭하거나 주소를 검색해서 토지를 등록합니다. 지목·면적·지번이 자동으로 채워지고, 등록한 토지는 지도 위에서 한눈에 관리됩니다.\n\n📅 재배 캘린더 & 진행률\n등록한 작물마다 파종일부터 수확예정일까지 D-day와 진행률(%)이 자동 계산됩니다. 여러 작물을 동시에 재배할 때도 캘린더 뷰에서 전체 일정을 겹쳐서 확인할 수 있습니다.\n\n🌦️ 날씨 연동 병해충 경보\n기상청 단기예보를 재배 중인 작물·지역과 대조해 역병·탄저병 같은 병해충 발생 위험을 위험/주의 단계로 미리 알려줍니다. 고온다습 조건처럼 위험 사유도 함께 표시돼 바로 대응할 수 있습니다.\n\n🌱 지역 맞춤 작물 추천\n현재 위치의 기온·날씨를 기준으로 지금 심기 좋은 작물과 그 지역 추천 작물을 보여줍니다. 작물 데이터는 FAO·농촌진흥청(RDA) 자료로 교차검증돼 있습니다.\n\n👥 인력 수급 매칭\n파종·수확 시기에 필요한 일손을 구인 등록하거나, 반대로 일용직으로 구직 등록할 수 있습니다. 작업 유형·인원·일당·지역 조건으로 농번기 인력난을 완화합니다.\n\n💰 수익 정산 & 판매 관리\n작물별·재배별로 비용과 매출을 기록하고 월별 차트로 순이익을 추적합니다. 판매 채널·판매량·단가·구매자까지 남겨 다음 시즌 판매 전략에 참고할 수 있습니다.`,
     api: ['Supabase', 'Naver Maps'],
     iconUrl: '/apps/farmguide/icon.png',
+    screenshots: [
+      '/apps/farmguide/farmguide_01.jpg',
+      '/apps/farmguide/farmguide_02.jpg',
+      '/apps/farmguide/farmguide_03.jpg',
+      '/apps/farmguide/farmguide_04.jpg',
+      '/apps/farmguide/farmguide_05.jpg',
+      '/apps/farmguide/farmguide_06.jpg'
+    ],
+    webUrl: 'https://farmway.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/farmguide-v1.0.0.1/farmGuide.apk',
     version: '1.0.0+1'
   },

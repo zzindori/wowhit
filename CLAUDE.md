@@ -68,6 +68,12 @@ version: 'x.y.z+build'
 
 ## 작업 히스토리
 
+### 2026-07-12
+- menuWayAll v1.0.4+12 APK 업데이트 (Gemini 응답 토큰 상한 추가 — wowhit-api 프록시의 thinking
+  모드 낭비 수정과 짝을 이루는 클라이언트측 변경)
+  - wowhit-releases에 `menuwayall-v1.0.4+12` 릴리스 생성
+  - `apps.ts`의 menuway 항목 apkUrl/version 갱신
+
 ### 2026-07-09
 - bibleWay 포트폴리오 추가 (아이콘 + 앱 데이터)
   - 자료실(digi.wowhit.org)에서 bibleWay (1).png 아이콘 가져와 1024x1024 리사이즈

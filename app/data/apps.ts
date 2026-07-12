@@ -191,11 +191,21 @@ export const apps: App[] = [
     name: 'igoMoya',
     category: 'flutter',
     description: '궁금한 것 찍으면 바로 AI 설명 + 타임라인 사진 정리',
-    longDescription: `길을 걷다, 음식을 보다, 궁금한 게 생기는 순간.\n\nigoMoya는 카메라를 대면 AI가 바로 설명해줍니다. 분할 화면으로 찍는 순간 결과를 바로 확인할 수 있습니다.\n\n찍은 사진들은 위치와 시간순으로 타임라인에 정리됩니다. 오늘 어디서 무엇을 봤는지 기억하고 싶을 때 꺼내보세요.\n\n궁금함을 바로 해결하는 AI 카메라 메모.`,
+    longDescription: `길을 걷다, 음식을 보다, 궁금한 게 생기는 순간.\n\nigoMoya는 카메라를 대면 AI가 바로 설명해줍니다. 분할 화면으로 찍는 순간 결과를 바로 확인할 수 있습니다.\n\n찍은 사진들은 위치와 시간순으로 타임라인에 정리되고, 지도 위에서도 한눈에 확인할 수 있습니다. 오늘 어디서 무엇을 봤는지 기억하고 싶을 때 꺼내보세요.\n\n궁금함을 바로 해결하는 AI 카메라 메모.\n\n📸 분할 화면 실시간 분석\n위는 카메라, 아래는 결과. 찍는 순간 AI가 바로 분석을 시작해 신뢰도(%)와 함께 결과를 실시간으로 보여줍니다. 음식이든 간판이든 브랜드 캐릭터든, 무엇이든 구체적으로 짚어냅니다.\n\n📝 깊이 있는 분석 결과\n한 줄 요약뿐 아니라 유래·재료·문화적 배경까지 담은 상세 설명, 대화 소재로 쓸 수 있는 이야기거리, 태그까지 한 번에 정리해줍니다.\n\n🗂️ 위치·시간순 이미지 창고\n찍은 사진들이 촬영 장소와 시간 기준으로 자동 그룹핑되어 타임라인으로 정리됩니다. "그날 거기서 뭘 봤더라" 할 때 바로 찾아볼 수 있습니다.\n\n🗺️ 사진 지도\n찍은 사진들이 원형 썸네일 마커로 지도 위에 표시됩니다. 마커를 탭하면 그 자리에서 분석 결과를 바로 볼 수 있습니다.\n\n💳 무료 7장 + 크레딧\n설치 후 7장은 바로 무료로 체험할 수 있습니다. 이후에는 본인의 Gemini API 키를 등록(BYOK)하거나 스마트스토어에서 크레딧을 구매해 계속 사용할 수 있습니다.\n\n🌐 웹앱 지원\n설치 없이 브라우저에서 바로 써볼 수 있습니다. iOS 사용자도 앱스토어 없이 바로 체험 가능합니다.`,
     api: ['Gemini'],
     iconUrl: '/apps/igomoya/icon.png',
+    screenshots: [
+      '/apps/igomoya/igomoya_01.jpg',
+      '/apps/igomoya/igomoya_02.jpg',
+      '/apps/igomoya/igomoya_03.jpg',
+      '/apps/igomoya/igomoya_04.jpg',
+      '/apps/igomoya/igomoya_05.jpg',
+      '/apps/igomoya/igomoya_06.jpg'
+    ],
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v0.1.3.4/igoMoya.apk',
     webUrl: 'https://igomoya.wowhit.org',
+    purchaseUrl: 'https://smartstore.naver.com/wowhit',
+    purchaseLabel: '크레딧 구매',
     version: '0.1.3+4'
   },
   {

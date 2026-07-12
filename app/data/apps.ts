@@ -128,10 +128,10 @@ export const apps: App[] = [
       '/apps/codi-d/codi_d07.jpg'
     ],
     webUrl: 'https://codi-d.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.5.6/CODI_D.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.6.7/CODI_D.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13646465925',
     purchaseLabel: '크레딧 구매',
-    version: '1.0.5+6'
+    version: '1.0.6+7'
   },
   {
     slug: 'careway',

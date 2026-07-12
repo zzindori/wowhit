@@ -194,8 +194,8 @@ export const apps: App[] = [
     longDescription: `길을 걷다, 음식을 보다, 궁금한 게 생기는 순간.\n\nigoMoya는 카메라를 대면 AI가 바로 설명해줍니다. 분할 화면으로 찍는 순간 결과를 바로 확인할 수 있습니다.\n\n찍은 사진들은 위치와 시간순으로 타임라인에 정리됩니다. 오늘 어디서 무엇을 봤는지 기억하고 싶을 때 꺼내보세요.\n\n궁금함을 바로 해결하는 AI 카메라 메모.`,
     api: ['Gemini'],
     iconUrl: '/apps/igomoya/icon.png',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v0.1.2.3/igoMoya.apk',
-    version: '0.1.2+3'
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v0.1.3.4/igoMoya.apk',
+    version: '0.1.3+4'
   },
   {
     slug: 'onbidway',

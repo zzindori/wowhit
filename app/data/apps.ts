@@ -202,11 +202,11 @@ export const apps: App[] = [
       '/apps/igomoya/igomoya_05.jpg',
       '/apps/igomoya/igomoya_06.jpg'
     ],
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v0.1.3.4/igoMoya.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v0.1.4.5/igoMoya.apk',
     webUrl: 'https://igomoya.wowhit.org',
-    purchaseUrl: 'https://smartstore.naver.com/wowhit',
+    purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13659737802',
     purchaseLabel: '크레딧 구매',
-    version: '0.1.3+4'
+    version: '0.1.4+5'
   },
   {
     slug: 'onbidway',

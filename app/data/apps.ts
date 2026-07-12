@@ -195,6 +195,7 @@ export const apps: App[] = [
     api: ['Gemini'],
     iconUrl: '/apps/igomoya/icon.png',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/igomoya-v0.1.3.4/igoMoya.apk',
+    webUrl: 'https://igomoya.wowhit.org',
     version: '0.1.3+4'
   },
   {

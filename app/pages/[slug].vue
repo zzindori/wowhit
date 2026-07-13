@@ -218,6 +218,17 @@ useSeoMeta({ title: `${app.name} — wowhit` })
           />
         </div>
 
+        <!-- 웹앱 데이터 보존 안내 -->
+        <UAlert
+          v-if="app.platformNotice"
+          icon="i-lucide-triangle-alert"
+          title="웹앱 이용 시 꼭 확인하세요"
+          :description="app.platformNotice"
+          color="warning"
+          variant="subtle"
+          class="mb-8"
+        />
+
         <!-- 스크린샷 갤러리 -->
         <div
           v-if="app.screenshots?.length"

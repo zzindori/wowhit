@@ -20,6 +20,7 @@ export interface App {
   shorts?: string[]
   storeReleased?: boolean
   sourceCodeUrl?: string
+  platformNotice?: string
 }
 
 export const apps: App[] = [
@@ -87,7 +88,8 @@ export const apps: App[] = [
     webUrl: 'https://joa.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/joa-v1.0.0.9/JoA.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13625209650',
-    version: '1.0.0+9'
+    version: '1.0.0+9',
+    platformNotice: '웹앱은 생성 이미지를 브라우저에만 저장합니다. iOS(Safari)는 7일간 미접속 시 데이터가 자동 삭제되니 반드시 "홈 화면에 추가"로 실행하세요. Android는 데이터 보존을 위해 APK 직접 설치를 권장합니다.'
   },
   {
     slug: 'itne',
@@ -108,7 +110,8 @@ export const apps: App[] = [
     webUrl: 'https://itne.wowhit.org',
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/itne-v1.5.5.32/app-release.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13644369839',
-    version: '1.5.6+33'
+    version: '1.5.6+33',
+    platformNotice: '웹앱은 냉장고 데이터를 브라우저에만 저장합니다. iOS(Safari)는 7일간 미접속 시 데이터가 자동 삭제되니 반드시 "홈 화면에 추가"로 실행하세요. Android는 데이터 보존을 위해 APK 직접 설치를 권장합니다.'
   },
   {
     slug: 'codi-d',
@@ -131,7 +134,8 @@ export const apps: App[] = [
     apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/codi-d-v1.0.6.7/CODI_D.apk',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13646465925',
     purchaseLabel: '크레딧 구매',
-    version: '1.0.6+7'
+    version: '1.0.6+7',
+    platformNotice: '웹앱은 생성한 코디 이미지를 브라우저에만 저장합니다. iOS(Safari)는 7일간 미접속 시 데이터가 자동 삭제되니 반드시 "홈 화면에 추가"로 실행하세요. Android는 데이터 보존을 위해 APK 직접 설치를 권장합니다.'
   },
   {
     slug: 'careway',
@@ -206,7 +210,8 @@ export const apps: App[] = [
     webUrl: 'https://igomoya.wowhit.org',
     purchaseUrl: 'https://smartstore.naver.com/wowhit/products/13659737802',
     purchaseLabel: '크레딧 구매',
-    version: '0.1.6+7'
+    version: '0.1.6+7',
+    platformNotice: '웹앱은 찍은 사진/분석 결과를 브라우저에만 저장합니다. iOS(Safari)는 7일간 미접속 시 데이터가 자동 삭제되니 반드시 "홈 화면에 추가"로 실행하세요. Android는 데이터 보존을 위해 APK 직접 설치를 권장합니다.'
   },
   {
     slug: 'onbidway',

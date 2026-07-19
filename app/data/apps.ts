@@ -188,7 +188,11 @@ export const apps: App[] = [
     description: '공항 동선 오케스트레이터 & 출국 스트레스 제거 비서',
     longDescription: `공항에서 헤매거나, 뭔가를 빠뜨린 채 출국한 경험 있으신가요?\n\ngateFlow는 출국 전 준비 체크리스트, 공항 터미널 동선 안내, 여권 보안 저장소까지 출국의 모든 과정을 함께합니다.\n\n여권을 카메라로 찍으면 OCR이 자동으로 정보를 읽어냅니다. 저장된 여권 정보는 생체인증으로만 접근할 수 있어 안전합니다.\n\n출발 타이머와 AI 여행 조언으로 첫 해외여행도 자신 있게.`,
     api: ['Gemini', 'MLKit OCR'],
-    iconUrl: '/apps/gateflow/icon.png'
+    iconUrl: '/apps/gateflow/icon.png',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/gateflow-v0.1.0/app-release.apk',
+    pricingModel: 'free',
+    version: '0.1.0+1',
+    storeReleased: false
   },
   {
     slug: 'igomoya',

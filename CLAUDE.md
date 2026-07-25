@@ -68,6 +68,16 @@ version: 'x.y.z+build'
 
 ## 작업 히스토리
 
+### 2026-07-25
+- HCLink(한국어화) 포트폴리오 추가 — "기타" 카테고리
+  - 중국산 브이로그 미러링 스크린 부속 앱을 디컴파일해 한국어화 + Pairip 우회 +
+    무선연결(스마트뷰 우회) 패치한 개인 프로젝트, 직접 만든 게 아니라 리패치임을
+    설명에 명시
+  - `apps.ts`에 `hclinkway` 항목 추가 (category: 'other')
+  - APK를 wowhit-releases에 `hclinkway-v1.2.0-ko` 릴리스로 업로드
+  - 소스(smali 패치, 별도 private repo)는 방문자가 접근 못하므로 포트폴리오에서
+    링크하지 않음
+
 ### 2026-07-12
 - menuWayAll v1.0.4+12 APK 업데이트 (Gemini 응답 토큰 상한 추가 — wowhit-api 프록시의 thinking
   모드 낭비 수정과 짝을 이루는 클라이언트측 변경)

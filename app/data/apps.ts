@@ -335,6 +335,17 @@ export const apps: App[] = [
     api: ['Firebase']
   },
   {
+    slug: 'hclinkway',
+    name: 'HCLink (한국어화)',
+    category: 'other',
+    description: '중국산 브이로그 미러링 스크린용 앱을 한국어화 + 버그 수정한 리패치 버전',
+    longDescription: `이 앱은 제가 처음부터 만든 게 아니라, 시중에 판매 중인 중국산 "브이로그 스크린"(폰 후면 카메라 화면을 무선/유선으로 미러링해주는 소형 모니터) 부속 앱 HCLink를 뜯어고친 버전입니다.\n\n원본 앱은 전체 UI가 중국어로만 되어 있고, 재서명하면 자체 변조 감지(Pairip) 때문에 강제종료되고, 무선(WiFi Direct) 연결도 기기 자체 결함으로 거의 항상 실패하는 상태였습니다.\n\nAPK를 디컴파일해서 다음을 고쳤습니다.\n\n🇰🇷 전체 UI 한국어 번역\n중국어 문자열 79개를 리소스 단에서 한국어로 교체.\n\n🔓 Pairip 라이선스체크 우회\n재서명한 APK를 정품이 아니라고 판단해 실행 즉시 죽이던 로직 제거.\n\n📡 무선 연결 구조 개선\n원본 앱의 WiFi Direct 구현 자체에 그룹 역할 판정 버그가 있어 정상적인 연결도 실패로 처리되던 것을 수정하고, 능동적으로 기기를 찾아 접속하는 서브넷 스캔 로직을 새로 추가했습니다. 그래도 기기 자체 하드웨어 한계로 불안정해서, 최종적으로는 안드로이드 기본 스마트뷰(Miracast)로 바로 연결되도록 우회 처리했습니다.\n\n리버스 엔지니어링 및 스마리(smali) 바이트코드 패치로 진행한 개인용 프로젝트입니다.`,
+    platform: 'Android (APK 재서명)',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/hclinkway-v1.2.0-ko/hclink_ko_signed.apk',
+    version: '1.2.0',
+    storeReleased: false
+  },
+  {
     slug: 'anyway',
     name: 'anyWay',
     category: 'flutter',

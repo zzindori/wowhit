@@ -288,9 +288,9 @@ export const apps: App[] = [
       '/apps/bibleway/bibleway_05.jpg'
     ],
     webUrl: 'https://bibleway.wowhit.org',
-    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/bibleway-v1.0.0.1/bibleWay.apk',
+    apkUrl: 'https://github.com/zzindori/wowhit-releases/releases/download/bibleway-v1.0.1.2/bibleWay.apk',
     pricingModel: 'free',
-    version: '1.0.0+1'
+    version: '1.0.1+2'
   },
 
   // Web 앱

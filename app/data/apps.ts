@@ -323,6 +323,14 @@ export const apps: App[] = [
     webUrl: 'https://zzindori.github.io/qrMaker/',
     sourceCodeUrl: '/apps/qrmaker/index.html'
   },
+  {
+    slug: 'woweditor',
+    name: 'wowEditor',
+    category: 'web',
+    description: 'Monaco 기반 브라우저 코드 에디터 + AI 채팅',
+    longDescription: `설치 없이 브라우저에서 바로 여는 코드 에디터입니다.\n\nMonaco Editor(VS Code와 같은 엔진)를 오프라인 번들로 통째로 넣어서, File System Access API로 로컬 폴더를 열고 그대로 저장까지 할 수 있습니다.\n\n오른쪽 채팅창에서 Gemini API Key를 등록하면, 지금 열어둔 폴더 구조와 파일 내용을 맥락으로 AI에게 바로 질문하고 코드를 고칠 수 있습니다.\n\n탭 편집, 폴더 트리, Diff 뷰, 이미지/PDF 미리보기까지 파일 하나로 동작하는 단일 HTML 에디터입니다.`,
+    webUrl: 'https://wowEditor.wowhit.org'
+  },
 
   // 기타
   {

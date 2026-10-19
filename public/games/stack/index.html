@@ -59,6 +59,16 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 .mbar i{display:block;height:100%;width:0;background:var(--cash);transition:width .25s}
 .toast{top:calc(env(safe-area-inset-top,0px) + 110px);background:var(--pad);transition:opacity .3s}
 .toast.bad{background:var(--warn)}
+.elev{position:fixed;top:calc(env(safe-area-inset-top,0px) + 170px);left:50%;transform:translateX(-50%);box-sizing:border-box;
+  width:min(320px,calc(100% - 32px));background:#3b3f4a;color:var(--hud);border-radius:18px;padding:14px;box-shadow:0 6px 0 rgba(44,43,53,.25);
+  display:flex;flex-direction:column;gap:10px}
+.elev .etitle{font-size:16px;text-align:center}
+.elev .ebtns{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:40vh;overflow-y:auto}
+.elev button{font:inherit;font-size:18px;border:0;border-radius:12px;padding:12px 0;background:#5b6070;color:var(--hud);cursor:pointer}
+.elev button:disabled{background:#e8b923;color:var(--ink);cursor:default}
+.elev button.warn{box-shadow:inset 0 0 0 3px #e8b923}
+.elev button.danger{background:var(--warn)}
+.elev button.full{box-shadow:inset 0 0 0 3px #e8b923;color:#ffe27a}
 </style>
 </head>
 <body>
@@ -77,6 +87,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
   <button id="reset" type="button">처음부터</button>
 </div>
 <div class="toast" id="toast" hidden></div>
+<div class="elev" id="elev" hidden><div class="etitle">엘리베이터 · 몇 층으로 갈까요?</div><div class="ebtns" id="elevBtns"></div></div>
 <div class="mission" id="mission" hidden>
   <div class="mrow"><span class="mlabel">미션</span><span id="mText"></span></div>
   <div class="mrow sub" id="mProg"></div>
@@ -197,7 +208,8 @@ let RT = [];                                       // 층별 실행 상태(손�
 let thief = null, thiefCd = 8;
 
 // ---- 층 사이 계단 (층마다 위로 가는 계단은 오른쪽 위, 아래로 가는 계단은 오른쪽 아래) ----
-const STAIR_UP = {x:640, y:80, w:120, h:84}, STAIR_DN = {x:640, y:900, w:120, h:84};
+const ELEV = {x:455, y:108}, ELEV_ZONE = {x:455, y:142, w:92, h:48};   // 엘리베이터 문(바닥 기준점)과 그 앞 타는 자리
+const STAIR_DN = {x:580, y:80, w:100, h:84}, STAIR_UP = {x:700, y:80, w:100, h:84};
 let fade = 0;
 const rt = z => RT[z] || (RT[z] = { custs:[], spawnT:1.5, serveT:0 });
 
@@ -257,16 +269,16 @@ function rebuildPads(){
       cost:() => Math.round(CFG.speed.cost*Math.pow(CFG.speed.mul, S.spdLv)), vis:() => z === 0, apply:() => { S.spdLv++; } });
     PADS.push({ id:'wallet', ...at(380, 480, 96, 84), label:'지갑', sub:() => `${fmt(walletOf(S.walLv))}→${fmt(walletOf(S.walLv+1))}`,
       cost:() => Math.round(walletOf(S.walLv)*CFG.wallet.costRate), vis:() => z === 0, apply:() => { S.walLv++; } });
-    if (z === 0) PADS.push({ id:'warp', ...at(110, 300, 100, 84), label:'엘리베이터', sub:() => '층 버튼으로 이동',
+    if (z === 0) PADS.push({ id:'warp', ...at(ELEV.x, 80, 100, 84), label:'엘리베이터', sub:() => '설치',
       cost:() => CFG.warpCost, vis:() => S.zones.length > 1 && !S.warp,
-      apply:() => { S.warp = true; renderZoneChips(); toast('이제 왼쪽 위 층 버튼을 누르면 엘리베이터로 바로 가요'); } });
+      apply:() => { S.warp = true; renderZoneChips(); toast('엘리베이터 설치! 문 앞에 서거나 왼쪽 위 층 버튼으로 바로 가요'); P.elevArm = false; } });
     PADS.push({ id:`${z}:wrk`, ...at(510, 480, 96, 84), label:'일꾼 고용', sub:() => `${Z.wrkLv}→${Z.wrkLv+1}명`,
       cost:() => Math.round(CFG.worker.cost*Math.pow(CFG.worker.mul, Z.wrkLv)*zscale(z)), vis:() => Z.wrkLv < CFG.workerMax, apply:() => { Z.wrkLv++; syncWorkers(); } });
     PADS.push({ id:`${z}:sell`, ...at(640, 480, 96, 84), label:'판매속도', sub:() => `Lv${Z.sellLv+1}`,
       cost:() => Math.round(CFG.sell.cost*Math.pow(CFG.sell.mul, Z.sellLv)*zscale(z)), vis:() => Z.sellLv < CFG.sellMax, apply:() => { Z.sellLv++; } });
     PADS.push({ id:`${z}:auto`, ...at(645, 250, 100, 84), label:'자동 수금', sub:() => '다른 층에 있을 때',
       cost:() => CFG.autoCost*zscale(z), vis:() => !Z.auto, apply:() => { Z.auto = true; } });
-    PADS.push({ id:`${z}:gate`, ...at(640, 80, 120, 84), gate:true, label:`${z+2}층 열기`, sub:() => '계단 공사',
+    PADS.push({ id:`${z}:gate`, ...at(STAIR_UP.x, 80, 110, 84), gate:true, label:`${z+2}층 열기`, sub:() => '계단 공사',
       cost:() => CFG.zoneCost*Math.pow(CFG.zoneCostMul, z), vis:() => z === S.zones.length-1 && Z.sp.every(s => s.on), apply:openZone });
   });
 }
@@ -297,8 +309,22 @@ function renderZoneChips(){
   });
 }
 function warp(z){
-  if (!S.warp) { toast('엘리베이터는 1층에서 살 수 있어요. 그 전엔 계단으로 다녀요', true); return; }
-  fade = 1; P.x = 380; P.y = gy(z, 600); cam.x = P.x; cam.y = P.y; sfx.warp(); }
+  if (!S.warp) { toast('엘리베이터는 1층 계단 옆에 설치할 수 있어요. 그 전엔 계단으로 다녀요', true); return; }
+  fade = 1; P.x = ELEV.x; P.y = gy(z, ELEV_ZONE.y + 40); cam.x = P.x; cam.y = P.y; sfx.warp();
+  P.elevArm = false; closeElev();
+}
+const elevEl = $('elev');
+function openElev(){
+  const box = $('elevBtns'); box.innerHTML = '';
+  S.zones.forEach((_, z) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = `${z+1}F`;
+    if (z === curZone) b.disabled = true;
+    else { const a = zoneAlert(z); if (a) b.classList.add(['', 'warn', 'danger', 'full'][a]); b.addEventListener('click', () => warp(z)); }
+    box.appendChild(b);
+  });
+  elevEl.hidden = false; tone(1047, 0.12, 'sine', 0.08);
+}
+function closeElev(){ elevEl.hidden = true; }
 let toastT = 0;
 function toast(msg, bad){ toastEl.textContent = msg; toastEl.classList.toggle('bad', !!bad); toastEl.hidden = false; toastEl.style.opacity = 1; toastT = 2.2; }
 
@@ -522,6 +548,16 @@ function goFloor(f, x, y){
   P.x = x; P.y = gy(f, y); cam.x = Math.max(VW/scale/2, Math.min(W - VW/scale/2, P.x)); cam.y = P.y;
   P.stairArm = false; fade = 1; sfx.steps();
 }
+function drawElevator(f){
+  floorRect(zr(f, ELEV_ZONE), 'rgba(255,250,240,.35)', '#8a8f9c', false, 0);
+  const [sx, sy] = toS(ELEV.x, gy(f, ELEV.y)), w = 70*scale, h = 86*scale;
+  ctx.fillStyle = '#5b6070'; rr(sx - w/2 - 5*scale, sy - h - 5*scale, w + 10*scale, h + 5*scale, 6*scale); ctx.fill();   // 문틀
+  ctx.fillStyle = '#b9bfcc'; ctx.fillRect(sx - w/2, sy - h, w, h);
+  ctx.fillStyle = '#9aa1b0'; ctx.fillRect(sx - 1*scale, sy - h, 2*scale, h);                                                     // 문 가운데 틈
+  ctx.fillStyle = '#2c2b35'; rr(sx - 16*scale, sy - h - 24*scale, 32*scale, 16*scale, 4*scale); ctx.fill();                   // 층 표시창
+  ctx.fillStyle = '#ffb347'; ctx.font = `${Math.round(11*scale)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(`${f+1}F`, sx, sy - h - 16*scale);
+}
 function drawStairs(r, label){
   const [x0, y0] = toS(r.x - r.w/2, r.y - r.h/2), w = r.w*scale, h = r.h*scale;
   rr(x0, y0, w, h, 8*scale); ctx.fillStyle = C.stair; ctx.fill();
@@ -622,8 +658,12 @@ function update(dt){
   // 계단 (계단 밖으로 한 번 나갔다가 다시 밟아야 이동 — 층을 연 직후 서 있던 자리가 계단이 돼도 바로 올라가지 않게)
   const onUp = cz < S.zones.length-1 && inRect(P.x, P.y, zr(cz, STAIR_UP)), onDn = cz > 0 && inRect(P.x, P.y, zr(cz, STAIR_DN));
   if (!onUp && !onDn) P.stairArm = true;
-  else if (P.stairArm && onUp) goFloor(cz+1, STAIR_DN.x, STAIR_DN.y - 80);
+  else if (P.stairArm && onUp) goFloor(cz+1, STAIR_DN.x, STAIR_DN.y + 80);
   else if (P.stairArm && onDn) goFloor(cz-1, STAIR_UP.x, STAIR_UP.y + 80);
+  // 엘리베이터 문 앞에 서면 층 선택판 (벗어나면 닫힘, 다시 서야 다시 열림)
+  const onElev = S.warp && inRect(P.x, P.y, zr(cz, ELEV_ZONE));
+  if (!onElev) { P.elevArm = true; if (!elevEl.hidden) closeElev(); }
+  else if (P.elevArm) { P.elevArm = false; openElev(); }
   if (fade > 0) fade = Math.max(0, fade - dt*2.5);
 
   // 업그레이드 칸
@@ -858,6 +898,7 @@ function render(){
     text(`₩${fmt(c - paid)}`, p.x, p.y+22, 0, 15, S.money > 0 ? C.billFront : C.ink);
   });
 
+  if (S.warp) list.push({ y:gy(f, ELEV.y), draw:() => drawElevator(f) });
   if (thief && thief.z === f) list.push({ y:thief.y, draw:drawThief });
   workers.forEach(w => { if (w.z === f) list.push({ y:w.y, draw:() => carrier(w, w.stack, C.worker, C.workerDark, 'worker', 'worker') }); });
   list.push({ y:P.y, draw:() => {

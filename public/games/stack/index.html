@@ -95,6 +95,7 @@ const CFG = {
   cust:   { every: 4.5, patience: 14, maxLine: 5, want: [1, 3], speed: 80, tip: 0.2 }, // 손님: 등장 간격(생산기 수로 나눔), 참을성(초), 줄 길이, 사는 개수, 팁 비율
   wallet: { base: 500, mul: 2, costRate: 0.6 },    // 지갑 한도 = 500 × 2^레벨, 업그레이드 비용 = 현재 한도의 60%
   gold: { chance: 0.03, mul: 10 },               // 황금 물건: 생산될 확률, 값 배수
+  thief: { after: 12, chance: 0.3, speed: 115, take: 0.5, cooldown: 25 }, // 도둑: 돈더미를 몇 초 방치하면 나타날 수 있음, 초당 등장 확률, 속도, 훔치는 비율, 다음 등장까지 쉬는 시간
   cashMax: 40,                                   // 돈더미 최대(지폐 장수). 꽉 차면 챙길 때까지 판매가 멈춤
   drawStackMax: 40                               // 등에 그려지는 최대 개수 (넘으면 숫자로 표시)
 };
@@ -102,7 +103,7 @@ const CFG = {
 // ================= 그림 슬롯 =================
 // 경로를 넣으면 도형 대신 그림으로 그림. 비워두거나 로딩 실패하면 도형 그대로.
 // 투명 PNG, 위에서 비스듬히 본 시점, 바닥 중앙이 기준점. item0~item5는 구역별 물건(6종 반복).
-const ART_SRC = { player:'', worker:'', customer:'', bill:'', machine:'', desk:'',
+const ART_SRC = { player:'', worker:'', customer:'', thief:'', bill:'', machine:'', desk:'',
   item0:'', item1:'', item2:'', item3:'', item4:'', item5:'' };
 const ART = {};
 Object.entries(ART_SRC).forEach(([k, src]) => { if (!src) return; const im = new Image(); im.onload = () => { ART[k] = im; }; im.src = src; });
@@ -183,6 +184,12 @@ let S = load();
 const P = { x:380, y:600, inc:0, fx:0, fy:1, svx:0, svy:0, t:0, payT:0, padCd:0, cashT:0, wasMax:false };
 let workers = [], anims = [], floats = [], PADS = [];
 let RT = [];                                       // 구역별 실행 상태(손님 등, 저장 안 함)
+let thief = null, thiefCd = 8;
+
+// ---- 구역 이름 (구역 번호로 자동 생성, 10곳마다 '2호', '3호'…가 붙어서 겹치지 않음) ----
+const ZN_A = ['새싹', '햇살', '바람', '달빛', '별빛', '구름', '노을', '파도', '숲속', '은하'];
+const ZN_B = ['공터', '창고', '골목', '시장', '항구', '광장', '공장', '언덕', '마을', '부두'];
+const zoneName = z => { const t = Math.floor(z / ZN_A.length); return `${ZN_A[z % ZN_A.length]} ${ZN_B[(z*7) % ZN_B.length]}${t ? ` ${t+1}호` : ''}`; };
 const rt = z => RT[z] || (RT[z] = { custs:[], spawnT:1.5, serveT:0 });
 
 // ---- 소리 · 진동 ----
@@ -221,6 +228,9 @@ const sfx = {
   gold(){ [1568, 2093, 2637].forEach((f, i) => tone(f, 0.12, 'sine', 0.07, i*0.06)); buzz([10, 30, 10]); },
   mission(){ [659, 784, 988, 1319, 1568].forEach((f, i) => tone(f, 0.18, 'triangle', 0.11, i*0.07)); buzz([30, 40, 30, 40, 60]); },
   max(){ tone(220, 0.12, 'square', 0.04); buzz(25); },
+  siren(){ [0, 1, 2].forEach(i => { tone(760, 0.14, 'square', 0.05, i*0.3); tone(1020, 0.14, 'square', 0.05, i*0.3 + 0.15); }); buzz([60, 80, 60, 80, 60]); },
+  caught(){ [784, 1047, 1319, 1568].forEach((f, i) => tone(f, 0.12, 'square', 0.06, i*0.05)); buzz([30, 20, 60]); },
+  stolen(){ tone(330, 0.4, 'sawtooth', 0.05, 0, 0.5); buzz(120); },
   warp(){ tone(300, 0.25, 'sine', 0.1, 0, 3); buzz(15); }
 };
 
@@ -241,14 +251,15 @@ function rebuildPads(){
       cost:() => Math.round(CFG.worker.cost*Math.pow(CFG.worker.mul, Z.wrkLv)*zscale(z)), vis:() => Z.wrkLv < CFG.workerMax, apply:() => { Z.wrkLv++; syncWorkers(); } });
     PADS.push({ id:`${z}:sell`, ...at(640, 480, 96, 84), label:'판매속도', sub:() => `Lv${Z.sellLv+1}`,
       cost:() => Math.round(CFG.sell.cost*Math.pow(CFG.sell.mul, Z.sellLv)*zscale(z)), vis:() => Z.sellLv < CFG.sellMax, apply:() => { Z.sellLv++; } });
-    PADS.push({ id:`${z}:gate`, ...at(640, 80, 120, 84), gate:true, label:`${z+2}구역 열기`, sub:() => `${KINDS[(z+1)%KINDS.length].name} ₩${fmt(valueOf(z+1))}`,
+    PADS.push({ id:`${z}:gate`, ...at(640, 80, 120, 84), gate:true, label:`${z+2}구역 열기`, sub:() => zoneName(z+1),
       cost:() => CFG.zoneCost*Math.pow(CFG.zoneCostMul, z), vis:() => z === S.zones.length-1 && Z.sp.every(s => s.on), apply:openZone });
   });
 }
 function openZone(){
   S.zones.push(newZone()); S.tut.zone = true;
   rebuildPads(); syncWorkers(); renderZoneChips(); sfx.zone();
-  toast(`${S.zones.length}구역이 열렸어요 · 위로 올라가거나 왼쪽 위 숫자로 이동`);
+  const n = S.zones.length;
+  toast(`${n}구역 「${zoneName(n-1)}」 열림! 위로 올라가거나 왼쪽 위 숫자로 이동`);
 }
 
 function newWorker(z, i){ return { z, i, x:DESK.x+60+i*20, y:gy(z, SELL.y+40), stack:[], inc:0, state:'toSpawn', tgt:null, t:0, wait:0, fx:0, fy:1, svx:0, svy:0 }; }
@@ -264,7 +275,7 @@ function renderZoneChips(){
   if (S.zones.length < 2) return;
   S.zones.forEach((_, z) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (z === curZone ? ' on' : '');
-    b.textContent = z+1; b.setAttribute('aria-label', `${z+1}구역으로 이동`);
+    b.textContent = z === curZone ? `${z+1} ${zoneName(z)}` : z+1; b.setAttribute('aria-label', `${z+1}구역 ${zoneName(z)} 가기`);
     b.addEventListener('click', () => warp(z)); zonesEl.appendChild(b);
   });
 }
@@ -283,7 +294,7 @@ paintPrefs();
 let armT = 0;
 resetBtn.addEventListener('click', () => {
   if (!resetBtn.classList.contains('armed')) { resetBtn.classList.add('armed'); resetBtn.textContent = '한 번 더 누르면 초기화'; armT = 3; return; }
-  S = DEF(); P.x = S.px; P.y = S.py; P.inc = 0; workers = []; anims = []; floats = []; RT = [];
+  S = DEF(); P.x = S.px; P.y = S.py; P.inc = 0; workers = []; anims = []; floats = []; RT = []; thief = null; thiefCd = 8;
   rebuildPads(); renderZoneChips(); save();
   resetBtn.classList.remove('armed'); resetBtn.textContent = '처음부터'; setPanel(false);
 });
@@ -425,8 +436,58 @@ function updCustomers(Z, z, cz, dt){
   } else R.serveT = 0;
 }
 
+// ---- 도둑 ----
+// 지금 있는 구역의 돈더미를 오래 방치하면 위쪽에서 나타나 절반을 들고 위로 도망감. 부딪히면 잡아서 돌려받음
+function updThief(cz, dt){
+  if (thiefCd > 0) thiefCd -= dt;
+  if (!thief) {
+    const Z = S.zones[cz], R = rt(cz);
+    if (thiefCd <= 0 && Z.cash > 0 && (R.cashIdle || 0) > CFG.thief.after && Math.random() < CFG.thief.chance*dt) {
+      thief = { z:cz, x:CASH.x + 60, y:gy(cz, -40), state:'come', loot:0, t:0, fx:-1, fy:0, svx:0, svy:0 };
+      toast('도둑이 나타났어요! 돈더미를 지키세요', true); sfx.siren();
+    }
+    return;
+  }
+  const T = thief, Z = S.zones[T.z];
+  if (T.state === 'come') {
+    if (Z.cash <= 0) T.state = 'run';
+    else if (moveTo(T, CASH.x + 34, gy(T.z, CASH.y), CFG.thief.speed, dt, true)) { T.state = 'grab'; T.t = 0; }
+  } else if (T.state === 'grab') {
+    if ((T.t += dt) > 0.9) {
+      T.loot = Math.min(Z.cash, Math.max(valueOf(T.z), Math.ceil(Z.cash*CFG.thief.take)));
+      Z.cash -= T.loot; T.state = 'run';
+      if (T.z === cz) { floatText(T.x, T.y, `-₩${fmt(T.loot)}`, C.warn); sfx.stolen(); }
+    }
+  } else if (moveTo(T, CASH.x + 60, gy(T.z, -60), CFG.thief.speed, dt, true)) {
+    if (T.loot > 0) toast(`도둑맞았어요 -₩${fmt(T.loot)}`, true);
+    thief = null; thiefCd = CFG.thief.cooldown; return;
+  }
+  // 잡기
+  if (T.z === cz && Math.hypot(P.x - T.x, P.y - T.y) < 28) {
+    if (T.loot > 0) { Z.cash += T.loot; toast(`도둑을 잡았어요! ₩${fmt(T.loot)} 되찾음`); }
+    else toast('도둑을 쫓아냈어요!');
+    floatText(T.x, T.y, '잡았다!', C.pad); sfx.caught(); S.stats.thief = (S.stats.thief || 0) + 1;
+    thief = null; thiefCd = CFG.thief.cooldown;
+  }
+}
+function drawThief(){
+  const T = thief; if (!T) return;
+  person(T, '#3b3a48', '#24232e', 'thief');
+  if (ART.thief) return;
+  const [sx, sy] = toS(T.x, T.y);
+  const bob = Math.hypot(T.svx, T.svy) > 20 ? Math.abs(Math.sin(performance.now()/90))*2*scale : 0;
+  ctx.fillStyle = '#24232e'; ctx.fillRect(sx - 9*scale, sy - 44*scale - bob, 18*scale, 5*scale);      // 눈가리개
+  if (T.loot > 0) {
+    const [bx, by] = toS(T.x - T.fx*12, T.y, 34);
+    ctx.fillStyle = '#c9b48a'; ctx.beginPath(); ctx.arc(bx, by - bob, 9*scale, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = C.billFront; ctx.font = `${Math.round(10*scale)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('₩', bx, by - bob);
+  }
+  if (T.state !== 'run' || T.loot > 0) text('도둑!', T.x, T.y, 62, 14, C.warn);
+}
+
 // ---- 갱신 ----
-let offAcc = 0, offT = 0;
+let offAcc = {}, offT = 0;
 function update(dt){
   if (armT > 0 && (armT -= dt) <= 0) { resetBtn.classList.remove('armed'); resetBtn.textContent = '처음부터'; }
   if (toastT > 0 && (toastT -= dt) <= 0) { toastEl.style.opacity = 0; setTimeout(() => { if (toastT <= 0) toastEl.hidden = true; }, 300); }
@@ -450,9 +511,18 @@ function update(dt){
       }
     });
     updCustomers(Z, z, cz, dt);
-    if (z !== cz && Z.cash > 0) { const take = Math.min(Z.cash, room()); if (take > 0) { S.money += take; offAcc += take; Z.cash -= take; } }
+    rt(z).cashIdle = Z.cash > 0 ? (rt(z).cashIdle || 0) + dt : 0;
+    if (z !== cz && Z.cash > 0) { const take = Math.min(Z.cash, room()); if (take > 0) { S.money += take; offAcc[z] = (offAcc[z] || 0) + take; Z.cash -= take; } }
   });
-  if ((offT += dt) > 2.5) { offT = 0; if (offAcc > 0) { toast(`다른 구역 수익 +₩${fmt(offAcc)}`); offAcc = 0; } }
+  if ((offT += dt) > 2.5) {
+    offT = 0;
+    const got = Object.entries(offAcc).sort((a, b) => b[1] - a[1]);
+    if (got.length) {
+      const parts = got.slice(0, 2).map(([z, v]) => `${zoneName(+z)} +₩${fmt(v)}`);
+      toast(parts.join(' · ') + (got.length > 2 ? ` 외 ${got.length-2}곳` : ''));
+      offAcc = {};
+    }
+  }
 
   // 플레이어 이동
   let ix = 0, iy = 0;
@@ -492,7 +562,7 @@ function update(dt){
     if (!S.tut.wallet) { S.tut.wallet = true; toast('지갑이 가득 찼어요! 돈을 쓰거나 지갑을 키워요', true); }
   }
   if (inRect(P.x, P.y, zr(cz, CASH)) && Z.cash > 0 && P.cashT > 0.05 && room() > 0) {
-    P.cashT = 0; const v = valueOf(cz); const chunk = Math.min(Z.cash, Math.max(v, Math.ceil(Z.cash/6)), room());
+    P.cashT = 0; rt(cz).cashIdle = 0; const v = valueOf(cz); const chunk = Math.min(Z.cash, Math.max(v, Math.ceil(Z.cash/6)), room());
     Z.cash -= chunk; S.money += chunk; S.tut.collected = true; S.stats.collect += chunk;
     fly(cashPos(cz, Math.ceil(Z.cash/v)), () => [P.x, P.y, 40], 'bill', 0.25, () => {});
     floatText(P.x, P.y, `+${fmt(chunk)}`, C.billFront); sfx.cash();
@@ -519,6 +589,7 @@ function update(dt){
   } else P.payT = 0;
 
   workers.forEach(w => updWorker(w, dt));
+  updThief(cz, dt);
   checkMission();
 
   anims = anims.filter(a => { a.t += dt/a.dur; if (a.t >= 1) { a.done(); return false; } return true; });
@@ -663,7 +734,7 @@ function render(){
   if (viewTop < worldTop) {
     const [lx, ly] = toS(0, worldTop - ZH), [rx, ry] = toS(W, worldTop);
     ctx.fillStyle = C.lock; ctx.fillRect(lx, ly, rx-lx, ry-ly);
-    text(`${nZ+1}구역 · 잠김`, W/2, worldTop - 110, 0, 22, C.hud);
+    text(`${nZ+1}구역 ${zoneName(nZ)} · 잠김`, W/2, worldTop - 110, 0, 22, C.hud);
   }
 
   const list = [];
@@ -671,7 +742,7 @@ function render(){
     if (gy(z, ZH) < viewTop || gy(z, 0) > viewBot) return;
     // 구역 경계와 이름
     if (z > 0) { const [a, b] = toS(0, gy(z, ZH)), [c] = toS(W, gy(z, ZH)); ctx.strokeStyle = 'rgba(44,43,53,.35)'; ctx.lineWidth = 4*scale; ctx.setLineDash([14*scale, 10*scale]); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, b); ctx.stroke(); ctx.setLineDash([]); }
-    text(`${z+1}구역 · ${KINDS[z % KINDS.length].name} ₩${fmt(valueOf(z))}`, 30, gy(z, 920), 0, 16, 'rgba(44,43,53,.55)', 'left');
+    text(`${z+1}구역 ${zoneName(z)} · ${KINDS[z % KINDS.length].name} ₩${fmt(valueOf(z))}`, 30, gy(z, 920), 0, 16, 'rgba(44,43,53,.55)', 'left');
 
     // 바닥 칸
     floorRect(zr(z, SELL), C.sellFill, C.sell, false, 0); text('판매', SELL.x, gy(z, SELL.y+22), 0, 15, C.sell);
@@ -718,6 +789,7 @@ function render(){
     text(`₩${fmt(c - paid)}`, p.x, p.y+22, 0, 15, S.money > 0 ? C.billFront : C.ink);
   });
 
+  if (thief && thief.y > viewTop && thief.y < viewBot) list.push({ y:thief.y, draw:drawThief });
   workers.forEach(w => { if (w.y > viewTop && w.y < viewBot) list.push({ y:w.y, draw:() => carrier(w, w.stack, C.worker, C.workerDark, 'worker') }); });
   list.push({ y:P.y, draw:() => {
     carrier(P, S.stack, C.player, C.playerDark, 'player');

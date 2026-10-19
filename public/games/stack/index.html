@@ -126,7 +126,7 @@ const CFG = {
   thief: { after: 12, chance: 0.3, speed: 115, take: 0.5, cooldown: 25 }, // 도둑: 돈더미를 몇 초 방치하면 나타날 수 있음, 초당 등장 확률, 속도, 훔치는 비율, 다음 등장까지 쉬는 시간
   warpCost: 1500,                                // 엘리베이터(층 버튼으로 이동) 비용
   events: { first: 60, every: 50 },              // 층 이벤트(고장·VIP): 처음 몇 초 뒤부터, 평균 몇 초마다
-  broken: { fixTime: 2 },                        // 고장 난 생산기 앞에 몇 초 서 있으면 수리
+  broken: { fixTime: 2, ruin: 120, warn: 30, rebuild: 100 }, // 수리: 앞에 몇 초 서 있기 / 고장 난 채로 몇 초 지나면 부서짐(몇 초 전부터 경고) / 다시 제작 비용(× 8^층)
   vip: { time: 40, want: [3, 6], mul: 5 },      // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5)
   autoCost: 1500,                                // 층 자동 수금 칸 비용 (× 8^층)
   cashMax: 40,                                   // 돈더미 최대 장수(손님 결제 1번 = 1장, 금액과 무관). 꽉 차면 챙길 때까지 판매가 멈춤
@@ -291,6 +291,8 @@ function rebuildPads(){
     const at = (x, y, w, h) => ({ x, y:gy(z, y), w, h, z });
     [1, 2].forEach(k => PADS.push({ id:`${z}:sp${k}`, ...at(SP[k].x, SP[k].y, SP_ZONE.w, SP_ZONE.h), label:'생산기 열기', sub:() => '',
       cost:() => CFG.spawnerCost[k]*zscale(z), vis:() => !Z.sp[k].on && (k === 1 || Z.sp[1].on), apply:() => { Z.sp[k].on = true; } }));
+    [0, 1, 2].forEach(k => PADS.push({ id:`${z}:re${k}`, ...at(SP[k].x, SP[k].y, SP_ZONE.w, SP_ZONE.h), label:'다시 제작', sub:() => '부서진 생산기',
+      cost:() => CFG.broken.rebuild*zscale(z), vis:() => !!Z.sp[k].ruined, apply:() => { Z.sp[k].ruined = false; Z.sp[k].t = 0; } }));
     PADS.push({ id:'cap', ...at(120, 480, 96, 84), label:'적재량', sub:() => `${capOf(S.capLv)}→${capOf(S.capLv+1)}개`,
       cost:() => Math.round(CFG.cap.cost*Math.pow(CFG.cap.mul, S.capLv)), vis:() => z === 0, apply:() => { S.capLv++; } });
     PADS.push({ id:'spd', ...at(250, 480, 96, 84), label:'이동속도', sub:() => `Lv${S.spdLv+1}`,
@@ -426,7 +428,7 @@ function moveTo(e, tx, ty, spd, dt, free){
 const normalCount = s => s.items - (s.golden || 0);   // 일꾼이 나를 수 있는 일반 물건 수
 function bestSpawner(Z){
   let best = 0, n = -1;
-  Z.sp.forEach((s, k) => { if (s.on && normalCount(s) > n) { n = normalCount(s); best = k; } });
+  Z.sp.forEach((s, k) => { if (s.on && !s.ruined && normalCount(s) > n) { n = normalCount(s); best = k; } });
   return best;
 }
 
@@ -575,7 +577,7 @@ function zoneAlert(z){
   const Z = S.zones[z]; if (!Z) return 0;
   const V = rt(z).vip;
   if (V && V.state !== 'leave') return 5;
-  if (Z.sp.some(s => s.broken)) return 4;
+  if (Z.sp.some(s => s.broken || s.ruined)) return 4;
   if (pileFull(Z, z)) return 3;
   if (Z.sp.some(s => s.on && (s.golden || 0) > 0)) return 6;   // 황금 물건 대기(주인공만 나를 수 있음)
   return custAlert(z);
@@ -590,17 +592,30 @@ function custAlert(z){
 // ---- 층 이벤트: 기계 고장 / VIP 손님 (자동화가 끝난 층에도 가끔 들를 이유) ----
 const VIP_SPOT = {x:110, y:300};
 let evT = CFG.events.first;
+// 고장 난 채로 오래 두면 부서짐: 쌓인 물건(황금 포함)은 사라지고, 그 자리 '다시 제작' 칸에서 돈을 내야 다시 돌아감
+function brokenTick(s, z, cz, dt){
+  s.brokenT = (s.brokenT || 0) + dt;
+  const left = CFG.broken.ruin - s.brokenT;
+  if (left <= CFG.broken.warn && !s.warned) { s.warned = true; toast(`${z+1}층 고장 난 생산기가 ${CFG.broken.warn}초 뒤 부서져요!`, true); }
+  if (left > 0) return;
+  Object.assign(s, { broken:false, fix:0, brokenT:0, warned:false, ruined:true, items:0, golden:0, goldLife:[], t:0 });
+  toast(`${z+1}층 생산기가 부서졌어요! 그 자리에서 다시 제작해야 해요`, true); sfx.broken(); save();
+}
 function updEvents(dt){
   if ((evT -= dt) > 0) return;
   evT = CFG.events.every * (0.7 + Math.random()*0.6);
-  const z = Math.floor(Math.random()*S.zones.length), Z = S.zones[z], R = rt(z);
   if (Math.random() < 0.5) {
-    if (Z.sp.some(s => s.broken)) return;
-    const ks = [0, 1, 2].filter(k => Z.sp[k].on);
+    // 이미 고장 난 생산기가 있어도 다른 생산기가 또 고장 날 수 있음. 멀쩡한 생산기가 있는 층 중에서 고름
+    const ok = s => s.on && !s.broken && !s.ruined;
+    const zs = S.zones.map((_, z) => z).filter(z => S.zones[z].sp.some(ok));
+    if (!zs.length) return;
+    const z = zs[Math.floor(Math.random()*zs.length)], Z = S.zones[z];
+    const ks = [0, 1, 2].filter(k => ok(Z.sp[k]));
     const k = ks[Math.floor(Math.random()*ks.length)];
-    Z.sp[k].broken = true; Z.sp[k].fix = 0;
-    toast(`${z+1}층 생산기가 고장 났어요! 가서 그 앞에 서 있으면 고쳐요`, true); sfx.broken();
+    Object.assign(Z.sp[k], { broken:true, fix:0, brokenT:0, warned:false });
+    toast(`${z+1}층 생산기가 고장 났어요! 그 앞에 서 있으면 고쳐요 (${CFG.broken.ruin}초 넘게 두면 부서져요)`, true); sfx.broken();
   } else {
+    const z = Math.floor(Math.random()*S.zones.length), R = rt(z);
     if (R.vip) return;
     const [lo, hi] = CFG.vip.want;
     R.vip = { x:-30, y:gy(z, VIP_SPOT.y), want:lo + Math.floor(Math.random()*(hi-lo+1)), got:0, sum:0, t:CFG.vip.time,
@@ -685,7 +700,8 @@ function update(dt){
   S.zones.forEach((Z, z) => {
     Z.sp.forEach((s, k) => {
       goldTick(s, z, k, cz, dt);
-      if (!s.on || s.broken) return; s.t += dt;
+      if (s.broken) brokenTick(s, z, cz, dt);
+      if (!s.on || s.broken || s.ruined) return; s.t += dt;
       if (s.t >= CFG.spawnEvery) {
         s.t = 0;
         if (s.items < CFG.spawnMax) {
@@ -800,7 +816,7 @@ function update(dt){
     if (inRect(P.x, P.y, { x:SP[k].x, y:gy(cz, SP[k].y), ...SP_ZONE })) {
       s.fix = (s.fix || 0) + dt;
       if (every('fixTick', 0.25)) tone(300 + s.fix*300, 0.05, 'square', 0.04);
-      if (s.fix >= CFG.broken.fixTime) { s.broken = false; s.fix = 0; S.stats.fix = (S.stats.fix || 0) + 1; floatText(SP[k].x, gy(cz, SP[k].y), '수리 완료!', C.pad); sfx.done(); }
+      if (s.fix >= CFG.broken.fixTime) { s.broken = false; s.fix = 0; s.brokenT = 0; s.warned = false; S.stats.fix = (S.stats.fix || 0) + 1; floatText(SP[k].x, gy(cz, SP[k].y), '수리 완료!', C.pad); sfx.done(); }
     } else s.fix = 0;
   });
   checkMission();
@@ -820,7 +836,7 @@ function updWorker(w, dt){
   const Z = S.zones[w.z]; if (!Z) return;
   w.t += dt;
   if (w.state === 'toSpawn') {
-    if (w.tgt === null || !Z.sp[w.tgt].on) w.tgt = bestSpawner(Z);
+    if (w.tgt === null || !Z.sp[w.tgt].on || Z.sp[w.tgt].ruined) w.tgt = bestSpawner(Z);
     const p = SP[w.tgt];
     if (moveTo(w, p.x-24+(w.i%3)*24, gy(w.z, p.y+30), CFG.workerSpeed, dt)) {
       const s = Z.sp[w.tgt];
@@ -976,7 +992,7 @@ function render(){
     // 바닥 칸
     floorRect(zr(z, SELL), C.sellFill, C.sell, false, 0); text('판매', SELL.x, gy(z, SELL.y+22), 0, 15, C.sell);
     floorRect(zr(z, CASH), C.cashFill, C.billFront, false, 0);
-    Z.sp.forEach((s, k) => { if (s.on) floorRect({ x:SP[k].x, y:gy(z, SP[k].y), ...SP_ZONE }, 'rgba(95,107,132,.15)', C.machFront, false, 0); });
+    Z.sp.forEach((s, k) => { if (s.on && !s.ruined) floorRect({ x:SP[k].x, y:gy(z, SP[k].y), ...SP_ZONE }, 'rgba(95,107,132,.15)', C.machFront, false, 0); });
 
     // 세우는 것들
     list.push({ y:gy(z, DESK.y), draw:() => {
@@ -994,7 +1010,7 @@ function render(){
       if (Z.auto) text('자동 수금', CASH.x, gy(z, CASH.y+58), 0, 13, C.billFront);
     }});
     Z.sp.forEach((s, k) => {
-      if (!s.on) return;
+      if (!s.on || s.ruined) return;                   // 부서진 생산기는 안 그림(그 자리에 '다시 제작' 칸)
       const p = SP[k], py = gy(z, p.y);
       list.push({ y:py-40, draw:() => {
         const [mx, my] = toS(p.x, py-34);
@@ -1005,8 +1021,9 @@ function render(){
           for (let i = 0; i < 3; i++) { const t = (performance.now()/900 + i/3) % 1, [cx, cy] = toS(p.x - 10 + i*10, py-34, 50 + t*40);
             ctx.fillStyle = `rgba(90,90,100,${0.5*(1-t)})`; ctx.beginPath(); ctx.arc(cx, cy, (6 + t*8)*scale, 0, Math.PI*2); ctx.fill(); }
           ctx.fillStyle = C.ok; ctx.fillRect(bx, by, 56*scale*Math.min(1, (s.fix || 0)/CFG.broken.fixTime), 6*scale);
-          const on = Math.floor(performance.now()/300) % 2;
-          text(s.fix > 0 ? '수리 중…' : '고장! 앞에 서서 수리', p.x, py-76, 0, 13, on || s.fix > 0 ? C.hud : '#ffb3a6');
+          const on = Math.floor(performance.now()/300) % 2, left = CFG.broken.ruin - (s.brokenT || 0);
+          const msg = s.fix > 0 ? '수리 중…' : left <= CFG.broken.warn ? `${Math.ceil(left)}초 뒤 부서짐!` : '고장! 앞에 서서 수리';
+          text(msg, p.x, py-76, 0, 13, on || s.fix > 0 ? C.hud : '#ffb3a6');
         } else {
           const prog = s.items >= CFG.spawnMax ? 1 : s.t/CFG.spawnEvery;
           ctx.fillStyle = s.items >= CFG.spawnMax ? C.warn : C.hud; ctx.fillRect(bx, by, 56*scale*prog, 6*scale);

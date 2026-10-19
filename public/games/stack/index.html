@@ -127,7 +127,7 @@ const CFG = {
   warpCost: 1500,                                // 엘리베이터(층 버튼으로 이동) 비용
   events: { first: 60, every: 50 },              // 층 이벤트(고장·VIP): 처음 몇 초 뒤부터, 평균 몇 초마다
   broken: { fixTime: 2, ruin: 120, warn: 30, rebuild: 100 }, // 수리: 앞에 몇 초 서 있기 / 고장 난 채로 몇 초 지나면 부서짐(몇 초 전부터 경고) / 다시 제작 비용(× 8^층)
-  vip: { time: 40, want: [3, 6], mul: 5 },      // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5)
+  vip: { time: 40, want: [3, 6], mul: 5, slow: 15 }, // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5), 놓치면 주인공 이동속도가 기본으로 돌아가는 시간(초)
   autoCost: 1500,                                // 층 자동 수금 칸 비용 (× 8^층)
   cashMax: 40,                                   // 돈더미 최대 장수(손님 결제 1번 = 1장, 금액과 무관). 꽉 차면 챙길 때까지 판매가 멈춤
   drawStackMax: 40                               // 등에 그려지는 최대 개수 (넘으면 숫자로 표시)
@@ -630,7 +630,10 @@ function updVip(z, cz, dt){
   if (V.state === 'come' && moveTo(V, VIP_SPOT.x, gy(z, VIP_SPOT.y), CFG.cust.speed, dt, true)) { V.state = 'wait'; V.fx = 0.5; V.fy = 1; }
   if ((V.t -= dt) <= 0) {
     V.state = 'leave'; V.angry = true;
-    toast(`${z+1}층 VIP가 기다리다 떠났어요`, true); if (z === cz) sfx.angry();
+    // 벌칙: 일정 시간 이동속도 업그레이드 무효. 엘리베이터 없을 땐 먼 층 VIP는 못 가니까 지금 층 VIP만. 겹치면 다시 처음부터
+    if (z === cz || S.warp) { S.slow = CFG.vip.slow; toast(`${z+1}층 VIP가 화나서 떠났어요! ${CFG.vip.slow}초 동안 느려져요`, true); }
+    else toast(`${z+1}층 VIP가 기다리다 떠났어요`, true);
+    if (z === cz) sfx.angry();
     return;
   }
   if (V.state === 'wait' && z === cz && S.stack.length && Math.hypot(P.x - V.x, P.y - V.y) < 60 && (V.serveT += dt) > 0.12) {
@@ -736,7 +739,8 @@ function update(dt){
   if (keys.has('w') || keys.has('arrowup')) iy--;   if (keys.has('s') || keys.has('arrowdown')) iy++;
   if (joy) { const dx = joy.x-joy.ox, dy = joy.y-joy.oy, d = Math.hypot(dx, dy); if (d > 6) { const m = Math.min(1, d/50); ix = dx/d*m; iy = dy/d*m; } }
   else { const d = Math.hypot(ix, iy); if (d > 1) { ix /= d; iy /= d; } }
-  const spd = spdOf(S.spdLv); steer(P, ix*spd, iy*spd, dt);
+  if (S.slow > 0 && (S.slow -= dt) <= 0) { S.slow = 0; floatText(P.x, P.y, '속도 회복!', C.pad); }
+  const spd = spdOf(S.slow > 0 ? 0 : S.spdLv); steer(P, ix*spd, iy*spd, dt);
 
   const Z = S.zones[cz];
   // 줍기
@@ -1061,6 +1065,12 @@ function render(){
     const cap = capOf(S.capLv), n = S.stack.length;
     const [x, y, z] = stackPos(P, n);
     if (n >= cap) text('MAX', x, y, z+14, 14, C.warn);
+    if (S.slow > 0) {                                  // VIP 놓친 벌칙: 머리(또는 등짐) 위 남은 시간
+      const label = `🐢 느려짐 ${Math.ceil(S.slow)}초`, [sx, sy] = toS(P.x, P.y, Math.max(z+30, 70));
+      ctx.font = `13px ${FONT}`; const tw = ctx.measureText(label).width + 16;
+      rr(sx - tw/2, sy - 12, tw, 24, 12); ctx.fillStyle = C.warn; ctx.fill();
+      ctx.fillStyle = C.hud; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy);
+    }
     else if (n > CFG.drawStackMax) text(`×${n}`, x, y, z+14, 14, C.ink);
   }});
   list.sort((a, b) => a.y - b.y).forEach(o => o.draw());

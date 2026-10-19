@@ -61,7 +61,9 @@ function copySource() {
   if (!sourceCode.value) return
   navigator.clipboard.writeText(sourceCode.value)
   sourceCopied.value = true
-  setTimeout(() => { sourceCopied.value = false }, 2000)
+  setTimeout(() => {
+    sourceCopied.value = false
+  }, 2000)
 }
 
 const deleteTarget = ref<{ id: number, author: string, isReply: boolean } | null>(null)

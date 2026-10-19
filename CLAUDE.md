@@ -68,6 +68,14 @@ version: 'x.y.z+build'
 
 ## 작업 히스토리
 
+### 2026-10-19
+- 쌓고팔기(아이들 아케이드 게임 시제품) 추가 — "기타" 카테고리
+  - 게임 본체: `public/games/stack/index.html` (독립 정적 HTML, 캔버스, 외부 의존은 Google Fonts Jua뿐)
+    → https://wowhit.org/games/stack/
+  - `apps.ts`에 `stack` 항목 추가 (category: 'other', webUrl 절대주소 — 상대경로면 NuxtLink가 내부 라우트로 처리함)
+  - 게임 HUD의 "소개" 버튼 → `/stack` 상세 페이지
+  - 진행 상황은 localStorage(`stack-sell-proto-v1`)에 저장. 주제(테마)는 아직 미정
+
 ### 2026-07-25
 - HCLink(한국어화) 포트폴리오 추가 — "기타" 카테고리
   - 중국산 브이로그 미러링 스크린 부속 앱을 디컴파일해 한국어화 + Pairip 우회 +

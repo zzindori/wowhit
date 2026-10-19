@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>쌓고팔기 시제품</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+<style>
+/* 한 화면 게임: 캔버스 전체 + 위쪽 HUD 띠. 단일 룩(밝은 모래색 바닥)으로 고정 */
+:root{
+  --ground:#d9ccb2; --ink:#2c2b35; --hud:#fffaf0; --cash:#4c9a66; --pad:#4f6390; --warn:#c2462f;
+  --display:'Jua',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);overflow:hidden;font-family:var(--display);
+  touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);
+  left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;justify-content:space-between;align-items:center;gap:12px;pointer-events:none}
+.money{background:var(--hud);border-radius:999px;padding:6px 16px 6px 8px;display:flex;align-items:center;gap:8px;
+  font-size:22px;box-shadow:0 3px 0 rgba(44,43,53,.18);font-variant-numeric:tabular-nums}
+.coin{width:26px;height:26px;border-radius:50%;background:var(--cash);color:var(--hud);display:grid;place-items:center;font-size:15px}
+#reset{pointer-events:auto;font:inherit;font-size:14px;background:var(--hud);color:var(--ink);border:0;border-radius:999px;
+  padding:8px 14px;box-shadow:0 3px 0 rgba(44,43,53,.18);cursor:pointer}
+.menu{display:flex;gap:8px}
+#back{pointer-events:auto;font-size:14px;background:var(--hud);color:var(--ink);text-decoration:none;border-radius:999px;
+  padding:8px 14px;box-shadow:0 3px 0 rgba(44,43,53,.18)}
+#back:focus-visible{outline:3px solid var(--pad);outline-offset:2px}
+#reset.armed{background:var(--warn);color:var(--hud)}
+#reset:focus-visible{outline:3px solid var(--pad);outline-offset:2px}
+.hint{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);left:50%;transform:translateX(-50%);
+  max-width:calc(100% - 32px);background:rgba(44,43,53,.82);color:var(--hud);padding:10px 18px;border-radius:14px;
+  font-size:16px;text-align:center;pointer-events:none;text-wrap:balance}
+</style>
+</head>
+<body>
+
+<canvas id="game" aria-label="쌓고팔기 게임 화면"></canvas>
+<div class="hud">
+  <div class="money"><span class="coin">₩</span><span id="money">0</span></div>
+  <div class="menu"><a id="back" href="/stack">소개</a><button id="reset" type="button">처음부터</button></div>
+</div>
+<div class="hint" id="hint">화면을 드래그해서 움직여요</div>
+
+<script>
+(() => {
+const cv = document.getElementById('game'), ctx = cv.getContext('2d');
+const moneyEl = document.getElementById('money'), hintEl = document.getElementById('hint'), resetBtn = document.getElementById('reset');
+const FONT = "Jua, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
+const C = { ground:'#d9ccb2', tile:'#cfc1a5', ink:'#2c2b35', hud:'#fffaf0',
+  boxTop:'#f2a35e', boxFront:'#d9772e', billTop:'#7cc794', billFront:'#4c9a66',
+  pad:'#4f6390', padFill:'rgba(79,99,144,.22)', sell:'#3f7fc4', sellFill:'rgba(63,127,196,.20)',
+  cashFill:'rgba(76,154,102,.18)', machTop:'#8a96ad', machFront:'#5f6b84', deskTop:'#b98a5e', deskFront:'#8f6440',
+  player:'#2f5bd3', playerDark:'#2245a3', worker:'#e0a82e', workerDark:'#b07f17', skin:'#f3d2b3' };
+
+// ---- 월드 배치 ----
+const W = 760, H = 980, VALUE = 4, WCAP = 4, KEY = 'stack-sell-proto-v1';
+const SP = [{x:170,y:720},{x:380,y:720},{x:590,y:720}];       // 생산기 출력 칸 중심
+const SP_ZONE = {w:110,h:86};
+const DESK = {x:300,y:180};
+const SELL = {x:300,y:258,w:140,h:76};
+const CASH = {x:490,y:240,w:104,h:92};
+
+const capOf = l => 6 + 2*l;
+const spdOf = l => 150 * Math.pow(1.12, l);
+const sellIv = l => 0.45 * Math.pow(0.78, l);
+
+const PADS = [
+  { id:'sp1', x:SP[1].x, y:SP[1].y, w:SP_ZONE.w, h:SP_ZONE.h, label:'생산기 열기', sub:()=>'',
+    cost:()=>60, vis:()=>!S.sp[1].on, apply:()=>{ S.sp[1].on = true; } },
+  { id:'sp2', x:SP[2].x, y:SP[2].y, w:SP_ZONE.w, h:SP_ZONE.h, label:'생산기 열기', sub:()=>'',
+    cost:()=>240, vis:()=>S.sp[1].on && !S.sp[2].on, apply:()=>{ S.sp[2].on = true; } },
+  { id:'cap', x:120, y:480, w:96, h:84, label:'적재량', sub:()=>`${capOf(S.capLv)}→${capOf(S.capLv+1)}개`,
+    cost:()=>Math.round(25*Math.pow(1.6,S.capLv)), vis:()=>S.capLv<8, apply:()=>{ S.capLv++; } },
+  { id:'spd', x:250, y:480, w:96, h:84, label:'이동속도', sub:()=>`Lv${S.spdLv+1}`,
+    cost:()=>Math.round(35*Math.pow(1.7,S.spdLv)), vis:()=>S.spdLv<5, apply:()=>{ S.spdLv++; } },
+  { id:'wrk', x:510, y:480, w:96, h:84, label:'일꾼 고용', sub:()=>`${S.wrkLv}→${S.wrkLv+1}명`,
+    cost:()=>Math.round(100*Math.pow(2.1,S.wrkLv)), vis:()=>S.wrkLv<4, apply:()=>{ S.wrkLv++; syncWorkers(); } },
+  { id:'sell', x:640, y:480, w:96, h:84, label:'판매속도', sub:()=>`Lv${S.sellLv+1}`,
+    cost:()=>Math.round(40*Math.pow(1.8,S.sellLv)), vis:()=>S.sellLv<5, apply:()=>{ S.sellLv++; } },
+];
+
+// ---- 상태 ----
+const DEF = () => ({ money:0, cash:0, capLv:0, spdLv:0, wrkLv:0, sellLv:0,
+  sp:[{on:true,items:4,t:0},{on:false,items:0,t:0},{on:false,items:0,t:0}],
+  paid:{}, stack:0, queue:0, px:380, py:600, tut:{sold:false,collected:false,upgraded:false} });
+let S;
+function load(seed){
+  if (seed && seed.sp) return Object.assign(DEF(), seed);
+  try { const raw = localStorage.getItem(KEY); if (raw) return Object.assign(DEF(), JSON.parse(raw)); } catch(e) {}
+  return DEF();
+}
+function save(){ try { S.px = P.x; S.py = P.y; localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+
+const P = { x:380, y:600, inc:0, fx:0, fy:1, svx:0, svy:0, t:0, payT:0, padCd:0, cashT:0 };
+let workers = [], anims = [], floats = [];
+function syncWorkers(){
+  while (workers.length < S.wrkLv) {
+    const i = workers.length;
+    workers.push({ i, x:DESK.x+60+i*20, y:SELL.y+40, stack:0, inc:0, state:'toSpawn', tgt:null, t:0, wait:0, fx:0, fy:1, svx:0, svy:0 });
+  }
+  workers.length = S.wrkLv;
+}
+
+// ---- 입력 ----
+let joy = null; const keys = new Set();
+cv.addEventListener('pointerdown', e => { joy = { id:e.pointerId, ox:e.clientX, oy:e.clientY, x:e.clientX, y:e.clientY }; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove', e => { if (joy && e.pointerId === joy.id) { joy.x = e.clientX; joy.y = e.clientY; } });
+const endJoy = e => { if (joy && e.pointerId === joy.id) joy = null; };
+cv.addEventListener('pointerup', endJoy); cv.addEventListener('pointercancel', endJoy);
+addEventListener('keydown', e => keys.add(e.key.toLowerCase()));
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => { keys.clear(); joy = null; });
+
+let armT = 0;
+resetBtn.addEventListener('click', () => {
+  if (!resetBtn.classList.contains('armed')) { resetBtn.classList.add('armed'); resetBtn.textContent = '한 번 더 누르면 초기화'; armT = 3; return; }
+  S = DEF(); P.x = S.px; P.y = S.py; P.inc = 0; workers = []; anims = []; floats = []; save();
+  resetBtn.classList.remove('armed'); resetBtn.textContent = '처음부터';
+});
+
+// ---- 화면/카메라 ----
+let VW = 0, VH = 0, DPR = 1, scale = 1; const cam = { x:380, y:600 };
+function resize(){
+  DPR = Math.min(devicePixelRatio || 1, 2); VW = cv.clientWidth; VH = cv.clientHeight;
+  cv.width = Math.round(VW*DPR); cv.height = Math.round(VH*DPR);
+  scale = Math.max(0.55, Math.min(1.6, Math.min(VW/430, VH/660)));
+}
+addEventListener('resize', resize);
+const toS = (x, y, z=0) => [(x-cam.x)*scale + VW/2, (y-cam.y)*scale + VH/2 - z*scale];
+const inRect = (x, y, r) => Math.abs(x-r.x) < r.w/2 && Math.abs(y-r.y) < r.h/2;
+
+// ---- 쌓인 위치 계산 (등 뒤, 흔들림 포함) ----
+function stackPos(e, i){
+  const sway = 0.0009*i*i;
+  return [e.x - e.fx*11 - e.svx*sway, e.y - e.fy*7 - e.svy*sway*0.6, 30 + i*9];
+}
+function spItemPos(k, i){
+  const p = SP[k]; const col = i%3, row = Math.floor(i/3)%2, layer = Math.floor(i/6);
+  return [p.x-18+col*18, p.y-4+row*15, layer*9];
+}
+function deskPos(i){ return [DESK.x-24+(i%4)*16, DESK.y+6, 26 + Math.floor(i/4)*9]; }
+function cashPos(i){ const col = i%3, row = Math.floor(i/3)%2, layer = Math.floor(i/6); return [CASH.x-20+col*20, CASH.y-6+row*16, layer*4]; }
+
+function fly(from, toFn, kind, dur, done){ anims.push({ from, toFn, kind, t:0, dur, done }); }
+function floatText(x, y, text, color){ floats.push({ x, y, text, color, t:0 }); }
+
+// ---- 이동 ----
+function steer(e, vx, vy, dt){
+  e.x = Math.max(20, Math.min(W-20, e.x + vx*dt));
+  e.y = Math.max(40, Math.min(H-20, e.y + vy*dt));
+  const sp = Math.hypot(vx, vy);
+  if (sp > 5) { e.fx = vx/sp; e.fy = vy/sp; }
+  const k = Math.min(1, dt*8); e.svx += (vx-e.svx)*k; e.svy += (vy-e.svy)*k;
+}
+function moveTo(e, tx, ty, spd, dt){
+  const dx = tx-e.x, dy = ty-e.y, d = Math.hypot(dx, dy);
+  if (d < 4) { steer(e, 0, 0, dt); return true; }
+  const s = Math.min(spd, d/dt); steer(e, dx/d*s, dy/d*s, dt); return false;
+}
+function bestSpawner(){
+  let best = 0, n = -1;
+  S.sp.forEach((s, k) => { if (s.on && s.items > n) { n = s.items; best = k; } });
+  return best;
+}
+
+// ---- 갱신 ----
+function update(dt){
+  if (armT > 0 && (armT -= dt) <= 0) { resetBtn.classList.remove('armed'); resetBtn.textContent = '처음부터'; }
+
+  // 생산
+  S.sp.forEach(s => { if (!s.on) return; s.t += dt; if (s.t >= 1.5) { s.t = 0; if (s.items < 12) s.items++; } });
+
+  // 플레이어 이동
+  let ix = 0, iy = 0;
+  if (keys.has('a') || keys.has('arrowleft')) ix--; if (keys.has('d') || keys.has('arrowright')) ix++;
+  if (keys.has('w') || keys.has('arrowup')) iy--;   if (keys.has('s') || keys.has('arrowdown')) iy++;
+  if (joy) { const dx = joy.x-joy.ox, dy = joy.y-joy.oy, d = Math.hypot(dx, dy); if (d > 6) { const m = Math.min(1, d/50); ix = dx/d*m; iy = dy/d*m; } }
+  else { const d = Math.hypot(ix, iy); if (d > 1) { ix /= d; iy /= d; } }
+  const spd = spdOf(S.spdLv); steer(P, ix*spd, iy*spd, dt);
+
+  // 줍기
+  P.t += dt;
+  const cap = capOf(S.capLv);
+  S.sp.forEach((s, k) => {
+    if (!s.on || !inRect(P.x, P.y, {x:SP[k].x, y:SP[k].y, ...SP_ZONE})) return;
+    if (s.items > 0 && S.stack + P.inc < cap && P.t > 0.09) {
+      P.t = 0; s.items--; P.inc++;
+      const idx = S.stack + P.inc - 1;
+      fly(spItemPos(k, s.items), () => stackPos(P, idx), 'box', 0.22, () => { S.stack++; P.inc--; });
+    }
+  });
+  // 판매대에 내려놓기
+  if (inRect(P.x, P.y, SELL) && S.stack > 0 && P.t > 0.07) {
+    P.t = 0; S.stack--; const q = S.queue;
+    fly(stackPos(P, S.stack), () => deskPos(Math.min(q, 15)), 'box', 0.2, () => { S.queue++; });
+  }
+  // 판매 처리
+  if (S.queue > 0) {
+    P.sellT = (P.sellT || 0) + dt;
+    if (P.sellT >= sellIv(S.sellLv)) {
+      P.sellT = 0; S.queue--; S.tut.sold = true;
+      const n = Math.min(Math.ceil(S.cash/VALUE), 17);
+      fly(deskPos(0), () => cashPos(n), 'bill', 0.3, () => {}); S.cash += VALUE;
+    }
+  } else P.sellT = 0;
+  // 돈 줍기
+  P.cashT += dt;
+  if (inRect(P.x, P.y, CASH) && S.cash > 0 && P.cashT > 0.05) {
+    P.cashT = 0; const chunk = Math.min(S.cash, Math.max(VALUE, Math.ceil(S.cash/6)));
+    S.cash -= chunk; S.money += chunk; S.tut.collected = true;
+    fly(cashPos(Math.min(Math.ceil(S.cash/VALUE), 17)), () => [P.x, P.y, 40], 'bill', 0.25, () => {});
+    floatText(P.x, P.y, `+${chunk}`, C.billFront);
+  }
+  // 업그레이드 칸
+  if (P.padCd > 0) P.padCd -= dt;
+  const pad = PADS.find(p => p.vis() && inRect(P.x, P.y, p));
+  if (pad && P.padCd <= 0 && S.money > 0) {
+    P.payT += dt;
+    while (P.payT > 0.04) {
+      P.payT -= 0.04;
+      const c = pad.cost(), paid = S.paid[pad.id] || 0, rem = c - paid;
+      const amt = Math.min(S.money, Math.max(1, Math.ceil(c/30)), rem);
+      if (amt <= 0) break;
+      S.money -= amt; S.paid[pad.id] = paid + amt;
+      if (Math.random() < 0.35) fly([P.x, P.y, 40], () => [pad.x, pad.y, 0], 'bill', 0.25, () => {});
+      if (S.paid[pad.id] >= c) {
+        S.paid[pad.id] = 0; pad.apply(); S.tut.upgraded = true; P.padCd = 0.8;
+        floatText(pad.x, pad.y, '완료!', C.pad); save(); break;
+      }
+    }
+  } else P.payT = 0;
+
+  workers.forEach(w => updWorker(w, dt));
+
+  anims = anims.filter(a => { a.t += dt/a.dur; if (a.t >= 1) { a.done(); return false; } return true; });
+  floats = floats.filter(f => (f.t += dt) < 0.9);
+
+  // 카메라
+  const vw = VW/scale, vh = VH/scale;
+  const tx = W > vw ? Math.max(vw/2, Math.min(W-vw/2, P.x)) : W/2;
+  const ty = H > vh ? Math.max(vh/2-40, Math.min(H-vh/2, P.y)) : H/2;
+  const k = Math.min(1, dt*6); cam.x += (tx-cam.x)*k; cam.y += (ty-cam.y)*k;
+}
+
+function updWorker(w, dt){
+  const spd = 95;
+  w.t += dt;
+  if (w.state === 'toSpawn') {
+    if (w.tgt === null || !S.sp[w.tgt].on) w.tgt = bestSpawner();
+    const p = SP[w.tgt];
+    if (moveTo(w, p.x-24+(w.i%3)*24, p.y+30, spd, dt)) {
+      const s = S.sp[w.tgt];
+      if (s.items > 0 && w.stack + w.inc < WCAP) {
+        w.wait = 0;
+        if (w.t > 0.2) {
+          w.t = 0; s.items--; w.inc++; const idx = w.stack + w.inc - 1;
+          fly(spItemPos(w.tgt, s.items), () => stackPos(w, idx), 'box', 0.22, () => { w.stack++; w.inc--; });
+        }
+      } else {
+        w.wait += dt;
+        if (w.inc === 0 && (w.stack >= WCAP || (w.stack > 0 && w.wait > 1.2))) { w.state = 'toSell'; w.tgt = null; w.wait = 0; }
+        else if (w.stack === 0 && w.wait > 1.5) { w.tgt = bestSpawner(); w.wait = 0; }
+      }
+    }
+  } else {
+    if (moveTo(w, SELL.x-45+w.i*30, SELL.y+14, spd, dt)) {
+      if (w.stack > 0) {
+        if (w.t > 0.13) {
+          w.t = 0; w.stack--; const q = S.queue;
+          fly(stackPos(w, w.stack), () => deskPos(Math.min(q, 15)), 'box', 0.2, () => { S.queue++; });
+        }
+      } else { w.state = 'toSpawn'; w.tgt = null; }
+    }
+  }
+}
+
+// ---- 그리기 ----
+function rr(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r); ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath(); }
+function cube(x, y, z, s, h, top, front){
+  const [sx, sy] = toS(x, y, z); const w = s*scale, hh = h*scale, d = s*0.5*scale;
+  ctx.fillStyle = front; ctx.fillRect(sx-w/2, sy-hh, w, hh);
+  ctx.fillStyle = top; ctx.fillRect(sx-w/2, sy-hh-d, w, d);
+  ctx.strokeStyle = 'rgba(44,43,53,.22)'; ctx.lineWidth = 1;
+  ctx.strokeRect(sx-w/2+.5, sy-hh-d+.5, w-1, hh+d-1);
+}
+const box = (x, y, z) => cube(x, y, z, 14, 9, C.boxTop, C.boxFront);
+const bill = (x, y, z) => cube(x, y, z, 18, 4, C.billTop, C.billFront);
+function text(str, x, y, z, size, color, align='center'){
+  const [sx, sy] = toS(x, y, z); ctx.font = `${Math.round(size*scale)}px ${FONT}`;
+  ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.fillStyle = color; ctx.fillText(str, sx, sy);
+}
+function floorRect(r, fill, stroke, dashed, progress){
+  const [x0, y0] = toS(r.x-r.w/2, r.y-r.h/2), w = r.w*scale, h = r.h*scale;
+  rr(x0, y0, w, h, 10*scale); ctx.fillStyle = fill; ctx.fill();
+  if (progress > 0) { ctx.save(); rr(x0, y0, w, h, 10*scale); ctx.clip(); ctx.fillStyle = stroke; ctx.globalAlpha = .35; ctx.fillRect(x0, y0+h*(1-progress), w, h*progress); ctx.restore(); }
+  ctx.setLineDash(dashed ? [8*scale, 6*scale] : []); ctx.lineWidth = 3*scale; ctx.strokeStyle = stroke;
+  rr(x0, y0, w, h, 10*scale); ctx.stroke(); ctx.setLineDash([]);
+}
+function person(e, body, dark){
+  const [sx, sy] = toS(e.x, e.y);
+  ctx.fillStyle = 'rgba(44,43,53,.22)'; ctx.beginPath(); ctx.ellipse(sx, sy, 13*scale, 6*scale, 0, 0, Math.PI*2); ctx.fill();
+  const bob = Math.hypot(e.svx, e.svy) > 20 ? Math.abs(Math.sin(performance.now()/90))*2*scale : 0;
+  ctx.fillStyle = dark; rr(sx-10*scale, sy-30*scale-bob, 20*scale, 28*scale, 8*scale); ctx.fill();
+  ctx.fillStyle = body; rr(sx-10*scale, sy-32*scale-bob, 20*scale, 24*scale, 8*scale); ctx.fill();
+  ctx.fillStyle = C.skin; ctx.beginPath(); ctx.arc(sx + e.fx*2*scale, sy-40*scale-bob + e.fy*1.5*scale, 9*scale, 0, Math.PI*2); ctx.fill();
+}
+function carrier(e, n, body, dark){
+  const draw = () => { for (let i = 0; i < n; i++) { const [x, y, z] = stackPos(e, i); box(x, y, z); } };
+  if (e.fy < -0.3) { person(e, body, dark); draw(); } else { draw(); person(e, body, dark); }
+}
+
+function render(){
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = C.ground; ctx.fillRect(0, 0, VW, VH);
+  // 바닥 타일
+  ctx.strokeStyle = C.tile; ctx.lineWidth = 1;
+  for (let gx = 0; gx <= W; gx += 40) { const [a, b] = toS(gx, 0), [, d] = toS(gx, H); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(a, d); ctx.stroke(); }
+  for (let gy = 0; gy <= H; gy += 40) { const [a, b] = toS(0, gy), [c] = toS(W, gy); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, b); ctx.stroke(); }
+
+  // 바닥 칸들
+  floorRect(SELL, C.sellFill, C.sell, false, 0); text('판매', SELL.x, SELL.y+22, 0, 15, C.sell);
+  floorRect(CASH, C.cashFill, C.billFront, false, 0);
+  S.sp.forEach((s, k) => { if (s.on) floorRect({x:SP[k].x, y:SP[k].y, ...SP_ZONE}, 'rgba(95,107,132,.15)', C.machFront, false, 0); });
+  PADS.forEach(p => {
+    if (!p.vis()) return;
+    const c = p.cost(), prog = (S.paid[p.id] || 0)/c;
+    floorRect(p, C.padFill, C.pad, true, prog);
+    text(p.label, p.x, p.y-18, 0, 15, C.ink);
+    if (p.sub()) text(p.sub(), p.x, p.y+2, 0, 13, C.pad);
+    text(`₩${c - (S.paid[p.id] || 0)}`, p.x, p.y+22, 0, 15, S.money > 0 ? C.billFront : C.ink);
+  });
+
+  // 깊이순 정렬해서 세우는 것들
+  const list = [];
+  list.push({ y:DESK.y, draw:() => {
+    cube(DESK.x, DESK.y+14, 0, 110, 26, C.deskTop, C.deskFront);
+    for (let i = 0; i < Math.min(S.queue, 16); i++) { const [x, y, z] = deskPos(i); box(x, y, z); }
+    text(S.queue > 16 ? `+${S.queue-16}` : '', DESK.x+66, DESK.y-10, 30, 13, C.ink);
+  }});
+  list.push({ y:CASH.y, draw:() => {
+    const n = Math.min(Math.ceil(S.cash/VALUE), 18);
+    for (let i = 0; i < n; i++) { const [x, y, z] = cashPos(i); bill(x, y, z); }
+    if (S.cash > 0) text(`₩${S.cash}`, CASH.x, CASH.y-38, 20, 15, C.billFront);
+  }});
+  S.sp.forEach((s, k) => {
+    if (!s.on) return;
+    const p = SP[k];
+    list.push({ y:p.y-40, draw:() => {
+      cube(p.x, p.y-34, 0, 80, 46, C.machTop, C.machFront);
+      const prog = s.items >= 12 ? 1 : s.t/1.5; const [bx, by] = toS(p.x-28, p.y-58, 0);
+      ctx.fillStyle = 'rgba(255,250,240,.5)'; ctx.fillRect(bx, by, 56*scale, 6*scale);
+      ctx.fillStyle = s.items >= 12 ? C.warn : C.hud; ctx.fillRect(bx, by, 56*scale*prog, 6*scale);
+      text(s.items >= 12 ? '가득 참' : '생산 중', p.x, p.y-76, 0, 13, C.hud);
+    }});
+    list.push({ y:p.y, draw:() => { for (let i = 0; i < s.items; i++) { const [x, y, z] = spItemPos(k, i); box(x, y, z); } } });
+  });
+  workers.forEach(w => list.push({ y:w.y, draw:() => carrier(w, w.stack, C.worker, C.workerDark) }));
+  list.push({ y:P.y, draw:() => {
+    carrier(P, S.stack, C.player, C.playerDark);
+    const cap = capOf(S.capLv);
+    if (S.stack >= cap) { const [x, y, z] = stackPos(P, S.stack); text('MAX', x, y, z+14, 14, C.warn); }
+  }});
+  list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
+
+  // 날아가는 것들
+  anims.forEach(a => {
+    const to = a.toFn(), t = a.t, e = 1-(1-t)*(1-t);
+    const x = a.from[0] + (to[0]-a.from[0])*e, y = a.from[1] + (to[1]-a.from[1])*e;
+    const z = a.from[2] + (to[2]-a.from[2])*e + Math.sin(Math.PI*t)*30;
+    a.kind === 'box' ? box(x, y, z) : bill(x, y, z);
+  });
+  floats.forEach(f => { ctx.globalAlpha = 1 - f.t/0.9; text(f.text, f.x, f.y, 60 + f.t*50, 18, f.color); ctx.globalAlpha = 1; });
+
+  // 조이스틱
+  if (joy) {
+    ctx.strokeStyle = 'rgba(44,43,53,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(joy.ox, joy.oy, 50, 0, Math.PI*2); ctx.stroke();
+    const dx = joy.x-joy.ox, dy = joy.y-joy.oy, d = Math.hypot(dx, dy), m = Math.min(1, 50/(d || 1));
+    ctx.fillStyle = 'rgba(44,43,53,.4)'; ctx.beginPath(); ctx.arc(joy.ox + dx*(d > 50 ? m : 1), joy.oy + dy*(d > 50 ? m : 1), 22, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+let shownMoney = -1, lastHint = '';
+function hud(){
+  if (S.money !== shownMoney) { shownMoney = S.money; moneyEl.textContent = S.money.toLocaleString('ko-KR'); }
+  let h = '';
+  if (!S.tut.sold) h = S.stack > 0 ? '파란 판매 칸으로 가져가요' : '회색 생산기 앞 칸에 서서 상자를 모아요';
+  else if (!S.tut.collected) h = '초록 돈더미를 밟아서 돈을 챙겨요';
+  else if (!S.tut.upgraded) h = '점선 칸 위에 서 있으면 돈이 들어가 업그레이드돼요';
+  if (h !== lastHint) { lastHint = h; hintEl.textContent = h; hintEl.hidden = !h; }
+}
+
+// ---- 시작 ----
+let last = 0, saveT = 0;
+function frame(now){
+  const dt = Math.min(0.05, (now - last)/1000 || 0); last = now;
+  update(dt); render(); hud();
+  if ((saveT += dt) > 1.5) { saveT = 0; save(); }
+  requestAnimationFrame(frame);
+}
+function start(seed){
+  S = load(seed); P.x = S.px; P.y = S.py; cam.x = P.x; cam.y = P.y;
+  syncWorkers(); resize(); requestAnimationFrame(t => { last = t; frame(t); });
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+start(null);
+})();
+</script>
+</body>
+</html>

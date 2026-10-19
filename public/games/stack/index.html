@@ -35,6 +35,7 @@ body{margin:0;background:var(--ground);color:var(--ink);overflow:hidden;font-fam
 #zones button.danger::after{content:'!';margin-left:3px}
 #zones button.full{background:#e8b923;color:var(--ink)}
 #zones button.full::after{content:' ₩MAX';font-size:12px}
+#zones button.locked{opacity:.7}
 @keyframes blink{50%{opacity:.55}}
 @media (prefers-reduced-motion:reduce){#zones button.danger{animation:none}}
 button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset:2px}
@@ -103,6 +104,7 @@ const CFG = {
   wallet: { base: 500, mul: 2, costRate: 0.6 },    // 지갑 한도 = 500 × 2^레벨, 업그레이드 비용 = 현재 한도의 60%
   gold: { chance: 0.03, mul: 10 },               // 황금 물건: 생산될 확률, 값 배수
   thief: { after: 12, chance: 0.3, speed: 115, take: 0.5, cooldown: 25 }, // 도둑: 돈더미를 몇 초 방치하면 나타날 수 있음, 초당 등장 확률, 속도, 훔치는 비율, 다음 등장까지 쉬는 시간
+  warpCost: 1500,                                // 순간이동(구역 버튼으로 이동) 비용
   autoCost: 1500,                                // 구역 자동 수금 칸 비용 (× 8^구역)
   cashMax: 40,                                   // 돈더미 최대(지폐 장수). 꽉 차면 챙길 때까지 판매가 멈춤
   drawStackMax: 40                               // 등에 그려지는 최대 개수 (넘으면 숫자로 표시)
@@ -165,7 +167,7 @@ function fmt(n){
 
 // ---- 상태 ----
 const newZone = () => ({ sp:[{on:true,items:4,t:0},{on:false,items:0,t:0},{on:false,items:0,t:0}], wrkLv:0, sellLv:0, cash:0, queue:[], auto:false });
-const DEF = () => ({ v:2, money:0, capLv:0, spdLv:0, walLv:0, zones:[newZone()], paid:{}, stack:[], px:380, py:600,
+const DEF = () => ({ v:2, money:0, capLv:0, spdLv:0, walLv:0, warp:false, zones:[newZone()], paid:{}, stack:[], px:380, py:600,
   tut:{ sold:false, collected:false, upgraded:false, zone:false, angry:false, cashFull:false, wallet:false },
   stats:{ sell:0, collect:0, tip:0, upgrade:0, golden:0 }, mission:null });
 function migrateV1(o){
@@ -250,11 +252,14 @@ function rebuildPads(){
     [1, 2].forEach(k => PADS.push({ id:`${z}:sp${k}`, ...at(SP[k].x, SP[k].y, SP_ZONE.w, SP_ZONE.h), label:'생산기 열기', sub:() => '',
       cost:() => CFG.spawnerCost[k]*zscale(z), vis:() => !Z.sp[k].on && (k === 1 || Z.sp[1].on), apply:() => { Z.sp[k].on = true; } }));
     PADS.push({ id:'cap', ...at(120, 480, 96, 84), label:'적재량', sub:() => `${capOf(S.capLv)}→${capOf(S.capLv+1)}개`,
-      cost:() => Math.round(CFG.cap.cost*Math.pow(CFG.cap.mul, S.capLv)), vis:() => true, apply:() => { S.capLv++; } });
+      cost:() => Math.round(CFG.cap.cost*Math.pow(CFG.cap.mul, S.capLv)), vis:() => z === 0, apply:() => { S.capLv++; } });
     PADS.push({ id:'spd', ...at(250, 480, 96, 84), label:'이동속도', sub:() => `Lv${S.spdLv+1}`,
-      cost:() => Math.round(CFG.speed.cost*Math.pow(CFG.speed.mul, S.spdLv)), vis:() => true, apply:() => { S.spdLv++; } });
+      cost:() => Math.round(CFG.speed.cost*Math.pow(CFG.speed.mul, S.spdLv)), vis:() => z === 0, apply:() => { S.spdLv++; } });
     PADS.push({ id:'wallet', ...at(380, 480, 96, 84), label:'지갑', sub:() => `${fmt(walletOf(S.walLv))}→${fmt(walletOf(S.walLv+1))}`,
-      cost:() => Math.round(walletOf(S.walLv)*CFG.wallet.costRate), vis:() => true, apply:() => { S.walLv++; } });
+      cost:() => Math.round(walletOf(S.walLv)*CFG.wallet.costRate), vis:() => z === 0, apply:() => { S.walLv++; } });
+    if (z === 0) PADS.push({ id:'warp', ...at(110, 300, 100, 84), label:'순간이동', sub:() => '구역 버튼으로 이동',
+      cost:() => CFG.warpCost, vis:() => S.zones.length > 1 && !S.warp,
+      apply:() => { S.warp = true; renderZoneChips(); toast('이제 왼쪽 위 구역 버튼을 누르면 바로 이동해요'); } });
     PADS.push({ id:`${z}:wrk`, ...at(510, 480, 96, 84), label:'일꾼 고용', sub:() => `${Z.wrkLv}→${Z.wrkLv+1}명`,
       cost:() => Math.round(CFG.worker.cost*Math.pow(CFG.worker.mul, Z.wrkLv)*zscale(z)), vis:() => Z.wrkLv < CFG.workerMax, apply:() => { Z.wrkLv++; syncWorkers(); } });
     PADS.push({ id:`${z}:sell`, ...at(640, 480, 96, 84), label:'판매속도', sub:() => `Lv${Z.sellLv+1}`,
@@ -269,7 +274,7 @@ function openZone(){
   S.zones.push(newZone()); S.tut.zone = true;
   rebuildPads(); syncWorkers(); renderZoneChips(); sfx.zone();
   const n = S.zones.length;
-  toast(`${n}구역 「${zoneName(n-1)}」 열림! 위로 올라가거나 왼쪽 위 숫자로 이동`);
+  toast(`${n}구역 「${zoneName(n-1)}」 열림! ` + (S.warp ? '위로 올라가거나 왼쪽 위 숫자로 이동' : '위로 걸어 올라가요'));
 }
 
 function newWorker(z, i){ return { z, i, x:DESK.x+60+i*20, y:gy(z, SELL.y+40), stack:[], inc:0, state:'toSpawn', tgt:null, t:0, wait:0, fx:0, fy:1, svx:0, svy:0 }; }
@@ -287,10 +292,13 @@ function renderZoneChips(){
   S.zones.forEach((_, z) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (z === curZone ? ' on' : '');
     b.textContent = z === curZone ? `${z+1} ${zoneName(z)}` : z+1; b.setAttribute('aria-label', `${z+1}구역 ${zoneName(z)} 가기`);
+    if (!S.warp) b.classList.add('locked');
     b.addEventListener('click', () => warp(z)); zonesEl.appendChild(b); chipEls[z] = b;
   });
 }
-function warp(z){ P.x = 380; P.y = gy(z, 600); cam.x = P.x; cam.y = P.y; sfx.warp(); }
+function warp(z){
+  if (!S.warp) { toast(`순간이동은 1구역 「${zoneName(0)}」에서 살 수 있어요`, true); return; }
+  P.x = 380; P.y = gy(z, 600); cam.x = P.x; cam.y = P.y; sfx.warp(); }
 let toastT = 0;
 function toast(msg, bad){ toastEl.textContent = msg; toastEl.classList.toggle('bad', !!bad); toastEl.hidden = false; toastEl.style.opacity = 1; toastT = 2.2; }
 

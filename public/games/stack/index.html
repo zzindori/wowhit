@@ -30,6 +30,11 @@ body{margin:0;background:var(--ground);color:var(--ink);overflow:hidden;font-fam
 #zones{display:flex;gap:6px;overflow-x:auto;max-width:calc(100vw - 140px);pointer-events:auto;padding-bottom:4px}
 #zones button{font:inherit;font-size:14px;border:0;min-width:36px;padding:6px 10px;color:var(--ink);cursor:pointer;flex:none}
 #zones button.on{background:var(--pad);color:var(--hud)}
+#zones button.warn{box-shadow:0 3px 0 rgba(44,43,53,.18),inset 0 0 0 3px #e8b923}
+#zones button.danger{background:var(--warn);color:var(--hud);animation:blink .6s steps(2) infinite}
+#zones button.danger::after{content:'!';margin-left:3px}
+@keyframes blink{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){#zones button.danger{animation:none}}
 button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset:2px}
 #menuBtn{pointer-events:auto;font:inherit;font-size:14px;border:0;padding:8px 14px;color:var(--ink);cursor:pointer}
 #panel{position:fixed;top:calc(env(safe-area-inset-top,0px) + 56px);right:max(16px,env(safe-area-inset-right,0px));
@@ -270,13 +275,14 @@ function syncWorkers(){
 
 // ---- HUD: 구역 이동, 설정, 알림 ----
 let curZone = 0;
+let chipEls = [], chipState = [];
 function renderZoneChips(){
-  zonesEl.innerHTML = '';
+  zonesEl.innerHTML = ''; chipEls = []; chipState = [];
   if (S.zones.length < 2) return;
   S.zones.forEach((_, z) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (z === curZone ? ' on' : '');
     b.textContent = z === curZone ? `${z+1} ${zoneName(z)}` : z+1; b.setAttribute('aria-label', `${z+1}구역 ${zoneName(z)} 가기`);
-    b.addEventListener('click', () => warp(z)); zonesEl.appendChild(b);
+    b.addEventListener('click', () => warp(z)); zonesEl.appendChild(b); chipEls[z] = b;
   });
 }
 function warp(z){ P.x = 380; P.y = gy(z, 600); cam.x = P.x; cam.y = P.y; sfx.warp(); }
@@ -406,7 +412,7 @@ function updCustomers(Z, z, cz, dt){
         if (z === cz) {
           floatText(c.x, c.y, '화났어요!', C.warn); sfx.angry();
           if (!S.tut.angry) { S.tut.angry = true; toast('손님이 화나서 그냥 가버렸어요. 늦지 않게 채워주세요', true); }
-        }
+        } else if (every('angryOff', 10)) toast(`${zoneName(z)} 손님이 화나서 떠났어요`, true);
       }
     }
   });
@@ -484,6 +490,13 @@ function drawThief(){
     ctx.fillText('₩', bx, by - bob);
   }
   if (T.state !== 'run' || T.loot > 0) text('도둑!', T.x, T.y, 62, 14, C.warn);
+}
+
+// 구역 손님 상태: 0=없음, 1=기다리는 중, 2=화나기 직전(참을성 35% 미만)
+function zoneAlert(z){
+  let a = 0;
+  for (const c of rt(z).custs) { if (c.state !== 'wait') continue; if (c.pat/CFG.cust.patience < 0.35) return 2; a = 1; }
+  return a;
 }
 
 // ---- 갱신 ----
@@ -820,6 +833,20 @@ function render(){
   });
   floats.forEach(f => { ctx.globalAlpha = 1 - f.t/0.9; text(f.text, f.x, f.y, 60 + f.t*50, 18, f.color); ctx.globalAlpha = 1; });
 
+  // 판매대가 화면 위로 벗어났을 때 손님 대기 표시
+  const R = rt(curZone), waiting = R.custs.filter(c => c.state !== 'leave').length;
+  if (waiting) {
+    const [dx, dy] = toS(DESK.x, gy(curZone, LINE.y), 40);
+    if (dy < 110) {
+      const danger = zoneAlert(curZone) === 2, blink = danger && Math.floor(performance.now()/300) % 2;
+      const label = `▲ 손님 ${waiting}명 대기${danger ? ' · 화나기 직전!' : ''}`;
+      ctx.font = `15px ${FONT}`; const tw = ctx.measureText(label).width + 28;
+      const x = Math.max(16 + tw/2, Math.min(VW - 16 - tw/2, dx)), y = toastEl.hidden ? 128 : 210;   // 알림이 떠 있으면 그 아래로
+      rr(x - tw/2, y - 17, tw, 34, 17); ctx.fillStyle = danger ? (blink ? '#e0604a' : C.warn) : 'rgba(44,43,53,.82)'; ctx.fill();
+      ctx.fillStyle = C.hud; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x, y);
+    }
+  }
+
   // 조이스틱
   if (joy) {
     ctx.strokeStyle = 'rgba(44,43,53,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(joy.ox, joy.oy, 50, 0, Math.PI*2); ctx.stroke();
@@ -839,6 +866,10 @@ function hud(){
   else if (!S.tut.upgraded) h = '점선 칸 위에 서 있으면 돈이 들어가 업그레이드돼요';
   else if (!S.tut.zone && gateOpen) h = '오른쪽 위 노란 칸에서 다음 구역을 열 수 있어요';
   if (h !== lastHint) { lastHint = h; hintEl.textContent = h; hintEl.hidden = !h; }
+  chipEls.forEach((b, z) => {                       // 다른 구역 손님 경고: 1=기다리는 중(노랑), 2=화나기 직전(빨강)
+    const a = z === curZone ? 0 : zoneAlert(z);
+    if (chipState[z] !== a) { chipState[z] = a; b.classList.toggle('warn', a === 1); b.classList.toggle('danger', a === 2); }
+  });
   const m = S.mission;
   if (m) {
     const prog = Math.min(m.target, (S.stats[m.type] || 0) - m.base), key = m.n + ':' + prog;

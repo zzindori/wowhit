@@ -25,6 +25,7 @@ body{margin:0;background:var(--ground);color:var(--ink);overflow:hidden;font-fam
 .left{display:flex;flex-direction:column;gap:8px;min-width:0}
 .chip{background:var(--hud);border-radius:999px;box-shadow:0 3px 0 rgba(44,43,53,.18)}
 .money{padding:6px 16px 6px 8px;display:flex;align-items:center;gap:8px;font-size:22px;font-variant-numeric:tabular-nums;width:fit-content}
+.money.full{color:var(--warn)}
 .coin{width:26px;height:26px;border-radius:50%;background:var(--cash);color:var(--hud);display:grid;place-items:center;font-size:15px}
 #zones{display:flex;gap:6px;overflow-x:auto;max-width:calc(100vw - 140px);pointer-events:auto;padding-bottom:4px}
 #zones button{font:inherit;font-size:14px;border:0;min-width:36px;padding:6px 10px;color:var(--ink);cursor:pointer;flex:none}
@@ -79,6 +80,7 @@ const CFG = {
   worker: { cost: 100, mul: 2.1 },
   sell:   { base: 0.45, decay: 0.78, cost: 40, mul: 1.8 },        // 손님에게 하나 건네는 간격
   cust:   { every: 4.5, patience: 14, maxLine: 5, want: [1, 3], speed: 80, tip: 0.2 }, // 손님: 등장 간격(생산기 수로 나눔), 참을성(초), 줄 길이, 사는 개수, 팁 비율
+  wallet: { base: 500, mul: 2, costRate: 0.6 },    // 지갑 한도 = 500 × 2^레벨, 업그레이드 비용 = 현재 한도의 60%
   cashMax: 40,                                   // 돈더미 최대(지폐 장수). 꽉 차면 챙길 때까지 판매가 멈춤
   drawStackMax: 40                               // 등에 그려지는 최대 개수 (넘으면 숫자로 표시)
 };
@@ -123,6 +125,8 @@ const valueOf = z => CFG.baseValue * Math.pow(CFG.valueMul, z);
 const zscale = z => Math.pow(CFG.zoneScale, z);
 const capOf = l => CFG.cap.base + CFG.cap.step*l;
 const spdOf = l => CFG.speed.base + CFG.speed.bonus*(1 - Math.pow(CFG.speed.decay, l));
+const walletOf = l => Math.round(CFG.wallet.base * Math.pow(CFG.wallet.mul, l));
+const room = () => Math.max(0, walletOf(S.walLv) - S.money);
 const sellIv = l => CFG.sell.base * Math.pow(CFG.sell.decay, l);
 
 const SUF = ['', 'K', 'M', 'B', 'T'];
@@ -136,8 +140,8 @@ function fmt(n){
 
 // ---- 상태 ----
 const newZone = () => ({ sp:[{on:true,items:4,t:0},{on:false,items:0,t:0},{on:false,items:0,t:0}], wrkLv:0, sellLv:0, cash:0, queue:[] });
-const DEF = () => ({ v:2, money:0, capLv:0, spdLv:0, zones:[newZone()], paid:{}, stack:[], px:380, py:600,
-  tut:{ sold:false, collected:false, upgraded:false, zone:false, angry:false, cashFull:false } });
+const DEF = () => ({ v:2, money:0, capLv:0, spdLv:0, walLv:0, zones:[newZone()], paid:{}, stack:[], px:380, py:600,
+  tut:{ sold:false, collected:false, upgraded:false, zone:false, angry:false, cashFull:false, wallet:false } });
 function migrateV1(o){
   const z = newZone();
   if (Array.isArray(o.sp)) z.sp = o.sp.map(s => ({ on:!!s.on, items:s.items||0, t:0 }));
@@ -212,6 +216,8 @@ function rebuildPads(){
       cost:() => Math.round(CFG.cap.cost*Math.pow(CFG.cap.mul, S.capLv)), vis:() => true, apply:() => { S.capLv++; } });
     PADS.push({ id:'spd', ...at(250, 480, 96, 84), label:'이동속도', sub:() => `Lv${S.spdLv+1}`,
       cost:() => Math.round(CFG.speed.cost*Math.pow(CFG.speed.mul, S.spdLv)), vis:() => true, apply:() => { S.spdLv++; } });
+    PADS.push({ id:'wallet', ...at(380, 480, 96, 84), label:'지갑', sub:() => `${fmt(walletOf(S.walLv))}→${fmt(walletOf(S.walLv+1))}`,
+      cost:() => Math.round(walletOf(S.walLv)*CFG.wallet.costRate), vis:() => true, apply:() => { S.walLv++; } });
     PADS.push({ id:`${z}:wrk`, ...at(510, 480, 96, 84), label:'일꾼 고용', sub:() => `${Z.wrkLv}→${Z.wrkLv+1}명`,
       cost:() => Math.round(CFG.worker.cost*Math.pow(CFG.worker.mul, Z.wrkLv)*zscale(z)), vis:() => Z.wrkLv < CFG.workerMax, apply:() => { Z.wrkLv++; syncWorkers(); } });
     PADS.push({ id:`${z}:sell`, ...at(640, 480, 96, 84), label:'판매속도', sub:() => `Lv${Z.sellLv+1}`,
@@ -387,7 +393,7 @@ function update(dt){
   S.zones.forEach((Z, z) => {
     Z.sp.forEach(s => { if (!s.on) return; s.t += dt; if (s.t >= CFG.spawnEvery) { s.t = 0; if (s.items < CFG.spawnMax) s.items++; } });
     updCustomers(Z, z, cz, dt);
-    if (z !== cz && Z.cash > 0) { S.money += Z.cash; offAcc += Z.cash; Z.cash = 0; }
+    if (z !== cz && Z.cash > 0) { const take = Math.min(Z.cash, room()); if (take > 0) { S.money += take; offAcc += take; Z.cash -= take; } }
   });
   if ((offT += dt) > 2.5) { offT = 0; if (offAcc > 0) { toast(`다른 구역 수익 +₩${fmt(offAcc)}`); offAcc = 0; } }
 
@@ -423,8 +429,13 @@ function update(dt){
   }
   // 돈 줍기
   P.cashT += dt;
-  if (inRect(P.x, P.y, zr(cz, CASH)) && Z.cash > 0 && P.cashT > 0.05) {
-    P.cashT = 0; const v = valueOf(cz); const chunk = Math.min(Z.cash, Math.max(v, Math.ceil(Z.cash/6)));
+  if (inRect(P.x, P.y, zr(cz, CASH)) && Z.cash > 0 && P.cashT > 0.05 && room() <= 0) {
+    P.cashT = 0;
+    if (every('walletFull', 1.2)) { floatText(P.x, P.y, '지갑 MAX', C.warn); sfx.max(); }
+    if (!S.tut.wallet) { S.tut.wallet = true; toast('지갑이 가득 찼어요! 돈을 쓰거나 지갑을 키워요', true); }
+  }
+  if (inRect(P.x, P.y, zr(cz, CASH)) && Z.cash > 0 && P.cashT > 0.05 && room() > 0) {
+    P.cashT = 0; const v = valueOf(cz); const chunk = Math.min(Z.cash, Math.max(v, Math.ceil(Z.cash/6)), room());
     Z.cash -= chunk; S.money += chunk; S.tut.collected = true;
     fly(cashPos(cz, Math.ceil(Z.cash/v)), () => [P.x, P.y, 40], 'bill', 0.25, () => {});
     floatText(P.x, P.y, `+${fmt(chunk)}`, C.billFront); sfx.cash();
@@ -669,9 +680,10 @@ function render(){
   }
 }
 
-let shownMoney = -1, lastHint = '';
+let shownMoney = '', lastHint = '';
 function hud(){
-  if (S.money !== shownMoney) { shownMoney = S.money; moneyEl.textContent = fmt(S.money); }
+  const w = walletOf(S.walLv), key = S.money + '/' + w;
+  if (key !== shownMoney) { shownMoney = key; moneyEl.textContent = `${fmt(S.money)} / ${fmt(w)}`; moneyEl.parentElement.classList.toggle('full', S.money >= w); }
   let h = '';
   const gateOpen = S.zones[S.zones.length-1].sp.every(s => s.on);
   if (!S.tut.sold) h = S.stack.length > 0 ? '파란 판매 칸에 내려놓으면 손님에게 팔려요' : '회색 생산기 앞 칸에 서서 물건을 모아요';

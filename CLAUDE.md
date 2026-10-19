@@ -75,6 +75,12 @@ version: 'x.y.z+build'
   - `apps.ts`에 `stack` 항목 추가 (category: 'other', webUrl 절대주소 — 상대경로면 NuxtLink가 내부 라우트로 처리함)
   - 게임 HUD의 "소개" 버튼 → `/stack` 상세 페이지
   - 진행 상황은 localStorage(`stack-sell-proto-v1`)에 저장. 주제(테마)는 아직 미정
+- 쌓고팔기 v2: 구역 무한 확장(위로 쌓임, 구역 칩으로 순간이동, 구역별 일꾼, 다른 구역 수익 자동 수금),
+  손님(줄 서서 구매, 참을성 바 → 화내고 떠남, 빨리 채우면 팁), 돈더미 MAX(꽉 차면 판매 정지),
+  효과음(WebAudio 합성, 파일 없음)·진동(navigator.vibrate), 설정 패널(소리/진동/처음부터)
+  - 밸런스는 파일 맨 위 `CFG`, 그림은 `ART_SRC`에 경로만 넣으면 도형 대신 그림으로 그림
+  - 저장 키 `stack-sell-v2` (v1 저장은 자동 이전)
+  - standalone 페이지라 `[hidden]{display:none!important}` 필요 (없으면 패널이 처음부터 열림)
 
 ### 2026-07-25
 - HCLink(한국어화) 포트폴리오 추가 — "기타" 카테고리

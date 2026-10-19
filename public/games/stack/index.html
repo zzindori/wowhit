@@ -960,8 +960,9 @@ function item(x, y, z, kind){
   }
 }
 function bill(x, y, z){ const [sx, sy] = toS(x, y, z); if (art('bill', sx, sy, 20*scale, 10*scale)) return; cube(x, y, z, 18, 4, C.billTop, C.billFront); }
-function text(str, x, y, z, size, color, align='center'){
+function text(str, x, y, z, size, color, align='center', maxW){
   const [sx, sy] = toS(x, y, z); ctx.font = `${Math.round(size*scale)}px ${FONT}`;
+  if (maxW) { const tw = ctx.measureText(str).width; if (tw > maxW*scale) ctx.font = `${Math.floor(size*scale*maxW*scale/tw)}px ${FONT}`; }   // 칸보다 길면 글자를 줄여서 맞춤
   ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.fillStyle = color; ctx.fillText(str, sx, sy);
 }
 function floorRect(r, fill, stroke, dashed, progress){
@@ -1126,9 +1127,10 @@ function render(){
     if (!p.vis() || p.z !== f) return;
     const c = p.cost(), paid = S.paid[p.id] || 0;
     floorRect(p, p.gate ? 'rgba(232,185,35,.22)' : C.padFill, p.gate ? '#b58a12' : C.pad, true, paid/c);
-    text(p.label, p.x, p.y-18, 0, 15, C.ink);
-    if (p.sub()) text(p.sub(), p.x, p.y+2, 0, 13, p.gate ? '#8a6a0e' : C.pad);
-    text(`₩${fmt(c - paid)}`, p.x, p.y+22, 0, 15, S.money > 0 ? C.billFront : C.ink);
+    const mw = p.w - 12;
+    text(p.label, p.x, p.y-18, 0, 15, C.ink, 'center', mw);
+    if (p.sub()) text(p.sub(), p.x, p.y+2, 0, 13, p.gate ? '#8a6a0e' : C.pad, 'center', mw);
+    text(`₩${fmt(c - paid)}`, p.x, p.y+22, 0, 15, S.money > 0 ? C.billFront : C.ink, 'center', mw);
   });
 
   muds.forEach(m => {                                // 진흙 발자국 (바닥)

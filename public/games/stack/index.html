@@ -27,6 +27,7 @@ body{margin:0;background:var(--ground);color:var(--ink);overflow:hidden;font-fam
 .money{padding:6px 16px 6px 8px;display:flex;align-items:center;gap:8px;font-size:22px;font-variant-numeric:tabular-nums;width:fit-content}
 .money.full{color:var(--warn)}
 .coin{width:26px;height:26px;border-radius:50%;background:var(--cash);color:var(--hud);display:grid;place-items:center;font-size:15px}
+#slowChip{font-size:14px;padding:6px 12px;width:fit-content;background:var(--warn);color:var(--hud)}
 #zones{display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100vw - 140px);pointer-events:none}
 #zones .chip{font-size:14px;min-width:36px;padding:6px 10px;color:var(--ink);flex:none;text-align:center;box-sizing:border-box}
 #zones .chip.on{background:var(--pad);color:var(--hud)}
@@ -84,6 +85,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 <div class="hud">
   <div class="left">
     <div class="money chip"><span class="coin">₩</span><span id="money">0</span></div>
+    <div id="slowChip" class="chip" hidden>🐢 VIP 화남 · 느려짐 <span id="slowSec">0</span>초</div>
     <div id="zones" aria-label="층 이동"></div>
   </div>
   <button id="menuBtn" class="chip" type="button" aria-expanded="false" aria-controls="panel">설정</button>
@@ -143,6 +145,7 @@ Object.entries(ART_SRC).forEach(([k, src]) => { if (!src) return; const im = new
 
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
 const $ = id => document.getElementById(id);
+const slowChip = $('slowChip'), slowSec = $('slowSec');
 const moneyEl = $('money'), hintEl = $('hint'), toastEl = $('toast'), zonesEl = $('zones');
 const FONT = "Jua, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
 const C = { ground:'#d9ccb2', tile:'#cfc1a5', ink:'#2c2b35', hud:'#fffaf0', warn:'#c2462f', gold:'#e8b923', ok:'#4c9a66', mid:'#d9a21b',
@@ -229,7 +232,7 @@ function save(){ try { S.px = P.x; S.py = P.y; localStorage.setItem(KEY, JSON.st
 let S = load();
 
 const P = { x:380, y:600, inc:0, fx:0, fy:1, svx:0, svy:0, t:0, payT:0, padCd:0, cashT:0, wasMax:false };
-let workers = [], anims = [], floats = [], PADS = [];
+let workers = [], anims = [], floats = [], PADS = [], muds = [];
 let RT = [];                                       // 층별 실행 상태(손님 등, 저장 안 함)
 let thief = null, thiefCd = 8;
 
@@ -366,7 +369,7 @@ paintPrefs();
 let armT = 0;
 resetBtn.addEventListener('click', () => {
   if (!resetBtn.classList.contains('armed')) { resetBtn.classList.add('armed'); resetBtn.textContent = '한 번 더 누르면 초기화'; armT = 3; return; }
-  S = DEF(); P.x = S.px; P.y = S.py; P.inc = 0; workers = []; anims = []; floats = []; RT = []; thief = null; thiefCd = 8; evT = CFG.events.first;
+  S = DEF(); P.x = S.px; P.y = S.py; P.inc = 0; workers = []; anims = []; floats = []; muds = []; RT = []; thief = null; thiefCd = 8; evT = CFG.events.first;
   rebuildPads(); renderZoneChips(); save();
   resetBtn.classList.remove('armed'); resetBtn.textContent = '처음부터'; setPanel(false);
 });
@@ -741,6 +744,10 @@ function update(dt){
   else { const d = Math.hypot(ix, iy); if (d > 1) { ix /= d; iy /= d; } }
   if (S.slow > 0 && (S.slow -= dt) <= 0) { S.slow = 0; floatText(P.x, P.y, '속도 회복!', C.pad); }
   const spd = spdOf(S.slow > 0 ? 0 : S.spdLv); steer(P, ix*spd, iy*spd, dt);
+  if (S.slow > 0 && Math.hypot(P.svx, P.svy) > 20 && (P.mudT = (P.mudT || 0) + dt) > 0.16) {   // 느려진 동안 진흙 발자국
+    P.mudT = 0; P.mudSide = !P.mudSide; muds.push({ x:P.x + (P.mudSide ? -5 : 5), y:P.y + 2, t:0 });
+  }
+  muds = muds.filter(m => (m.t += dt) < 1.4);
 
   const Z = S.zones[cz];
   // 줍기
@@ -941,6 +948,23 @@ function person(e, body, dark, key, skin, shake, gear){
     ctx.fillStyle = C.helmetDark; ctx.fillRect(hx-1.2*scale, hy-11*scale, 2.4*scale, 8*scale);
   }
 }
+// 화난 VIP 먹구름: 왕관 쓴 먹구름이 머리 위를 따라다니며 비를 뿌림
+function vipCloud(e, h){
+  const now = performance.now(), [cx, cy0] = toS(e.x, e.y, h), cy = cy0 + Math.sin(now/400)*2*scale, u = scale*1.35;
+  ctx.strokeStyle = 'rgba(90,120,170,.75)'; ctx.lineWidth = 1.5*u;
+  for (let i = 0; i < 4; i++) {                    // 빗줄기
+    const t = (now/500 + i/4) % 1, rx = cx + (i - 1.5)*7*u, ry = cy + 8*u + t*18*u;
+    ctx.globalAlpha = 1 - t; ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 1.5*u, ry + 5*u); ctx.stroke();
+  }
+  ctx.globalAlpha = 1; ctx.fillStyle = '#6a6f7e';
+  [[-11, 2, 8], [0, -3, 10], [11, 2, 8], [0, 5, 9]].forEach(([dx, dy, r]) => { ctx.beginPath(); ctx.arc(cx + dx*u, cy + dy*u, r*u, 0, Math.PI*2); ctx.fill(); });
+  ctx.strokeStyle = C.hud; ctx.lineWidth = 1.6*u;     // 화난 눈썹 + 입
+  ctx.beginPath(); ctx.moveTo(cx - 8*u, cy - 3*u); ctx.lineTo(cx - 3*u, cy - 1*u); ctx.moveTo(cx + 8*u, cy - 3*u); ctx.lineTo(cx + 3*u, cy - 1*u);
+  ctx.moveTo(cx - 4*u, cy + 5*u); ctx.quadraticCurveTo(cx, cy + 2*u, cx + 4*u, cy + 5*u); ctx.stroke();
+  ctx.fillStyle = C.gold; ctx.beginPath();          // 왕관
+  ctx.moveTo(cx - 7*u, cy - 10*u); ctx.lineTo(cx - 7*u, cy - 17*u); ctx.lineTo(cx - 3.5*u, cy - 13*u); ctx.lineTo(cx, cy - 18*u);
+  ctx.lineTo(cx + 3.5*u, cy - 13*u); ctx.lineTo(cx + 7*u, cy - 17*u); ctx.lineTo(cx + 7*u, cy - 10*u); ctx.closePath(); ctx.fill();
+}
 function carrier(e, stack, body, dark, key, gear){
   const n = Math.min(stack.length, CFG.drawStackMax);
   const draw = () => { for (let i = 0; i < n; i++) { const [x, y, z] = stackPos(e, i); item(x, y, z, stack[i]); } };
@@ -1057,20 +1081,24 @@ function render(){
     text(`₩${fmt(c - paid)}`, p.x, p.y+22, 0, 15, S.money > 0 ? C.billFront : C.ink);
   });
 
+  muds.forEach(m => {                                // 진흙 발자국 (바닥)
+    const [mx, my] = toS(m.x, m.y); ctx.fillStyle = `rgba(110,78,44,${0.45*(1 - m.t/1.4)})`;
+    ctx.beginPath(); ctx.ellipse(mx, my, 4.5*scale, 2.6*scale, 0, 0, Math.PI*2); ctx.fill();
+  });
+
   if (S.warp) list.push({ y:gy(f, ELEV.y), draw:() => drawElevator(f) });
   if (thief && thief.z === f) list.push({ y:thief.y, draw:drawThief });
   workers.forEach(w => { if (w.z === f) list.push({ y:w.y, draw:() => carrier(w, w.stack, C.worker, C.workerDark, 'worker', 'worker') }); });
   list.push({ y:P.y, draw:() => {
+    if (S.slow > 0) {                                  // 발밑 진흙 웅덩이
+      const [px, py] = toS(P.x, P.y); ctx.fillStyle = 'rgba(110,78,44,.45)';
+      ctx.beginPath(); ctx.ellipse(px, py + 1*scale, 19*scale, 8*scale, 0, 0, Math.PI*2); ctx.fill();
+    }
     carrier(P, S.stack, C.player, C.playerDark, 'player');
     const cap = capOf(S.capLv), n = S.stack.length;
     const [x, y, z] = stackPos(P, n);
     if (n >= cap) text('MAX', x, y, z+14, 14, C.warn);
-    if (S.slow > 0) {                                  // VIP 놓친 벌칙: 머리(또는 등짐) 위 남은 시간
-      const label = `🐢 느려짐 ${Math.ceil(S.slow)}초`, [sx, sy] = toS(P.x, P.y, Math.max(z+30, 70));
-      ctx.font = `13px ${FONT}`; const tw = ctx.measureText(label).width + 16;
-      rr(sx - tw/2, sy - 12, tw, 24, 12); ctx.fillStyle = C.warn; ctx.fill();
-      ctx.fillStyle = C.hud; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, sx, sy);
-    }
+    if (S.slow > 0) vipCloud(P, Math.max(z + 34, 80));  // VIP 놓친 벌칙: 머리(또는 등짐) 위 화난 VIP 먹구름
     else if (n > CFG.drawStackMax) text(`×${n}`, x, y, z+14, 14, C.ink);
   }});
   list.sort((a, b) => a.y - b.y).forEach(o => o.draw());
@@ -1108,9 +1136,11 @@ function render(){
   }
 }
 
-let shownMoney = '', lastHint = '', shownMission = '';
+let shownSlow = 0, shownMoney = '', lastHint = '', shownMission = '';
 function hud(){
   const w = walletOf(S.walLv), key = S.money + '/' + w;
+  const sl = S.slow > 0 ? Math.ceil(S.slow) : 0;
+  if (sl !== shownSlow) { shownSlow = sl; slowChip.hidden = !sl; slowSec.textContent = sl; }
   if (key !== shownMoney) { shownMoney = key; moneyEl.textContent = `${fmt(S.money)} / ${fmt(w)}`; moneyEl.parentElement.classList.toggle('full', S.money >= w); }
   let h = '';
   const gateOpen = S.zones[S.zones.length-1].sp.every(s => s.on);

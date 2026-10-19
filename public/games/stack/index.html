@@ -66,7 +66,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 <div class="hud">
   <div class="left">
     <div class="money chip"><span class="coin">₩</span><span id="money">0</span></div>
-    <div id="zones" aria-label="구역 이동"></div>
+    <div id="zones" aria-label="층 이동"></div>
   </div>
   <button id="menuBtn" class="chip" type="button" aria-expanded="false" aria-controls="panel">설정</button>
 </div>
@@ -90,11 +90,11 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 const CFG = {
   zoneH: 980, worldW: 760,
   spawnEvery: 1.5, spawnMax: 12,                 // 생산 간격(초), 생산기 앞 최대 개수
-  baseValue: 4, valueMul: 5,                     // N구역 물건 값 = 4 × 5^N
-  zoneCost: 1000, zoneCostMul: 8,                // 다음 구역 열기 = 1000 × 8^N
-  zoneScale: 8,                                  // 구역 안 비용 배수 (N구역 = 1구역 비용 × 8^N)
+  baseValue: 4, valueMul: 5,                     // N층 물건 값 = 4 × 5^N
+  zoneCost: 1000, zoneCostMul: 8,                // 다음 층 열기 = 1000 × 8^N
+  zoneScale: 8,                                  // 층 안 비용 배수 (N층 = 1층 비용 × 8^N)
   spawnerCost: [0, 60, 240],
-  workerMax: 3, workerCap: 4, workerSpeed: 95,   // 구역당 일꾼 수, 일꾼 적재량, 속도
+  workerMax: 3, workerCap: 4, workerSpeed: 95,   // 층당 일꾼 수, 일꾼 적재량, 속도
   sellMax: 5,
   cap:    { base: 6, step: 2, cost: 25, mul: 1.6 },               // 적재량 (상한 없음)
   speed:  { base: 150, bonus: 130, decay: 0.85, cost: 35, mul: 1.7 }, // 이동속도 (상한 없음, 갈수록 덜 오름)
@@ -104,15 +104,15 @@ const CFG = {
   wallet: { base: 500, mul: 2, costRate: 0.6 },    // 지갑 한도 = 500 × 2^레벨, 업그레이드 비용 = 현재 한도의 60%
   gold: { chance: 0.03, mul: 10 },               // 황금 물건: 생산될 확률, 값 배수
   thief: { after: 12, chance: 0.3, speed: 115, take: 0.5, cooldown: 25 }, // 도둑: 돈더미를 몇 초 방치하면 나타날 수 있음, 초당 등장 확률, 속도, 훔치는 비율, 다음 등장까지 쉬는 시간
-  warpCost: 1500,                                // 순간이동(구역 버튼으로 이동) 비용
-  autoCost: 1500,                                // 구역 자동 수금 칸 비용 (× 8^구역)
+  warpCost: 1500,                                // 엘리베이터(층 버튼으로 이동) 비용
+  autoCost: 1500,                                // 층 자동 수금 칸 비용 (× 8^층)
   cashMax: 40,                                   // 돈더미 최대(지폐 장수). 꽉 차면 챙길 때까지 판매가 멈춤
   drawStackMax: 40                               // 등에 그려지는 최대 개수 (넘으면 숫자로 표시)
 };
 
 // ================= 그림 슬롯 =================
 // 경로를 넣으면 도형 대신 그림으로 그림. 비워두거나 로딩 실패하면 도형 그대로.
-// 투명 PNG, 위에서 비스듬히 본 시점, 바닥 중앙이 기준점. item0~item5는 구역별 물건(6종 반복).
+// 투명 PNG, 위에서 비스듬히 본 시점, 바닥 중앙이 기준점. item0~item5는 층별 물건(6종 반복).
 const ART_SRC = { player:'', worker:'', customer:'', thief:'', bill:'', machine:'', desk:'',
   item0:'', item1:'', item2:'', item3:'', item4:'', item5:'' };
 const ART = {};
@@ -125,7 +125,7 @@ const FONT = "Jua, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Goth
 const C = { ground:'#d9ccb2', tile:'#cfc1a5', ink:'#2c2b35', hud:'#fffaf0', warn:'#c2462f', gold:'#e8b923', ok:'#4c9a66', mid:'#d9a21b',
   billTop:'#7cc794', billFront:'#4c9a66', pad:'#4f6390', padFill:'rgba(79,99,144,.22)', sell:'#3f7fc4', sellFill:'rgba(63,127,196,.20)',
   cashFill:'rgba(76,154,102,.18)', machTop:'#8a96ad', machFront:'#5f6b84', deskTop:'#b98a5e', deskFront:'#8f6440',
-  player:'#2f5bd3', playerDark:'#2245a3', worker:'#6b6f7a', workerDark:'#4c4f58', vest:'#f08a24', reflect:'#f6f0c8', helmet:'#f2c230', helmetDark:'#c99a12', skin:'#f3d2b3', angry:'#ec8a74', lock:'rgba(44,43,53,.28)' };
+  player:'#2f5bd3', playerDark:'#2245a3', worker:'#6b6f7a', workerDark:'#4c4f58', vest:'#f08a24', reflect:'#f6f0c8', helmet:'#f2c230', helmetDark:'#c99a12', skin:'#f3d2b3', angry:'#ec8a74', lock:'rgba(44,43,53,.28)', wall:'#b3a588', stair:'#c4b596', stairLine:'#8a7d64' };
 const KINDS = [
   { name:'상자', shape:'box',    top:'#f2a35e', front:'#d9772e' },
   { name:'통',   shape:'barrel', top:'#8fc0e8', front:'#4f8fc4' },
@@ -135,16 +135,16 @@ const KINDS = [
   { name:'금괴', shape:'box',    top:'#f4d35e', front:'#c9a227' }
 ];
 const CUST_COLS = [['#6aa36f','#4e7f52'], ['#c46a9a','#9a4f78'], ['#7a7fd1','#5a5fa8'], ['#d1835a','#a8643f'], ['#5aa9b5','#3f8590']];
-const GOLD = 1000;                                 // 황금 물건은 1000 + 구역번호로 표시
+const GOLD = 1000;                                 // 황금 물건은 1000 + 층번호로 표시
 const KEY = 'stack-sell-v2', KEY_V1 = 'stack-sell-proto-v1', PREF = 'stack-sell-prefs';
 const ZH = CFG.zoneH, W = CFG.worldW;
 
-// ---- 구역 안 배치 (구역 로컬 좌표, y는 아래로) ----
+// ---- 층 안 배치 (층 로컬 좌표, y는 아래로) ----
 const SP = [{x:170,y:720},{x:380,y:720},{x:590,y:720}];
 const SP_ZONE = {w:110,h:86};
 const DESK = {x:300,y:180}, SELL = {x:300,y:258,w:140,h:76}, CASH = {x:490,y:240,w:104,h:92};
 const LINE = {x:290, y:128, gap:42};               // 손님 줄: 판매대 건너편, 왼쪽으로 늘어섬
-const gy = (z, ly) => ly - z*ZH;                   // 구역 z는 위로 쌓임
+const gy = (z, ly) => ly - z*ZH;                   // 층 z는 위로 쌓임
 const zoneOf = y => Math.max(0, Math.min(S.zones.length-1, Math.floor((ZH - y)/ZH)));
 
 const valueOf = z => CFG.baseValue * Math.pow(CFG.valueMul, z);
@@ -193,13 +193,12 @@ let S = load();
 
 const P = { x:380, y:600, inc:0, fx:0, fy:1, svx:0, svy:0, t:0, payT:0, padCd:0, cashT:0, wasMax:false };
 let workers = [], anims = [], floats = [], PADS = [];
-let RT = [];                                       // 구역별 실행 상태(손님 등, 저장 안 함)
+let RT = [];                                       // 층별 실행 상태(손님 등, 저장 안 함)
 let thief = null, thiefCd = 8;
 
-// ---- 구역 이름 (구역 번호로 자동 생성, 10곳마다 '2호', '3호'…가 붙어서 겹치지 않음) ----
-const ZN_A = ['새싹', '햇살', '바람', '달빛', '별빛', '구름', '노을', '파도', '숲속', '은하'];
-const ZN_B = ['공터', '창고', '골목', '시장', '항구', '광장', '공장', '언덕', '마을', '부두'];
-const zoneName = z => { const t = Math.floor(z / ZN_A.length); return `${ZN_A[z % ZN_A.length]} ${ZN_B[(z*7) % ZN_B.length]}${t ? ` ${t+1}호` : ''}`; };
+// ---- 층 사이 계단 (층마다 위로 가는 계단은 오른쪽 위, 아래로 가는 계단은 오른쪽 아래) ----
+const STAIR_UP = {x:640, y:80, w:120, h:84}, STAIR_DN = {x:640, y:900, w:120, h:84};
+let fade = 0;
 const rt = z => RT[z] || (RT[z] = { custs:[], spawnT:1.5, serveT:0 });
 
 // ---- 소리 · 진동 ----
@@ -241,10 +240,11 @@ const sfx = {
   siren(){ [0, 1, 2].forEach(i => { tone(760, 0.14, 'square', 0.05, i*0.3); tone(1020, 0.14, 'square', 0.05, i*0.3 + 0.15); }); buzz([60, 80, 60, 80, 60]); },
   caught(){ [784, 1047, 1319, 1568].forEach((f, i) => tone(f, 0.12, 'square', 0.06, i*0.05)); buzz([30, 20, 60]); },
   stolen(){ tone(330, 0.4, 'sawtooth', 0.05, 0, 0.5); buzz(120); },
+  steps(){ [0, 1, 2, 3].forEach(i => tone(170 + (i % 2)*40, 0.06, 'square', 0.04, i*0.09)); buzz([10, 70, 10, 70, 10]); },
   warp(){ tone(300, 0.25, 'sine', 0.1, 0, 3); buzz(15); }
 };
 
-// ---- 업그레이드 칸 (구역마다 생성) ----
+// ---- 업그레이드 칸 (층마다 생성) ----
 function rebuildPads(){
   PADS = [];
   S.zones.forEach((Z, z) => {
@@ -257,24 +257,24 @@ function rebuildPads(){
       cost:() => Math.round(CFG.speed.cost*Math.pow(CFG.speed.mul, S.spdLv)), vis:() => z === 0, apply:() => { S.spdLv++; } });
     PADS.push({ id:'wallet', ...at(380, 480, 96, 84), label:'지갑', sub:() => `${fmt(walletOf(S.walLv))}→${fmt(walletOf(S.walLv+1))}`,
       cost:() => Math.round(walletOf(S.walLv)*CFG.wallet.costRate), vis:() => z === 0, apply:() => { S.walLv++; } });
-    if (z === 0) PADS.push({ id:'warp', ...at(110, 300, 100, 84), label:'순간이동', sub:() => '구역 버튼으로 이동',
+    if (z === 0) PADS.push({ id:'warp', ...at(110, 300, 100, 84), label:'엘리베이터', sub:() => '층 버튼으로 이동',
       cost:() => CFG.warpCost, vis:() => S.zones.length > 1 && !S.warp,
-      apply:() => { S.warp = true; renderZoneChips(); toast('이제 왼쪽 위 구역 버튼을 누르면 바로 이동해요'); } });
+      apply:() => { S.warp = true; renderZoneChips(); toast('이제 왼쪽 위 층 버튼을 누르면 엘리베이터로 바로 가요'); } });
     PADS.push({ id:`${z}:wrk`, ...at(510, 480, 96, 84), label:'일꾼 고용', sub:() => `${Z.wrkLv}→${Z.wrkLv+1}명`,
       cost:() => Math.round(CFG.worker.cost*Math.pow(CFG.worker.mul, Z.wrkLv)*zscale(z)), vis:() => Z.wrkLv < CFG.workerMax, apply:() => { Z.wrkLv++; syncWorkers(); } });
     PADS.push({ id:`${z}:sell`, ...at(640, 480, 96, 84), label:'판매속도', sub:() => `Lv${Z.sellLv+1}`,
       cost:() => Math.round(CFG.sell.cost*Math.pow(CFG.sell.mul, Z.sellLv)*zscale(z)), vis:() => Z.sellLv < CFG.sellMax, apply:() => { Z.sellLv++; } });
-    PADS.push({ id:`${z}:auto`, ...at(645, 250, 100, 84), label:'자동 수금', sub:() => '다른 구역일 때',
+    PADS.push({ id:`${z}:auto`, ...at(645, 250, 100, 84), label:'자동 수금', sub:() => '다른 층에 있을 때',
       cost:() => CFG.autoCost*zscale(z), vis:() => !Z.auto, apply:() => { Z.auto = true; } });
-    PADS.push({ id:`${z}:gate`, ...at(640, 80, 120, 84), gate:true, label:`${z+2}구역 열기`, sub:() => zoneName(z+1),
+    PADS.push({ id:`${z}:gate`, ...at(640, 80, 120, 84), gate:true, label:`${z+2}층 열기`, sub:() => '계단 공사',
       cost:() => CFG.zoneCost*Math.pow(CFG.zoneCostMul, z), vis:() => z === S.zones.length-1 && Z.sp.every(s => s.on), apply:openZone });
   });
 }
 function openZone(){
-  S.zones.push(newZone()); S.tut.zone = true;
+  S.zones.push(newZone()); S.tut.zone = true; P.stairArm = false;
   rebuildPads(); syncWorkers(); renderZoneChips(); sfx.zone();
   const n = S.zones.length;
-  toast(`${n}구역 「${zoneName(n-1)}」 열림! ` + (S.warp ? '위로 올라가거나 왼쪽 위 숫자로 이동' : '위로 걸어 올라가요'));
+  toast(`${n}층이 열렸어요! 오른쪽 위 계단으로 올라가요` + (S.warp ? ' · 엘리베이터로도 갈 수 있어요' : ''));
 }
 
 function newWorker(z, i){ return { z, i, x:DESK.x+60+i*20, y:gy(z, SELL.y+40), stack:[], inc:0, state:'toSpawn', tgt:null, t:0, wait:0, fx:0, fy:1, svx:0, svy:0 }; }
@@ -283,7 +283,7 @@ function syncWorkers(){
   S.zones.forEach((Z, z) => { for (let i = 0; i < Z.wrkLv; i++) if (!workers.some(w => w.z === z && w.i === i)) workers.push(newWorker(z, i)); });
 }
 
-// ---- HUD: 구역 이동, 설정, 알림 ----
+// ---- HUD: 층 이동(엘리베이터), 설정, 알림 ----
 let curZone = 0;
 let chipEls = [], chipState = [];
 function renderZoneChips(){
@@ -291,14 +291,14 @@ function renderZoneChips(){
   if (S.zones.length < 2) return;
   S.zones.forEach((_, z) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (z === curZone ? ' on' : '');
-    b.textContent = z === curZone ? `${z+1} ${zoneName(z)}` : z+1; b.setAttribute('aria-label', `${z+1}구역 ${zoneName(z)} 가기`);
+    b.textContent = `${z+1}F`; b.setAttribute('aria-label', `${z+1}층으로 이동`);
     if (!S.warp) b.classList.add('locked');
     b.addEventListener('click', () => warp(z)); zonesEl.appendChild(b); chipEls[z] = b;
   });
 }
 function warp(z){
-  if (!S.warp) { toast(`순간이동은 1구역 「${zoneName(0)}」에서 살 수 있어요`, true); return; }
-  P.x = 380; P.y = gy(z, 600); cam.x = P.x; cam.y = P.y; sfx.warp(); }
+  if (!S.warp) { toast('엘리베이터는 1층에서 살 수 있어요. 그 전엔 계단으로 다녀요', true); return; }
+  fade = 1; P.x = 380; P.y = gy(z, 600); cam.x = P.x; cam.y = P.y; sfx.warp(); }
 let toastT = 0;
 function toast(msg, bad){ toastEl.textContent = msg; toastEl.classList.toggle('bad', !!bad); toastEl.hidden = false; toastEl.style.opacity = 1; toastT = 2.2; }
 
@@ -360,7 +360,8 @@ function steer(e, vx, vy, dt, free){
   e.x += vx*dt; e.y += vy*dt;
   if (!free) {
     e.x = Math.max(20, Math.min(W-20, e.x));
-    e.y = Math.max(gy(S.zones.length-1, 40), Math.min(ZH-20, e.y));
+    const f = e.z ?? curZone;                       // 일꾼은 자기 층, 주인공은 지금 층
+    e.y = Math.max(gy(f, 40), Math.min(gy(f, ZH-20), e.y));
   }
   const sp = Math.hypot(vx, vy);
   if (sp > 5) { e.fx = vx/sp; e.fy = vy/sp; }
@@ -425,7 +426,7 @@ function updCustomers(Z, z, cz, dt){
         if (z === cz) {
           floatText(c.x, c.y, '화났어요!', C.warn); sfx.angry();
           if (!S.tut.angry) { S.tut.angry = true; toast('손님이 화나서 그냥 가버렸어요. 늦지 않게 채워주세요', true); }
-        } else if (every('angryOff', 10)) toast(`${zoneName(z)} 손님이 화나서 떠났어요`, true);
+        } else if (every('angryOff', 10)) toast(`${z+1}층 손님이 화나서 떠났어요`, true);
       }
     }
   });
@@ -456,7 +457,7 @@ function updCustomers(Z, z, cz, dt){
 }
 
 // ---- 도둑 ----
-// 지금 있는 구역의 돈더미를 오래 방치하면 위쪽에서 나타나 절반을 들고 위로 도망감. 부딪히면 잡아서 돌려받음
+// 지금 있는 층의 돈더미를 오래 방치하면 위쪽에서 나타나 절반을 들고 위로 도망감. 부딪히면 잡아서 돌려받음
 function updThief(cz, dt){
   if (thiefCd > 0) thiefCd -= dt;
   if (!thief) {
@@ -505,16 +506,32 @@ function drawThief(){
   if (T.state !== 'run' || T.loot > 0) text('도둑!', T.x, T.y, 62, 14, C.warn);
 }
 
-// 구역 경고: 3=돈더미 MAX(판매 멈춤), 그 외는 손님 상태
+// 층 경고: 3=돈더미 MAX(판매 멈춤), 그 외는 손님 상태
 function zoneAlert(z){
   const Z = S.zones[z];
   return Z && Z.cash >= CFG.cashMax*valueOf(z) ? 3 : custAlert(z);
 }
-// 구역 손님 상태: 0=없음, 1=기다리는 중, 2=화나기 직전(참을성 35% 미만)
+// 층 손님 상태: 0=없음, 1=기다리는 중, 2=화나기 직전(참을성 35% 미만)
 function custAlert(z){
   let a = 0;
   for (const c of rt(z).custs) { if (c.state !== 'wait') continue; if (c.pat/CFG.cust.patience < 0.35) return 2; a = 1; }
   return a;
+}
+
+function goFloor(f, x, y){
+  P.x = x; P.y = gy(f, y); cam.x = Math.max(VW/scale/2, Math.min(W - VW/scale/2, P.x)); cam.y = P.y;
+  P.stairArm = false; fade = 1; sfx.steps();
+}
+function drawStairs(r, label){
+  const [x0, y0] = toS(r.x - r.w/2, r.y - r.h/2), w = r.w*scale, h = r.h*scale;
+  rr(x0, y0, w, h, 8*scale); ctx.fillStyle = C.stair; ctx.fill();
+  ctx.strokeStyle = C.stairLine; ctx.lineWidth = 2*scale;
+  for (let i = 1; i < 5; i++) { ctx.beginPath(); ctx.moveTo(x0 + 6*scale, y0 + h*i/5); ctx.lineTo(x0 + w - 6*scale, y0 + h*i/5); ctx.stroke(); }
+  ctx.lineWidth = 3*scale; rr(x0, y0, w, h, 8*scale); ctx.stroke();
+  const [tx, ty] = toS(r.x, r.y); ctx.font = `${Math.round(16*scale)}px ${FONT}`;
+  const tw = ctx.measureText(label).width + 16*scale;
+  rr(tx - tw/2, ty - 12*scale, tw, 24*scale, 12*scale); ctx.fillStyle = C.hud; ctx.fill();
+  ctx.fillStyle = C.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, tx, ty);
 }
 
 // ---- 갱신 ----
@@ -526,10 +543,10 @@ function update(dt){
   const cz = zoneOf(P.y);
   if (cz !== curZone) {
     curZone = cz; renderZoneChips();
-    if (!S.tut.autoInfo && S.zones.length > 1) { S.tut.autoInfo = true; toast('다른 구역 돈은 그 구역 돈더미에 쌓여요. 구역마다 자동 수금 칸을 사면 알아서 들어와요'); toastT = 4; }
+    if (!S.tut.autoInfo && S.zones.length > 1) { S.tut.autoInfo = true; toast('다른 층 돈은 그 층 돈더미에 쌓여요. 층마다 자동 수금 칸을 사면 알아서 들어와요'); toastT = 4; }
   }
 
-  // 모든 구역: 생산, 손님, 다른 구역 돈 자동 수금
+  // 모든 층: 생산, 손님, 다른 층 돈 자동 수금
   S.zones.forEach((Z, z) => {
     Z.sp.forEach((s, k) => {
       if (!s.on) return; s.t += dt;
@@ -547,13 +564,13 @@ function update(dt){
     updCustomers(Z, z, cz, dt);
     rt(z).cashIdle = Z.cash > 0 ? (rt(z).cashIdle || 0) + dt : 0;
     if (z !== cz && Z.auto && Z.cash > 0) { const take = Math.min(Z.cash, room()); if (take > 0) { S.money += take; offAcc[z] = (offAcc[z] || 0) + take; Z.cash -= take; } }
-    if (z !== cz && Z.cash >= CFG.cashMax*valueOf(z) && every('full' + z, 30)) toast(`${zoneName(z)} 돈더미가 가득 찼어요 · 가서 챙기거나 자동 수금을 사요`, true);
+    if (z !== cz && Z.cash >= CFG.cashMax*valueOf(z) && every('full' + z, 30)) toast(`${z+1}층 돈더미가 가득 찼어요 · 가서 챙기거나 자동 수금을 사요`, true);
   });
   if ((offT += dt) > 2.5) {
     offT = 0;
     const got = Object.entries(offAcc).sort((a, b) => b[1] - a[1]);
     if (got.length) {
-      const parts = got.slice(0, 2).map(([z, v]) => `${zoneName(+z)} +₩${fmt(v)}`);
+      const parts = got.slice(0, 2).map(([z, v]) => `${+z+1}층 +₩${fmt(v)}`);
       toast(parts.join(' · ') + (got.length > 2 ? ` 외 ${got.length-2}곳` : ''));
       offAcc = {};
     }
@@ -602,6 +619,13 @@ function update(dt){
     fly(cashPos(cz, Math.ceil(Z.cash/v)), () => [P.x, P.y, 40], 'bill', 0.25, () => {});
     floatText(P.x, P.y, `+${fmt(chunk)}`, C.billFront); sfx.cash();
   }
+  // 계단 (계단 밖으로 한 번 나갔다가 다시 밟아야 이동 — 층을 연 직후 서 있던 자리가 계단이 돼도 바로 올라가지 않게)
+  const onUp = cz < S.zones.length-1 && inRect(P.x, P.y, zr(cz, STAIR_UP)), onDn = cz > 0 && inRect(P.x, P.y, zr(cz, STAIR_DN));
+  if (!onUp && !onDn) P.stairArm = true;
+  else if (P.stairArm && onUp) goFloor(cz+1, STAIR_DN.x, STAIR_DN.y - 80);
+  else if (P.stairArm && onDn) goFloor(cz-1, STAIR_UP.x, STAIR_UP.y + 80);
+  if (fade > 0) fade = Math.max(0, fade - dt*2.5);
+
   // 업그레이드 칸
   if (P.padCd > 0) P.padCd -= dt;
   const pad = PADS.find(p => p.vis() && inRect(P.x, P.y, p));
@@ -630,9 +654,9 @@ function update(dt){
   anims = anims.filter(a => { a.t += dt/a.dur; if (a.t >= 1) { a.done(); return false; } return true; });
   floats = floats.filter(f => (f.t += dt) < 0.9);
 
-  // 카메라 (맨 위 구역 위로 잠긴 땅이 조금 보이게)
+  // 카메라 (지금 층 안 + 위는 돈 표시, 아래는 미션 카드에 가리지 않게 여유)
   const vw = VW/scale, vh = VH/scale;
-  const top = gy(S.zones.length-1, 0) - 220, bottom = ZH;
+  const top = gy(zoneOf(P.y), 0) - 90, bottom = gy(zoneOf(P.y), ZH) + 170;
   const tx = W > vw ? Math.max(vw/2, Math.min(W-vw/2, P.x)) : W/2;
   const ty = bottom - top > vh ? Math.max(top + vh/2, Math.min(bottom - vh/2, P.y)) : (top + bottom)/2;
   const k = Math.min(1, dt*6); cam.x += (tx-cam.x)*k; cam.y += (ty-cam.y)*k;
@@ -768,27 +792,25 @@ function render(){
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.fillStyle = C.ground; ctx.fillRect(0, 0, VW, VH);
   const vh = VH/scale, viewTop = cam.y - vh/2 - 60, viewBot = cam.y + vh/2 + 60;
-  const nZ = S.zones.length, worldTop = gy(nZ-1, 0);
+  const f = curZone, fTop = gy(f, 0), fBot = gy(f, ZH);
+  // 층 바깥은 벽
+  { const [, a] = toS(0, fTop), [, b] = toS(0, fBot); ctx.fillStyle = C.wall; if (a > 0) ctx.fillRect(0, 0, VW, a); if (b < VH) ctx.fillRect(0, b, VW, VH - b); }
 
   // 바닥 타일 (보이는 곳만)
   ctx.strokeStyle = C.tile; ctx.lineWidth = 1;
-  const y0 = Math.max(worldTop - ZH, Math.floor(viewTop/40)*40), y1 = Math.min(ZH, viewBot);
+  const y0 = Math.max(fTop, Math.floor(viewTop/40)*40), y1 = Math.min(fBot, viewBot);
   for (let gx = 0; gx <= W; gx += 40) { const [a, b] = toS(gx, y0), [, d] = toS(gx, y1); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(a, d); ctx.stroke(); }
   for (let yy = y0; yy <= y1; yy += 40) { const [a, b] = toS(0, yy), [c] = toS(W, yy); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, b); ctx.stroke(); }
 
-  // 잠긴 다음 구역
-  if (viewTop < worldTop) {
-    const [lx, ly] = toS(0, worldTop - ZH), [rx, ry] = toS(W, worldTop);
-    ctx.fillStyle = C.lock; ctx.fillRect(lx, ly, rx-lx, ry-ly);
-    text(`${nZ+1}구역 ${zoneName(nZ)} · 잠김`, W/2, worldTop - 110, 0, 22, C.hud);
-  }
+  // 계단
+  if (f < S.zones.length-1) drawStairs(zr(f, STAIR_UP), `▲ ${f+2}층`);
+  if (f > 0) drawStairs(zr(f, STAIR_DN), `▼ ${f}층`);
 
   const list = [];
   S.zones.forEach((Z, z) => {
-    if (gy(z, ZH) < viewTop || gy(z, 0) > viewBot) return;
-    // 구역 경계와 이름
-    if (z > 0) { const [a, b] = toS(0, gy(z, ZH)), [c] = toS(W, gy(z, ZH)); ctx.strokeStyle = 'rgba(44,43,53,.35)'; ctx.lineWidth = 4*scale; ctx.setLineDash([14*scale, 10*scale]); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, b); ctx.stroke(); ctx.setLineDash([]); }
-    text(`${z+1}구역 ${zoneName(z)} · ${KINDS[z % KINDS.length].name} ₩${fmt(valueOf(z))}`, 30, gy(z, 920), 0, 16, 'rgba(44,43,53,.55)', 'left');
+    if (z !== f) return;
+    // 층 이름
+    text(`${z+1}층 · ${KINDS[z % KINDS.length].name} ₩${fmt(valueOf(z))}`, 30, gy(z, 920), 0, 16, 'rgba(44,43,53,.55)', 'left');
 
     // 바닥 칸
     floorRect(zr(z, SELL), C.sellFill, C.sell, false, 0); text('판매', SELL.x, gy(z, SELL.y+22), 0, 15, C.sell);
@@ -826,9 +848,9 @@ function render(){
     rt(z).custs.forEach(c => list.push({ y:c.y, draw:() => customer(c, z) }));
   });
 
-  // 업그레이드 칸 (보이는 구역만)
+  // 업그레이드 칸 (지금 층만)
   PADS.forEach(p => {
-    if (!p.vis() || p.y < viewTop || p.y > viewBot) return;
+    if (!p.vis() || p.z !== f) return;
     const c = p.cost(), paid = S.paid[p.id] || 0;
     floorRect(p, p.gate ? 'rgba(232,185,35,.22)' : C.padFill, p.gate ? '#b58a12' : C.pad, true, paid/c);
     text(p.label, p.x, p.y-18, 0, 15, C.ink);
@@ -836,8 +858,8 @@ function render(){
     text(`₩${fmt(c - paid)}`, p.x, p.y+22, 0, 15, S.money > 0 ? C.billFront : C.ink);
   });
 
-  if (thief && thief.y > viewTop && thief.y < viewBot) list.push({ y:thief.y, draw:drawThief });
-  workers.forEach(w => { if (w.y > viewTop && w.y < viewBot) list.push({ y:w.y, draw:() => carrier(w, w.stack, C.worker, C.workerDark, 'worker', 'worker') }); });
+  if (thief && thief.z === f) list.push({ y:thief.y, draw:drawThief });
+  workers.forEach(w => { if (w.z === f) list.push({ y:w.y, draw:() => carrier(w, w.stack, C.worker, C.workerDark, 'worker', 'worker') }); });
   list.push({ y:P.y, draw:() => {
     carrier(P, S.stack, C.player, C.playerDark, 'player');
     const cap = capOf(S.capLv), n = S.stack.length;
@@ -870,6 +892,8 @@ function render(){
     }
   }
 
+  if (fade > 0) { ctx.fillStyle = `rgba(44,43,53,${fade})`; ctx.fillRect(0, 0, VW, VH); }
+
   // 조이스틱
   if (joy) {
     ctx.strokeStyle = 'rgba(44,43,53,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(joy.ox, joy.oy, 50, 0, Math.PI*2); ctx.stroke();
@@ -887,9 +911,9 @@ function hud(){
   if (!S.tut.sold) h = S.stack.length > 0 ? '파란 판매 칸에 내려놓으면 손님에게 팔려요' : '회색 생산기 앞 칸에 서서 물건을 모아요';
   else if (!S.tut.collected) h = '초록 돈더미를 밟아서 돈을 챙겨요';
   else if (!S.tut.upgraded) h = '점선 칸 위에 서 있으면 돈이 들어가 업그레이드돼요';
-  else if (!S.tut.zone && gateOpen) h = '오른쪽 위 노란 칸에서 다음 구역을 열 수 있어요';
+  else if (!S.tut.zone && gateOpen) h = '오른쪽 위 노란 칸에서 다음 층을 열 수 있어요';
   if (h !== lastHint) { lastHint = h; hintEl.textContent = h; hintEl.hidden = !h; }
-  chipEls.forEach((b, z) => {                       // 다른 구역 손님 경고: 1=기다리는 중(노랑), 2=화나기 직전(빨강)
+  chipEls.forEach((b, z) => {                       // 다른 층 손님 경고: 1=기다리는 중(노랑), 2=화나기 직전(빨강)
     const a = z === curZone ? 0 : zoneAlert(z);
     if (chipState[z] !== a) { chipState[z] = a; b.classList.toggle('warn', a === 1); b.classList.toggle('danger', a === 2); b.classList.toggle('full', a === 3); }
   });

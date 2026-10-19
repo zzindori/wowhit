@@ -27,17 +27,20 @@ body{margin:0;background:var(--ground);color:var(--ink);overflow:hidden;font-fam
 .money{padding:6px 16px 6px 8px;display:flex;align-items:center;gap:8px;font-size:22px;font-variant-numeric:tabular-nums;width:fit-content}
 .money.full{color:var(--warn)}
 .coin{width:26px;height:26px;border-radius:50%;background:var(--cash);color:var(--hud);display:grid;place-items:center;font-size:15px}
-#zones{display:flex;gap:6px;overflow-x:auto;max-width:calc(100vw - 140px);pointer-events:auto;padding-bottom:4px}
-#zones button{font:inherit;font-size:14px;border:0;min-width:36px;padding:6px 10px;color:var(--ink);cursor:pointer;flex:none}
-#zones button.on{background:var(--pad);color:var(--hud)}
-#zones button.warn{box-shadow:0 3px 0 rgba(44,43,53,.18),inset 0 0 0 3px #e8b923}
-#zones button.danger{background:var(--warn);color:var(--hud);animation:blink .6s steps(2) infinite}
-#zones button.danger::after{content:'!';margin-left:3px}
-#zones button.full{background:#e8b923;color:var(--ink)}
-#zones button.full::after{content:' ₩MAX';font-size:12px}
-#zones button.locked{opacity:.7}
+#zones{display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100vw - 140px);pointer-events:none}
+#zones .chip{font-size:14px;min-width:36px;padding:6px 10px;color:var(--ink);flex:none;text-align:center;box-sizing:border-box}
+#zones .chip.on{background:var(--pad);color:var(--hud)}
+#zones .chip.warn{box-shadow:0 3px 0 rgba(44,43,53,.18),inset 0 0 0 3px #e8b923}
+#zones .chip.danger{background:var(--warn);color:var(--hud);animation:blink .6s steps(2) infinite}
+#zones .chip.danger::after{content:'!';margin-left:3px}
+#zones .chip.full{background:#e8b923;color:var(--ink)}
+#zones .chip.full::after{content:' ₩MAX';font-size:12px}
+#zones .chip.broken{background:#5b6070;color:var(--hud)}
+#zones .chip.broken::after{content:' 고장';font-size:12px}
+#zones .chip.vip{background:#b58a12;color:var(--hud);animation:blink .6s steps(2) infinite}
+#zones .chip.vip::after{content:' VIP';font-size:12px}
 @keyframes blink{50%{opacity:.55}}
-@media (prefers-reduced-motion:reduce){#zones button.danger{animation:none}}
+@media (prefers-reduced-motion:reduce){#zones .chip.danger,#zones .chip.vip{animation:none}}
 button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset:2px}
 #menuBtn{pointer-events:auto;font:inherit;font-size:14px;border:0;padding:8px 14px;color:var(--ink);cursor:pointer}
 #panel{position:fixed;top:calc(env(safe-area-inset-top,0px) + 56px);right:max(16px,env(safe-area-inset-right,0px));
@@ -69,6 +72,8 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 .elev button.warn{box-shadow:inset 0 0 0 3px #e8b923}
 .elev button.danger{background:var(--warn)}
 .elev button.full{box-shadow:inset 0 0 0 3px #e8b923;color:#ffe27a}
+.elev button.broken{box-shadow:inset 0 0 0 3px #ffb3a6}
+.elev button.vip{background:#b58a12}
 </style>
 </head>
 <body>
@@ -116,6 +121,9 @@ const CFG = {
   gold: { chance: 0.03, mul: 10 },               // 황금 물건: 생산될 확률, 값 배수
   thief: { after: 12, chance: 0.3, speed: 115, take: 0.5, cooldown: 25 }, // 도둑: 돈더미를 몇 초 방치하면 나타날 수 있음, 초당 등장 확률, 속도, 훔치는 비율, 다음 등장까지 쉬는 시간
   warpCost: 1500,                                // 엘리베이터(층 버튼으로 이동) 비용
+  events: { first: 60, every: 50 },              // 층 이벤트(고장·VIP): 처음 몇 초 뒤부터, 평균 몇 초마다
+  broken: { fixTime: 2 },                        // 고장 난 생산기 앞에 몇 초 서 있으면 수리
+  vip: { time: 40, want: [3, 6], mul: 5 },      // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5)
   autoCost: 1500,                                // 층 자동 수금 칸 비용 (× 8^층)
   cashMax: 40,                                   // 돈더미 최대(지폐 장수). 꽉 차면 챙길 때까지 판매가 멈춤
   drawStackMax: 40                               // 등에 그려지는 최대 개수 (넘으면 숫자로 표시)
@@ -253,6 +261,8 @@ const sfx = {
   caught(){ [784, 1047, 1319, 1568].forEach((f, i) => tone(f, 0.12, 'square', 0.06, i*0.05)); buzz([30, 20, 60]); },
   stolen(){ tone(330, 0.4, 'sawtooth', 0.05, 0, 0.5); buzz(120); },
   steps(){ [0, 1, 2, 3].forEach(i => tone(170 + (i % 2)*40, 0.06, 'square', 0.04, i*0.09)); buzz([10, 70, 10, 70, 10]); },
+  broken(){ tone(220, 0.3, 'sawtooth', 0.05, 0, 0.5); tone(160, 0.35, 'sawtooth', 0.05, 0.15, 0.5); buzz([50, 40, 50]); },
+  vip(){ [1319, 1568, 2093, 2637].forEach((f, i) => tone(f, 0.14, 'triangle', 0.08, i*0.08)); buzz([20, 40, 20, 40, 20]); },
   warp(){ tone(300, 0.25, 'sine', 0.1, 0, 3); buzz(15); }
 };
 
@@ -271,7 +281,7 @@ function rebuildPads(){
       cost:() => Math.round(walletOf(S.walLv)*CFG.wallet.costRate), vis:() => z === 0, apply:() => { S.walLv++; } });
     if (z === 0) PADS.push({ id:'warp', ...at(ELEV.x, 80, 100, 84), label:'엘리베이터', sub:() => '설치',
       cost:() => CFG.warpCost, vis:() => S.zones.length > 1 && !S.warp,
-      apply:() => { S.warp = true; renderZoneChips(); toast('엘리베이터 설치! 문 앞에 서거나 왼쪽 위 층 버튼으로 바로 가요'); P.elevArm = false; } });
+      apply:() => { S.warp = true; renderZoneChips(); toast('엘리베이터 설치! 층마다 계단 옆 문 앞에 서면 층을 골라 바로 가요'); P.elevArm = false; } });
     PADS.push({ id:`${z}:wrk`, ...at(510, 480, 96, 84), label:'일꾼 고용', sub:() => `${Z.wrkLv}→${Z.wrkLv+1}명`,
       cost:() => Math.round(CFG.worker.cost*Math.pow(CFG.worker.mul, Z.wrkLv)*zscale(z)), vis:() => Z.wrkLv < CFG.workerMax, apply:() => { Z.wrkLv++; syncWorkers(); } });
     PADS.push({ id:`${z}:sell`, ...at(640, 480, 96, 84), label:'판매속도', sub:() => `Lv${Z.sellLv+1}`,
@@ -302,14 +312,11 @@ function renderZoneChips(){
   zonesEl.innerHTML = ''; chipEls = []; chipState = [];
   if (S.zones.length < 2) return;
   S.zones.forEach((_, z) => {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (z === curZone ? ' on' : '');
-    b.textContent = `${z+1}F`; b.setAttribute('aria-label', `${z+1}층으로 이동`);
-    if (!S.warp) b.classList.add('locked');
-    b.addEventListener('click', () => warp(z)); zonesEl.appendChild(b); chipEls[z] = b;
+    const b = document.createElement('span'); b.className = 'chip' + (z === curZone ? ' on' : '');   // 표시판: 층 이동은 엘리베이터 문 앞에서만
+    b.textContent = `${z+1}F`; zonesEl.appendChild(b); chipEls[z] = b;
   });
 }
 function warp(z){
-  if (!S.warp) { toast('엘리베이터는 1층 계단 옆에 설치할 수 있어요. 그 전엔 계단으로 다녀요', true); return; }
   fade = 1; P.x = ELEV.x; P.y = gy(z, ELEV_ZONE.y + 40); cam.x = P.x; cam.y = P.y; sfx.warp();
   P.elevArm = false; closeElev();
 }
@@ -319,7 +326,7 @@ function openElev(){
   S.zones.forEach((_, z) => {
     const b = document.createElement('button'); b.type = 'button'; b.textContent = `${z+1}F`;
     if (z === curZone) b.disabled = true;
-    else { const a = zoneAlert(z); if (a) b.classList.add(['', 'warn', 'danger', 'full'][a]); b.addEventListener('click', () => warp(z)); }
+    else { const a = zoneAlert(z); if (a) b.classList.add(ALERT_CLS[a]); b.addEventListener('click', () => warp(z)); }
     box.appendChild(b);
   });
   elevEl.hidden = false; tone(1047, 0.12, 'sine', 0.08);
@@ -339,7 +346,7 @@ paintPrefs();
 let armT = 0;
 resetBtn.addEventListener('click', () => {
   if (!resetBtn.classList.contains('armed')) { resetBtn.classList.add('armed'); resetBtn.textContent = '한 번 더 누르면 초기화'; armT = 3; return; }
-  S = DEF(); P.x = S.px; P.y = S.py; P.inc = 0; workers = []; anims = []; floats = []; RT = []; thief = null; thiefCd = 8;
+  S = DEF(); P.x = S.px; P.y = S.py; P.inc = 0; workers = []; anims = []; floats = []; RT = []; thief = null; thiefCd = 8; evT = CFG.events.first;
   rebuildPads(); renderZoneChips(); save();
   resetBtn.classList.remove('armed'); resetBtn.textContent = '처음부터'; setPanel(false);
 });
@@ -532,16 +539,76 @@ function drawThief(){
   if (T.state !== 'run' || T.loot > 0) text('도둑!', T.x, T.y, 62, 14, C.warn);
 }
 
-// 층 경고: 3=돈더미 MAX(판매 멈춤), 그 외는 손님 상태
+// 층 경고: 5=VIP 손님, 4=생산기 고장, 3=돈더미 MAX(판매 멈춤), 그 외는 손님 상태
+const ALERT_CLS = ['', 'warn', 'danger', 'full', 'broken', 'vip'];
 function zoneAlert(z){
-  const Z = S.zones[z];
-  return Z && Z.cash >= CFG.cashMax*valueOf(z) ? 3 : custAlert(z);
+  const Z = S.zones[z]; if (!Z) return 0;
+  const V = rt(z).vip;
+  if (V && V.state !== 'leave') return 5;
+  if (Z.sp.some(s => s.broken)) return 4;
+  return Z.cash >= CFG.cashMax*valueOf(z) ? 3 : custAlert(z);
 }
 // 층 손님 상태: 0=없음, 1=기다리는 중, 2=화나기 직전(참을성 35% 미만)
 function custAlert(z){
   let a = 0;
   for (const c of rt(z).custs) { if (c.state !== 'wait') continue; if (c.pat/CFG.cust.patience < 0.35) return 2; a = 1; }
   return a;
+}
+
+// ---- 층 이벤트: 기계 고장 / VIP 손님 (자동화가 끝난 층에도 가끔 들를 이유) ----
+const VIP_SPOT = {x:110, y:300};
+let evT = CFG.events.first;
+function updEvents(dt){
+  if ((evT -= dt) > 0) return;
+  evT = CFG.events.every * (0.7 + Math.random()*0.6);
+  const z = Math.floor(Math.random()*S.zones.length), Z = S.zones[z], R = rt(z);
+  if (Math.random() < 0.5) {
+    if (Z.sp.some(s => s.broken)) return;
+    const ks = [0, 1, 2].filter(k => Z.sp[k].on);
+    const k = ks[Math.floor(Math.random()*ks.length)];
+    Z.sp[k].broken = true; Z.sp[k].fix = 0;
+    toast(`${z+1}층 생산기가 고장 났어요! 가서 그 앞에 서 있으면 고쳐요`, true); sfx.broken();
+  } else {
+    if (R.vip) return;
+    const [lo, hi] = CFG.vip.want;
+    R.vip = { x:-30, y:gy(z, VIP_SPOT.y), want:lo + Math.floor(Math.random()*(hi-lo+1)), got:0, sum:0, t:CFG.vip.time,
+      state:'come', fx:1, fy:0, svx:0, svy:0, serveT:0 };
+    toast(`${z+1}층에 VIP 손님! 직접 물건을 건네야 해요 (${CFG.vip.time}초)`); sfx.vip();
+  }
+}
+// VIP는 일꾼이 상대 못 하고 주인공이 옆에 서서 등에 진 물건을 건네야 함. 보상은 물건 값 × 5, 지갑 한도와 상관없이 들어옴
+function updVip(z, cz, dt){
+  const R = rt(z), V = R.vip; if (!V) return;
+  if (V.state === 'leave') { if (moveTo(V, -50, gy(z, VIP_SPOT.y), CFG.cust.speed*1.4, dt, true)) R.vip = null; return; }
+  if (V.state === 'come' && moveTo(V, VIP_SPOT.x, gy(z, VIP_SPOT.y), CFG.cust.speed, dt, true)) { V.state = 'wait'; V.fx = 0.5; V.fy = 1; }
+  if ((V.t -= dt) <= 0) {
+    V.state = 'leave'; V.angry = true;
+    toast(`${z+1}층 VIP가 기다리다 떠났어요`, true); if (z === cz) sfx.angry();
+    return;
+  }
+  if (V.state === 'wait' && z === cz && S.stack.length && Math.hypot(P.x - V.x, P.y - V.y) < 60 && (V.serveT += dt) > 0.12) {
+    V.serveT = 0; const it = S.stack.pop(); V.got++; V.sum += itemValue(it);
+    fly(stackPos(P, S.stack.length), () => [V.x, V.y, 30], it, 0.2, () => {}); sfx.hand();
+    if (V.got >= V.want) {
+      const reward = Math.round(V.sum*CFG.vip.mul);
+      S.money += reward; S.stats.vip = (S.stats.vip || 0) + 1;
+      V.state = 'leave'; V.happy = true;
+      floatText(V.x, V.y, `VIP +₩${fmt(reward)}`, '#b58a12'); toast(`VIP 만족! 보상 +₩${fmt(reward)}`); sfx.mission(); save();
+    }
+  }
+}
+function drawVip(V, z){
+  if (V.state === 'wait') floorRect({ x:VIP_SPOT.x, y:gy(z, VIP_SPOT.y), w:96, h:76 }, 'rgba(232,185,35,.18)', '#b58a12', true, 0);
+  person(V, '#e8b923', '#b58a12', 'vip', V.angry ? C.angry : C.skin);
+  const [sx, sy] = toS(V.x, V.y), cy = sy - 50*scale;
+  ctx.fillStyle = '#f2c230'; ctx.beginPath();                                  // 왕관
+  ctx.moveTo(sx - 8*scale, cy); ctx.lineTo(sx - 8*scale, cy - 8*scale); ctx.lineTo(sx - 4*scale, cy - 4*scale); ctx.lineTo(sx, cy - 10*scale);
+  ctx.lineTo(sx + 4*scale, cy - 4*scale); ctx.lineTo(sx + 8*scale, cy - 8*scale); ctx.lineTo(sx + 8*scale, cy); ctx.closePath(); ctx.fill();
+  if (V.state === 'leave') { if (V.angry) text('!!', V.x + 12, V.y, 62, 18, C.warn); return; }
+  text(`VIP ${V.got}/${V.want}`, V.x, V.y, 84, 15, '#8a6a0e');
+  const r = Math.max(0, V.t/CFG.vip.time), [px, py] = toS(V.x - 20, V.y, 74);
+  ctx.fillStyle = 'rgba(44,43,53,.2)'; ctx.fillRect(px, py, 40*scale, 5*scale);
+  ctx.fillStyle = r > 0.5 ? C.ok : r > 0.25 ? C.mid : C.warn; ctx.fillRect(px, py, 40*scale*r, 5*scale);
 }
 
 function goFloor(f, x, y){
@@ -585,7 +652,7 @@ function update(dt){
   // 모든 층: 생산, 손님, 다른 층 돈 자동 수금
   S.zones.forEach((Z, z) => {
     Z.sp.forEach((s, k) => {
-      if (!s.on) return; s.t += dt;
+      if (!s.on || s.broken) return; s.t += dt;
       if (s.t >= CFG.spawnEvery) {
         s.t = 0;
         if (s.items < CFG.spawnMax) {
@@ -689,6 +756,17 @@ function update(dt){
 
   workers.forEach(w => updWorker(w, dt));
   updThief(cz, dt);
+  updEvents(dt);
+  S.zones.forEach((_, z) => updVip(z, cz, dt));
+  // 고장 수리: 지금 층 고장 난 생산기 앞에 서 있기
+  Z.sp.forEach((s, k) => {
+    if (!s.broken) return;
+    if (inRect(P.x, P.y, { x:SP[k].x, y:gy(cz, SP[k].y), ...SP_ZONE })) {
+      s.fix = (s.fix || 0) + dt;
+      if (every('fixTick', 0.25)) tone(300 + s.fix*300, 0.05, 'square', 0.04);
+      if (s.fix >= CFG.broken.fixTime) { s.broken = false; s.fix = 0; S.stats.fix = (S.stats.fix || 0) + 1; floatText(SP[k].x, gy(cz, SP[k].y), '수리 완료!', C.pad); sfx.done(); }
+    } else s.fix = 0;
+  });
   checkMission();
 
   anims = anims.filter(a => { a.t += dt/a.dur; if (a.t >= 1) { a.done(); return false; } return true; });
@@ -878,14 +956,24 @@ function render(){
       list.push({ y:py-40, draw:() => {
         const [mx, my] = toS(p.x, py-34);
         if (!art('machine', mx, my, 84*scale, 90*scale)) cube(p.x, py-34, 0, 80, 46, C.machTop, C.machFront);
-        const prog = s.items >= CFG.spawnMax ? 1 : s.t/CFG.spawnEvery; const [bx, by] = toS(p.x-28, py-58, 0);
+        const [bx, by] = toS(p.x-28, py-58, 0);
         ctx.fillStyle = 'rgba(255,250,240,.5)'; ctx.fillRect(bx, by, 56*scale, 6*scale);
-        ctx.fillStyle = s.items >= CFG.spawnMax ? C.warn : C.hud; ctx.fillRect(bx, by, 56*scale*prog, 6*scale);
-        text(s.items >= CFG.spawnMax ? '가득 참' : '생산 중', p.x, py-76, 0, 13, C.hud);
+        if (s.broken) {                                // 고장: 연기 + 수리 막대
+          for (let i = 0; i < 3; i++) { const t = (performance.now()/900 + i/3) % 1, [cx, cy] = toS(p.x - 10 + i*10, py-34, 50 + t*40);
+            ctx.fillStyle = `rgba(90,90,100,${0.5*(1-t)})`; ctx.beginPath(); ctx.arc(cx, cy, (6 + t*8)*scale, 0, Math.PI*2); ctx.fill(); }
+          ctx.fillStyle = C.ok; ctx.fillRect(bx, by, 56*scale*Math.min(1, (s.fix || 0)/CFG.broken.fixTime), 6*scale);
+          const on = Math.floor(performance.now()/300) % 2;
+          text(s.fix > 0 ? '수리 중…' : '고장! 앞에 서서 수리', p.x, py-76, 0, 13, on || s.fix > 0 ? C.hud : '#ffb3a6');
+        } else {
+          const prog = s.items >= CFG.spawnMax ? 1 : s.t/CFG.spawnEvery;
+          ctx.fillStyle = s.items >= CFG.spawnMax ? C.warn : C.hud; ctx.fillRect(bx, by, 56*scale*prog, 6*scale);
+          text(s.items >= CFG.spawnMax ? '가득 참' : '생산 중', p.x, py-76, 0, 13, C.hud);
+        }
       }});
       list.push({ y:py, draw:() => { for (let i = 0; i < s.items; i++) { const [x, y, zz] = spItemPos(z, k, i); item(x, y, zz, i >= s.items - (s.golden || 0) ? GOLD + z : z); } } });
     });
     rt(z).custs.forEach(c => list.push({ y:c.y, draw:() => customer(c, z) }));
+    const V = rt(z).vip; if (V) list.push({ y:V.y, draw:() => drawVip(V, z) });
   });
 
   // 업그레이드 칸 (지금 층만)
@@ -956,7 +1044,7 @@ function hud(){
   if (h !== lastHint) { lastHint = h; hintEl.textContent = h; hintEl.hidden = !h; }
   chipEls.forEach((b, z) => {                       // 다른 층 손님 경고: 1=기다리는 중(노랑), 2=화나기 직전(빨강)
     const a = z === curZone ? 0 : zoneAlert(z);
-    if (chipState[z] !== a) { chipState[z] = a; b.classList.toggle('warn', a === 1); b.classList.toggle('danger', a === 2); b.classList.toggle('full', a === 3); }
+    if (chipState[z] !== a) { chipState[z] = a; ALERT_CLS.forEach((c, i) => { if (i) b.classList.toggle(c, a === i); }); }
   });
   const m = S.mission;
   if (m) {

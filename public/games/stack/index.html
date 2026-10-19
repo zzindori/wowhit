@@ -42,8 +42,10 @@ body{margin:0;background:var(--ground);color:var(--ink);overflow:hidden;font-fam
 #zones .chip.vip::after{content:' VIP';font-size:12px}
 #zones .chip.gold{background:#f4d35e;color:var(--ink)}
 #zones .chip.gold::after{content:' 황금';font-size:12px}
+#zones .chip.ruin{background:var(--warn);color:var(--hud);animation:blink .6s steps(2) infinite}
+#zones .chip.ruin::after{content:' 고장!';font-size:12px}
 @keyframes blink{50%{opacity:.55}}
-@media (prefers-reduced-motion:reduce){#zones .chip.danger,#zones .chip.vip{animation:none}}
+@media (prefers-reduced-motion:reduce){#zones .chip.danger,#zones .chip.vip,#zones .chip.ruin{animation:none}}
 button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset:2px}
 #menuBtn{pointer-events:auto;font:inherit;font-size:14px;border:0;padding:8px 14px;color:var(--ink);cursor:pointer}
 #panel{position:fixed;top:calc(env(safe-area-inset-top,0px) + 56px);right:max(16px,env(safe-area-inset-right,0px));
@@ -78,6 +80,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 .elev button.broken{box-shadow:inset 0 0 0 3px #ffb3a6}
 .elev button.vip{background:#b58a12}
 .elev button.gold{background:#c9a227;color:var(--ink)}
+.elev button.ruin{background:var(--warn);box-shadow:inset 0 0 0 3px #ffb3a6}
 </style>
 </head>
 <body>
@@ -581,16 +584,19 @@ function drawThief(){
   if (T.state !== 'run' || T.loot > 0) text('도둑!', T.x, T.y, 62, 14, C.warn);
 }
 
-// 층 경고(우선순위 순): 5=VIP 손님, 4=생산기 고장, 3=돈더미 MAX(판매 멈춤), 6=황금 물건 대기, 그 외는 손님 상태
-const ALERT_CLS = ['', 'warn', 'danger', 'full', 'broken', 'vip', 'gold'];
+// 층 경고 — 남은 시간이 짧고 놓치면 손해 큰 순서:
+// 5=VIP(40초) > 6=황금(60초에 사라짐) > 7=부서지기 직전 고장 > 2=손님 화나기 직전 > 4=고장·부서짐 > 3=돈더미 MAX(판매만 멈춤) > 1=손님 대기
+const ALERT_CLS = ['', 'warn', 'danger', 'full', 'broken', 'vip', 'gold', 'ruin'];
 function zoneAlert(z){
   const Z = S.zones[z]; if (!Z) return 0;
   const V = rt(z).vip;
   if (V && V.state !== 'leave') return 5;
+  if (Z.sp.some(s => s.on && (s.golden || 0) > 0)) return 6;   // 황금 물건 대기(주인공만 나를 수 있음)
+  if (Z.sp.some(s => s.broken && CFG.broken.ruin - (s.brokenT || 0) <= CFG.broken.warn)) return 7;
+  const c = custAlert(z); if (c === 2) return 2;
   if (Z.sp.some(s => s.broken || s.ruined)) return 4;
   if (pileFull(Z, z)) return 3;
-  if (Z.sp.some(s => s.on && (s.golden || 0) > 0)) return 6;   // 황금 물건 대기(주인공만 나를 수 있음)
-  return custAlert(z);
+  return c;
 }
 // 층 손님 상태: 0=없음, 1=기다리는 중, 2=화나기 직전(참을성 35% 미만)
 function custAlert(z){

@@ -33,6 +33,8 @@ body{margin:0;background:var(--ground);color:var(--ink);overflow:hidden;font-fam
 #zones button.warn{box-shadow:0 3px 0 rgba(44,43,53,.18),inset 0 0 0 3px #e8b923}
 #zones button.danger{background:var(--warn);color:var(--hud);animation:blink .6s steps(2) infinite}
 #zones button.danger::after{content:'!';margin-left:3px}
+#zones button.full{background:#e8b923;color:var(--ink)}
+#zones button.full::after{content:' ₩MAX';font-size:12px}
 @keyframes blink{50%{opacity:.55}}
 @media (prefers-reduced-motion:reduce){#zones button.danger{animation:none}}
 button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset:2px}
@@ -101,6 +103,7 @@ const CFG = {
   wallet: { base: 500, mul: 2, costRate: 0.6 },    // 지갑 한도 = 500 × 2^레벨, 업그레이드 비용 = 현재 한도의 60%
   gold: { chance: 0.03, mul: 10 },               // 황금 물건: 생산될 확률, 값 배수
   thief: { after: 12, chance: 0.3, speed: 115, take: 0.5, cooldown: 25 }, // 도둑: 돈더미를 몇 초 방치하면 나타날 수 있음, 초당 등장 확률, 속도, 훔치는 비율, 다음 등장까지 쉬는 시간
+  autoCost: 1500,                                // 구역 자동 수금 칸 비용 (× 8^구역)
   cashMax: 40,                                   // 돈더미 최대(지폐 장수). 꽉 차면 챙길 때까지 판매가 멈춤
   drawStackMax: 40                               // 등에 그려지는 최대 개수 (넘으면 숫자로 표시)
 };
@@ -161,7 +164,7 @@ function fmt(n){
 }
 
 // ---- 상태 ----
-const newZone = () => ({ sp:[{on:true,items:4,t:0},{on:false,items:0,t:0},{on:false,items:0,t:0}], wrkLv:0, sellLv:0, cash:0, queue:[] });
+const newZone = () => ({ sp:[{on:true,items:4,t:0},{on:false,items:0,t:0},{on:false,items:0,t:0}], wrkLv:0, sellLv:0, cash:0, queue:[], auto:false });
 const DEF = () => ({ v:2, money:0, capLv:0, spdLv:0, walLv:0, zones:[newZone()], paid:{}, stack:[], px:380, py:600,
   tut:{ sold:false, collected:false, upgraded:false, zone:false, angry:false, cashFull:false, wallet:false },
   stats:{ sell:0, collect:0, tip:0, upgrade:0, golden:0 }, mission:null });
@@ -256,6 +259,8 @@ function rebuildPads(){
       cost:() => Math.round(CFG.worker.cost*Math.pow(CFG.worker.mul, Z.wrkLv)*zscale(z)), vis:() => Z.wrkLv < CFG.workerMax, apply:() => { Z.wrkLv++; syncWorkers(); } });
     PADS.push({ id:`${z}:sell`, ...at(640, 480, 96, 84), label:'판매속도', sub:() => `Lv${Z.sellLv+1}`,
       cost:() => Math.round(CFG.sell.cost*Math.pow(CFG.sell.mul, Z.sellLv)*zscale(z)), vis:() => Z.sellLv < CFG.sellMax, apply:() => { Z.sellLv++; } });
+    PADS.push({ id:`${z}:auto`, ...at(645, 250, 100, 84), label:'자동 수금', sub:() => '다른 구역일 때',
+      cost:() => CFG.autoCost*zscale(z), vis:() => !Z.auto, apply:() => { Z.auto = true; } });
     PADS.push({ id:`${z}:gate`, ...at(640, 80, 120, 84), gate:true, label:`${z+2}구역 열기`, sub:() => zoneName(z+1),
       cost:() => CFG.zoneCost*Math.pow(CFG.zoneCostMul, z), vis:() => z === S.zones.length-1 && Z.sp.every(s => s.on), apply:openZone });
   });
@@ -492,8 +497,13 @@ function drawThief(){
   if (T.state !== 'run' || T.loot > 0) text('도둑!', T.x, T.y, 62, 14, C.warn);
 }
 
-// 구역 손님 상태: 0=없음, 1=기다리는 중, 2=화나기 직전(참을성 35% 미만)
+// 구역 경고: 3=돈더미 MAX(판매 멈춤), 그 외는 손님 상태
 function zoneAlert(z){
+  const Z = S.zones[z];
+  return Z && Z.cash >= CFG.cashMax*valueOf(z) ? 3 : custAlert(z);
+}
+// 구역 손님 상태: 0=없음, 1=기다리는 중, 2=화나기 직전(참을성 35% 미만)
+function custAlert(z){
   let a = 0;
   for (const c of rt(z).custs) { if (c.state !== 'wait') continue; if (c.pat/CFG.cust.patience < 0.35) return 2; a = 1; }
   return a;
@@ -506,7 +516,10 @@ function update(dt){
   if (toastT > 0 && (toastT -= dt) <= 0) { toastEl.style.opacity = 0; setTimeout(() => { if (toastT <= 0) toastEl.hidden = true; }, 300); }
 
   const cz = zoneOf(P.y);
-  if (cz !== curZone) { curZone = cz; renderZoneChips(); }
+  if (cz !== curZone) {
+    curZone = cz; renderZoneChips();
+    if (!S.tut.autoInfo && S.zones.length > 1) { S.tut.autoInfo = true; toast('다른 구역 돈은 그 구역 돈더미에 쌓여요. 구역마다 자동 수금 칸을 사면 알아서 들어와요'); toastT = 4; }
+  }
 
   // 모든 구역: 생산, 손님, 다른 구역 돈 자동 수금
   S.zones.forEach((Z, z) => {
@@ -525,7 +538,8 @@ function update(dt){
     });
     updCustomers(Z, z, cz, dt);
     rt(z).cashIdle = Z.cash > 0 ? (rt(z).cashIdle || 0) + dt : 0;
-    if (z !== cz && Z.cash > 0) { const take = Math.min(Z.cash, room()); if (take > 0) { S.money += take; offAcc[z] = (offAcc[z] || 0) + take; Z.cash -= take; } }
+    if (z !== cz && Z.auto && Z.cash > 0) { const take = Math.min(Z.cash, room()); if (take > 0) { S.money += take; offAcc[z] = (offAcc[z] || 0) + take; Z.cash -= take; } }
+    if (z !== cz && Z.cash >= CFG.cashMax*valueOf(z) && every('full' + z, 30)) toast(`${zoneName(z)} 돈더미가 가득 찼어요 · 가서 챙기거나 자동 수금을 사요`, true);
   });
   if ((offT += dt) > 2.5) {
     offT = 0;
@@ -786,6 +800,7 @@ function render(){
       for (let i = 0; i < n; i++) { const [x, y, zz] = cashPos(z, i); bill(x, y, zz); }
       if (Z.cash >= CFG.cashMax*valueOf(z)) { const pulse = 1 + Math.sin(performance.now()/120)*0.08; text('MAX', CASH.x, gy(z, CASH.y-38), 22, 17*pulse, C.warn); }
       else if (Z.cash > 0) text(`₩${fmt(Z.cash)}`, CASH.x, gy(z, CASH.y-38), 20, 15, C.billFront);
+      if (Z.auto) text('자동 수금', CASH.x, gy(z, CASH.y+58), 0, 13, C.billFront);
     }});
     Z.sp.forEach((s, k) => {
       if (!s.on) return;
@@ -838,7 +853,7 @@ function render(){
   if (waiting) {
     const [dx, dy] = toS(DESK.x, gy(curZone, LINE.y), 40);
     if (dy < 110) {
-      const danger = zoneAlert(curZone) === 2, blink = danger && Math.floor(performance.now()/300) % 2;
+      const danger = custAlert(curZone) === 2, blink = danger && Math.floor(performance.now()/300) % 2;
       const label = `▲ 손님 ${waiting}명 대기${danger ? ' · 화나기 직전!' : ''}`;
       ctx.font = `15px ${FONT}`; const tw = ctx.measureText(label).width + 28;
       const x = Math.max(16 + tw/2, Math.min(VW - 16 - tw/2, dx)), y = toastEl.hidden ? 128 : 210;   // 알림이 떠 있으면 그 아래로
@@ -868,7 +883,7 @@ function hud(){
   if (h !== lastHint) { lastHint = h; hintEl.textContent = h; hintEl.hidden = !h; }
   chipEls.forEach((b, z) => {                       // 다른 구역 손님 경고: 1=기다리는 중(노랑), 2=화나기 직전(빨강)
     const a = z === curZone ? 0 : zoneAlert(z);
-    if (chipState[z] !== a) { chipState[z] = a; b.classList.toggle('warn', a === 1); b.classList.toggle('danger', a === 2); }
+    if (chipState[z] !== a) { chipState[z] = a; b.classList.toggle('warn', a === 1); b.classList.toggle('danger', a === 2); b.classList.toggle('full', a === 3); }
   });
   const m = S.mission;
   if (m) {

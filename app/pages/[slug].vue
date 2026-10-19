@@ -250,7 +250,7 @@ useSeoMeta({ title: `${app.name} — wowhit` })
             <p
               v-for="(line, i) in app.longDescription.split('\n\n')"
               :key="i"
-              class="text-base text-muted mb-3 last:mb-0"
+              class="text-base text-muted mb-3 last:mb-0 whitespace-pre-line"
             >
               {{ line }}
             </p>

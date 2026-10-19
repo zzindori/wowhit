@@ -115,7 +115,7 @@ const FONT = "Jua, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Goth
 const C = { ground:'#d9ccb2', tile:'#cfc1a5', ink:'#2c2b35', hud:'#fffaf0', warn:'#c2462f', gold:'#e8b923', ok:'#4c9a66', mid:'#d9a21b',
   billTop:'#7cc794', billFront:'#4c9a66', pad:'#4f6390', padFill:'rgba(79,99,144,.22)', sell:'#3f7fc4', sellFill:'rgba(63,127,196,.20)',
   cashFill:'rgba(76,154,102,.18)', machTop:'#8a96ad', machFront:'#5f6b84', deskTop:'#b98a5e', deskFront:'#8f6440',
-  player:'#2f5bd3', playerDark:'#2245a3', worker:'#e0a82e', workerDark:'#b07f17', skin:'#f3d2b3', angry:'#ec8a74', lock:'rgba(44,43,53,.28)' };
+  player:'#2f5bd3', playerDark:'#2245a3', worker:'#6b6f7a', workerDark:'#4c4f58', vest:'#f08a24', reflect:'#f6f0c8', helmet:'#f2c230', helmetDark:'#c99a12', skin:'#f3d2b3', angry:'#ec8a74', lock:'rgba(44,43,53,.28)' };
 const KINDS = [
   { name:'상자', shape:'box',    top:'#f2a35e', front:'#d9772e' },
   { name:'통',   shape:'barrel', top:'#8fc0e8', front:'#4f8fc4' },
@@ -681,19 +681,30 @@ function floorRect(r, fill, stroke, dashed, progress){
   ctx.setLineDash(dashed ? [8*scale, 6*scale] : []); ctx.lineWidth = 3*scale; ctx.strokeStyle = stroke;
   rr(x0, y0, w, h, 10*scale); ctx.stroke(); ctx.setLineDash([]);
 }
-function person(e, body, dark, key, skin, shake){
+function person(e, body, dark, key, skin, shake, gear){
   const [bx, sy] = toS(e.x, e.y), sx = bx + (shake || 0);
   ctx.fillStyle = 'rgba(44,43,53,.22)'; ctx.beginPath(); ctx.ellipse(bx, sy, 13*scale, 6*scale, 0, 0, Math.PI*2); ctx.fill();
   const bob = Math.hypot(e.svx, e.svy) > 20 ? Math.abs(Math.sin(performance.now()/90))*2*scale : 0;
   if (art(key, sx, sy - bob, 40*scale, 52*scale)) return;
   ctx.fillStyle = dark; rr(sx-10*scale, sy-30*scale-bob, 20*scale, 28*scale, 8*scale); ctx.fill();
   ctx.fillStyle = body; rr(sx-10*scale, sy-32*scale-bob, 20*scale, 24*scale, 8*scale); ctx.fill();
-  ctx.fillStyle = skin || C.skin; ctx.beginPath(); ctx.arc(sx + e.fx*2*scale, sy-40*scale-bob + e.fy*1.5*scale, 9*scale, 0, Math.PI*2); ctx.fill();
+  if (gear === 'worker') {                         // 일꾼: 반사띠 주황 조끼
+    ctx.fillStyle = C.vest; rr(sx-10*scale, sy-31*scale-bob, 20*scale, 22*scale, 6*scale); ctx.fill();
+    ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(sx-4*scale, sy-31*scale-bob); ctx.lineTo(sx+4*scale, sy-31*scale-bob); ctx.lineTo(sx, sy-24*scale-bob); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = C.reflect; ctx.fillRect(sx-10*scale, sy-20*scale-bob, 20*scale, 2.5*scale); ctx.fillRect(sx-10*scale, sy-14*scale-bob, 20*scale, 2.5*scale);
+  }
+  const hx = sx + e.fx*2*scale, hy = sy-40*scale-bob + e.fy*1.5*scale;
+  ctx.fillStyle = skin || C.skin; ctx.beginPath(); ctx.arc(hx, hy, 9*scale, 0, Math.PI*2); ctx.fill();
+  if (gear === 'worker') {                         // 일꾼: 노란 안전모
+    ctx.fillStyle = C.helmet; ctx.beginPath(); ctx.arc(hx, hy-2*scale, 9.5*scale, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = C.helmetDark; ctx.beginPath(); ctx.ellipse(hx, hy-2*scale, 12*scale, 2.6*scale, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = C.helmetDark; ctx.fillRect(hx-1.2*scale, hy-11*scale, 2.4*scale, 8*scale);
+  }
 }
-function carrier(e, stack, body, dark, key){
+function carrier(e, stack, body, dark, key, gear){
   const n = Math.min(stack.length, CFG.drawStackMax);
   const draw = () => { for (let i = 0; i < n; i++) { const [x, y, z] = stackPos(e, i); item(x, y, z, stack[i]); } };
-  if (e.fy < -0.3) { person(e, body, dark, key); draw(); } else { draw(); person(e, body, dark, key); }
+  if (e.fy < -0.3) { person(e, body, dark, key, null, 0, gear); draw(); } else { draw(); person(e, body, dark, key, null, 0, gear); }
 }
 function customer(c, z){
   const r = Math.max(0, c.pat/CFG.cust.patience);
@@ -790,7 +801,7 @@ function render(){
   });
 
   if (thief && thief.y > viewTop && thief.y < viewBot) list.push({ y:thief.y, draw:drawThief });
-  workers.forEach(w => { if (w.y > viewTop && w.y < viewBot) list.push({ y:w.y, draw:() => carrier(w, w.stack, C.worker, C.workerDark, 'worker') }); });
+  workers.forEach(w => { if (w.y > viewTop && w.y < viewBot) list.push({ y:w.y, draw:() => carrier(w, w.stack, C.worker, C.workerDark, 'worker', 'worker') }); });
   list.push({ y:P.y, draw:() => {
     carrier(P, S.stack, C.player, C.playerDark, 'player');
     const cap = capOf(S.capLv), n = S.stack.length;

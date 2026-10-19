@@ -132,7 +132,8 @@ const CFG = {
   warpCost: 1500,                                // 엘리베이터(층 버튼으로 이동) 비용
   events: { first: 60, every: 50 },              // 층 이벤트(고장·VIP): 처음 몇 초 뒤부터, 평균 몇 초마다
   broken: { fixTime: 2, ruin: 120, warn: 30, rebuild: 100 }, // 수리: 앞에 몇 초 서 있기 / 고장 난 채로 몇 초 지나면 부서짐(몇 초 전부터 경고) / 다시 제작 비용(× 8^층)
-  vip: { time: 40, want: [3, 6], mul: 5, slow: 15 }, // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5), 놓치면 주인공 이동속도가 기본으로 돌아가는 시간(초)
+  vip: { time: 40, want: [3, 6], mul: 5, goldMul: 5, slow: 10, slowMin: 0.2 }, // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5), 황금을 건네면 그 물건만 또 × 5,
+                                                 //      놓치면 이동속도가 20%로 뚝 떨어졌다가 10초에 걸쳐 원래대로
   autoCost: 1500,                                // 층 자동 수금 칸 비용 (× 8^층)
   away: { hours: [1, 2, 4, 8], cost: 300, mul: 4, rate: 0.5, min: 60 }, // 야간 금고: 단계별 최대 시간, 비용(× 4^단계 × 8^층), 자동으로 벌던 속도의 몇 %, 몇 초 이상 비워야 계산
   cashMax: 40,                                   // 돈더미 최대 장수(손님 결제 1번 = 1장, 금액과 무관). 꽉 차면 챙길 때까지 판매가 멈춤
@@ -671,19 +672,25 @@ function updVip(z, cz, dt){
   if ((V.t -= dt) <= 0) {
     V.state = 'leave'; V.angry = true;
     // 벌칙: 일정 시간 이동속도 업그레이드 무효. 엘리베이터 없을 땐 먼 층 VIP는 못 가니까 지금 층 VIP만. 겹치면 다시 처음부터
-    if (z === cz || S.warp) { S.slow = CFG.vip.slow; toast(`${z+1}층 VIP가 화나서 떠났어요! ${CFG.vip.slow}초 동안 느려져요`, true); }
+    if (z === cz || S.warp) { S.slow = CFG.vip.slow; toast(`${z+1}층 VIP가 화나서 떠났어요! 발이 묶였어요 (${CFG.vip.slow}초)`, true); }
     else toast(`${z+1}층 VIP가 기다리다 떠났어요`, true);
     if (z === cz) sfx.angry();
     return;
   }
   if (V.state === 'wait' && z === cz && S.stack.length && Math.hypot(P.x - V.x, P.y - V.y) < 60 && (V.serveT += dt) > 0.12) {
-    V.serveT = 0; const it = S.stack.pop(); V.got++; V.sum += itemValue(it);
+    V.serveT = 0; const it = S.stack.pop(); V.got++;
+    const gold = it % MINE >= GOLD;                  // 황금을 건네면 그 물건 값이 또 × 5 (원래도 최고층 값 × 10)
+    V.sum += itemValue(it)*(gold ? CFG.vip.goldMul : 1);
     fly(stackPos(P, S.stack.length), () => [V.x, V.y, 30], it, 0.2, () => {}); sfx.hand();
+    if (gold) { V.gold = (V.gold || 0) + 1; floatText(V.x, V.y, `황금! ×${CFG.vip.goldMul}`, '#b58a12'); sfx.gold(); buzz([30, 30, 60]); }
     if (V.got >= V.want) {
       const reward = Math.round(V.sum*CFG.vip.mul);
       S.money += reward; S.stats.vip = (S.stats.vip || 0) + 1;
       V.state = 'leave'; V.happy = true;
-      floatText(V.x, V.y, `VIP +₩${fmt(reward)}`, '#b58a12'); toast(`VIP 만족! 보상 +₩${fmt(reward)}`); sfx.mission(); save();
+      floatText(V.x, V.y, `VIP +₩${fmt(reward)}`, '#b58a12');
+      if (V.gold) { toast(`VIP 대만족!! 황금 ${V.gold}개 보너스 · +₩${fmt(reward)}`); toastT = 4; [0, 0.25, 0.5].forEach(d => setTimeout(() => sfx.gold(), d*1000)); }
+      else toast(`VIP 만족! 보상 +₩${fmt(reward)}`);
+      sfx.mission(); save();
     }
   }
 }
@@ -695,7 +702,7 @@ function drawVip(V, z){
   ctx.moveTo(sx - 8*scale, cy); ctx.lineTo(sx - 8*scale, cy - 8*scale); ctx.lineTo(sx - 4*scale, cy - 4*scale); ctx.lineTo(sx, cy - 10*scale);
   ctx.lineTo(sx + 4*scale, cy - 4*scale); ctx.lineTo(sx + 8*scale, cy - 8*scale); ctx.lineTo(sx + 8*scale, cy); ctx.closePath(); ctx.fill();
   if (V.state === 'leave') { if (V.angry) text('!!', V.x + 12, V.y, 62, 18, C.warn); return; }
-  text(`VIP ${V.got}/${V.want}`, V.x, V.y, 84, 15, '#8a6a0e');
+  text(`VIP ${V.got}/${V.want}${V.gold ? ` · 황금${V.gold}` : ''}`, V.x, V.y, 84, 15, '#8a6a0e');
   const r = Math.max(0, V.t/CFG.vip.time), [px, py] = toS(V.x - 20, V.y, 74);
   ctx.fillStyle = 'rgba(44,43,53,.2)'; ctx.fillRect(px, py, 40*scale, 5*scale);
   ctx.fillStyle = r > 0.5 ? C.ok : r > 0.25 ? C.mid : C.warn; ctx.fillRect(px, py, 40*scale*r, 5*scale);
@@ -781,7 +788,9 @@ function update(dt){
   if (joy) { const dx = joy.x-joy.ox, dy = joy.y-joy.oy, d = Math.hypot(dx, dy); if (d > 6) { const m = Math.min(1, d/50); ix = dx/d*m; iy = dy/d*m; } }
   else { const d = Math.hypot(ix, iy); if (d > 1) { ix /= d; iy /= d; } }
   if (S.slow > 0 && (S.slow -= dt) <= 0) { S.slow = 0; floatText(P.x, P.y, '속도 회복!', C.pad); }
-  const spd = spdOf(S.slow > 0 ? 0 : S.spdLv); steer(P, ix*spd, iy*spd, dt);
+  // VIP 놓친 벌칙: 처음엔 지금 속도의 20%로 거의 멈췄다가 시간이 지나며 원래 속도로 회복
+  const slowMul = S.slow > 0 ? CFG.vip.slowMin + (1 - CFG.vip.slowMin)*(1 - Math.min(1, S.slow/CFG.vip.slow)) : 1;
+  const spd = spdOf(S.spdLv)*slowMul; steer(P, ix*spd, iy*spd, dt);
   if (S.slow > 0 && Math.hypot(P.svx, P.svy) > 20 && (P.mudT = (P.mudT || 0) + dt) > 0.16) {   // 느려진 동안 진흙 발자국
     P.mudT = 0; P.mudSide = !P.mudSide; muds.push({ x:P.x + (P.mudSide ? -5 : 5), y:P.y + 2, t:0 });
   }

@@ -174,7 +174,8 @@ const ZH = CFG.zoneH, W = CFG.worldW;
 // ---- 층 안 배치 (층 로컬 좌표, y는 아래로) ----
 const SP = [{x:170,y:720},{x:380,y:720},{x:590,y:720}];
 const SP_ZONE = {w:110,h:86};
-const SAFE = {x:500, y:370, w:96, h:84}, AWAY_PAD = {x:645, y:370};   // 야간 금고(자리 비운 동안 수익)와 그 업그레이드 칸
+// 판매대 줄과 업그레이드 줄 사이 가운데 줄: 자동 수금 · 야간 금고 칸 · 금고 (오른쪽 끝에 두면 폰 화면 밖이라 안 보였음)
+const AUTO_PAD = {x:250, y:375}, AWAY_PAD = {x:380, y:375}, SAFE = {x:515, y:375, w:96, h:80};
 const DESK = {x:300,y:180}, SELL = {x:300,y:258,w:140,h:76}, CASH = {x:490,y:240,w:104,h:92};
 const LINE = {x:290, y:128, gap:42};               // 손님 줄: 판매대 건너편, 왼쪽으로 늘어섬
 const gy = (z, ly) => ly - z*ZH;                   // 층 z는 위로 쌓임
@@ -315,9 +316,9 @@ function rebuildPads(){
       cost:() => Math.round(CFG.worker.cost*Math.pow(CFG.worker.mul, Z.wrkLv)*zscale(z)), vis:() => Z.wrkLv < CFG.workerMax, apply:() => { Z.wrkLv++; syncWorkers(); } });
     PADS.push({ id:`${z}:sell`, ...at(640, 480, 96, 84), label:'판매속도', sub:() => `Lv${Z.sellLv+1}`,
       cost:() => Math.round(CFG.sell.cost*Math.pow(CFG.sell.mul, Z.sellLv)*zscale(z)), vis:() => Z.sellLv < CFG.sellMax, apply:() => { Z.sellLv++; } });
-    PADS.push({ id:`${z}:auto`, ...at(645, 250, 100, 84), label:'자동 수금', sub:() => '다른 층에 있을 때',
+    PADS.push({ id:`${z}:auto`, ...at(AUTO_PAD.x, AUTO_PAD.y, 100, 80), label:'자동 수금', sub:() => '다른 층에 있을 때',
       cost:() => CFG.autoCost*zscale(z), vis:() => !Z.auto, apply:() => { Z.auto = true; } });
-    PADS.push({ id:`${z}:away`, ...at(AWAY_PAD.x, AWAY_PAD.y, 100, 84), label:'야간 금고',
+    PADS.push({ id:`${z}:away`, ...at(AWAY_PAD.x, AWAY_PAD.y, 100, 80), label:'야간 금고',
       sub:() => Z.awayLv ? `${awayHours(Z)}→${CFG.away.hours[Z.awayLv]}시간` : `${CFG.away.hours[0]}시간`,
       cost:() => Math.round(CFG.away.cost*Math.pow(CFG.away.mul, Z.awayLv || 0)*zscale(z)), vis:() => (Z.awayLv || 0) < CFG.away.hours.length,
       apply:() => { Z.awayLv = (Z.awayLv || 0) + 1;

@@ -129,7 +129,7 @@ const CFG = {
   broken: { fixTime: 2 },                        // 고장 난 생산기 앞에 몇 초 서 있으면 수리
   vip: { time: 40, want: [3, 6], mul: 5 },      // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5)
   autoCost: 1500,                                // 층 자동 수금 칸 비용 (× 8^층)
-  cashMax: 40,                                   // 돈더미 최대(지폐 장수). 꽉 차면 챙길 때까지 판매가 멈춤
+  cashMax: 40,                                   // 돈더미 최대 장수(손님 결제 1번 = 1장, 금액과 무관). 꽉 차면 챙길 때까지 판매가 멈춤
   drawStackMax: 40                               // 등에 그려지는 최대 개수 (넘으면 숫자로 표시)
 };
 
@@ -194,7 +194,16 @@ function fmt(n){
 }
 
 // ---- 상태 ----
-const newZone = () => ({ sp:[{on:true,items:4,t:0},{on:false,items:0,t:0},{on:false,items:0,t:0}], wrkLv:0, sellLv:0, cash:0, queue:[], auto:false });
+const newZone = () => ({ sp:[{on:true,items:4,t:0},{on:false,items:0,t:0},{on:false,items:0,t:0}], wrkLv:0, sellLv:0, cash:0, bills:0, queue:[], auto:false });
+// 돈더미가 꽉 찼는지는 금액이 아니라 장수(결제 횟수)로 판단 — 아래층에서 황금 한 번 팔렸다고 바로 MAX가 되지 않게.
+// 예전 저장(bills 없음)은 금액 ÷ 그 층 물건 값으로 보정. 돈이 빠지면 장수도 같은 비율로 줄임
+const bills = (Z, z) => Z.bills ?? (Z.bills = Z.cash > 0 ? Math.min(CFG.cashMax, Math.ceil(Z.cash/valueOf(z))) : 0);
+const pileFull = (Z, z) => bills(Z, z) >= CFG.cashMax;
+function takeCash(Z, z, amt){
+  const before = Z.cash; bills(Z, z);
+  Z.cash -= amt;
+  Z.bills = Z.cash <= 0 ? 0 : Math.ceil(Z.bills * Z.cash / before);
+}
 const DEF = () => ({ v:2, money:0, capLv:0, spdLv:0, walLv:0, warp:false, zones:[newZone()], paid:{}, stack:[], px:380, py:600,
   tut:{ sold:false, collected:false, upgraded:false, zone:false, angry:false, cashFull:false, wallet:false },
   stats:{ sell:0, collect:0, tip:0, upgrade:0, golden:0 }, mission:null });
@@ -488,7 +497,7 @@ function updCustomers(Z, z, cz, dt){
 
   // 맨 앞 손님에게 하나씩 건네기
   const front = R.custs.find(c => c.state === 'wait' && c.slot === 0 && c.at);
-  const cashFull = Z.cash >= CFG.cashMax*valueOf(z);
+  const cashFull = pileFull(Z, z);
   if (cashFull && z === cz && !S.tut.cashFull) { S.tut.cashFull = true; toast('돈더미가 가득 찼어요! 챙겨야 다시 팔려요', true); }
   if (front && Z.queue.length && !cashFull) {
     R.serveT += dt;
@@ -500,9 +509,9 @@ function updCustomers(Z, z, cz, dt){
         const tip = front.pat/CFG.cust.patience > 0.6;
         if (tip) S.stats.tip++;
         const pay = tip ? Math.round(front.paySum*(1 + CFG.cust.tip)) : front.paySum;
-        Z.cash += pay; S.tut.sold = true; front.state = 'leave'; front.happy = true;
+        Z.cash += pay; Z.bills = bills(Z, z) + 1; S.tut.sold = true; front.state = 'leave'; front.happy = true;
         if (z === cz) {
-          fly([front.x, front.y, 30], () => cashPos(z, Math.ceil(Z.cash/valueOf(z))), 'bill', 0.3, () => {});
+          fly([front.x, front.y, 30], () => cashPos(z, bills(Z, z)), 'bill', 0.3, () => {});
           floatText(front.x, front.y, tip ? `팁! +${fmt(pay)}` : `+${fmt(pay)}`, tip ? '#b58a12' : C.billFront); sfx.paid(tip);
         }
       }
@@ -529,7 +538,7 @@ function updThief(cz, dt){
   } else if (T.state === 'grab') {
     if ((T.t += dt) > 0.9) {
       T.loot = Math.min(Z.cash, Math.max(valueOf(T.z), Math.ceil(Z.cash*CFG.thief.take)));
-      Z.cash -= T.loot; T.state = 'run';
+      T.lootBills = bills(Z, T.z); takeCash(Z, T.z, T.loot); T.lootBills -= Z.bills; T.state = 'run';
       if (T.z === cz) { floatText(T.x, T.y, `-₩${fmt(T.loot)}`, C.warn); sfx.stolen(); }
     }
   } else if (moveTo(T, CASH.x + 60, gy(T.z, -60), CFG.thief.speed, dt, true)) {
@@ -538,7 +547,7 @@ function updThief(cz, dt){
   }
   // 잡기
   if (T.z === cz && Math.hypot(P.x - T.x, P.y - T.y) < 28) {
-    if (T.loot > 0) { Z.cash += T.loot; toast(`도둑을 잡았어요! ₩${fmt(T.loot)} 되찾음`); }
+    if (T.loot > 0) { Z.cash += T.loot; Z.bills = bills(Z, T.z) + (T.lootBills || 1); toast(`도둑을 잡았어요! ₩${fmt(T.loot)} 되찾음`); }
     else toast('도둑을 쫓아냈어요!');
     floatText(T.x, T.y, '잡았다!', C.pad); sfx.caught(); S.stats.thief = (S.stats.thief || 0) + 1;
     thief = null; thiefCd = CFG.thief.cooldown;
@@ -567,7 +576,7 @@ function zoneAlert(z){
   const V = rt(z).vip;
   if (V && V.state !== 'leave') return 5;
   if (Z.sp.some(s => s.broken)) return 4;
-  if (Z.cash >= CFG.cashMax*valueOf(z)) return 3;
+  if (pileFull(Z, z)) return 3;
   if (Z.sp.some(s => s.on && (s.golden || 0) > 0)) return 6;   // 황금 물건 대기(주인공만 나를 수 있음)
   return custAlert(z);
 }
@@ -692,8 +701,8 @@ function update(dt){
     });
     updCustomers(Z, z, cz, dt);
     rt(z).cashIdle = Z.cash > 0 ? (rt(z).cashIdle || 0) + dt : 0;
-    if (z !== cz && Z.auto && Z.cash > 0) { const take = Math.min(Z.cash, room()); if (take > 0) { S.money += take; offAcc[z] = (offAcc[z] || 0) + take; Z.cash -= take; } }
-    if (z !== cz && Z.cash >= CFG.cashMax*valueOf(z) && every('full' + z, 30)) toast(`${z+1}층 돈더미가 가득 찼어요 · 가서 챙기거나 자동 수금을 사요`, true);
+    if (z !== cz && Z.auto && Z.cash > 0) { const take = Math.min(Z.cash, room()); if (take > 0) { S.money += take; offAcc[z] = (offAcc[z] || 0) + take; takeCash(Z, z, take); } }
+    if (z !== cz && pileFull(Z, z) && every('full' + z, 30)) toast(`${z+1}층 돈더미가 가득 찼어요 · 가서 챙기거나 자동 수금을 사요`, true);
   });
   if ((offT += dt) > 2.5) {
     offT = 0;
@@ -745,8 +754,8 @@ function update(dt){
   }
   if (inRect(P.x, P.y, zr(cz, CASH)) && Z.cash > 0 && P.cashT > 0.05 && room() > 0) {
     P.cashT = 0; rt(cz).cashIdle = 0; const v = valueOf(cz); const chunk = Math.min(Z.cash, Math.max(v, Math.ceil(Z.cash/6)), room());
-    Z.cash -= chunk; S.money += chunk; S.tut.collected = true; S.stats.collect += chunk;
-    fly(cashPos(cz, Math.ceil(Z.cash/v)), () => [P.x, P.y, 40], 'bill', 0.25, () => {});
+    takeCash(Z, cz, chunk); S.money += chunk; S.tut.collected = true; S.stats.collect += chunk;
+    fly(cashPos(cz, bills(Z, cz)), () => [P.x, P.y, 40], 'bill', 0.25, () => {});
     floatText(P.x, P.y, `+${fmt(chunk)}`, C.billFront); sfx.cash();
   }
   // 계단 (계단 밖으로 한 번 나갔다가 다시 밟아야 이동 — 층을 연 직후 서 있던 자리가 계단이 돼도 바로 올라가지 않게)
@@ -978,9 +987,9 @@ function render(){
       if (q.length > 16) text(`+${q.length-16}`, DESK.x+66, gy(z, DESK.y-10), 30, 13, C.ink);
     }});
     list.push({ y:gy(z, CASH.y), draw:() => {
-      const n = Math.min(Math.ceil(Z.cash/valueOf(z)), 18);
+      const n = Math.min(bills(Z, z), 18);
       for (let i = 0; i < n; i++) { const [x, y, zz] = cashPos(z, i); bill(x, y, zz); }
-      if (Z.cash >= CFG.cashMax*valueOf(z)) { const pulse = 1 + Math.sin(performance.now()/120)*0.08; text('MAX', CASH.x, gy(z, CASH.y-38), 22, 17*pulse, C.warn); }
+      if (pileFull(Z, z)) { const pulse = 1 + Math.sin(performance.now()/120)*0.08; text('MAX', CASH.x, gy(z, CASH.y-38), 22, 17*pulse, C.warn); }
       else if (Z.cash > 0) text(`₩${fmt(Z.cash)}`, CASH.x, gy(z, CASH.y-38), 20, 15, C.billFront);
       if (Z.auto) text('자동 수금', CASH.x, gy(z, CASH.y+58), 0, 13, C.billFront);
     }});

@@ -158,6 +158,9 @@ BUN.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="
 `);
 // 층마다 가게 이름(없으면 표시 안 함)
 const SHOP = ['층층분식'];
+// 테마 있는 층만 물건을 바꿈(그 층 번호 그대로일 때만 — 같은 종류가 반복되는 위층은 원래 모양). 없는 층은 KINDS 기본 모양
+const THEME_ITEM = [{ name:'김밥', shape:'kimbap', top:'#fff7e6', front:'#f6deb0' }];
+const kindOf = kind => THEME_ITEM[kind] || KINDS[kind % KINDS.length];
 // 판매대 = 레트로 계산대(짙은 나무 + 황동 금전등록기, 코드로 그린 SVG). 숫자판·손잡이·서랍은 drawDesk()가 움직이며 그림. ART_SRC.desk가 있으면 그걸 우선
 const DSK = new Image();
 DSK.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 170" width="480" height="340"><defs><linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9dfe7"/><stop offset="1" stop-color="#93c4d0"/></linearGradient><linearGradient id="top" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef9fb"/><stop offset="1" stop-color="#cfe9ef"/></linearGradient><linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9b884"/><stop offset="1" stop-color="#c98f5a"/></linearGradient><linearGradient id="woodt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe6c6"/><stop offset="1" stop-color="#efcc98"/></linearGradient><linearGradient id="brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#d9a52e"/></linearGradient><linearGradient id="mint" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9f0dc"/><stop offset="1" stop-color="#9fd9bd"/></linearGradient><linearGradient id="scr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4a66"/><stop offset="1" stop-color="#2a3448"/></linearGradient></defs><ellipse cx="120" cy="162" rx="104" ry="7" fill="#2c2b35" opacity=".2"/><g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><path d="M34 84 Q34 78 40 78 L200 78 Q206 78 206 84 L212 116 L28 116 Z" fill="url(#woodt)"/><rect x="28" y="114" width="184" height="46" rx="7" fill="#8c4f3a"/><rect x="38" y="122" width="76" height="30" rx="4" fill="#a8604a" stroke-width="2.5"/><rect x="126" y="122" width="76" height="30" rx="4" fill="#a8604a" stroke-width="2.5"/><path d="M146 112 L210 112 L206 96 L150 96 Z" fill="url(#brass)"/><rect x="152" y="66" width="52" height="32" rx="6" fill="url(#brass)"/></g><g fill="#38445a"><circle cx="160" cy="76" r="2.2"/><circle cx="168" cy="76" r="2.2"/><circle cx="176" cy="76" r="2.2"/><circle cx="184" cy="76" r="2.2"/><circle cx="192" cy="76" r="2.2"/><circle cx="160" cy="84" r="2.2"/><circle cx="168" cy="84" r="2.2"/><circle cx="176" cy="84" r="2.2"/><circle cx="184" cy="84" r="2.2"/><circle cx="192" cy="84" r="2.2"/></g><path d="M162 104 H194" stroke="#a87b1a" stroke-width="2.5" stroke-linecap="round"/><g fill="#fff" opacity=".6"><rect x="40" y="81" width="100" height="3" rx="1.5"/><rect x="156" y="70" width="4" height="22" rx="2"/></g><g fill="#fff" opacity=".15"><rect x="42" y="125" width="68" height="4" rx="2"/><rect x="130" y="125" width="68" height="4" rx="2"/></g></svg>
@@ -174,7 +177,7 @@ const C = { ground:'#d9ccb2', tile:'#cfc1a5', ink:'#2c2b35', hud:'#fffaf0', warn
   cashFill:'rgba(76,154,102,.18)', machTop:'#8a96ad', machFront:'#5f6b84', deskTop:'#b98a5e', deskFront:'#8f6440',
   player:'#2f5bd3', playerDark:'#2245a3', worker:'#6b6f7a', workerDark:'#4c4f58', vest:'#f08a24', reflect:'#f6f0c8', helmet:'#f2c230', helmetDark:'#c99a12', skin:'#f3d2b3', angry:'#ec8a74', lock:'rgba(44,43,53,.28)', wall:'#b3a588', stair:'#c4b596', stairLine:'#8a7d64' };
 const KINDS = [
-  { name:'김밥', shape:'kimbap', top:'#fff7e6', front:'#f6deb0' },
+  { name:'상자', shape:'box',    top:'#f2a35e', front:'#d9772e' },
   { name:'통',   shape:'barrel', top:'#8fc0e8', front:'#4f8fc4' },
   { name:'궤짝', shape:'box',    top:'#c9a3e8', front:'#9567c4' },
   { name:'공',   shape:'ball',   top:'#f07f86', front:'#cc4f58' },
@@ -1118,7 +1121,7 @@ function item(x, y, z, kind){
     ctx.moveTo(sx, sy - 4*scale); ctx.lineTo(sx + 1.5*scale, sy); ctx.lineTo(sx, sy + 4*scale); ctx.lineTo(sx - 1.5*scale, sy); ctx.closePath(); ctx.fill();
     return;
   }
-  const K = KINDS[kind % KINDS.length], tier = Math.floor(kind / KINDS.length), edge = tier > 0 ? C.gold : null;
+  const K = kindOf(kind), tier = Math.floor(kind / KINDS.length), edge = tier > 0 ? C.gold : null;
   const [sx, sy] = toS(x, y, z);
   if (art('item' + (kind % KINDS.length), sx, sy, 18*scale, 18*scale)) return;
   if (K.shape === 'box') return cube(x, y, z, 14, 9, K.top, K.front, edge);
@@ -1466,7 +1469,7 @@ function render(){
   S.zones.forEach((Z, z) => {
     if (z !== f) return;
     // 층 이름
-    text(`${z+1}층${SHOP[z] ? ' ' + SHOP[z] : ''} · ${KINDS[z % KINDS.length].name} ₩${fmt(valueOf(z))}`, 30, gy(z, 920), 0, 16, 'rgba(44,43,53,.55)', 'left');
+    text(`${z+1}층${SHOP[z] ? ' ' + SHOP[z] : ''} · ${kindOf(z).name} ₩${fmt(valueOf(z))}`, 30, gy(z, 920), 0, 16, 'rgba(44,43,53,.55)', 'left');
 
     // 바닥 칸
     floorRect(zr(z, SELL), C.sellFill, C.sell, false, 0); text('판매', SELL.x, gy(z, SELL.y+22), 0, 15, C.sell);

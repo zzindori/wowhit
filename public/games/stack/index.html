@@ -46,8 +46,10 @@ body{margin:0;background:var(--ground);color:var(--ink);overflow:hidden;font-fam
 #zones .chip.gold::after{content:' 황금';font-size:12px}
 #zones .chip.ruin{background:var(--warn);color:var(--hud);animation:blink .6s steps(2) infinite}
 #zones .chip.ruin::after{content:' 고장!';font-size:12px}
+#zones .chip.deliv{background:#3fa98a;color:var(--hud);animation:blink .6s steps(2) infinite}
+#zones .chip.deliv::after{content:' 배달';font-size:12px}
 @keyframes blink{50%{opacity:.55}}
-@media (prefers-reduced-motion:reduce){#zones .chip.danger,#zones .chip.vip,#zones .chip.ruin,.money.bump{animation:none}}
+@media (prefers-reduced-motion:reduce){#zones .chip.danger,#zones .chip.vip,#zones .chip.ruin,#zones .chip.deliv,.money.bump{animation:none}}
 button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset:2px}
 #menuBtn{pointer-events:auto;font:inherit;font-size:14px;border:0;padding:8px 14px;color:var(--ink);cursor:pointer}
 #panel{position:fixed;top:calc(env(safe-area-inset-top,0px) + 56px);right:max(16px,env(safe-area-inset-right,0px));
@@ -83,6 +85,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 .elev button.vip{background:#b58a12}
 .elev button.gold{background:#c9a227;color:var(--ink)}
 .elev button.ruin{background:var(--warn);box-shadow:inset 0 0 0 3px #ffb3a6}
+.elev button.deliv{background:#3fa98a}
 </style>
 </head>
 <body>
@@ -135,6 +138,7 @@ const CFG = {
   warpCost: 1500,                                // 엘리베이터(층 버튼으로 이동) 비용
   events: { first: 60, every: 50 },              // 층 이벤트(고장·VIP): 처음 몇 초 뒤부터, 평균 몇 초마다
   broken: { fixTime: 2, ruin: 120, warn: 30, rebuild: 100 }, // 수리: 앞에 몇 초 서 있기 / 고장 난 채로 몇 초 지나면 부서짐(몇 초 전부터 경고) / 다시 제작 비용(× 8^층)
+  deliv: { time: 50, perFloor: 10, want: [2, 4], mul: 3, tip: 0.3 }, // 배달 주문: 기본 제한 시간 + 층 차이당 추가 초, 개수, 보상 배수(물건 값 × 3), 절반 넘게 남기고 끝내면 배달팁 30%
   vip: { time: 40, want: [3, 6], mul: 5, goldMul: 5, slow: 10, slowSpd: 0.6 }, // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5), 황금을 건네면 그 물건만 또 × 5,
                                                  //      놓치면 10초 동안 일꾼 속도의 60%로 (업그레이드와 상관없이 일꾼보다 느림)
   autoCost: 1500,                                // 층 자동 수금 칸 비용 (× 8^층)
@@ -253,6 +257,10 @@ const itemValue = k => {
   const b = k % MINE, v = b >= GOLD ? valueOf(S.zones.length - 1)*CFG.gold.mul : valueOf(b);
   return v * (k >= MINE ? CFG.direct.mul : 1);
 };
+// 물건이 어느 층 것인지 (황금 = 1000 + 층, 직접 납품 = 10000 + …)
+const floorOfItem = k => { const b = k % MINE; return b >= GOLD ? b - GOLD : b; };
+// 등짐에서 그 층 물건 중 맨 위 것의 자리 (없으면 -1)
+const topOf = (stack, f) => { for (let i = stack.length - 1; i >= 0; i--) if (floorOfItem(stack[i]) === f) return i; return -1; };
 const sellIv = l => CFG.sell.base * Math.pow(CFG.sell.decay, l);
 
 const SUF = ['', 'K', 'M', 'B', 'T'];
@@ -609,6 +617,7 @@ function collide(e, z){
     const x0 = SP[k].x - MACH.hw - BODY_R, x1 = SP[k].x + MACH.hw + BODY_R;
     pushOut(e, x0, x1, y0, y1);
   });
+  if (S.warp) pushOut(e, ELEV.x - 35 - BODY_R, ELEV.x + 35 + BODY_R, gy(z, ELEV.y - 40) - BODY_R, gy(z, ELEV.y) + BODY_R);   // 엘리베이터 문(벽에 붙은 상자)
   const dy = gy(z, DESK.y);                                   // 판매대(그림보다 약간 작게): 바닥 DESK.y-8 ~ DESK.y+12
   pushOut(e, DESK.x - DESK_BOX.hw - BODY_R, DESK.x + DESK_BOX.hw + BODY_R, dy - DESK_BOX.top - BODY_R, dy + DESK_BOX.bot + BODY_R);
 }
@@ -733,22 +742,25 @@ function updCustomers(Z, z, cz, dt){
 
 // ---- 도둑 ----
 // 지금 있는 층의 돈더미를 오래 방치하면 위·왼쪽·오른쪽·아래 중 아무 데서나 나타나 절반을 들고 (또 아무 쪽으로) 도망감. 부딪히면 잡아서 돌려받음
-// 아래쪽은 프린터 줄을 뚫고 지나가지 않게 오른쪽 바깥(x W+40)에서 올라옴
-const THIEF_SIDES = [['위쪽', z => [CASH.x + 60, gy(z, -50)]], ['왼쪽', z => [-50, gy(z, 330)]], ['오른쪽', z => [W + 50, gy(z, 330)]], ['아래쪽', z => [W + 40, gy(z, ZH + 40)]]];
+// 길은 바깥 → (경유점) → 돈더미, 도망은 그 반대. 계단·엘리베이터(오른쪽 위 x 410~)와 프린터 줄을 가로지르지 않게:
+// 위쪽은 판매대와 엘리베이터 사이 통로(x 395)로 내려오고, 아래쪽은 오른쪽 바깥(x W+40)으로 올라옴
+const THIEF_SIDES = [['위쪽', [[395, -50], [395, 225]]], ['왼쪽', [[-50, 330]]], ['오른쪽', [[W + 50, 330]]], ['아래쪽', [[W + 40, ZH + 40]]]];
+const thiefPath = (side, z) => side[1].map(([x, y]) => [x, gy(z, y)]);
 function updThief(cz, dt){
   if (thiefCd > 0) thiefCd -= dt;
   if (!thief) {
     const Z = S.zones[cz], R = rt(cz);
     if (thiefCd <= 0 && Z.cash > 0 && (R.cashIdle || 0) > CFG.thief.after && Math.random() < CFG.thief.chance*dt) {
-      const [name, from] = pick(THIEF_SIDES), [x, y] = from(cz);
-      thief = { z:cz, x, y, out:pick(THIEF_SIDES)[1](cz), state:'come', loot:0, t:0, fx:-1, fy:0, svx:0, svy:0 };
-      toast(`도둑이 ${name}에서 나타났어요! 돈더미를 지키세요`, true); sfx.siren();
+      const side = pick(THIEF_SIDES), path = thiefPath(side, cz);
+      thief = { z:cz, x:path[0][0], y:path[0][1], path, wp:1, out:thiefPath(pick(THIEF_SIDES), cz).reverse(), owp:0, state:'come', loot:0, t:0, fx:-1, fy:0, svx:0, svy:0 };
+      toast(`도둑이 ${side[0]}에서 나타났어요! 돈더미를 지키세요`, true); sfx.siren();
     }
     return;
   }
   const T = thief, Z = S.zones[T.z];
   if (T.state === 'come') {
-    if (Z.cash <= 0) T.state = 'run';
+    if (Z.cash <= 0) { T.state = 'run'; T.out = [...T.path.slice(0, T.wp)].reverse(); T.owp = 0; }   // 돈이 없어지면 온 길로 돌아감
+    else if (T.wp < T.path.length) { if (moveTo(T, T.path[T.wp][0], T.path[T.wp][1], CFG.thief.speed, dt, true)) T.wp++; }
     else if (moveTo(T, CASH.x + 34, gy(T.z, CASH.y), CFG.thief.speed, dt, true)) { T.state = 'grab'; T.t = 0; }
   } else if (T.state === 'grab') {
     if ((T.t += dt) > 0.9) {
@@ -756,7 +768,8 @@ function updThief(cz, dt){
       T.lootBills = bills(Z, T.z); takeCash(Z, T.z, T.loot); T.lootBills -= Z.bills; T.state = 'run';
       if (T.z === cz) { floatText(T.x, T.y, `-₩${fmt(T.loot)}`, C.warn); sfx.stolen(); shake(4); }
     }
-  } else if (moveTo(T, T.out[0], T.out[1], CFG.thief.speed, dt, true)) {
+  } else if (T.owp < T.out.length - 1) { if (moveTo(T, T.out[T.owp][0], T.out[T.owp][1], CFG.thief.speed, dt, true)) T.owp++; }
+  else if (moveTo(T, T.out[T.owp][0], T.out[T.owp][1], CFG.thief.speed, dt, true)) {
     if (T.loot > 0) toast(`도둑맞았어요 -₩${fmt(T.loot)}`, true);
     thief = null; thiefCd = CFG.thief.cooldown; return;
   }
@@ -786,11 +799,12 @@ function drawThief(){
 
 // 층 경고 — 남은 시간이 짧고 놓치면 손해 큰 순서:
 // 5=VIP(40초) > 6=황금(60초에 사라짐) > 7=부서지기 직전 고장 > 2=손님 화나기 직전 > 4=고장·부서짐 > 3=돈더미 MAX(판매만 멈춤) > 1=손님 대기
-const ALERT_CLS = ['', 'warn', 'danger', 'full', 'broken', 'vip', 'gold', 'ruin'];
+const ALERT_CLS = ['', 'warn', 'danger', 'full', 'broken', 'vip', 'gold', 'ruin', 'deliv'];
 function zoneAlert(z){
   const Z = S.zones[z]; if (!Z) return 0;
   const V = rt(z).vip;
   if (V && V.state !== 'leave') return 5;
+  const D = rt(z).deliv; if (D && D.state !== 'leave') return 8;   // 배달 주문 받은 층
   if (Z.sp.some(s => s.on && (s.golden || 0) > 0)) return 6;   // 황금 물건 대기(주인공만 나를 수 있음)
   if (Z.sp.some(s => s.broken && CFG.broken.ruin - (s.brokenT || 0) <= CFG.broken.warn)) return 7;
   const c = custAlert(z); if (c === 2) return 2;
@@ -847,7 +861,9 @@ function brokenTick(s, z, cz, dt){
 function updEvents(dt){
   if ((evT -= dt) > 0) return;
   evT = CFG.events.every * (0.7 + Math.random()*0.6);
-  if (Math.random() < 0.5) {
+  const r = Math.random();
+  if (r >= 0.7 && S.zones.length >= 2) return startDeliv();
+  if (r < 0.4) {
     // 이미 고장 난 생산기가 있어도 다른 생산기가 또 고장 날 수 있음. 멀쩡한 생산기가 있는 층 중에서 고름
     const ok = s => s.on && !s.broken && !s.ruined;
     const zs = S.zones.map((_, z) => z).filter(z => S.zones[z].sp.some(ok));
@@ -866,6 +882,60 @@ function updEvents(dt){
       state:'come', fx:1, fy:0, svx:0, svy:0, serveT:0 };
     toast(`${z+1}층에 VIP 손님! 직접 물건을 건네야 해요 (${CFG.vip.time}초)`); sfx.vip();
   }
+}
+// ---- 배달 주문: 어느 층 손님이 다른 층 물건을 시킴 (예: 6층 노래방에서 3층 치킨). 주인공만 가져다줄 수 있고 보상은 물건 값 × 3 (+빨리 오면 배달팁) ----
+const DELIV_SPOT = {x:180, y:390};
+const shopLabel = z => `${z+1}층${THEMES[z] ? ' ' + THEMES[z].shop : ''}`;
+const itemName = z => (THEMES[z]?.item || KINDS[z % KINDS.length]).name;
+function startDeliv(){
+  const zs = S.zones.map((_, z) => z).filter(z => !rt(z).deliv);
+  if (!zs.length) return;
+  const t = pick(zs), src = pick(S.zones.map((_, z) => z).filter(z => z !== t));
+  const [lo, hi] = CFG.deliv.want, want = lo + Math.floor(Math.random()*(hi - lo + 1)), time = CFG.deliv.time + CFG.deliv.perFloor*Math.abs(t - src);
+  const gear = THEMES[t] ? pick(THEMES[t].guests) : null;
+  rt(t).deliv = { x:-30, y:gy(t, DELIV_SPOT.y), src, want, got:0, sum:0, t:time, time, state:'come', fx:1, fy:0, svx:0, svy:0, serveT:0,
+    gear, col:gear ? GUESTS[gear] : pick(CUST_COLS) };
+  toast(`🛵 배달 주문! ${src+1}층 ${itemName(src)} ${want}개 → ${shopLabel(t)} (${time}초)`); toastT = 4.5; sfx.vip();
+}
+function updDeliv(z, cz, dt){
+  const R = rt(z), D = R.deliv; if (!D) return;
+  if (D.sayT > 0) D.sayT -= dt;
+  if (D.state === 'leave') { if (moveTo(D, -50, gy(z, DELIV_SPOT.y), CFG.cust.speed*1.4, dt, true)) R.deliv = null; return; }
+  if (D.state === 'come' && moveTo(D, DELIV_SPOT.x, gy(z, DELIV_SPOT.y), CFG.cust.speed, dt, true)) {
+    D.state = 'wait'; D.fx = 0.5; D.fy = 1; D.say = `${itemName(D.src)} ${D.want}개 배달이요~`; D.sayT = 2.4;
+  }
+  if ((D.t -= dt) <= 0) { D.state = 'leave'; D.angry = true; D.say = '배달이 안 오네…'; D.sayT = 2.4; toast(`${shopLabel(z)} 배달 주문이 취소됐어요`, true); return; }
+  if (D.state !== 'wait' || z !== cz || Math.hypot(P.x - D.x, P.y - D.y) >= 60) return;
+  const idx = topOf(S.stack, D.src);
+  if (idx < 0) { if (S.stack.length && every('delivWrong', 2.5)) floatText(D.x, D.y, `${itemName(D.src)}만 받아요`, C.warn); return; }
+  if ((D.serveT += dt) <= 0.12) return;
+  D.serveT = 0; const it = S.stack.splice(idx, 1)[0]; D.got++; D.sum += itemValue(it);
+  fly(stackPos(P, idx), () => [D.x, D.y, 30], it, 0.2, () => {}); sfx.hand();
+  if (D.got >= D.want) {
+    const fast = D.t > D.time/2, reward = Math.round(D.sum*CFG.deliv.mul*(fast ? 1 + CFG.deliv.tip : 1));
+    S.money += reward; S.stats.deliv = (S.stats.deliv || 0) + 1;     // 지갑 한도와 상관없이 들어옴(VIP처럼)
+    D.state = 'leave'; D.happy = true; D.say = fast ? '벌써 왔어요? 최고!' : '잘 먹을게요!'; D.sayT = 2.4;
+    floatText(D.x, D.y, `배달${fast ? '팁' : ''} +₩${fmt(reward)}`, '#2f8f6f'); coinsFrom(D.x, D.y, 50, 10); shake(4);
+    burst(D.x, D.y, 50, 20, 'spark', { color:'#7fe0c0', speed:130, up:110, g:60, life:0.8 });
+    showBanner(fast ? '🛵 총알 배달!' : '🛵 배달 완료!');
+    toast(`배달 완료! +₩${fmt(reward)}${fast ? ' (배달팁 포함)' : ''}`); sfx.mission(); save();
+  }
+}
+function drawDeliv(D, z){
+  if (D.state === 'wait') floorRect({ x:DELIV_SPOT.x, y:gy(z, DELIV_SPOT.y), w:96, h:76 }, 'rgba(63,169,138,.16)', '#3fa98a', true, 0);
+  person(D, D.col[0], D.col[1], 'customer', D.angry ? C.angry : C.skin, 0, D.gear);
+  if (D.sayT > 0) { const c = { x:D.x, y:D.y, sayT:D.sayT }; speech(c, D.state === 'leave' ? 80 : 104, D.say); }
+  if (D.state === 'leave') return;
+  // 머리 위: 시킨 물건 + 개수, 남은 시간 막대
+  const [sx, sy] = toS(D.x, D.y, 66), bw = 74*scale, bh = 22*scale;
+  rr(sx - bw/2, sy - bh, bw, bh, bh/2); ctx.fillStyle = '#e9f8f2'; ctx.fill(); ctx.strokeStyle = '#3fa98a'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.font = `${Math.round(11*scale)}px ${FONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#2f8f6f';
+  ctx.fillText('🛵', sx - bw/2 + 5*scale, sy - bh/2);
+  item(D.x - 4, D.y, 69, D.src);
+  ctx.fillStyle = C.ink; ctx.fillText(`${D.got}/${D.want}`, sx + 7*scale, sy - bh/2 + 0.5*scale);
+  const r = Math.max(0, D.t/D.time), [px, py] = toS(D.x - 20, D.y, 60);
+  ctx.fillStyle = 'rgba(44,43,53,.2)'; ctx.fillRect(px, py, 40*scale, 5*scale);
+  ctx.fillStyle = r > 0.5 ? C.ok : r > 0.25 ? C.mid : C.warn; ctx.fillRect(px, py, 40*scale*r, 5*scale);
 }
 // VIP는 일꾼이 상대 못 하고 주인공이 옆에 서서 등에 진 물건을 건네야 함. 보상은 물건 값 × 5, 지갑 한도와 상관없이 들어옴
 function updVip(z, cz, dt){
@@ -1027,11 +1097,16 @@ function update(dt){
   if (full && !P.wasMax) sfx.max();
   P.wasMax = full;
   // 판매대에 내려놓기
+  // 손님은 그 층 물건만 삼 — 다른 층 물건은 등에 남겨 둠(배달 주문으로만 팔 수 있음)
   if (inRect(P.x, P.y, zr(cz, SELL)) && S.stack.length > 0 && P.t > 0.07) {
-    P.t = 0; const it = S.stack.pop(); const q = Z.queue.length;
-    fly(stackPos(P, S.stack.length), () => deskPos(cz, q), it, 0.2, () => { Z.queue.push(it + MINE); });
+    P.t = 0; const idx = topOf(S.stack, cz);
+    if (idx < 0) { if (every('otherFloor', 2.5)) { floatText(P.x, P.y, `${cz+1}층 물건만 팔려요`, C.warn); sfx.max(); } }
+    else {
+    const it = S.stack.splice(idx, 1)[0], q = Z.queue.length;
+    fly(stackPos(P, idx), () => deskPos(cz, q), it, 0.2, () => { Z.queue.push(it + MINE); });
     sfx.drop();
     if (!S.tut.direct) { S.tut.direct = true; toast('직접 내려놓은 물건은 2배 값에 팔려요! (파란 테두리)'); toastT = 3.5; }
+    }
   }
   // 돈 줍기
   P.cashT += dt;
@@ -1059,8 +1134,9 @@ function update(dt){
     }
   }
   // 계단 (계단 밖으로 한 번 나갔다가 다시 밟아야 이동 — 층을 연 직후 서 있던 자리가 계단이 돼도 바로 올라가지 않게)
+  // 다시 쓸 수 있게 되는 건 계단 밖에서 손을 떼거나(멈춤) 계단에서 50 넘게 멀어졌을 때만 — 위로 계속 누르고 있으면 위·아래층을 깜빡이며 오가던 문제
   const onUp = cz < S.zones.length-1 && inRect(P.x, P.y, zr(cz, STAIR_UP)), onDn = cz > 0 && inRect(P.x, P.y, zr(cz, STAIR_DN));
-  if (!onUp && !onDn) P.stairArm = true;
+  if (!onUp && !onDn && ((!ix && !iy) || P.y > gy(cz, STAIR_UP.y + STAIR_UP.h/2 + 50))) P.stairArm = true;
   else if (P.stairArm && onUp) goFloor(cz+1, STAIR_DN.x, STAIR_DN.y + 80);
   else if (P.stairArm && onDn) goFloor(cz-1, STAIR_UP.x, STAIR_UP.y + 80);
   // 엘리베이터 문 앞에 서면 층 선택판 (벗어나면 닫힘, 다시 서야 다시 열림)
@@ -1095,7 +1171,7 @@ function update(dt){
   workers.forEach(w => updWorker(w, dt));
   updThief(cz, dt);
   updEvents(dt);
-  S.zones.forEach((_, z) => updVip(z, cz, dt));
+  S.zones.forEach((_, z) => { updVip(z, cz, dt); updDeliv(z, cz, dt); });
   // 고장 수리: 지금 층 고장 난 생산기 앞에 서 있기
   Z.sp.forEach((s, k) => {
     if (!s.broken) return;
@@ -1831,6 +1907,7 @@ function render(){
     });
     rt(z).custs.forEach(c => list.push({ y:c.y, draw:() => customer(c, z) }));
     const V = rt(z).vip; if (V) list.push({ y:V.y, draw:() => drawVip(V, z) });
+    const D = rt(z).deliv; if (D) list.push({ y:D.y, draw:() => drawDeliv(D, z) });
   });
 
   // 업그레이드 칸 (지금 층만)

@@ -24,13 +24,14 @@ body{margin:0;background:var(--ground);color:var(--ink);overflow:hidden;font-fam
   display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none}
 .left{display:flex;flex-direction:column;gap:8px;min-width:0}
 .chip{background:var(--hud);border-radius:999px;box-shadow:0 3px 0 rgba(44,43,53,.18)}
-.money{padding:6px 16px 6px 8px;display:flex;align-items:center;gap:8px;font-size:22px;font-variant-numeric:tabular-nums;width:fit-content}
+.money{padding:3px 12px 3px 4px;display:flex;align-items:center;gap:6px;font-size:16px;font-variant-numeric:tabular-nums;width:fit-content}
 .money.full{color:var(--warn)}
 .money.bump{animation:bump .2s ease-out}
 @keyframes bump{40%{transform:scale(1.14)}}
-.coin{width:26px;height:26px;border-radius:50%;background:var(--cash);color:var(--hud);display:grid;place-items:center;font-size:15px}
+.coin{width:20px;height:20px;border-radius:50%;background:var(--cash);color:var(--hud);display:grid;place-items:center;font-size:12px}
 #slowChip{font-size:14px;padding:6px 12px;width:fit-content;background:var(--warn);color:var(--hud)}
-#zones{display:flex;flex-wrap:nowrap;gap:6px;max-width:calc(100vw - 32px);overflow:hidden;pointer-events:none}
+#zones{position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + var(--stackB,104px) + 52px);
+  display:flex;flex-direction:column;align-items:flex-start;gap:5px;pointer-events:none}   /* 층 칩: 왼쪽 아래 세로, 최대 5개 */
 #zones .chip{font-size:12px;min-width:30px;padding:4px 8px;color:var(--ink);flex:none;text-align:center;box-sizing:border-box}
 #zones .chip.on{background:var(--pad);color:var(--hud)}
 #zones .chip.warn{box-shadow:0 3px 0 rgba(44,43,53,.18),inset 0 0 0 3px #e8b923}
@@ -419,7 +420,7 @@ function syncWorkers(){
 // ---- HUD: 층 이동(엘리베이터), 설정, 알림 ----
 let curZone = 0;
 let chipEls = [], chipState = [], moreEl = null;
-const CHIP_MAX = 2;                                // 경고 층 칩은 급한 것 2개까지, 나머지는 '+N'
+const CHIP_MAX = 4;                                // 지금 층 + 경고 층은 급한 것 4개까지(세로 5칸), 나머지는 '+N'
 function renderZoneChips(){
   zonesEl.innerHTML = ''; chipEls = []; chipState = [];
   if (S.zones.length < 2) return;

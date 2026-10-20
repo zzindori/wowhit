@@ -174,16 +174,22 @@ const FRG = svgImg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200
 // item은 그 층 번호 그대로일 때만(같은 종류가 반복되는 위층은 원래 모양)
 const THEMES = [
   { shop:'층층분식', sign:'#e0614a', ink:'#fff', awn:'#e0614a', img:BUN, anim:animBunsik, spot:[178, 104], reveal:0.7, up:14,
+    guests:['student', 'kid'], order:['김밥 {n}줄이요!', '김밥 {n}줄 포장이요~', '떡볶이도 맛있겠다… 김밥 {n}줄!'], thanks:['잘 먹을게요!', '학원 가기 전에 딱!'],
     item:{ name:'김밥', shape:'kimbap', top:'#fff7e6', front:'#f6deb0' } },
   { shop:'따끈 붕어빵', sign:'#2d4a7a', ink:'#ffe08a', awn:'#2d4a7a', img:BUNG, anim:animBung, spot:[120, 94], reveal:0.75, up:4,
+    guests:['office', 'grandma'], order:['붕어빵 {n}봉지요!', '팥으로 {n}봉지 주세요', '퇴근길엔 붕어빵이지~'], thanks:['따끈따끈하네!', '손주 줘야겠다~'],
     item:{ name:'붕어빵', shape:'bung', top:'#efe6d2', front:'#fffdf6' } },
   { shop:'바삭치킨', sign:'#f2c230', ink:'#c0392b', awn:'#e0614a', img:FRY, anim:animFry, spot:[188, 90], reveal:0.75, up:12,
+    guests:['office', 'ajussi'], order:['치킨 {n}마리요!', '반반 무 많이요!', '오늘 축구 하잖아요, {n}마리!'], thanks:['치킨은 진리!', '오늘 야근 끝~'],
     item:{ name:'치킨', shape:'chicken', top:'#efe6d2', front:'#ffffff' } },
   { shop:'24시 층층마트', sign:'#ffffff', ink:'#2f8f6f', awn:'#5ec1a0', img:FRG, anim:animMart, spot:[120, 170], reveal:0.6, up:6,
+    guests:['student', 'office', 'youth'], order:['바나나우유 {n}개요', '이거 {n}개 계산이요', '빨대도 주세요~'], thanks:['역시 바나나우유!', '봉투는 괜찮아요'],
     item:{ name:'바나나우유', shape:'bmilk', top:'#fbe38a', front:'#fbe38a' } },
   { shop:'한강라면', sign:'#1f3157', ink:'#ffd84a', awn:'#f2c230', img:RAM, anim:animRamen, spot:[169, 128], reveal:0.8, up:16,
+    guests:['tourist', 'youth'], order:['라면 {n}개요!', '계란 넣어 주세요!', 'Ramyeon {n}, please!'], thanks:['한강에서 라면 최고!', 'So good!'],
     item:{ name:'라면', shape:'ramen', top:'#e8833a', front:'#cfd6e0' } },
   { shop:'♪ 코인노래방', sign:'#3b2a55', ink:'#ff8ad8', awn:'#b48ae0', img:KAR, anim:animKaraoke, spot:[215, 162], reveal:0.85, up:20,
+    guests:['youth', 'office', 'student'], order:['음료 {n}개요!', '한 곡만 더 부를게요', '목이 타요… {n}개!'], thanks:['100점 가자!', '앵콜~!'],
     item:{ name:'음료', shape:'can', top:'#cfd6e0', front:'#5ec1a0' } }
 ];
 // 가게 미리보기(설정): 지금 층을 다른 층 가게 모습으로 바꿔 봄. 그림만 바뀌고 값·저장은 그대로. null = 층대로, -1 = 원래 스타일
@@ -214,6 +220,13 @@ const KINDS = [
   { name:'드럼', shape:'barrel', top:'#9fd8a0', front:'#5aa85d' },
   { name:'금괴', shape:'box',    top:'#f4d35e', front:'#c9a227' }
 ];
+// 층 손님 종류(테마 층만): 옷 색 + personBody 장식. 테마 없는 층은 CUST_COLS 무작위 색
+const GUESTS = { student:['#2d3f6b', '#22305a'], kid:['#f08a24', '#c96f17'], office:['#f4f6fa', '#cfd6e0'], grandma:['#9b6fb5', '#7a5293'],
+  ajussi:['#7a8a5a', '#5f6d44'], tourist:['#3fb6c8', '#2b8f9e'], youth:['#f2a58c', '#d9826a'] };
+const HURRY = ['빨리빨리!', '아직이에요?', '빨리 좀요~'], GRUMBLE = ['에이, 안 사!', '너무 늦어요!'];
+const pick = a => a[Math.floor(Math.random()*a.length)];
+// 한 층에 말풍선은 하나씩: 새로 말하면 다른 손님 말풍선은 금방 사라짐(옆 사람끼리 겹치지 않게)
+const say = (c, text, R) => { R.custs.forEach(o => { if (o !== c && o.sayT > 0.3) o.sayT = 0.3; }); c.say = text; c.sayT = 2.4; };
 const CUST_COLS = [['#6aa36f','#4e7f52'], ['#c46a9a','#9a4f78'], ['#7a7fd1','#5a5fa8'], ['#d1835a','#a8643f'], ['#5aa9b5','#3f8590']];
 const GOLD = 1000;                                 // 황금 물건은 1000 + 층번호로 표시
 const MINE = 10000;                                // 주인공이 직접 판매대에 내려놓은 물건은 10000을 더해 표시(직접 납품 보너스)
@@ -664,21 +677,26 @@ function updCustomers(Z, z, cz, dt){
   if (R.spawnT <= 0 && R.custs.filter(c => c.state !== 'leave').length < CFG.cust.maxLine) {
     R.spawnT = CFG.cust.every/onCnt * (0.7 + Math.random()*0.6);
     const [lo, hi] = CFG.cust.want;
+    const T = themeOf(z), gear = T ? pick(T.guests) : null;
     R.custs.push({ x:-30, y:gy(z, LINE.y), want:lo + Math.floor(Math.random()*(hi-lo+1)), got:0, paySum:0,
-      pat:CFG.cust.patience, state:'walk', at:false, fx:1, fy:0, svx:0, svy:0, col:CUST_COLS[Math.floor(Math.random()*CUST_COLS.length)] });
+      pat:CFG.cust.patience, state:'walk', at:false, fx:1, fy:0, svx:0, svy:0, gear, col:gear ? GUESTS[gear] : pick(CUST_COLS) });
   }
   let slot = 0;
   R.custs.forEach(c => {
+    if (c.sayT > 0) c.sayT -= dt;
     if (c.state === 'leave') { moveTo(c, -50, gy(z, 70), CFG.cust.speed*1.4, dt, true); return; }
     c.slot = slot++;
     c.at = moveTo(c, LINE.x - c.slot*LINE.gap, gy(z, LINE.y), CFG.cust.speed, dt, true);
     if (c.at) { c.state = 'wait'; c.fx = 0.3; c.fy = 1; }
     if (c.state === 'wait') {
       c.pat -= dt;
+      const T = themeOf(z);                        // 말풍선: 맨 앞에 오면 주문(테마 층), 참을성 35% 아래면 재촉(모든 층)
+      if (c.slot === 0 && !c.ordered) { c.ordered = true; if (T) say(c, pick(T.order).replace('{n}', c.want), R); }
+      if (!c.hurried && c.pat/CFG.cust.patience < 0.35) { c.hurried = true; say(c, pick(HURRY), R); }
       if (c.pat <= 0) {
         c.state = 'leave'; c.angry = true;
         if (z === cz) {
-          floatText(c.x, c.y, '화났어요!', C.warn); sfx.angry();
+          say(c, pick(GRUMBLE), R); sfx.angry();
           if (!S.tut.angry) { S.tut.angry = true; toast('손님이 화나서 그냥 가버렸어요. 늦지 않게 채워주세요', true); }
         } else if (every('angryOff', 10)) toast(`${z+1}층 손님이 화나서 떠났어요`, true);
       }
@@ -701,6 +719,7 @@ function updCustomers(Z, z, cz, dt){
         if (tip) S.stats.tip++;
         const pay = tip ? Math.round(front.paySum*(1 + CFG.cust.tip)) : front.paySum;
         Z.cash += pay; Z.bills = bills(Z, z) + 1; S.tut.sold = true; front.state = 'leave'; front.happy = true;
+        if (themeOf(z)) say(front, pick(themeOf(z).thanks), R);
         if (z === cz) {
           fly([front.x, front.y, 30], () => cashPos(z, bills(Z, z)), 'bill', 0.3, () => {});
           floatText(front.x, front.y, tip ? `팁! +${fmt(pay)}` : `+${fmt(pay)}`, tip ? '#b58a12' : C.billFront); sfx.paid(tip); R.ring = performance.now();
@@ -1606,12 +1625,53 @@ function personBody(e, body, dark, key, skin, gear, sx, sy, bob){
     ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(sx-4*scale, sy-31*scale-bob); ctx.lineTo(sx+4*scale, sy-31*scale-bob); ctx.lineTo(sx, sy-24*scale-bob); ctx.closePath(); ctx.fill();
     ctx.fillStyle = C.reflect; ctx.fillRect(sx-10*scale, sy-20*scale-bob, 20*scale, 2.5*scale); ctx.fillRect(sx-10*scale, sy-14*scale-bob, 20*scale, 2.5*scale);
   }
-  const hx = sx + e.fx*2*scale, hy = sy-40*scale-bob + e.fy*1.5*scale;
+  const hx = sx + e.fx*2*scale, hy = sy-40*scale-bob + e.fy*1.5*scale, u = scale, by = sy - 32*u - bob;
+  if (gear && gear !== 'worker') guestBody(gear, sx, by, u);
+  if (gear === 'youth') { ctx.fillStyle = '#d9826a'; ctx.beginPath(); ctx.arc(hx, hy + 2*u, 11*u, 0, Math.PI*2); ctx.fill(); }   // 후드 모자(머리 뒤)
   ctx.fillStyle = skin || C.skin; ctx.beginPath(); ctx.arc(hx, hy, 9*scale, 0, Math.PI*2); ctx.fill();
+  if (gear && gear !== 'worker') guestHead(gear, hx, hy, u);
   if (gear === 'worker') {                         // 일꾼: 노란 안전모
     ctx.fillStyle = C.helmet; ctx.beginPath(); ctx.arc(hx, hy-2*scale, 9.5*scale, Math.PI, 0); ctx.fill();
     ctx.fillStyle = C.helmetDark; ctx.beginPath(); ctx.ellipse(hx, hy-2*scale, 12*scale, 2.6*scale, 0, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = C.helmetDark; ctx.fillRect(hx-1.2*scale, hy-11*scale, 2.4*scale, 8*scale);
+  }
+}
+// 손님 옷 장식(몸통 위) — by = 몸통 윗선
+function guestBody(g, sx, by, u){
+  if (g === 'student') {                           // 교복: 흰 깃 + 빨간 넥타이
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(sx - 6*u, by + 1*u); ctx.lineTo(sx + 6*u, by + 1*u); ctx.lineTo(sx, by + 8*u); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#e0614a'; ctx.fillRect(sx - 1.5*u, by + 4*u, 3*u, 8*u);
+  } else if (g === 'kid') {                        // 초등학생: 책가방 끈
+    ctx.fillStyle = '#5a6fb5'; ctx.fillRect(sx - 8*u, by + 1*u, 3*u, 16*u); ctx.fillRect(sx + 5*u, by + 1*u, 3*u, 16*u);
+  } else if (g === 'office') {                     // 직장인: 흰 셔츠 + 남색 넥타이 + 사원증
+    ctx.fillStyle = '#2d3f6b'; ctx.beginPath(); ctx.moveTo(sx - 2*u, by + 2*u); ctx.lineTo(sx + 2*u, by + 2*u); ctx.lineTo(sx + 2.5*u, by + 14*u); ctx.lineTo(sx, by + 17*u); ctx.lineTo(sx - 2.5*u, by + 14*u); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#5ec1a0'; ctx.fillRect(sx + 4*u, by + 9*u, 4*u, 5*u);
+  } else if (g === 'grandma') {                    // 할머니: 꽃무늬 점
+    ctx.fillStyle = '#f6d0e8'; [[-5, 6], [4, 4], [-2, 13], [6, 14]].forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(sx + dx*u, by + dy*u, 1.6*u, 0, Math.PI*2); ctx.fill(); });
+  } else if (g === 'tourist') {                    // 관광객: 하와이안 꽃 + 목에 카메라
+    ctx.fillStyle = '#fff3b0'; [[-5, 5], [5, 9], [-3, 15]].forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(sx + dx*u, by + dy*u, 2*u, 0, Math.PI*2); ctx.fill(); });
+    ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1*u; ctx.beginPath(); ctx.moveTo(sx - 5*u, by); ctx.lineTo(sx, by + 7*u); ctx.lineTo(sx + 5*u, by); ctx.stroke();
+    ctx.fillStyle = '#38445a'; rr(sx - 4*u, by + 6*u, 8*u, 6*u, 1.5*u); ctx.fill(); ctx.fillStyle = '#9fd8e8'; ctx.beginPath(); ctx.arc(sx, by + 9*u, 1.8*u, 0, Math.PI*2); ctx.fill();
+  } else if (g === 'youth') {                      // 후드티: 앞주머니 + 끈
+    ctx.fillStyle = '#d9826a'; rr(sx - 6*u, by + 12*u, 12*u, 6*u, 2*u); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1*u; ctx.beginPath(); ctx.moveTo(sx - 2*u, by + 1*u); ctx.lineTo(sx - 2*u, by + 7*u); ctx.moveTo(sx + 2*u, by + 1*u); ctx.lineTo(sx + 2*u, by + 7*u); ctx.stroke();
+  }
+}
+// 손님 머리 장식(머리 그린 뒤)
+function guestHead(g, hx, hy, u){
+  const hair = col => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(hx, hy - 1*u, 9.4*u, Math.PI*1.05, Math.PI*1.95); ctx.lineTo(hx + 7*u, hy - 3*u); ctx.quadraticCurveTo(hx, hy - 6*u, hx - 7*u, hy - 3*u); ctx.closePath(); ctx.fill(); };
+  if (g === 'student' || g === 'office' || g === 'youth') hair(g === 'youth' ? '#7a4a2e' : '#2b2b33');
+  if (g === 'kid') {                               // 노란 모자
+    ctx.fillStyle = '#f2c230'; ctx.beginPath(); ctx.arc(hx, hy - 2*u, 9.6*u, Math.PI, 0); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(hx + 4*u, hy - 2*u, 8*u, 2.2*u, 0, 0, Math.PI*2); ctx.fill();
+  } else if (g === 'grandma') {                    // 회색 머리 + 쪽머리
+    hair('#c9c9d1'); ctx.beginPath(); ctx.arc(hx, hy - 10*u, 4*u, 0, Math.PI*2); ctx.fill();
+  } else if (g === 'ajussi') {                     // 등산 모자
+    ctx.fillStyle = '#4f6d3a'; ctx.beginPath(); ctx.arc(hx, hy - 2*u, 9.6*u, Math.PI, 0); ctx.fill();
+    ctx.fillRect(hx - 2*u, hy - 4*u, 13*u, 2.6*u);
+  } else if (g === 'tourist') {                    // 챙 넓은 밀짚모자
+    ctx.fillStyle = '#e9c98a'; ctx.beginPath(); ctx.ellipse(hx, hy - 4*u, 15*u, 3.4*u, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx, hy - 4*u, 7.5*u, Math.PI, 0); ctx.fill(); ctx.fillStyle = '#e0614a'; ctx.fillRect(hx - 7.5*u, hy - 6*u, 15*u, 2*u);
   }
 }
 // 화난 VIP 먹구름: 왕관 쓴 먹구름이 머리 위를 따라다니며 비를 뿌림
@@ -1636,11 +1696,25 @@ function carrier(e, stack, body, dark, key, gear){
   const draw = () => { for (let i = 0; i < n; i++) { const [x, y, z] = stackPos(e, i); item(x, y, z, stack[i]); } };
   if (e.fy < -0.3) { person(e, body, dark, key, null, 0, gear); draw(); } else { draw(); person(e, body, dark, key, null, 0, gear); }
 }
+// 손님 말풍선(대사): 머리 위 흰 풍선 + 꼬리, 나올 때 톡 커지고 사라질 때 흐려짐
+function speech(c, h, msg){
+  const [sx, sy] = toS(c.x, c.y, h), a = Math.min(1, c.sayT/0.4), pop = Math.min(1, (2.4 - c.sayT)/0.12);
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.font = `${Math.round(12*scale)}px ${FONT}`; const tw = ctx.measureText(msg).width, w = tw + 14*scale, hh = 20*scale;
+  ctx.translate(sx, sy); ctx.scale(0.7 + 0.3*pop, 0.7 + 0.3*pop);
+  rr(-w/2, -hh, w, hh, hh/2); ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-4*scale, -1); ctx.lineTo(0, 6*scale); ctx.lineTo(4*scale, -1); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(44,43,53,.35)'; ctx.lineWidth = 1; rr(-w/2, -hh, w, hh, hh/2); ctx.stroke();
+  ctx.fillStyle = HURRY.includes(msg) || GRUMBLE.includes(msg) ? C.warn : C.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(msg, 0, -hh/2 + 0.5*scale);
+  ctx.restore();
+}
 function customer(c, z){
   const r = Math.max(0, c.pat/CFG.cust.patience);
   const mad = c.angry || (c.state === 'wait' && r < 0.25);
   const shake = mad && !c.happy ? Math.sin(performance.now()/40)*1.5*scale : 0;
-  person(c, c.col[0], c.col[1], 'customer', mad ? C.angry : C.skin, shake);
+  person(c, c.col[0], c.col[1], 'customer', mad ? C.angry : C.skin, shake, c.gear);
+  if (c.sayT > 0) speech(c, c.state === 'leave' ? 80 : 96, c.say);
   if (c.state === 'leave') {
     if (c.angry) text('!!', c.x + 12, c.y, 62, 18, C.warn);
     else if (c.happy) text('♥', c.x + 10, c.y, 62 + Math.sin(performance.now()/150)*3, 16, '#e0607e');

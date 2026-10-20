@@ -300,7 +300,8 @@ const sfx = {
   steps(){ [0, 1, 2, 3].forEach(i => tone(170 + (i % 2)*40, 0.06, 'square', 0.04, i*0.09)); buzz([10, 70, 10, 70, 10]); },
   broken(){ tone(220, 0.3, 'sawtooth', 0.05, 0, 0.5); tone(160, 0.35, 'sawtooth', 0.05, 0.15, 0.5); buzz([50, 40, 50]); },
   vip(){ [1319, 1568, 2093, 2637].forEach((f, i) => tone(f, 0.14, 'triangle', 0.08, i*0.08)); buzz([20, 40, 20, 40, 20]); },
-  warp(){ tone(300, 0.25, 'sine', 0.1, 0, 3); buzz(15); }
+  warp(){ tone(300, 0.25, 'sine', 0.1, 0, 3); buzz(15); },
+  robot(){ tone(1400, 0.06, 'square', 0.04); tone(1860, 0.08, 'square', 0.04, 0.09); }
 };
 
 // ---- 업그레이드 칸 (층마다 생성) ----
@@ -428,7 +429,7 @@ function spItemPos(z, k, i){
   return [p.x-18+col*18, gy(z, p.y-4+row*15), layer*9];
 }
 function deskPos(z, i){ i = Math.min(i, 15); return [DESK.x-44+(i%4)*16, gy(z, DESK.y+6), 26 + Math.floor(i/4)*9]; }
-function cashPos(z, i){ i = Math.min(i, 17); const col = i%3, row = Math.floor(i/3)%2, layer = Math.floor(i/6); return [CASH.x-20+col*20, gy(z, CASH.y-6+row*16), layer*4]; }
+function cashPos(z, i){ i = Math.min(i, 17); const col = i%3, row = Math.floor(i/3)%2, layer = Math.floor(i/6); return [CASH.x-20+col*20, gy(z, CASH.y-6+row*16), 3 + layer*4]; }   // 3 = 매트 높이
 
 function fly(from, toFn, kind, dur, done){ anims.push({ from, toFn, kind, t:0, dur, done }); }
 function floatText(x, y, text, color){ floats.push({ x, y, text, color, t:0 }); }
@@ -881,6 +882,7 @@ function update(dt){
   const cz = zoneOf(P.y);
   if (cz !== curZone) {
     curZone = cz; renderZoneChips();
+    if (S.zones[cz].auto) { rt(cz).spin = 1.2; sfx.robot(); }   // 자동 수금 로봇: 돌아오면 '삑' 하고 빠르게 한 바퀴
     if (!S.tut.autoInfo && S.zones.length > 1) { S.tut.autoInfo = true; toast('다른 층 돈은 그 층 돈더미에 쌓여요. 층마다 자동 수금 칸을 사면 알아서 들어와요'); toastT = 4; }
   }
 
@@ -1197,7 +1199,42 @@ function drawPrinter(s, z, k, p, py){
     text(msg, p.x, top, 0, 13, on || s.fix > 0 ? C.ink : C.warn);
   } else if (full) text('가득 참', p.x, top, 0, 13, C.warn);
 }
-function bill(x, y, z){ const [sx, sy] = toS(x, y, z); if (art('bill', sx, sy, 20*scale, 10*scale)) return; cube(x, y, z, 18, 4, C.billTop, C.billFront); }
+// 돈 = 띠지 두른 초록 돈다발 (ART_SRC.bill이 있으면 그 그림)
+function bill(x, y, z){
+  const [sx, sy] = toS(x, y, z); if (art('bill', sx, sy, 20*scale, 10*scale)) return;
+  const w = 18*scale, hh = 5*scale, d = 9*scale;
+  ctx.fillStyle = C.billFront; ctx.fillRect(sx-w/2, sy-hh, w, hh);
+  ctx.fillStyle = '#9be0b0'; ctx.fillRect(sx-w/2, sy-hh-d, w, d);
+  ctx.fillStyle = '#79c793'; ctx.beginPath(); ctx.ellipse(sx, sy-hh-d/2, w*0.26, d*0.3, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(sx-w/2, sy-hh-scale, w, scale);    // 지폐 층 결
+  ctx.fillStyle = '#f7ead0'; ctx.fillRect(sx-2*scale, sy-hh-d, 4*scale, hh+d);           // 띠지
+  ctx.lineWidth = 1.2; ctx.strokeStyle = '#38445a'; ctx.strokeRect(sx-w/2, sy-hh-d, w, hh+d);
+}
+// 바닥에 놓인 낮은 판(월드 좌표 사각형 + 높이)
+function slab(x0, y0, x1, y1, h, top, front){
+  const [ax, ay] = toS(x0, y0, h), [bx, by] = toS(x1, y1, h), [, fy] = toS(x1, y1, 0);
+  ctx.fillStyle = top; ctx.fillRect(ax, ay, bx-ax, by-ay);
+  ctx.fillStyle = front; ctx.fillRect(ax, by, bx-ax, fy-by);
+  ctx.lineWidth = 2*scale; ctx.strokeStyle = '#38445a'; ctx.strokeRect(ax, ay, bx-ax, fy-ay);
+}
+// 자동 수금 로봇(자동 수금 산 층만): 돈더미 주위를 돎. 층에 돌아오면 잠깐 빨리 돎
+function cashRobot(z){
+  const R = rt(z), dt = lastDt; if (R.spin > 0) R.spin -= dt;
+  R.robA = (R.robA || 0) + dt*(R.spin > 0 ? 6 : 0.7);
+  const now = performance.now(), cy = gy(z, CASH.y);
+  return { x:CASH.x + Math.cos(R.robA)*56, y:cy - 4 + Math.sin(R.robA)*40, a:R.robA, now };
+}
+function drawRobot(b){
+  const [sx, sy] = toS(b.x, b.y, 0), r = 15*scale, ol = '#38445a';
+  ctx.fillStyle = 'rgba(44,43,53,.2)'; ctx.beginPath(); ctx.ellipse(sx, sy, r, r*0.45, 0, 0, Math.PI*2); ctx.fill();
+  ctx.lineWidth = 2.5*scale; ctx.strokeStyle = ol;
+  ctx.fillStyle = '#93c4d0'; ctx.beginPath(); ctx.ellipse(sx, sy - 4*scale, r, r*0.5, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#eef9fb'; ctx.beginPath(); ctx.ellipse(sx, sy - 9*scale, r*0.95, r*0.48, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#f2c230'; ctx.beginPath(); ctx.arc(sx, sy - 10*scale, 5.5*scale, 0, Math.PI*2); ctx.fill(); ctx.lineWidth = 1.5*scale; ctx.stroke();
+  ctx.fillStyle = ol; ctx.font = `${Math.round(8*scale)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('₩', sx, sy - 9.5*scale);
+  ctx.fillStyle = Math.floor(b.now/300) % 2 ? '#7ff0a8' : '#3a8f5c';                       // 앞쪽 눈 불빛
+  ctx.beginPath(); ctx.arc(sx + Math.cos(b.a + Math.PI/2)*9*scale, sy - 6*scale + Math.sin(b.a + Math.PI/2)*3*scale, 2*scale, 0, Math.PI*2); ctx.fill();
+}
 function text(str, x, y, z, size, color, align='center', maxW){
   const [sx, sy] = toS(x, y, z); ctx.font = `${Math.round(size*scale)}px ${FONT}`;
   if (maxW) { const tw = ctx.measureText(str).width; if (tw > maxW*scale) ctx.font = `${Math.floor(size*scale*maxW*scale/tw)}px ${FONT}`; }   // 칸보다 길면 글자를 줄여서 맞춤
@@ -1310,7 +1347,10 @@ function render(){
 
     // 바닥 칸
     floorRect(zr(z, SELL), C.sellFill, C.sell, false, 0); text('판매', SELL.x, gy(z, SELL.y+22), 0, 15, C.sell);
-    floorRect(zr(z, CASH), C.cashFill, C.billFront, false, 0);
+    floorRect(zr(z, CASH), 'rgba(76,154,102,.10)', 'rgba(76,154,102,.45)', false, 0);   // 밟는 칸(옅게)
+    { const cy = gy(z, CASH.y), [a, b] = toS(CASH.x - 34, cy - 20, 3), [c, d] = toS(CASH.x + 34, cy + 12, 3);   // 초록 펠트 매트
+      slab(CASH.x - 40, cy - 26, CASH.x + 40, cy + 18, 3, '#5fae7d', '#3f7d58');
+      ctx.strokeStyle = '#f2c230'; ctx.lineWidth = 2*scale; ctx.setLineDash([5*scale, 4*scale]); ctx.strokeRect(a, b, c-a, d-b); ctx.setLineDash([]); }
     Z.sp.forEach((s, k) => { if (s.on && !s.ruined) floorRect({ x:SP[k].x, y:gy(z, SP[k].y), ...SP_ZONE }, 'rgba(95,107,132,.15)', C.machFront, false, 0); });
 
     // 세우는 것들
@@ -1346,6 +1386,7 @@ function render(){
       else if (Z.cash > 0) text(`₩${fmt(Z.cash)}`, CASH.x, gy(z, CASH.y-38), 20, 15, C.billFront);
       if (Z.auto) text('자동 수금', CASH.x, gy(z, CASH.y+58), 0, 13, C.billFront);
     }});
+    if (Z.auto) { const b = cashRobot(z); list.push({ y:b.y, draw:() => drawRobot(b) }); }
     Z.sp.forEach((s, k) => {
       if (!s.on || s.ruined) return;                   // 부서진 생산기는 안 그림(그 자리에 '다시 제작' 칸)
       const p = SP[k], py = gy(z, p.y);

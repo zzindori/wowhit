@@ -1236,12 +1236,14 @@ function customer(c, z){
     return;
   }
   // 말풍선: 원하는 물건과 개수, 그 밑에 참을성 막대
-  const [sx, sy] = toS(c.x, c.y, 66); const bw = 40*scale, bh = 22*scale;
-  rr(sx-bw/2 + shake, sy-bh, bw, bh, 8*scale); ctx.fillStyle = C.hud; ctx.fill();
+  // 폭은 글자 길이에 맞춤(왼쪽 여백 7 + 물건 14 + 사이 4 + 글자 + 오른쪽 여백 9), 물건은 말풍선 높이 가운데
+  ctx.font = `${Math.round(12*scale)}px ${FONT}`; const label = `${c.got}/${c.want}`, tw = ctx.measureText(label).width/scale;
+  const bwU = 7 + 14 + 4 + tw + 9, [sx, sy] = toS(c.x, c.y, 66); const bw = bwU*scale, bh = 22*scale;
+  rr(sx-bw/2 + shake, sy-bh, bw, bh, bh/2); ctx.fillStyle = C.hud; ctx.fill();
   ctx.strokeStyle = mad ? C.warn : 'rgba(44,43,53,.25)'; ctx.lineWidth = mad ? 2 : 1; ctx.stroke();
-  item(c.x - 9 + shake/scale, c.y, 66 + 6, z);
-  ctx.font = `${Math.round(12*scale)}px ${FONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = C.ink;
-  ctx.fillText(`${c.got}/${c.want}`, sx + 1*scale + shake, sy - bh/2);
+  item(c.x - bwU/2 + 7 + 7 + shake/scale, c.y, 66 + 3, z);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = C.ink;
+  ctx.fillText(label, sx - bw/2 + 25*scale + shake, sy - bh/2 + 0.5*scale);
   if (c.state === 'wait') {
     const [px, py] = toS(c.x - 16, c.y, 60);
     ctx.fillStyle = 'rgba(44,43,53,.2)'; ctx.fillRect(px + shake, py, 32*scale, 4*scale);

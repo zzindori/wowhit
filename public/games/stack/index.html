@@ -784,11 +784,13 @@ function updThief(cz, dt){
   }
   // 잡기
   if (T.z === cz && Math.hypot(P.x - T.x, P.y - T.y) < 28) {
-    // 현상금: 그 층 물건 값 × 15 + 훔쳐 가던 돈의 50% — 지갑 한도와 상관없이 바로 들어옴
-    const bounty = Math.round(valueOf(T.z)*CFG.thief.bounty + T.loot*CFG.thief.lootBonus);
-    S.money += bounty; coinsFrom(T.x, T.y, 40, 10); showBanner('🚓 도둑 검거!');
+    // 현상금: 그 층 물건 값 × 15 + 훔쳐 가던(또는 훔쳤을) 돈의 50% — 지갑 한도와 상관없이 바로 들어옴.
+    // 훔치기 전에 막으면 기본 현상금 2배('철통 방어') — 놔뒀다 잡는 쪽이 이득이 되지 않게
+    const early = T.loot <= 0, risk = early ? Math.ceil(Z.cash*CFG.thief.take) : T.loot;
+    const bounty = Math.round(valueOf(T.z)*CFG.thief.bounty*(early ? 2 : 1) + risk*CFG.thief.lootBonus);
+    S.money += bounty; coinsFrom(T.x, T.y, 40, early ? 16 : 10); showBanner(early ? '🛡️ 철통 방어!' : '🚓 도둑 검거!');
     if (T.loot > 0) { Z.cash += T.loot; Z.bills = bills(Z, T.z) + (T.lootBills || 1); toast(`도둑을 잡았어요! ₩${fmt(T.loot)} 되찾고 현상금 +₩${fmt(bounty)}`); }
-    else toast(`도둑을 쫓아냈어요! 현상금 +₩${fmt(bounty)}`);
+    else toast(`훔치기 전에 막았어요! 현상금 2배 +₩${fmt(bounty)}`);
     setTimeout(() => floatText(T.x, T.y, `현상금 +₩${fmt(bounty)}`, '#b58a12'), 250);
     floatText(T.x, T.y, '잡았다!', C.pad); sfx.caught(); shake(5); burst(T.x, T.y, 40, 16, 'spark', { color:'#fff3b0', speed:140, up:100, g:0, life:0.5 }); S.stats.thief = (S.stats.thief || 0) + 1;
     thief = null; thiefCd = CFG.thief.cooldown;

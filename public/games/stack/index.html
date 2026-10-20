@@ -922,7 +922,7 @@ function updDeliv(z, cz, dt){
   if (D.sayT > 0) D.sayT -= dt;
   if (D.state === 'leave') { if (moveTo(D, -50, gy(z, DELIV_SPOT.y), CFG.cust.speed*1.4, dt, true)) R.deliv = null; return; }
   if (D.state === 'come' && moveTo(D, DELIV_SPOT.x, gy(z, DELIV_SPOT.y), CFG.cust.speed, dt, true)) {
-    D.state = 'wait'; D.fx = 0.5; D.fy = 1; D.say = `${itemName(D.src)} ${D.want}개 배달이요~`; D.sayT = 2.4;
+    D.state = 'wait'; D.fx = 0.5; D.fy = 1; D.say = `${D.src+1}층 ${itemName(D.src)} ${D.want}개 배달이요~`; D.sayT = 2.4;
   }
   if ((D.t -= dt) <= 0) { D.state = 'leave'; D.angry = true; D.say = '배달이 안 오네…'; D.sayT = 2.4; toast(`${shopLabel(z)} 배달 주문이 취소됐어요`, true); return; }
   if (D.state !== 'wait' || z !== cz || Math.hypot(P.x - D.x, P.y - D.y) >= 60) return;
@@ -946,13 +946,14 @@ function drawDeliv(D, z){
   person(D, D.col[0], D.col[1], 'customer', D.angry ? C.angry : C.skin, 0, D.gear);
   if (D.sayT > 0) { const c = { x:D.x, y:D.y, sayT:D.sayT }; speech(c, D.state === 'leave' ? 80 : 104, D.say); }
   if (D.state === 'leave') return;
-  // 머리 위: 시킨 물건 + 개수, 남은 시간 막대
-  const [sx, sy] = toS(D.x, D.y, 66), bw = 74*scale, bh = 22*scale;
-  rr(sx - bw/2, sy - bh, bw, bh, bh/2); ctx.fillStyle = '#e9f8f2'; ctx.fill(); ctx.strokeStyle = '#3fa98a'; ctx.lineWidth = 2; ctx.stroke();
-  ctx.font = `${Math.round(11*scale)}px ${FONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#2f8f6f';
-  ctx.fillText('🛵', sx - bw/2 + 5*scale, sy - bh/2);
-  item(D.x - 4, D.y, 69, D.src);
-  ctx.fillStyle = C.ink; ctx.fillText(`${D.got}/${D.want}`, sx + 7*scale, sy - bh/2 + 0.5*scale);
+  // 머리 위: 🛵 + 어느 층 물건인지(N층) + 물건 그림 + 개수, 남은 시간 막대
+  const [sx, sy] = toS(D.x, D.y, 66), bw = 100*scale, bh = 22*scale, l = sx - bw/2, my = sy - bh/2 + 0.5*scale;
+  rr(l, sy - bh, bw, bh, bh/2); ctx.fillStyle = '#e9f8f2'; ctx.fill(); ctx.strokeStyle = '#3fa98a'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.font = `${Math.round(11*scale)}px ${FONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('🛵', l + 5*scale, my);
+  ctx.font = `${Math.round(12*scale)}px ${FONT}`; ctx.fillStyle = '#1f6e57'; ctx.fillText(`${D.src+1}층`, l + 22*scale, my);
+  item(D.x + 6, D.y, 69, D.src);
+  ctx.fillStyle = C.ink; ctx.fillText(`${D.got}/${D.want}`, l + 66*scale, my);
   const r = Math.max(0, D.t/D.time), [px, py] = toS(D.x - 20, D.y, 60);
   ctx.fillStyle = 'rgba(44,43,53,.2)'; ctx.fillRect(px, py, 40*scale, 5*scale);
   ctx.fillStyle = r > 0.5 ? C.ok : r > 0.25 ? C.mid : C.warn; ctx.fillRect(px, py, 40*scale*r, 5*scale);

@@ -152,6 +152,10 @@ const ART = {};
 // ART_SRC.machine에 그림을 넣으면 그걸 우선 사용(예전 방식)
 const PRN = new Image();
 PRN.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="480" height="400"><defs> <linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9dfe7"/><stop offset="1" stop-color="#93c4d0"/></linearGradient> <linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef9fb"/><stop offset="1" stop-color="#cfe9ef"/></linearGradient> <linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c8ecf5"/></linearGradient> <pattern id="h" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="12" fill="#f2c230"/><rect x="6" width="6" height="12" fill="#38445a"/></pattern></defs> <ellipse cx="120" cy="190" rx="110" ry="8" fill="#2c2b35" opacity=".2"/> <g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"> <path d="M14 136 Q14 128 22 128 L218 128 Q226 128 226 136 L230 150 L10 150 Z" fill="url(#t)"/> <rect x="10" y="148" width="220" height="34" rx="8" fill="url(#b)"/><rect x="10" y="168" width="220" height="14" rx="6" fill="#f2a58c"/> <rect x="150" y="153" width="64" height="11" rx="3" fill="url(#h)" stroke-width="2.5"/> <rect x="20" y="58" width="44" height="92" rx="8" fill="url(#b)"/><path d="M24 50 Q24 44 30 44 L54 44 Q60 44 60 50 L64 60 L20 60 Z" fill="url(#t)"/> <rect x="27" y="70" width="30" height="24" rx="4" fill="#2f3b4f" stroke-width="3"/><path d="M31 87 L37 80 L43 84 L51 75" fill="none" stroke="#7ff0a8" stroke-width="2.5"/> <circle cx="33" cy="106" r="4" fill="#7ff0a8" stroke-width="2"/><circle cx="45" cy="106" r="4" fill="#f2c230" stroke-width="2"/> <rect x="27" y="116" width="30" height="8" rx="3" fill="#f2a58c" stroke-width="2.5"/><rect x="198" y="52" width="18" height="80" rx="5" fill="url(#b)"/> <rect x="54" y="34" width="168" height="22" rx="7" fill="#f2a58c"/><path d="M62 45 h150" stroke="#d98a70" stroke-width="2"/> <path d="M100 124 L168 124 L172 134 L96 134 Z" fill="url(#p)" stroke-width="3"/></g> <path d="M104 129 L166 129" stroke="#8fe3f0" stroke-width="2"/> <g fill="#fff" opacity=".5"><rect x="16" y="151" width="208" height="4" rx="2"/><rect x="24" y="62" width="36" height="4" rx="2"/></g></svg>`);
+// 판매대 = 레트로 계산대(짙은 나무 + 황동 금전등록기, 코드로 그린 SVG). 숫자판·손잡이·서랍은 drawDesk()가 움직이며 그림. ART_SRC.desk가 있으면 그걸 우선
+const DSK = new Image();
+DSK.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 170" width="480" height="340"><defs><linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9dfe7"/><stop offset="1" stop-color="#93c4d0"/></linearGradient><linearGradient id="top" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef9fb"/><stop offset="1" stop-color="#cfe9ef"/></linearGradient><linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9b884"/><stop offset="1" stop-color="#c98f5a"/></linearGradient><linearGradient id="woodt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe6c6"/><stop offset="1" stop-color="#efcc98"/></linearGradient><linearGradient id="brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#d9a52e"/></linearGradient><linearGradient id="mint" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9f0dc"/><stop offset="1" stop-color="#9fd9bd"/></linearGradient><linearGradient id="scr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4a66"/><stop offset="1" stop-color="#2a3448"/></linearGradient></defs><ellipse cx="120" cy="162" rx="104" ry="7" fill="#2c2b35" opacity=".2"/><g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><path d="M34 84 Q34 78 40 78 L200 78 Q206 78 206 84 L212 116 L28 116 Z" fill="url(#woodt)"/><rect x="28" y="114" width="184" height="46" rx="7" fill="#8c4f3a"/><rect x="38" y="122" width="76" height="30" rx="4" fill="#a8604a" stroke-width="2.5"/><rect x="126" y="122" width="76" height="30" rx="4" fill="#a8604a" stroke-width="2.5"/><path d="M146 112 L210 112 L206 96 L150 96 Z" fill="url(#brass)"/><rect x="152" y="66" width="52" height="32" rx="6" fill="url(#brass)"/></g><g fill="#38445a"><circle cx="160" cy="76" r="2.2"/><circle cx="168" cy="76" r="2.2"/><circle cx="176" cy="76" r="2.2"/><circle cx="184" cy="76" r="2.2"/><circle cx="192" cy="76" r="2.2"/><circle cx="160" cy="84" r="2.2"/><circle cx="168" cy="84" r="2.2"/><circle cx="176" cy="84" r="2.2"/><circle cx="184" cy="84" r="2.2"/><circle cx="192" cy="84" r="2.2"/></g><path d="M162 104 H194" stroke="#a87b1a" stroke-width="2.5" stroke-linecap="round"/><g fill="#fff" opacity=".6"><rect x="40" y="81" width="100" height="3" rx="1.5"/><rect x="156" y="70" width="4" height="22" rx="2"/></g><g fill="#fff" opacity=".15"><rect x="42" y="125" width="68" height="4" rx="2"/><rect x="130" y="125" width="68" height="4" rx="2"/></g></svg>
+`);
 Object.entries(ART_SRC).forEach(([k, src]) => { if (!src) return; const im = new Image(); im.onload = () => { ART[k] = im; }; im.src = src; });
 
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
@@ -423,7 +427,7 @@ function spItemPos(z, k, i){
   const p = SP[k]; const col = i%3, row = Math.floor(i/3)%2, layer = Math.floor(i/6);
   return [p.x-18+col*18, gy(z, p.y-4+row*15), layer*9];
 }
-function deskPos(z, i){ i = Math.min(i, 15); return [DESK.x-24+(i%4)*16, gy(z, DESK.y+6), 26 + Math.floor(i/4)*9]; }
+function deskPos(z, i){ i = Math.min(i, 15); return [DESK.x-44+(i%4)*16, gy(z, DESK.y+6), 26 + Math.floor(i/4)*9]; }
 function cashPos(z, i){ i = Math.min(i, 17); const col = i%3, row = Math.floor(i/3)%2, layer = Math.floor(i/6); return [CASH.x-20+col*20, gy(z, CASH.y-6+row*16), layer*4]; }
 
 function fly(from, toFn, kind, dur, done){ anims.push({ from, toFn, kind, t:0, dur, done }); }
@@ -538,16 +542,22 @@ function moveTo(e, tx, ty, spd, dt, free){
 // ---- 충돌: 프린터 몸체는 못 지나감 (그림보다 약간 작게). 막히면 멈추지 않고 벽 따라 미끄러짐 ----
 const MACH = { hw:62, top:70, bot:28 };            // 프린터 x ±62, y는 생산기 칸 y-70 ~ y-28 (바닥 기준선 근처)
 const BODY_R = 10;                                 // 사람 몸 반지름
+const DESK_BOX = { hw:54, top:8, bot:12 };
 function collide(e, z){
   const Z = S.zones[z]; if (!Z) return;
   Z.sp.forEach((s, k) => {
     if (!s.on || s.ruined) return;
     const y0 = gy(z, SP[k].y) - MACH.top - BODY_R, y1 = gy(z, SP[k].y) - MACH.bot + BODY_R;
     const x0 = SP[k].x - MACH.hw - BODY_R, x1 = SP[k].x + MACH.hw + BODY_R;
-    if (e.x <= x0 || e.x >= x1 || e.y <= y0 || e.y >= y1) return;
-    const dl = e.x - x0, dr = x1 - e.x, du = e.y - y0, dd = y1 - e.y, m = Math.min(dl, dr, du, dd);   // 가장 적게 파고든 쪽으로 밀어냄
-    if (m === dl) e.x = x0; else if (m === dr) e.x = x1; else if (m === du) e.y = y0; else e.y = y1;
+    pushOut(e, x0, x1, y0, y1);
   });
+  const dy = gy(z, DESK.y);                                   // 판매대(그림보다 약간 작게): 바닥 DESK.y-8 ~ DESK.y+12
+  pushOut(e, DESK.x - DESK_BOX.hw - BODY_R, DESK.x + DESK_BOX.hw + BODY_R, dy - DESK_BOX.top - BODY_R, dy + DESK_BOX.bot + BODY_R);
+}
+function pushOut(e, x0, x1, y0, y1){
+  if (e.x <= x0 || e.x >= x1 || e.y <= y0 || e.y >= y1) return;
+  const dl = e.x - x0, dr = x1 - e.x, du = e.y - y0, dd = y1 - e.y, m = Math.min(dl, dr, du, dd);   // 가장 적게 파고든 쪽으로 밀어냄
+  if (m === dl) e.x = x0; else if (m === dr) e.x = x1; else if (m === du) e.y = y0; else e.y = y1;
 }
 // 일꾼 길찾기: 프린터 줄 위아래를 오갈 땐 프린터 사이 통로로 돌아감 (판매대에 가까운 쪽 통로)
 const CORRIDOR = [275, 275, 485];
@@ -640,7 +650,7 @@ function updCustomers(Z, z, cz, dt){
     if (R.serveT >= sellIv(Z.sellLv)) {
       R.serveT = 0; const it = Z.queue.shift(); front.got++; front.paySum += itemValue(it);
       S.stats.sell++; if (it % MINE >= GOLD) S.stats.golden++;
-      if (z === cz) { fly(deskPos(z, 0), () => [front.x, front.y, 30], it, 0.22, () => {}); sfx.hand(); }
+      if (z === cz) { fly(deskPos(z, 0), () => [front.x, front.y, 30], it, 0.22, () => {}); sfx.hand(); R.pull = performance.now(); }
       if (front.got >= front.want) {
         const tip = front.pat/CFG.cust.patience > 0.6;
         if (tip) S.stats.tip++;
@@ -648,7 +658,8 @@ function updCustomers(Z, z, cz, dt){
         Z.cash += pay; Z.bills = bills(Z, z) + 1; S.tut.sold = true; front.state = 'leave'; front.happy = true;
         if (z === cz) {
           fly([front.x, front.y, 30], () => cashPos(z, bills(Z, z)), 'bill', 0.3, () => {});
-          floatText(front.x, front.y, tip ? `팁! +${fmt(pay)}` : `+${fmt(pay)}`, tip ? '#b58a12' : C.billFront); sfx.paid(tip);
+          floatText(front.x, front.y, tip ? `팁! +${fmt(pay)}` : `+${fmt(pay)}`, tip ? '#b58a12' : C.billFront); sfx.paid(tip); R.ring = performance.now();
+          burst(DESK.x + 37, gy(z, DESK.y+14), 66, 5, 'spark', { color:'#ffd23f', speed:60, up:50, g:0, life:0.45 });
           burst(front.x, front.y, 50, tip ? 14 : 6, 'spark', { color:tip ? '#ffd23f' : '#9be3b0', speed:80, up:60, g:0, life:0.55 });
         }
       }
@@ -1120,6 +1131,28 @@ function item(x, y, z, kind){
 const PU = 0.625, prnBase = (z, k) => gy(z, SP[k].y) - 30;
 const prnW = (k, z, u, v) => [SP[k].x + (u - 120)*PU, prnBase(z, k), (200 - v)*PU];   // SVG (u,v) → 월드 [x, y, 높이]
 const PRN_ITEM = [134, 124];                                  // 받침대 위 물건이 만들어지는 자리
+// 레트로 계산대: 물건 하나 건넬 때마다 손잡이 당김, 결제하면 숫자판이 튀어오르고(₩ 빨강) 서랍이 툭 나왔다 들어감
+function drawDesk(z){
+  const now = performance.now(), R = rt(z), u = PU*scale;
+  const D = (a, b) => toS(DESK.x + (a-120)*PU, gy(z, DESK.y+14), (160-b)*PU);
+  const [l, t] = D(0, 0); ctx.drawImage(DSK, l, t, 240*u, 170*u);
+  const e = (now - (R.ring || -1e9))/700, ring = e >= 0 && e < 1;
+  ctx.strokeStyle = '#38445a'; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (ring) {                                                 // 서랍(지폐 보임)
+    const out = 9*Math.min(1, (1-e)*3), [dx, dy] = D(158, 106 + out);
+    ctx.fillStyle = '#7fc99a'; ctx.fillRect(dx + 4*u, dy - 4*u, 32*u, 5*u);
+    rr(dx, dy, 40*u, 8*u, 2*u); ctx.fillStyle = '#e8b93c'; ctx.fill(); ctx.lineWidth = 2.5*u; ctx.stroke();
+  }
+  const lift = ring ? 12*(1-e)*Math.min(1, e/0.12) : 0, [px, py] = D(160, 50 - lift);   // 숫자판
+  rr(px, py, 36*u, 18*u, 4*u); ctx.fillStyle = '#fff8e0'; ctx.fill(); ctx.lineWidth = 3*u; ctx.stroke();
+  ctx.font = `${Math.round(14*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = ring ? '#e0614a' : '#38445a'; ctx.fillText('₩', px + 18*u, py + 10*u);
+  const pl = (now - (R.pull || -1e9))/260, a = pl >= 0 && pl < 1 ? Math.sin(Math.PI*pl) : 0;   // 손잡이
+  const ang = -0.46 + a*1.2, [hx, hy] = D(206, 80);
+  const kx = hx + Math.cos(ang)*14*u, ky = hy + Math.sin(ang)*14*u;
+  ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(kx, ky); ctx.lineWidth = 3*u; ctx.stroke();
+  ctx.beginPath(); ctx.arc(kx, ky, 4*u, 0, Math.PI*2); ctx.fillStyle = '#e0614a'; ctx.fill(); ctx.lineWidth = 2.5*u; ctx.stroke();
+}
 function drawPrinter(s, z, k, p, py){
   const now = performance.now(), S2 = (u, v) => { const [x, y, h] = prnW(k, z, u, v); return toS(x, y, h); };
   const [l, t] = S2(0, 0), u = PU*scale;
@@ -1283,10 +1316,10 @@ function render(){
     // 세우는 것들
     list.push({ y:gy(z, DESK.y), draw:() => {
       const [sx, sy] = toS(DESK.x, gy(z, DESK.y+14));
-      if (!art('desk', sx, sy, 110*scale, 70*scale)) cube(DESK.x, gy(z, DESK.y+14), 0, 110, 26, C.deskTop, C.deskFront);
+      if (!art('desk', sx, sy, 110*scale, 70*scale)) { if (DSK.complete && DSK.naturalWidth) drawDesk(z); else cube(DESK.x, gy(z, DESK.y+14), 0, 110, 26, C.deskTop, C.deskFront); }
       const q = Z.queue, n = Math.min(q.length, 16);
       for (let i = 0; i < n; i++) { const [x, y, zz] = deskPos(z, i); item(x, y, zz, q[i]); }
-      if (q.length > 16) text(`+${q.length-16}`, DESK.x+66, gy(z, DESK.y-10), 30, 13, C.ink);
+      if (q.length > 16) text(`+${q.length-16}`, DESK.x-72, gy(z, DESK.y-10), 30, 13, C.ink);
     }});
     if (Z.awayLv) list.push({ y:gy(z, SAFE.y), draw:() => {   // 잔업
       const sy = gy(z, SAFE.y);

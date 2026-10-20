@@ -899,7 +899,7 @@ function update(dt){
     });
     updCustomers(Z, z, cz, dt);
     rt(z).cashIdle = Z.cash > 0 ? (rt(z).cashIdle || 0) + dt : 0;
-    if (z !== cz && Z.auto && Z.safe > 0) { const take = Math.min(Z.safe, room()); if (take > 0) { S.money += take; offAcc[z] = (offAcc[z] || 0) + take; Z.safe -= take; } }
+    // 잔업수당은 자동 수금 대상 아님 — 층마다 상자에 그대로 남아 있다가 주인공이 가서 챙김
     if (z !== cz && Z.auto && Z.cash > 0) { const take = Math.min(Z.cash, room()); if (take > 0) { S.money += take; offAcc[z] = (offAcc[z] || 0) + take; takeCash(Z, z, take); } }
     if (z !== cz && pileFull(Z, z) && every('full' + z, 30)) toast(`${z+1}층 돈더미가 가득 찼어요 · 가서 챙기거나 자동 수금을 사요`, true);
   });

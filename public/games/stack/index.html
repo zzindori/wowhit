@@ -823,7 +823,7 @@ function zoneAlert(z, chip){                       // chip = 왼쪽 아래 층 �
   const Z = S.zones[z]; if (!Z) return 0;
   const V = rt(z).vip;
   if (V && V.state !== 'leave') return 5;
-  const D = rt(z).deliv; if (D && D.state !== 'leave') return 8;   // 배달 주문 받은 층(위 칩에선 빼고 배달 카드로 보여 줌)
+  const D = rt(z).deliv; if (D && (D.state === 'come' || D.state === 'wait')) return 8;   // 배달 주문 받은 층(위 칩에선 빼고 배달 카드로 보여 줌)
   if (!chip && Z.sp.some(s => s.on && (s.golden || 0) > 0)) return 6;   // 황금 물건 대기(주인공만 나를 수 있음)
   if (Z.sp.some(s => s.broken && CFG.broken.ruin - (s.brokenT || 0) <= CFG.broken.warn)) return 7;
   const c = custAlert(z); if (c === 2) return 2;
@@ -921,6 +921,7 @@ function updDeliv(z, cz, dt){
   const R = rt(z), D = R.deliv; if (!D) return;
   if (D.sayT > 0) D.sayT -= dt;
   if (D.state === 'leave') { if (moveTo(D, -50, gy(z, DELIV_SPOT.y), CFG.cust.speed*1.4, dt, true)) R.deliv = null; return; }
+  if (D.state === 'extra') return delivExtra(D, z, cz, dt);
   if (D.state === 'come' && moveTo(D, DELIV_SPOT.x, gy(z, DELIV_SPOT.y), CFG.cust.speed, dt, true)) {
     D.state = 'wait'; D.fx = 0.5; D.fy = 1; D.say = `${D.src+1}층 ${itemName(D.src)} ${D.want}개 배달이요~`; D.sayT = 2.4;
   }
@@ -935,17 +936,34 @@ function updDeliv(z, cz, dt){
     const fast = D.t > D.time/2, reward = Math.round(D.sum*(fast ? 1 + CFG.deliv.tip : 1));
     S.money += reward; S.stats.deliv = (S.stats.deliv || 0) + 1;     // 지갑 한도와 상관없이 들어옴(VIP처럼)
     D.state = 'leave'; D.happy = true; D.say = fast ? '벌써 왔어요? 최고!' : '잘 먹을게요!'; D.sayT = 2.4;
+    if (topOf(S.stack, D.src) >= 0) { D.state = 'extra'; D.extra = 0; D.extraSum = 0; D.serveT = -0.6; D.say = pick(DDEOLI_ASK); D.sayT = 2.6; }   // 남은 같은 물건은 떨이로
     floatText(D.x, D.y, `배달${fast ? '팁' : ''} +₩${fmt(reward)}`, '#2f8f6f'); coinsFrom(D.x, D.y, 50, 10); shake(4);
     burst(D.x, D.y, 50, 20, 'spark', { color:'#7fe0c0', speed:130, up:110, g:60, life:0.8 });
     showBanner(fast ? '🛵 총알 배달!' : '🛵 배달 완료!');
     toast(`배달 완료! +₩${fmt(reward)}${fast ? ' (배달팁 포함)' : ''}`); sfx.mission(); save();
   }
 }
+// 떨이: 배달을 끝낸 뒤 등에 같은 층 물건이 남아 있으면 배달 손님이 반값에 다 사 감(옆에 있는 동안). 다 주거나 멀어지면 정산하고 떠남
+const DDEOLI_ASK = ['남은 거 떨이로 다 주세요!', '어? 그것도 떨이 안 돼요?', '남은 것도 싸게 주세요~'];
+const DDEOLI_DONE = ['떨이 득템! 땡큐~', '덤까지 감사해요!', '오늘 장사 잘 됐네요~'];
+function delivExtra(D, z, cz, dt){
+  const near = z === cz && Math.hypot(P.x - D.x, P.y - D.y) < 60, idx = near ? topOf(S.stack, D.src) : -1;
+  if (idx >= 0) {
+    if ((D.serveT += dt) <= 0.09) return;
+    D.serveT = 0; const it = S.stack.splice(idx, 1)[0]; D.extra++; D.extraSum += itemValue(it)*0.5;
+    fly(stackPos(P, idx), () => [D.x, D.y, 30], it, 0.18, () => {}); sfx.hand();
+    return;
+  }
+  if (D.serveT < 0 && near) { D.serveT += dt; return; }       // 말 걸고 잠깐 기다렸다가
+  const pay = Math.max(D.extra ? 1 : 0, Math.round(D.extraSum));
+  if (pay) { S.money += pay; floatText(D.x, D.y, `떨이 ${D.extra}개 +₩${fmt(pay)}`, '#b58a12'); coinsFrom(D.x, D.y, 40, 4); sfx.cash(); }
+  D.state = 'leave'; D.say = D.extra ? pick(DDEOLI_DONE) : '그럼 다음에~'; D.sayT = 2.4;
+}
 function drawDeliv(D, z){
   if (D.state === 'wait') floorRect({ x:DELIV_SPOT.x, y:gy(z, DELIV_SPOT.y), w:96, h:76 }, 'rgba(63,169,138,.16)', '#3fa98a', true, 0);
   person(D, D.col[0], D.col[1], 'customer', D.angry ? C.angry : C.skin, 0, D.gear);
   if (D.sayT > 0) { const c = { x:D.x, y:D.y, sayT:D.sayT }; speech(c, D.state === 'leave' ? 80 : 104, D.say); }
-  if (D.state === 'leave') return;
+  if (D.state === 'leave' || D.state === 'extra') return;
   // 머리 위: 🛵 + 어느 층 물건인지(N층) + 물건 그림 + 개수, 남은 시간 막대
   const [sx, sy] = toS(D.x, D.y, 66), bw = 100*scale, bh = 22*scale, l = sx - bw/2, my = sy - bh/2 + 0.5*scale;
   rr(l, sy - bh, bw, bh, bh/2); ctx.fillStyle = '#e9f8f2'; ctx.fill(); ctx.strokeStyle = '#3fa98a'; ctx.lineWidth = 2; ctx.stroke();
@@ -2054,7 +2072,7 @@ function hud(){
   chipEls.forEach((b, z) => { const h = z !== curZone && !shown.has(z); if (b.hidden !== h) b.hidden = h; });
   if (moreEl) { const n = al.length - shown.size, t = n > 0 ? `+${n}` : ''; if (moreEl.textContent !== t) { moreEl.textContent = t; moreEl.hidden = !n; } }
   // 배달 주문 카드: 미션 카드 위에 진행 중인 배달을 계속 보여 줌
-  const ords = S.zones.map((_, z) => rt(z).deliv).map((D, z) => D && D.state !== 'leave'
+  const ords = S.zones.map((_, z) => rt(z).deliv).map((D, z) => D && D.state !== 'leave' && D.state !== 'extra'
     ? `<div${D.t < 15 ? ' class="low"' : ''}>🛵 <b>${z+1}층으로 배달</b> · ${D.src+1}층 ${itemName(D.src)} ${D.got}/${D.want}개 · ₩${fmt(delivEach()*D.want)} · ${Math.ceil(D.t)}초</div>` : '').join('');   // 갈 층을 맨 앞에 굵게
   if (ords !== shownOrders) { shownOrders = ords; ordersEl.innerHTML = ords; ordersEl.hidden = !ords; layoutT = 0; }
   if ((layoutT -= lastDt) <= 0) {                   // 아래쪽 쌓기: 미션 카드 → 배달 카드 → 알림/안내

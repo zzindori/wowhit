@@ -620,16 +620,19 @@ function awayRate(Z, z){
   const cust = Z.sp.filter(s => s.on).length/CFG.cust.every*(CFG.cust.want[0] + CFG.cust.want[1])/2;
   return Math.min(prod, carry, cust)*valueOf(z)*CFG.away.rate;
 }
+// 잔업을 샀는데 못 버는 이유 (없으면 '')
+const awayWhy = Z => !Z.awayLv ? '' : !Z.wrkLv ? '일꾼 없음' : !Z.sp.some(s => s.on && !s.broken && !s.ruined) ? '생산기 고장' : '';
 function grantAway(sec){
-  const parts = []; let total = 0;
+  const parts = [], miss = []; let total = 0;
   S.zones.forEach((Z, z) => {
     const v = Math.floor(awayRate(Z, z)*Math.min(sec, awayHours(Z)*3600));
-    if (v <= 0) return;
+    if (v <= 0) { if (awayWhy(Z)) miss.push(`${z+1}층(${awayWhy(Z)})`); return; }
     Z.safe = (Z.safe || 0) + v; total += v; parts.push(`${z+1}층 ₩${fmt(v)}`);
   });
-  if (!total) return;
-  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60);
-  toast(`자리 비운 ${h ? h + '시간' : ''}${m || !h ? ` ${m}분` : ''} 동안 ${parts.slice(0, 3).join(' · ')}${parts.length > 3 ? ` 외 ${parts.length-3}곳` : ''} · 층마다 잔업수당을 챙겨요`);
+  if (!total && !miss.length) return;
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), missMsg = miss.length ? ` · 못 받음: ${miss.join(' ')}` : '';
+  if (!total) { toast(`잔업수당 없음${missMsg}`, true); toastT = 6; return; }
+  toast(`자리 비운 ${h ? h + '시간' : ''}${m || !h ? ` ${m}분` : ''} 동안 ${parts.slice(0, 3).join(' · ')}${parts.length > 3 ? ` 외 ${parts.length-3}곳` : ''} · 층마다 잔업수당을 챙겨요${missMsg}`);
   toastT = 6; sfx.mission(); save();
 }
 
@@ -1103,7 +1106,8 @@ function render(){
         cube(SAFE.x, sy - 8, 0, 50, 40, '#a4a9b5', '#7d8391');
         const [dx, dy] = toS(SAFE.x, sy - 8, 20); ctx.fillStyle = '#5c6476'; ctx.beginPath(); ctx.arc(dx, dy, 5*scale, 0, Math.PI*2); ctx.fill();
       }
-      text(Z.safe > 0 ? `잔업수당 ₩${fmt(Z.safe)}` : `잔업수당 · 최대 ${awayHours(Z)}시간`, SAFE.x, sy + 26, 0, Z.safe > 0 ? 14 : 12, Z.safe > 0 ? '#8a6a0e' : C.ink, 'center', SAFE.w - 8);
+      const why = awayWhy(Z);   // 못 버는 상태면 빈 상자 밑에 이유를 빨갛게
+      text(Z.safe > 0 ? `잔업수당 ₩${fmt(Z.safe)}` : why ? `잔업 멈춤 · ${why}` : `잔업수당 · 최대 ${awayHours(Z)}시간`, SAFE.x, sy + 26, 0, Z.safe > 0 ? 14 : 12, Z.safe > 0 ? '#8a6a0e' : why ? C.warn : C.ink, 'center', SAFE.w - 8);
     }});
     list.push({ y:gy(z, CASH.y), draw:() => {
       const n = Math.min(bills(Z, z), 18);

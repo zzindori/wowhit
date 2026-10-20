@@ -1217,6 +1217,52 @@ function slab(x0, y0, x1, y1, h, top, front){
   ctx.fillStyle = front; ctx.fillRect(ax, by, bx-ax, fy-by);
   ctx.lineWidth = 2*scale; ctx.strokeStyle = '#38445a'; ctx.strokeRect(ax, ay, bx-ax, fy-ay);
 }
+// 잔업수당 = 보물상자. 비었으면 닫힌 빛바랜 상자 + 달(밤에 쌓인다는 뜻), 있으면 뚜껑 열림 + 뒤에서 도는 빛 + 금화 더미(최대치 대비 높이) + 월급봉투
+function drawChest(x, y, full, ratio){
+  const now = performance.now(), u = scale, ol = '#38445a', [cx, by] = toS(x, y, 0), w = 56*u, bh = 24*u, top = by - bh;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (full) {                                                 // 뒤에서 도는 빛
+    ctx.save(); ctx.translate(cx, top - 6*u); ctx.rotate(now/2400);
+    const g = ctx.createRadialGradient(0, 0, 4*u, 0, 0, 60*u); g.addColorStop(0, 'rgba(255,226,122,.75)'); g.addColorStop(1, 'rgba(255,226,122,0)');
+    ctx.fillStyle = g;
+    for (let i = 0; i < 8; i++) { ctx.rotate(Math.PI/4); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(60*u, -9*u); ctx.lineTo(60*u, 9*u); ctx.closePath(); ctx.fill(); }
+    ctx.restore();
+    const lid = top - 22*u;                                   // 열린 뚜껑(뒤로 젖혀짐)
+    rr(cx - w/2 + 3*u, lid, w - 6*u, 20*u, 8*u); ctx.fillStyle = '#b8794a'; ctx.fill(); ctx.lineWidth = 2.5*u; ctx.strokeStyle = ol; ctx.stroke();
+    ctx.fillStyle = '#f2c230'; [-16, 16].forEach(dx => { ctx.fillRect(cx + dx*u - 3*u, lid + 1*u, 6*u, 18*u); ctx.strokeRect(cx + dx*u - 3*u, lid + 1*u, 6*u, 18*u); });
+    ctx.fillStyle = '#4a3326'; ctx.fillRect(cx - w/2 + 3*u, top - 3*u, w - 6*u, 5*u);   // 상자 안쪽
+    const mh = (6 + 12*ratio)*u;                              // 금화 더미 + 월급봉투
+    ctx.save(); ctx.translate(cx + 10*u, top - mh + 2*u); ctx.rotate(-0.35);
+    rr(-9*u, -6*u, 18*u, 13*u, 2*u); ctx.fillStyle = '#f6deb0'; ctx.fill(); ctx.lineWidth = 1.8*u; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-9*u, -6*u); ctx.lineTo(0, 1*u); ctx.lineTo(9*u, -6*u); ctx.stroke();
+    ctx.fillStyle = '#e0614a'; ctx.beginPath(); ctx.arc(0, 1*u, 2.5*u, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+    ctx.beginPath(); ctx.ellipse(cx, top, w/2 - 5*u, mh, 0, Math.PI, 0); ctx.fillStyle = '#f4c53a'; ctx.fill(); ctx.lineWidth = 2*u; ctx.stroke();
+    for (let i = 0; i < 3 + Math.round(4*ratio); i++) {
+      const a = Math.PI*(0.15 + 0.7*((i*0.37) % 1)), r = (0.3 + 0.55*((i*0.61) % 1)), px = cx + Math.cos(a)*(w/2 - 9*u)*r*(i % 2 ? 1 : -1), py = top - Math.sin(a)*mh*r - 1*u;
+      ctx.beginPath(); ctx.ellipse(px, py, 4.5*u, 2.8*u, 0, 0, Math.PI*2); ctx.fillStyle = '#ffe58a'; ctx.fill(); ctx.lineWidth = 1.2*u; ctx.strokeStyle = '#b58a12'; ctx.stroke();
+    }
+    ctx.strokeStyle = ol;
+  }
+  // 몸통
+  rr(cx - w/2, top, w, bh, 4*u); ctx.fillStyle = full ? '#c98f5a' : '#a99c8f'; ctx.fill(); ctx.lineWidth = 2.5*u; ctx.strokeStyle = ol; ctx.stroke();
+  ctx.fillStyle = full ? '#f2c230' : '#c9c3b8';
+  [-16, 16].forEach(dx => { ctx.fillRect(cx + dx*u - 3*u, top, 6*u, bh); ctx.strokeRect(cx + dx*u - 3*u, top, 6*u, bh); });
+  if (!full) {                                                // 닫힌 뚜껑 + 달
+    rr(cx - w/2, top - 14*u, w, 16*u, 8*u); ctx.fillStyle = '#b7aa9c'; ctx.fill(); ctx.stroke();
+    [-16, 16].forEach(dx => { ctx.fillStyle = '#c9c3b8'; ctx.fillRect(cx + dx*u - 3*u, top - 13*u, 6*u, 14*u); ctx.strokeRect(cx + dx*u - 3*u, top - 13*u, 6*u, 14*u); });
+    const mx = cx + 20*u, my = top - 26*u + Math.sin(now/700)*2*u;
+    ctx.save(); ctx.beginPath(); ctx.arc(mx, my, 6*u, 0, Math.PI*2); ctx.clip();   // 초승달: 원 안에서 어긋난 원만큼 빼고 칠함
+    ctx.beginPath(); ctx.rect(mx - 7*u, my - 7*u, 14*u, 14*u); ctx.arc(mx + 3*u, my - 2*u, 5*u, 0, Math.PI*2); ctx.fillStyle = '#f2c230'; ctx.fill('evenodd'); ctx.restore();
+  }
+  rr(cx - 6*u, top - 4*u, 12*u, 12*u, 2*u); ctx.fillStyle = full ? '#ffe58a' : '#8b8f9c'; ctx.fill(); ctx.lineWidth = 2*u; ctx.strokeStyle = ol; ctx.stroke();   // 자물쇠
+  ctx.fillStyle = ol; ctx.beginPath(); ctx.arc(cx, top + 1*u, 1.6*u, 0, Math.PI*2); ctx.fill(); ctx.fillRect(cx - 0.8*u, top + 1*u, 1.6*u, 4*u);
+  if (full) {
+    const tw = now/300;
+    text('✦', x + 26, y - 8, 46 + Math.sin(tw)*4, 14, '#fff3b0');
+    text('✦', x - 28, y - 4, 30 + Math.sin(tw + 2)*4, 10, '#fff3b0');
+  }
+}
 // 자동 수금 로봇(자동 수금 산 층만): 돈더미 주위를 돎. 층에 돌아오면 잠깐 빨리 돎
 function cashRobot(z){
   const R = rt(z), dt = lastDt; if (R.spin > 0) R.spin -= dt;
@@ -1365,17 +1411,8 @@ function render(){
       const sy = gy(z, SAFE.y);
       const full = Z.safe > 0;
       floorRect(zr(z, SAFE), full ? 'rgba(232,185,35,.22)' : 'rgba(44,43,53,.08)', full ? '#b58a12' : C.lock, true, 0);   // 돈더미(초록)와 구별되게 금색
-      if (full) {   // 받을 돈 있음: 금색 상자 + 위에 금화 더미(최대치 대비 많을수록 높게) + 반짝임
-        cube(SAFE.x, sy - 8, 0, 50, 40, '#f4d35e', '#c9a227', '#8a6a0e');
-        const max = awayRate(Z, z)*awayHours(Z)*3600, n = 1 + Math.round(5*Math.min(1, max > 0 ? Z.safe/max : 1));
-        for (let i = 0; i < n; i++) cube(SAFE.x + (i%2 ? 6 : -6), sy - 16, 40 + i*5, 18, 5, '#ffe58a', '#d9a21b');
-        const tw = performance.now()/300;
-        text('✦', SAFE.x + 22, sy - 20, 52 + Math.sin(tw)*4, 14, '#fff3b0');
-        text('✦', SAFE.x - 24, sy - 12, 34 + Math.sin(tw + 2)*4, 10, '#fff3b0');
-      } else {      // 비었음: 회색 닫힌 상자, 자물쇠도 회색
-        cube(SAFE.x, sy - 8, 0, 50, 40, '#a4a9b5', '#7d8391');
-        const [dx, dy] = toS(SAFE.x, sy - 8, 20); ctx.fillStyle = '#5c6476'; ctx.beginPath(); ctx.arc(dx, dy, 5*scale, 0, Math.PI*2); ctx.fill();
-      }
+      const max = awayRate(Z, z)*awayHours(Z)*3600;
+      drawChest(SAFE.x, sy - 8, full, full ? Math.min(1, max > 0 ? Z.safe/max : 1) : 0);
       const why = awayWhy(Z);   // 못 버는 상태면 빈 상자 밑에 이유를 빨갛게
       text(Z.safe > 0 ? `잔업수당 ₩${fmt(Z.safe)}` : why ? `잔업 멈춤 · ${why}` : `잔업수당 · 최대 ${awayHours(Z)}시간`, SAFE.x, sy + 26, 0, Z.safe > 0 ? 14 : 12, Z.safe > 0 ? '#8a6a0e' : why ? C.warn : C.ink, 'center', SAFE.w - 8);
     }});

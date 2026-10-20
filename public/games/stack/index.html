@@ -819,12 +819,12 @@ function drawThief(){
 // 5=VIP(40초) > 6=황금(60초에 사라짐) > 7=부서지기 직전 고장 > 2=손님 화나기 직전 > 4=고장·부서짐 > 3=돈더미 MAX(판매만 멈춤) > 1=손님 대기
 const ALERT_CLS = ['', 'warn', 'danger', 'full', 'broken', 'vip', 'gold', 'ruin', 'deliv'];
 const ALERT_RANK = [5, 8, 6, 7, 2, 4, 3, 1];          // 층 칩 앞에 오는 순서(급한 것부터)
-function zoneAlert(z, noDeliv){
+function zoneAlert(z, chip){                       // chip = 왼쪽 아래 층 표시용(황금은 안 보임 — 엘리베이터 선택판에만)
   const Z = S.zones[z]; if (!Z) return 0;
   const V = rt(z).vip;
   if (V && V.state !== 'leave') return 5;
-  const D = rt(z).deliv; if (!noDeliv && D && D.state !== 'leave') return 8;   // 배달 주문 받은 층(위 칩에선 빼고 배달 카드로 보여 줌)
-  if (Z.sp.some(s => s.on && (s.golden || 0) > 0)) return 6;   // 황금 물건 대기(주인공만 나를 수 있음)
+  const D = rt(z).deliv; if (D && D.state !== 'leave') return 8;   // 배달 주문 받은 층(위 칩에선 빼고 배달 카드로 보여 줌)
+  if (!chip && Z.sp.some(s => s.on && (s.golden || 0) > 0)) return 6;   // 황금 물건 대기(주인공만 나를 수 있음)
   if (Z.sp.some(s => s.broken && CFG.broken.ruin - (s.brokenT || 0) <= CFG.broken.warn)) return 7;
   const c = custAlert(z); if (c === 2) return 2;
   if (Z.sp.some(s => s.broken || s.ruined)) return 4;
@@ -2044,7 +2044,7 @@ function hud(){
   // 층 칩: 층이 많아져도 한 줄 — 지금 층 + 경고 있는 층만 보이고, 급한 것부터 앞에 (조용한 층은 숨김. 전체는 엘리베이터 선택판)
   const al = [];
   chipEls.forEach((b, z) => {
-    const a = z === curZone ? 0 : zoneAlert(z);
+    const a = z === curZone ? 0 : zoneAlert(z, true);
     if (chipState[z] !== a) { chipState[z] = a; ALERT_CLS.forEach((c, i) => { if (i) b.classList.toggle(c, a === i); }); b.style.order = z === curZone ? -1 : ALERT_RANK.indexOf(a); }
     if (a) al.push([ALERT_RANK.indexOf(a), z]);
   });

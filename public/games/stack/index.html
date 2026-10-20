@@ -30,7 +30,7 @@ body{margin:0;background:var(--ground);color:var(--ink);overflow:hidden;font-fam
 @keyframes bump{40%{transform:scale(1.14)}}
 .coin{width:26px;height:26px;border-radius:50%;background:var(--cash);color:var(--hud);display:grid;place-items:center;font-size:15px}
 #slowChip{font-size:14px;padding:6px 12px;width:fit-content;background:var(--warn);color:var(--hud)}
-#zones{display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100vw - 140px);pointer-events:none}
+#zones{display:flex;flex-wrap:nowrap;gap:6px;max-width:calc(100vw - 32px);overflow:hidden;pointer-events:none}
 #zones .chip{font-size:14px;min-width:36px;padding:6px 10px;color:var(--ink);flex:none;text-align:center;box-sizing:border-box}
 #zones .chip.on{background:var(--pad);color:var(--hud)}
 #zones .chip.warn{box-shadow:0 3px 0 rgba(44,43,53,.18),inset 0 0 0 3px #e8b923}
@@ -60,7 +60,11 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 #reset.armed{background:var(--warn);color:var(--hud)}
 .hint,.toast{position:fixed;left:50%;transform:translateX(-50%);max-width:calc(100% - 32px);background:rgba(44,43,53,.82);color:var(--hud);
   padding:10px 18px;border-radius:14px;font-size:16px;text-align:center;pointer-events:none;text-wrap:balance}
-.hint{bottom:calc(env(safe-area-inset-bottom,0px) + 104px)}
+.hint,.toast{bottom:calc(env(safe-area-inset-bottom,0px) + var(--stackB,104px))}
+.orders{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + var(--ordB,16px));box-sizing:border-box;
+  width:min(360px,calc(100% - 32px));background:#e9f8f2;border:2px solid #3fa98a;border-radius:14px;padding:6px 12px;pointer-events:none;
+  display:flex;flex-direction:column;gap:3px;font-size:14px;color:#2f6f5b;font-variant-numeric:tabular-nums}
+.orders .low{color:var(--warn)}
 .mission{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:50%;transform:translateX(-50%);box-sizing:border-box;
   width:min(360px,calc(100% - 32px));background:var(--hud);border-radius:16px;box-shadow:0 4px 0 rgba(44,43,53,.18);padding:10px 14px;
   pointer-events:none;display:flex;flex-direction:column;gap:5px}
@@ -69,7 +73,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 .mrow.sub{font-size:13px;color:var(--pad);font-variant-numeric:tabular-nums}
 .mbar{height:6px;border-radius:3px;background:rgba(44,43,53,.12);overflow:hidden}
 .mbar i{display:block;height:100%;width:0;background:var(--cash);transition:width .25s}
-.toast{top:calc(env(safe-area-inset-top,0px) + 110px);background:var(--pad);transition:opacity .3s}
+.toast{background:var(--pad);transition:opacity .3s}
 .toast.bad{background:var(--warn)}
 .elev{position:fixed;top:calc(env(safe-area-inset-top,0px) + 170px);left:50%;transform:translateX(-50%);box-sizing:border-box;
   width:min(320px,calc(100% - 32px));background:#3b3f4a;color:var(--hud);border-radius:18px;padding:14px;box-shadow:0 6px 0 rgba(44,43,53,.25);
@@ -112,7 +116,8 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
   <div class="mrow sub" id="mProg"></div>
   <div class="mbar"><i id="mBar"></i></div>
 </div>
-<div class="hint" id="hint">화면을 드래그해서 움직여요</div>
+<div class="orders" id="orders" hidden></div>
+<div class="hint" id="hint" hidden></div>
 
 <script>
 (() => {
@@ -210,7 +215,7 @@ Object.entries(ART_SRC).forEach(([k, src]) => { if (!src) return; const im = new
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
 const $ = id => document.getElementById(id);
 const slowChip = $('slowChip'), slowSec = $('slowSec');
-const moneyEl = $('money'), hintEl = $('hint'), toastEl = $('toast'), zonesEl = $('zones');
+const moneyEl = $('money'), hintEl = $('hint'), toastEl = $('toast'), zonesEl = $('zones'), ordersEl = $('orders');
 const FONT = "Jua, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
 const C = { ground:'#d9ccb2', tile:'#cfc1a5', ink:'#2c2b35', hud:'#fffaf0', warn:'#c2462f', gold:'#e8b923', ok:'#4c9a66', mid:'#d9a21b',
   billTop:'#7cc794', billFront:'#4c9a66', pad:'#4f6390', padFill:'rgba(79,99,144,.22)', sell:'#3f7fc4', sellFill:'rgba(63,127,196,.20)',
@@ -800,6 +805,7 @@ function drawThief(){
 // 층 경고 — 남은 시간이 짧고 놓치면 손해 큰 순서:
 // 5=VIP(40초) > 6=황금(60초에 사라짐) > 7=부서지기 직전 고장 > 2=손님 화나기 직전 > 4=고장·부서짐 > 3=돈더미 MAX(판매만 멈춤) > 1=손님 대기
 const ALERT_CLS = ['', 'warn', 'danger', 'full', 'broken', 'vip', 'gold', 'ruin', 'deliv'];
+const ALERT_RANK = [5, 8, 6, 7, 2, 4, 3, 1];          // 층 칩 앞에 오는 순서(급한 것부터)
 function zoneAlert(z){
   const Z = S.zones[z]; if (!Z) return 0;
   const V = rt(z).vip;
@@ -1068,6 +1074,7 @@ function update(dt){
   if (keys.has('w') || keys.has('arrowup')) iy--;   if (keys.has('s') || keys.has('arrowdown')) iy++;
   if (joy) { const dx = joy.x-joy.ox, dy = joy.y-joy.oy, d = Math.hypot(dx, dy); if (d > 6) { const m = Math.min(1, d/50); ix = dx/d*m; iy = dy/d*m; } }
   else { const d = Math.hypot(ix, iy); if (d > 1) { ix /= d; iy /= d; } }
+  if ((ix || iy) && !S.tut.moved) S.tut.moved = true;   // 처음 한 번 움직이면 '드래그' 안내 끝
   if (S.slow > 0 && (S.slow -= dt) <= 0) { S.slow = 0; floatText(P.x, P.y, '속도 회복!', C.pad); }
   // VIP 놓친 벌칙: 끝날 때까지 일꾼보다 느린 고정 속도
   const spd = S.slow > 0 ? Math.min(spdOf(S.spdLv), CFG.workerSpeed*CFG.vip.slowSpd) : spdOf(S.spdLv); steer(P, ix*spd, iy*spd, dt); collide(P, cz);
@@ -1985,7 +1992,7 @@ function render(){
   }
 }
 
-let shownSlow = 0, shownMoney = '', lastHint = '', shownMission = '', dispMoney = S.money, lastDt = 0.016;
+let shownSlow = 0, shownMoney = '', lastHint = null, shownOrders = '', layoutT = 0, shownMission = '', dispMoney = S.money, lastDt = 0.016;
 function hud(){
   const w = walletOf(S.walLv);
   const sl = S.slow > 0 ? Math.ceil(S.slow) : 0;
@@ -1996,15 +2003,26 @@ function hud(){
   if (txt !== shownMoney) { shownMoney = txt; moneyEl.textContent = txt; moneyEl.parentElement.classList.toggle('full', S.money >= w); }
   let h = '';
   const gateOpen = S.zones[S.zones.length-1].sp.every(s => s.on);
-  if (!S.tut.sold) h = S.stack.length > 0 ? '파란 판매 칸에 내려놓으면 손님에게 팔려요' : '회색 생산기 앞 칸에 서서 물건을 모아요';
+  if (!S.tut.moved) h = '화면을 드래그해서 움직여요';
+  else if (!S.tut.sold) h = S.stack.length > 0 ? '파란 판매 칸에 내려놓으면 손님에게 팔려요' : '회색 생산기 앞 칸에 서서 물건을 모아요';
   else if (!S.tut.collected) h = '초록 돈더미를 밟아서 돈을 챙겨요';
   else if (!S.tut.upgraded) h = '점선 칸 위에 서 있으면 돈이 들어가 업그레이드돼요';
   else if (!S.tut.zone && gateOpen) h = '오른쪽 위 노란 칸에서 다음 층을 열 수 있어요';
   if (h !== lastHint) { lastHint = h; hintEl.textContent = h; hintEl.hidden = !h; }
-  chipEls.forEach((b, z) => {                       // 다른 층 손님 경고: 1=기다리는 중(노랑), 2=화나기 직전(빨강)
+  // 층 칩: 층이 많아져도 한 줄 — 지금 층 + 경고 있는 층만 보이고, 급한 것부터 앞에 (조용한 층은 숨김. 전체는 엘리베이터 선택판)
+  chipEls.forEach((b, z) => {
     const a = z === curZone ? 0 : zoneAlert(z);
-    if (chipState[z] !== a) { chipState[z] = a; ALERT_CLS.forEach((c, i) => { if (i) b.classList.toggle(c, a === i); }); }
+    if (chipState[z] !== a) { chipState[z] = a; ALERT_CLS.forEach((c, i) => { if (i) b.classList.toggle(c, a === i); });
+      b.hidden = z !== curZone && !a; b.style.order = z === curZone ? -1 : ALERT_RANK.indexOf(a); }
   });
+  // 배달 주문 카드: 미션 카드 위에 진행 중인 배달을 계속 보여 줌
+  const ords = S.zones.map((_, z) => rt(z).deliv).map((D, z) => D && D.state !== 'leave'
+    ? `<div${D.t < 15 ? ' class="low"' : ''}>🛵 ${D.src+1}층 ${itemName(D.src)} ${D.got}/${D.want} → ${shopLabel(z)} · ${Math.ceil(D.t)}초</div>` : '').join('');
+  if (ords !== shownOrders) { shownOrders = ords; ordersEl.innerHTML = ords; ordersEl.hidden = !ords; layoutT = 0; }
+  if ((layoutT -= lastDt) <= 0) {                   // 아래쪽 쌓기: 미션 카드 → 배달 카드 → 알림/안내
+    layoutT = 0.5; const mEl = $('mission'), mh = mEl.hidden ? 0 : mEl.offsetHeight + 8, oh = ordersEl.hidden ? 0 : ordersEl.offsetHeight + 8;
+    document.documentElement.style.setProperty('--ordB', `${16 + mh}px`); document.documentElement.style.setProperty('--stackB', `${16 + mh + oh}px`);
+  }
   const m = S.mission;
   if (m) {
     const prog = Math.min(m.target, (S.stats[m.type] || 0) - m.base), key = m.n + ':' + prog;

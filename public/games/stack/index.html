@@ -42,7 +42,7 @@ body{margin:0;background:var(--ground);color:var(--ink);overflow:hidden;font-fam
 #zones .chip.broken{background:#5b6070;color:var(--hud)}
 #zones .chip.broken::after{content:' 고장';font-size:12px}
 #zones .chip.vip{background:#b58a12;color:var(--hud);animation:blink .6s steps(2) infinite}
-#zones .chip.vip::after{content:' VIP';font-size:12px}
+#zones .chip.vip::after{content:' 건물주';font-size:12px}
 #zones .chip.gold{background:#f4d35e;color:var(--ink)}
 #zones .chip.gold::after{content:' 황금';font-size:12px}
 #zones .chip.ruin{background:var(--warn);color:var(--hud);animation:blink .6s steps(2) infinite}
@@ -99,7 +99,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 <div class="hud">
   <div class="left">
     <div class="money chip"><span class="coin">₩</span><span id="money">0</span></div>
-    <div id="slowChip" class="chip" hidden>🐢 VIP 화남 · 느려짐 <span id="slowSec">0</span>초</div>
+    <div id="slowChip" class="chip" hidden>🐢 건물주 화남 · 느려짐 <span id="slowSec">0</span>초</div>
     <div id="zones" aria-label="층 이동"></div>
   </div>
   <button id="menuBtn" class="chip" type="button" aria-expanded="false" aria-controls="panel">설정</button>
@@ -406,10 +406,11 @@ function rebuildPads(){
 }
 function openZone(){
   S.zones.push(newZone()); S.tut.zone = true; P.stairArm = false;
+  S.zones[S.zones.length - 1].openedAt = Date.now();          // 개업 화환을 몇 분 세워 둠(저장됨)
   rebuildPads(); syncWorkers(); renderZoneChips(); sfx.zone();
   const n = S.zones.length;
-  showBanner(`${n}층 오픈!`); shake(9); burst(P.x, P.y, 20, 70, 'conf', { speed:260, up:320, life:1.6 });
-  toast(`${n}층이 열렸어요! 오른쪽 위 계단으로 올라가요` + (S.warp ? ' · 엘리베이터로도 갈 수 있어요' : ''));
+  showBanner(`🎉 ${shopLabel(n - 1)} 개업!`); shake(9); burst(P.x, P.y, 20, 70, 'conf', { speed:260, up:320, life:1.6 });
+  toast(`축 개업! ${n}층이 열렸어요. 오른쪽 위 계단으로 올라가요` + (S.warp ? ' · 엘리베이터로도 갈 수 있어요' : ''));
 }
 
 function newWorker(z, i){ return { z, i, x:DESK.x+60+i*20, y:gy(z, SELL.y+40), stack:[], inc:0, state:'toSpawn', tgt:null, t:0, wait:0, fx:0, fy:1, svx:0, svy:0 }; }
@@ -762,7 +763,7 @@ function updThief(cz, dt){
     if (thiefCd <= 0 && Z.cash > 0 && (R.cashIdle || 0) > CFG.thief.after && Math.random() < CFG.thief.chance*dt) {
       const side = pick(THIEF_SIDES), path = thiefPath(side, cz);
       thief = { z:cz, x:path[0][0], y:path[0][1], path, wp:1, out:thiefPath(pick(THIEF_SIDES), cz).reverse(), owp:0, state:'come', loot:0, t:0, fx:-1, fy:0, svx:0, svy:0 };
-      toast(`도둑이 ${side[0]}에서 나타났어요! 돈더미를 지키세요`, true); sfx.siren();
+      toast(`먹튀범이 ${side[0]}에서 나타났어요! 돈더미를 지키세요`, true); sfx.siren();
     }
     return;
   }
@@ -779,7 +780,7 @@ function updThief(cz, dt){
     }
   } else if (T.owp < T.out.length - 1) { if (moveTo(T, T.out[T.owp][0], T.out[T.owp][1], CFG.thief.speed, dt, true)) T.owp++; }
   else if (moveTo(T, T.out[T.owp][0], T.out[T.owp][1], CFG.thief.speed, dt, true)) {
-    if (T.loot > 0) toast(`도둑맞았어요 -₩${fmt(T.loot)}`, true);
+    if (T.loot > 0) toast(`먹튀당했어요 -₩${fmt(T.loot)}`, true);
     thief = null; thiefCd = CFG.thief.cooldown; return;
   }
   // 잡기
@@ -788,8 +789,8 @@ function updThief(cz, dt){
     // 훔치기 전에 막으면 기본 현상금 2배('철통 방어') — 놔뒀다 잡는 쪽이 이득이 되지 않게
     const early = T.loot <= 0, risk = early ? Math.ceil(Z.cash*CFG.thief.take) : T.loot;
     const bounty = Math.round(valueOf(T.z)*CFG.thief.bounty*(early ? 2 : 1) + risk*CFG.thief.lootBonus);
-    S.money += bounty; coinsFrom(T.x, T.y, 40, early ? 16 : 10); showBanner(early ? '🛡️ 철통 방어!' : '🚓 도둑 검거!');
-    if (T.loot > 0) { Z.cash += T.loot; Z.bills = bills(Z, T.z) + (T.lootBills || 1); toast(`도둑을 잡았어요! ₩${fmt(T.loot)} 되찾고 현상금 +₩${fmt(bounty)}`); }
+    S.money += bounty; coinsFrom(T.x, T.y, 40, early ? 16 : 10); showBanner(early ? '🛡️ 철통 방어!' : '🚓 먹튀범 검거!');
+    if (T.loot > 0) { Z.cash += T.loot; Z.bills = bills(Z, T.z) + (T.lootBills || 1); toast(`먹튀범을 잡았어요! ₩${fmt(T.loot)} 되찾고 현상금 +₩${fmt(bounty)}`); }
     else toast(`훔치기 전에 막았어요! 현상금 2배 +₩${fmt(bounty)}`);
     setTimeout(() => floatText(T.x, T.y, `현상금 +₩${fmt(bounty)}`, '#b58a12'), 250);
     floatText(T.x, T.y, '잡았다!', C.pad); sfx.caught(); shake(5); burst(T.x, T.y, 40, 16, 'spark', { color:'#fff3b0', speed:140, up:100, g:0, life:0.5 }); S.stats.thief = (S.stats.thief || 0) + 1;
@@ -809,7 +810,7 @@ function drawThief(){
     ctx.fillStyle = C.billFront; ctx.font = `${Math.round(10*scale)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('₩', bx, by - bob);
   }
-  if (T.state !== 'run' || T.loot > 0) text('도둑!', T.x, T.y, 62, 14, C.warn);
+  if (T.state !== 'run' || T.loot > 0) text('먹튀!', T.x, T.y, 62, 14, C.warn);
 }
 
 // 층 경고 — 남은 시간이 짧고 놓치면 손해 큰 순서:
@@ -896,7 +897,7 @@ function updEvents(dt){
     const [lo, hi] = CFG.vip.want;
     R.vip = { x:-30, y:gy(z, VIP_SPOT.y), want:lo + Math.floor(Math.random()*(hi-lo+1)), got:0, sum:0, t:CFG.vip.time,
       state:'come', fx:1, fy:0, svx:0, svy:0, serveT:0 };
-    toast(`${z+1}층에 VIP 손님! 직접 물건을 건네야 해요 (${CFG.vip.time}초)`); sfx.vip();
+    toast(`${z+1}층에 건물주 등장! 직접 물건을 건네야 해요 (${CFG.vip.time}초)`); sfx.vip();
   }
 }
 // ---- 배달 주문: 어느 층 손님이 다른 층 물건을 시킴 (예: 6층 노래방에서 3층 치킨). 주인공만 가져다줄 수 있고 보상은 물건 값 × 3 (+빨리 오면 배달팁) ----
@@ -958,12 +959,13 @@ function drawDeliv(D, z){
 function updVip(z, cz, dt){
   const R = rt(z), V = R.vip; if (!V) return;
   if (V.state === 'leave') { if (moveTo(V, -50, gy(z, VIP_SPOT.y), CFG.cust.speed*1.4, dt, true)) R.vip = null; return; }
-  if (V.state === 'come' && moveTo(V, VIP_SPOT.x, gy(z, VIP_SPOT.y), CFG.cust.speed, dt, true)) { V.state = 'wait'; V.fx = 0.5; V.fy = 1; }
+  if (V.sayT > 0) V.sayT -= dt;
+  if (V.state === 'come' && moveTo(V, VIP_SPOT.x, gy(z, VIP_SPOT.y), CFG.cust.speed, dt, true)) { V.state = 'wait'; V.fx = 0.5; V.fy = 1; V.say = '어디, 장사 잘 되나 볼까?'; V.sayT = 2.4; }
   if ((V.t -= dt) <= 0) {
-    V.state = 'leave'; V.angry = true;
+    V.state = 'leave'; V.angry = true; V.say = '임대료 올려야겠군!'; V.sayT = 2.4;
     // 벌칙: 일정 시간 이동속도 업그레이드 무효. 엘리베이터 없을 땐 먼 층 VIP는 못 가니까 지금 층 VIP만. 겹치면 다시 처음부터
-    if (z === cz || S.warp) { S.slow = CFG.vip.slow; toast(`${z+1}층 VIP가 화나서 떠났어요! 발이 묶였어요 (${CFG.vip.slow}초)`, true); }
-    else toast(`${z+1}층 VIP가 기다리다 떠났어요`, true);
+    if (z === cz || S.warp) { S.slow = CFG.vip.slow; toast(`${z+1}층 건물주가 화나서 떠났어요! 발이 묶였어요 (${CFG.vip.slow}초)`, true); }
+    else toast(`${z+1}층 건물주가 기다리다 떠났어요`, true);
     if (z === cz) sfx.angry();
     return;
   }
@@ -976,12 +978,12 @@ function updVip(z, cz, dt){
     if (V.got >= V.want) {
       const reward = Math.round(V.sum*CFG.vip.mul);
       S.money += reward; S.stats.vip = (S.stats.vip || 0) + 1;
-      V.state = 'leave'; V.happy = true;
-      floatText(V.x, V.y, `VIP +₩${fmt(reward)}`, '#b58a12'); coinsFrom(V.x, V.y, 50, 12); shake(5);
+      V.state = 'leave'; V.happy = true; V.say = V.gold ? '임대료 깎아 줘야겠네!' : '장사 잘하네~'; V.sayT = 2.4;
+      floatText(V.x, V.y, `건물주 +₩${fmt(reward)}`, '#b58a12'); coinsFrom(V.x, V.y, 50, 12); shake(5);
       burst(V.x, V.y, 50, V.gold ? 40 : 20, 'spark', { color:'#ffd23f', speed:140, up:120, g:60, life:0.9 });
-      if (V.gold) showBanner('VIP 대만족!!');
-      if (V.gold) { toast(`VIP 대만족!! 황금 ${V.gold}개 보너스 · +₩${fmt(reward)}`); toastT = 4; [0, 0.25, 0.5].forEach(d => setTimeout(() => sfx.gold(), d*1000)); }
-      else toast(`VIP 만족! 보상 +₩${fmt(reward)}`);
+      if (V.gold) showBanner('건물주 대만족!!');
+      if (V.gold) { toast(`건물주 대만족!! 황금 ${V.gold}개 보너스 · +₩${fmt(reward)}`); toastT = 4; [0, 0.25, 0.5].forEach(d => setTimeout(() => sfx.gold(), d*1000)); }
+      else toast(`건물주 만족! 보상 +₩${fmt(reward)}`);
       sfx.mission(); save();
     }
   }
@@ -993,8 +995,9 @@ function drawVip(V, z){
   ctx.fillStyle = '#f2c230'; ctx.beginPath();                                  // 왕관
   ctx.moveTo(sx - 8*scale, cy); ctx.lineTo(sx - 8*scale, cy - 8*scale); ctx.lineTo(sx - 4*scale, cy - 4*scale); ctx.lineTo(sx, cy - 10*scale);
   ctx.lineTo(sx + 4*scale, cy - 4*scale); ctx.lineTo(sx + 8*scale, cy - 8*scale); ctx.lineTo(sx + 8*scale, cy); ctx.closePath(); ctx.fill();
+  if (V.sayT > 0) speech(V, V.state === 'leave' ? 80 : 104, V.say);
   if (V.state === 'leave') { if (V.angry) text('!!', V.x + 12, V.y, 62, 18, C.warn); return; }
-  text(`VIP ${V.got}/${V.want}${V.gold ? ` · 황금${V.gold}` : ''}`, V.x, V.y, 84, 15, '#8a6a0e');
+  text(`건물주 ${V.got}/${V.want}${V.gold ? ` · 황금${V.gold}` : ''}`, V.x, V.y, 84, 15, '#8a6a0e');
   const r = Math.max(0, V.t/CFG.vip.time), [px, py] = toS(V.x - 20, V.y, 74);
   ctx.fillStyle = 'rgba(44,43,53,.2)'; ctx.fillRect(px, py, 40*scale, 5*scale);
   ctx.fillStyle = r > 0.5 ? C.ok : r > 0.25 ? C.mid : C.warn; ctx.fillRect(px, py, 40*scale*r, 5*scale);
@@ -1582,6 +1585,21 @@ function drawPrinter(s, z, k, p, py){
   ctx.fillStyle = '#cdd3dc'; ctx.fill(); ctx.lineWidth = 3*u; ctx.stroke();
   machLabel(s, z, k, p, py, now, full);
 }
+// 개업 화환: 층을 연 뒤 5분 동안 왼쪽 위에 두 개. 꽃 둥근 판 + 세로 리본('축 개업' / '대박 나세요')
+const WREATH_MS = 5*60*1000;
+function drawWreath(x, z, i){
+  const u = scale, [bx, by] = toS(x, gy(z, 44)), [, ry] = toS(x, gy(z, 44), 64), sway = Math.sin(performance.now()/700 + i)*1.2*u;
+  ctx.strokeStyle = '#8c5a3a'; ctx.lineWidth = 2.5*u; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(bx - 9*u, by); ctx.lineTo(bx - 2*u, ry); ctx.moveTo(bx + 9*u, by); ctx.lineTo(bx + 2*u, ry); ctx.stroke();
+  const cx = bx + sway, cols = i ? ['#ffd1dc', '#ffffff', '#f2c230'] : ['#ff8aa8', '#ffffff', '#ffd1dc'];
+  for (let k = 0; k < 14; k++) { const a = k/14*Math.PI*2; ctx.fillStyle = cols[k % 3]; ctx.beginPath(); ctx.arc(cx + Math.cos(a)*15*u, ry + Math.sin(a)*15*u, 5.5*u, 0, Math.PI*2); ctx.fill(); }
+  ctx.fillStyle = i ? '#fff3b0' : '#ffe0ea'; ctx.beginPath(); ctx.arc(cx, ry, 10*u, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#e0614a'; ctx.beginPath(); ctx.arc(cx, ry, 4*u, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(44,43,53,.3)'; ctx.lineWidth = 1;
+  ctx.fillRect(cx - 5*u, ry + 14*u, 10*u, 36*u); ctx.strokeRect(cx - 5*u, ry + 14*u, 10*u, 36*u);
+  ctx.font = `${Math.round(8*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#e0614a';
+  (i ? '대박나세요' : '축개업').split('').forEach((ch, k, arr) => ctx.fillText(ch, cx, ry + 14*u + (k + 0.5)*36*u/arr.length));
+}
 // 가게 간판: 층 맨 위 벽에 붙은 간판 + 아래 줄무늬 차양 (색은 테마)
 function shopSign(T, fTop){
   const u = scale, [x0, y1] = toS(180, fTop), [x1] = toS(400, fTop), w = x1 - x0, h = 34*u, y0 = y1 - 8*u - h;
@@ -1926,6 +1944,7 @@ function render(){
     rt(z).custs.forEach(c => list.push({ y:c.y, draw:() => customer(c, z) }));
     const V = rt(z).vip; if (V) list.push({ y:V.y, draw:() => drawVip(V, z) });
     const D = rt(z).deliv; if (D) list.push({ y:D.y, draw:() => drawDeliv(D, z) });
+    if (Z.openedAt && Date.now() - Z.openedAt < WREATH_MS) [60, 128].forEach((x, i) => list.push({ y:gy(z, 44), draw:() => drawWreath(x, z, i) }));
   });
 
   // 업그레이드 칸 (지금 층만)

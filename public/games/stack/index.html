@@ -66,6 +66,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
   width:min(360px,calc(100% - 32px));background:#e9f8f2;border:2px solid #3fa98a;border-radius:14px;padding:6px 12px;pointer-events:none;
   display:flex;flex-direction:column;gap:3px;font-size:14px;color:#2f6f5b;font-variant-numeric:tabular-nums}
 .orders .low{color:var(--warn)}
+.orders b{color:#1f6e57;font-weight:normal;background:#c8eee0;border-radius:6px;padding:0 5px}
 .mission{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:50%;transform:translateX(-50%);box-sizing:border-box;
   width:min(360px,calc(100% - 32px));background:var(--hud);border-radius:16px;box-shadow:0 4px 0 rgba(44,43,53,.18);padding:10px 14px;
   pointer-events:none;display:flex;flex-direction:column;gap:5px}
@@ -2015,7 +2016,7 @@ function hud(){
   // 층 칩: 층이 많아져도 한 줄 — 지금 층 + 경고 있는 층만 보이고, 급한 것부터 앞에 (조용한 층은 숨김. 전체는 엘리베이터 선택판)
   const al = [];
   chipEls.forEach((b, z) => {
-    const a = z === curZone ? 0 : zoneAlert(z, true);
+    const a = z === curZone ? 0 : zoneAlert(z);
     if (chipState[z] !== a) { chipState[z] = a; ALERT_CLS.forEach((c, i) => { if (i) b.classList.toggle(c, a === i); }); b.style.order = z === curZone ? -1 : ALERT_RANK.indexOf(a); }
     if (a) al.push([ALERT_RANK.indexOf(a), z]);
   });
@@ -2025,7 +2026,7 @@ function hud(){
   if (moreEl) { const n = al.length - shown.size, t = n > 0 ? `+${n}` : ''; if (moreEl.textContent !== t) { moreEl.textContent = t; moreEl.hidden = !n; } }
   // 배달 주문 카드: 미션 카드 위에 진행 중인 배달을 계속 보여 줌
   const ords = S.zones.map((_, z) => rt(z).deliv).map((D, z) => D && D.state !== 'leave'
-    ? `<div${D.t < 15 ? ' class="low"' : ''}>🛵 ${D.src+1}층 ${itemName(D.src)} ${D.got}/${D.want} → ${shopLabel(z)} · ${Math.ceil(D.t)}초</div>` : '').join('');
+    ? `<div${D.t < 15 ? ' class="low"' : ''}>🛵 <b>${z+1}층으로 배달</b> · ${D.src+1}층 ${itemName(D.src)} ${D.got}/${D.want}개 · ${Math.ceil(D.t)}초</div>` : '').join('');   // 갈 층을 맨 앞에 굵게
   if (ords !== shownOrders) { shownOrders = ords; ordersEl.innerHTML = ords; ordersEl.hidden = !ords; layoutT = 0; }
   if ((layoutT -= lastDt) <= 0) {                   // 아래쪽 쌓기: 미션 카드 → 배달 카드 → 알림/안내
     layoutT = 0.5; const mEl = $('mission'), mh = mEl.hidden ? 0 : mEl.offsetHeight + 8, oh = ordersEl.hidden ? 0 : ordersEl.offsetHeight + 8;

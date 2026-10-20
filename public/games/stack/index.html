@@ -148,6 +148,10 @@ const CFG = {
 const ART_SRC = { player:'', worker:'', customer:'', thief:'', bill:'', machine:'', desk:'',
   item0:'', item1:'', item2:'', item3:'', item4:'', item5:'' };
 const ART = {};
+// 기본 생산기 = 3D 프린터 몸체(코드로 그린 SVG). 노즐 머리·빛·만들어지는 물건은 drawPrinter()가 움직이며 그림.
+// ART_SRC.machine에 그림을 넣으면 그걸 우선 사용(예전 방식)
+const PRN = new Image();
+PRN.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="480" height="400"><defs> <linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9dfe7"/><stop offset="1" stop-color="#93c4d0"/></linearGradient> <linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef9fb"/><stop offset="1" stop-color="#cfe9ef"/></linearGradient> <linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c8ecf5"/></linearGradient> <pattern id="h" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="12" fill="#f2c230"/><rect x="6" width="6" height="12" fill="#38445a"/></pattern></defs> <ellipse cx="120" cy="190" rx="110" ry="8" fill="#2c2b35" opacity=".2"/> <g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"> <path d="M14 136 Q14 128 22 128 L218 128 Q226 128 226 136 L230 150 L10 150 Z" fill="url(#t)"/> <rect x="10" y="148" width="220" height="34" rx="8" fill="url(#b)"/><rect x="10" y="168" width="220" height="14" rx="6" fill="#f2a58c"/> <rect x="150" y="153" width="64" height="11" rx="3" fill="url(#h)" stroke-width="2.5"/> <rect x="20" y="58" width="44" height="92" rx="8" fill="url(#b)"/><path d="M24 50 Q24 44 30 44 L54 44 Q60 44 60 50 L64 60 L20 60 Z" fill="url(#t)"/> <rect x="27" y="70" width="30" height="24" rx="4" fill="#2f3b4f" stroke-width="3"/><path d="M31 87 L37 80 L43 84 L51 75" fill="none" stroke="#7ff0a8" stroke-width="2.5"/> <circle cx="33" cy="106" r="4" fill="#7ff0a8" stroke-width="2"/><circle cx="45" cy="106" r="4" fill="#f2c230" stroke-width="2"/> <rect x="27" y="116" width="30" height="8" rx="3" fill="#f2a58c" stroke-width="2.5"/><rect x="198" y="52" width="18" height="80" rx="5" fill="url(#b)"/> <rect x="54" y="34" width="168" height="22" rx="7" fill="#f2a58c"/><path d="M62 45 h150" stroke="#d98a70" stroke-width="2"/> <path d="M100 124 L168 124 L172 134 L96 134 Z" fill="url(#p)" stroke-width="3"/></g> <path d="M104 129 L166 129" stroke="#8fe3f0" stroke-width="2"/> <g fill="#fff" opacity=".5"><rect x="16" y="151" width="208" height="4" rx="2"/><rect x="24" y="62" width="36" height="4" rx="2"/></g></svg>`);
 Object.entries(ART_SRC).forEach(([k, src]) => { if (!src) return; const im = new Image(); im.onload = () => { ART[k] = im; }; im.src = src; });
 
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
@@ -856,7 +860,12 @@ function update(dt){
         s.t = 0;
         if (s.items < CFG.spawnMax) {
           s.items++;
-          if (Math.random() < CFG.gold.chance && (s.golden || 0) < 3) {
+          const isGold = Math.random() < CFG.gold.chance && (s.golden || 0) < 3;
+          if (z === cz) {                              // 지금 층이면 프린터 받침대에서 더미로 톡 날아감
+            const R = rt(z), pf = R.pfly || (R.pfly = [0, 0, 0]); pf[k]++;
+            fly(prnW(k, z, ...PRN_ITEM), () => spItemPos(z, k, s.items - 1), isGold ? GOLD + z : z, 0.35, () => { pf[k] = Math.max(0, pf[k] - 1); });
+          }
+          if (isGold) {
             s.golden = (s.golden || 0) + 1; (s.goldLife || (s.goldLife = [])).push(CFG.gold.life);
             if (z === cz) { floatText(SP[k].x, gy(z, SP[k].y), '황금!', '#b58a12'); sfx.gold(); burst(SP[k].x, gy(z, SP[k].y), 30, 16, 'spark', { color:'#ffe27a', speed:90, up:140, g:120, life:0.8 }); }
             if (!S.tut.goldOnly) { S.tut.goldOnly = true; toast(`황금 물건! 일꾼은 못 날라요. ${CFG.gold.life}초 안에 직접 가져가면 최고층 값의 10배`); toastT = 4; }
@@ -1081,6 +1090,55 @@ function item(x, y, z, kind){
     if (edge) { ctx.strokeStyle = edge; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx, sy-h/2-1*scale, w*0.55, 0, Math.PI*2); ctx.stroke(); }
   }
 }
+// ---- 3D 프린터 생산기 ----
+// SVG 좌표(240×200)를 월드로: 가로 0.625배, 그림 바닥이 생산기 칸 30 위
+const PU = 0.625, prnBase = (z, k) => gy(z, SP[k].y) - 30;
+const prnW = (k, z, u, v) => [SP[k].x + (u - 120)*PU, prnBase(z, k), (200 - v)*PU];   // SVG (u,v) → 월드 [x, y, 높이]
+const PRN_ITEM = [134, 124];                                  // 받침대 위 물건이 만들어지는 자리
+function drawPrinter(s, z, k, p, py){
+  const now = performance.now(), S2 = (u, v) => { const [x, y, h] = prnW(k, z, u, v); return toS(x, y, h); };
+  const [l, t] = S2(0, 0), u = PU*scale;
+  ctx.drawImage(PRN, l, t, 240*u, 200*u);
+  const full = s.items >= CFG.spawnMax, work = !s.broken && !full, prog = Math.min(1, s.t/CFG.spawnEvery);
+  const nx = work ? Math.sin(now/170)*16 : 0;                 // 일하는 동안 노즐이 좌우로 왔다 갔다
+  if (s.broken) {                                             // 고장: 조종탑 화면 빨갛게 깜빡
+    const [a, b] = S2(27, 70); ctx.fillStyle = Math.floor(now/250) % 2 ? 'rgba(226,80,60,.85)' : 'rgba(120,30,30,.85)';
+    rr(a + 2*scale, b + 2*scale, 26*u, 20*u, 3*scale); ctx.fill();
+  }
+  if (work) {                                                 // 빛줄기(깜빡임) + 받침대 빛
+    const [ax, ay] = S2(134 + nx, 80), [bx, by] = S2(134, 126), fl = 0.55 + 0.45*Math.abs(Math.sin(now/40)) * (Math.random() < 0.12 ? 0.3 : 1);
+    const g = ctx.createLinearGradient(0, ay, 0, by); g.addColorStop(0, `rgba(191,246,255,${0.95*fl})`); g.addColorStop(1, `rgba(191,246,255,${0.2*fl})`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(ax - 4*u, ay); ctx.lineTo(ax + 4*u, ay); ctx.lineTo(bx + 24*u, by); ctx.lineTo(bx - 24*u, by); ctx.closePath(); ctx.fill();
+    const hg = ctx.createRadialGradient(bx, by, 0, bx, by, 40*u); hg.addColorStop(0, `rgba(191,246,255,${0.7*fl})`); hg.addColorStop(1, 'rgba(191,246,255,0)');
+    ctx.fillStyle = hg; ctx.beginPath(); ctx.ellipse(bx, by, 40*u, 11*u, 0, 0, Math.PI*2); ctx.fill();
+    // 만들어지는 물건: 아래부터 차오름 + 맨 위 빛나는 선
+    const [ix, iy, ih] = prnW(k, z, ...PRN_ITEM), [sx, sy] = toS(ix, iy, ih), hh = 22*scale;
+    ctx.save(); ctx.beginPath(); ctx.rect(sx - 14*scale, sy - hh*prog, 28*scale, hh*prog + 3*scale); ctx.clip();
+    item(ix, iy, ih, z); ctx.restore();
+    ctx.fillStyle = `rgba(255,255,255,${0.9*fl})`; ctx.fillRect(sx - 10*scale, sy - hh*prog - 1*scale, 20*scale, 2*scale);
+    if (Math.random() < 0.15) burst(ix + (Math.random() - 0.5)*12, iy, ih + 14*prog, 1, 'spark', { color:'#e9fdff', speed:30, up:30, g:0, life:0.3, size:3 });
+  }
+  // 노즐 머리 (가로대에 매달려 움직임)
+  const [hx, hy] = S2(112 + nx, 26);
+  ctx.lineWidth = 3.5*u; ctx.strokeStyle = '#38445a'; ctx.lineJoin = 'round';
+  rr(hx, hy, 44*u, 40*u, 8*u); ctx.fillStyle = '#e3f3f6'; ctx.fill(); ctx.stroke();
+  const [wx, wy] = S2(120 + nx, 34); rr(wx, wy, 28*u, 8*u, 3*u);
+  ctx.fillStyle = s.broken ? '#e2503c' : work ? (Math.floor(now/120) % 2 ? '#bff6ff' : '#7fe0f0') : '#9aa7b8'; ctx.fill(); ctx.lineWidth = 2*u; ctx.stroke();
+  const [c1x, c1y] = S2(124 + nx, 66), [c2x] = S2(144 + nx, 66), [c3x, c3y] = S2(138 + nx, 80), [c4x] = S2(130 + nx, 80);
+  ctx.beginPath(); ctx.moveTo(c1x, c1y); ctx.lineTo(c2x, c1y); ctx.lineTo(c3x, c3y); ctx.lineTo(c4x, c3y); ctx.closePath();
+  ctx.fillStyle = '#cdd3dc'; ctx.fill(); ctx.lineWidth = 3*u; ctx.stroke();
+  // 위쪽 글자 · 수리 막대
+  const top = py - 160;
+  if (s.broken) {
+    for (let i = 0; i < 3; i++) { const tt = (now/900 + i/3) % 1, [cx, cy] = toS(p.x - 10 + i*10, prnBase(z, k), 80 + tt*40);
+      ctx.fillStyle = `rgba(90,90,100,${0.5*(1-tt)})`; ctx.beginPath(); ctx.arc(cx, cy, (6 + tt*8)*scale, 0, Math.PI*2); ctx.fill(); }
+    const [bx, by] = toS(p.x - 28, top + 12); ctx.fillStyle = 'rgba(255,250,240,.6)'; ctx.fillRect(bx, by, 56*scale, 6*scale);
+    ctx.fillStyle = C.ok; ctx.fillRect(bx, by, 56*scale*Math.min(1, (s.fix || 0)/CFG.broken.fixTime), 6*scale);
+    const on = Math.floor(now/300) % 2, left = CFG.broken.ruin - (s.brokenT || 0);
+    const msg = s.fix > 0 ? '수리 중…' : left <= CFG.broken.warn ? `${Math.ceil(left)}초 뒤 부서짐!` : '고장! 앞에 서서 수리';
+    text(msg, p.x, top, 0, 13, on || s.fix > 0 ? C.ink : C.warn);
+  } else if (full) text('가득 참', p.x, top, 0, 13, C.warn);
+}
 function bill(x, y, z){ const [sx, sy] = toS(x, y, z); if (art('bill', sx, sy, 20*scale, 10*scale)) return; cube(x, y, z, 18, 4, C.billTop, C.billFront); }
 function text(str, x, y, z, size, color, align='center', maxW){
   const [sx, sy] = toS(x, y, z); ctx.font = `${Math.round(size*scale)}px ${FONT}`;
@@ -1232,6 +1290,7 @@ function render(){
       if (!s.on || s.ruined) return;                   // 부서진 생산기는 안 그림(그 자리에 '다시 제작' 칸)
       const p = SP[k], py = gy(z, p.y);
       list.push({ y:py-40, draw:() => {
+        if (!ART.machine && PRN.complete && PRN.naturalWidth) return drawPrinter(s, z, k, p, py);
         const [mx, my] = toS(p.x, py-34);
         if (!art('machine', mx, my, 84*scale, 90*scale)) cube(p.x, py-34, 0, 80, 46, C.machTop, C.machFront);
         const [bx, by] = toS(p.x-28, py-58, 0);
@@ -1251,7 +1310,8 @@ function render(){
       }});
       list.push({ y:py, draw:() => {
         const g0 = s.items - (s.golden || 0), blinkOff = Math.floor(performance.now()/200) % 2;
-        for (let i = 0; i < s.items; i++) {
+        const shown = s.items - ((rt(z).pfly || [])[k] || 0);   // 프린터에서 날아오는 중인 물건은 도착하면 보임
+        for (let i = 0; i < shown; i++) {
           const gold = i >= g0, life = gold && s.goldLife ? s.goldLife[i - g0] : 99;
           if (gold && life < 10 && blinkOff) continue;             // 사라지기 10초 전부터 깜빡임
           const [x, y, zz] = spItemPos(z, k, i); item(x, y, zz, gold ? GOLD + z : z);

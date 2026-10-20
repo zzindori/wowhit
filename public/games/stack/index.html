@@ -270,13 +270,15 @@ const floorOfItem = k => { const b = k % MINE; return b >= GOLD ? b - GOLD : b; 
 const topOf = (stack, f) => { for (let i = stack.length - 1; i >= 0; i--) if (floorOfItem(stack[i]) === f) return i; return -1; };
 const sellIv = l => CFG.sell.base * Math.pow(CFG.sell.decay, l);
 
-const SUF = ['', 'K', 'M', 'B', 'T'];
+// 돈 표시는 한국식 단위: 9,500 → 5.5만 → 410만 → 4,100만 → 1.2억 … (단위 앞 숫자는 최대 4자리, 10 미만이면 소수 한 자리)
+const SUF = ['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정', '재', '극'];
+const comma = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 function fmt(n){
-  n = Math.floor(n); if (n < 1000) return String(n);
-  const e = Math.floor(Math.log10(n)/3), v = n/Math.pow(1000, e);
-  const i = e - SUF.length;
+  n = Math.floor(n); if (n < 10000) return comma(n);
+  const e = Math.floor(Math.log10(n)/4), v = n/Math.pow(10000, e);
+  const i = e - SUF.length;                          // 극(10^48) 넘으면 aa, ab … (거기까진 거의 안 감)
   const suf = e < SUF.length ? SUF[e] : String.fromCharCode(97 + Math.floor(i/26)%26) + String.fromCharCode(97 + i%26);
-  return (v < 100 ? v.toFixed(1).replace(/\.0$/, '') : Math.floor(v)) + suf;
+  return (v < 10 ? v.toFixed(1).replace(/\.0$/, '') : comma(Math.floor(v))) + suf;
 }
 
 // ---- 상태 ----

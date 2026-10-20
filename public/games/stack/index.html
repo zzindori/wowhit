@@ -535,6 +535,29 @@ function moveTo(e, tx, ty, spd, dt, free){
   if (d < 4) { steer(e, 0, 0, dt, free); return true; }
   const s = Math.min(spd, d/dt); steer(e, dx/d*s, dy/d*s, dt, free); return false;
 }
+// ---- 충돌: 프린터 몸체는 못 지나감 (그림보다 약간 작게). 막히면 멈추지 않고 벽 따라 미끄러짐 ----
+const MACH = { hw:62, top:70, bot:28 };            // 프린터 x ±62, y는 생산기 칸 y-70 ~ y-28 (바닥 기준선 근처)
+const BODY_R = 10;                                 // 사람 몸 반지름
+function collide(e, z){
+  const Z = S.zones[z]; if (!Z) return;
+  Z.sp.forEach((s, k) => {
+    if (!s.on || s.ruined) return;
+    const y0 = gy(z, SP[k].y) - MACH.top - BODY_R, y1 = gy(z, SP[k].y) - MACH.bot + BODY_R;
+    const x0 = SP[k].x - MACH.hw - BODY_R, x1 = SP[k].x + MACH.hw + BODY_R;
+    if (e.x <= x0 || e.x >= x1 || e.y <= y0 || e.y >= y1) return;
+    const dl = e.x - x0, dr = x1 - e.x, du = e.y - y0, dd = y1 - e.y, m = Math.min(dl, dr, du, dd);   // 가장 적게 파고든 쪽으로 밀어냄
+    if (m === dl) e.x = x0; else if (m === dr) e.x = x1; else if (m === du) e.y = y0; else e.y = y1;
+  });
+}
+// 일꾼 길찾기: 프린터 줄 위아래를 오갈 땐 프린터 사이 통로로 돌아감 (판매대에 가까운 쪽 통로)
+const CORRIDOR = [275, 275, 485];
+function detour(e, z, k, tx, ty){
+  const yb = gy(z, SP[0].y), top = yb - MACH.top - BODY_R - 6, bot = yb - MACH.bot + BODY_R + 6, cx = CORRIDOR[k];
+  const below = e.y > bot, above = e.y < top, tBelow = ty > bot;
+  if (tBelow ? below : above) return [tx, ty];
+  if (Math.abs(e.x - cx) > 4 && (below || above)) return [cx, e.y];   // 먼저 통로 앞으로 옆걸음
+  return [cx, tBelow ? bot + 8 : top - 8];                            // 통로를 따라 줄을 건넘
+}
 const normalCount = s => s.items - (s.golden || 0);   // 일꾼이 나를 수 있는 일반 물건 수
 function bestSpawner(Z){
   let best = 0, n = -1;
@@ -898,7 +921,7 @@ function update(dt){
   else { const d = Math.hypot(ix, iy); if (d > 1) { ix /= d; iy /= d; } }
   if (S.slow > 0 && (S.slow -= dt) <= 0) { S.slow = 0; floatText(P.x, P.y, '속도 회복!', C.pad); }
   // VIP 놓친 벌칙: 끝날 때까지 일꾼보다 느린 고정 속도
-  const spd = S.slow > 0 ? Math.min(spdOf(S.spdLv), CFG.workerSpeed*CFG.vip.slowSpd) : spdOf(S.spdLv); steer(P, ix*spd, iy*spd, dt);
+  const spd = S.slow > 0 ? Math.min(spdOf(S.spdLv), CFG.workerSpeed*CFG.vip.slowSpd) : spdOf(S.spdLv); steer(P, ix*spd, iy*spd, dt); collide(P, cz);
   if (S.slow > 0 && Math.hypot(P.svx, P.svy) > 20 && (P.mudT = (P.mudT || 0) + dt) > 0.16) {   // 느려진 동안 진흙 발자국
     P.mudT = 0; P.mudSide = !P.mudSide; muds.push({ x:P.x + (P.mudSide ? -5 : 5), y:P.y + 2, t:0 });
   }
@@ -1022,8 +1045,8 @@ function updWorker(w, dt){
   w.t += dt; if (w.bump) w.bump = Math.max(0, w.bump - dt*6);
   if (w.state === 'toSpawn') {
     if (w.tgt === null || !Z.sp[w.tgt].on || Z.sp[w.tgt].ruined) w.tgt = bestSpawner(Z);
-    const p = SP[w.tgt];
-    if (moveTo(w, p.x-24+(w.i%3)*24, gy(w.z, p.y+30), CFG.workerSpeed, dt)) {
+    const p = SP[w.tgt], [gx, gyy] = [p.x-24+(w.i%3)*24, gy(w.z, p.y+30)], [wx, wy] = detour(w, w.z, w.tgt, gx, gyy);
+    if (moveTo(w, wx, wy, CFG.workerSpeed, dt) && wx === gx && wy === gyy) {
       const s = Z.sp[w.tgt];
       if (normalCount(s) > 0 && w.stack.length + w.inc < CFG.workerCap) {
         w.wait = 0;
@@ -1034,12 +1057,13 @@ function updWorker(w, dt){
         }
       } else {
         w.wait += dt;
-        if (w.inc === 0 && (w.stack.length >= CFG.workerCap || (w.stack.length > 0 && w.wait > 1.2))) { w.state = 'toSell'; w.tgt = null; w.wait = 0; }
+        if (w.inc === 0 && (w.stack.length >= CFG.workerCap || (w.stack.length > 0 && w.wait > 1.2))) { w.state = 'toSell'; w.from = w.tgt; w.tgt = null; w.wait = 0; }
         else if (w.stack.length === 0 && w.wait > 1.5) { w.tgt = bestSpawner(Z); w.wait = 0; }
       }
     }
   } else {
-    if (moveTo(w, SELL.x-45+w.i*30, gy(w.z, SELL.y+14), CFG.workerSpeed, dt)) {
+    const sx = SELL.x-45+w.i*30, sy = gy(w.z, SELL.y+14), [wx, wy] = detour(w, w.z, w.from ?? 1, sx, sy);
+    if (moveTo(w, wx, wy, CFG.workerSpeed, dt) && wx === sx && wy === sy) {
       if (w.stack.length > 0) {
         if (w.t > 0.13) {
           w.t = 0; const it = w.stack.pop(); const q = Z.queue.length;
@@ -1048,6 +1072,7 @@ function updWorker(w, dt){
       } else { w.state = 'toSpawn'; w.tgt = null; }
     }
   }
+  collide(w, w.z);                                 // 혹시 걸쳐 있으면 밀어냄 (예전 저장 위치 등)
 }
 
 // ---- 그리기 ----

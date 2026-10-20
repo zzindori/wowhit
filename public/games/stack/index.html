@@ -135,7 +135,7 @@ const CFG = {
   vip: { time: 40, want: [3, 6], mul: 5, goldMul: 5, slow: 10, slowSpd: 0.6 }, // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5), 황금을 건네면 그 물건만 또 × 5,
                                                  //      놓치면 10초 동안 일꾼 속도의 60%로 (업그레이드와 상관없이 일꾼보다 느림)
   autoCost: 1500,                                // 층 자동 수금 칸 비용 (× 8^층)
-  away: { hours: [1, 2, 4, 8], cost: 300, mul: 4, rate: 0.5, min: 60 }, // 야간 금고: 단계별 최대 시간, 비용(× 4^단계 × 8^층), 자동으로 벌던 속도의 몇 %, 몇 초 이상 비워야 계산
+  away: { hours: [1, 2, 4, 8], cost: 300, mul: 4, rate: 0.5, min: 60 }, // 잔업: 단계별 최대 시간, 비용(× 4^단계 × 8^층), 자동으로 벌던 속도의 몇 %, 몇 초 이상 비워야 계산
   cashMax: 40,                                   // 돈더미 최대 장수(손님 결제 1번 = 1장, 금액과 무관). 꽉 차면 챙길 때까지 판매가 멈춤
   drawStackMax: 40                               // 등에 그려지는 최대 개수 (넘으면 숫자로 표시)
 };
@@ -174,7 +174,7 @@ const ZH = CFG.zoneH, W = CFG.worldW;
 // ---- 층 안 배치 (층 로컬 좌표, y는 아래로) ----
 const SP = [{x:170,y:720},{x:380,y:720},{x:590,y:720}];
 const SP_ZONE = {w:110,h:86};
-const SAFE = {x:645, y:370, w:96, h:84}, AWAY_PAD = {x:500, y:370};   // 야간 금고(자리 비운 동안 수익)와 그 업그레이드 칸
+const SAFE = {x:645, y:370, w:96, h:84}, AWAY_PAD = {x:500, y:370};   // 잔업(자리 비운 동안 수익)와 그 업그레이드 칸
 const DESK = {x:300,y:180}, SELL = {x:300,y:258,w:140,h:76}, CASH = {x:490,y:240,w:104,h:92};
 const LINE = {x:290, y:128, gap:42};               // 손님 줄: 판매대 건너편, 왼쪽으로 늘어섬
 const gy = (z, ly) => ly - z*ZH;                   // 층 z는 위로 쌓임
@@ -317,11 +317,11 @@ function rebuildPads(){
       cost:() => Math.round(CFG.sell.cost*Math.pow(CFG.sell.mul, Z.sellLv)*zscale(z)), vis:() => Z.sellLv < CFG.sellMax, apply:() => { Z.sellLv++; } });
     PADS.push({ id:`${z}:auto`, ...at(645, 250, 100, 84), label:'자동 수금', sub:() => '다른 층에 있을 때',
       cost:() => CFG.autoCost*zscale(z), vis:() => !Z.auto, apply:() => { Z.auto = true; } });
-    PADS.push({ id:`${z}:away`, ...at(AWAY_PAD.x, AWAY_PAD.y, 100, 84), label:'야간 금고',
+    PADS.push({ id:`${z}:away`, ...at(AWAY_PAD.x, AWAY_PAD.y, 100, 84), label:'잔업(오프라인)',
       sub:() => Z.awayLv ? `${awayHours(Z)}→${CFG.away.hours[Z.awayLv]}시간` : `${CFG.away.hours[0]}시간`,
       cost:() => Math.round(CFG.away.cost*Math.pow(CFG.away.mul, Z.awayLv || 0)*zscale(z)), vis:() => (Z.awayLv || 0) < CFG.away.hours.length,
       apply:() => { Z.awayLv = (Z.awayLv || 0) + 1;
-        if (!S.tut.away) { S.tut.away = true; toast('야간 금고! 게임을 꺼 둔 동안에도 일꾼이 번 돈이 이 층 금고에 쌓여요 (일꾼 1명 이상)'); toastT = 4; } } });
+        if (!S.tut.away) { S.tut.away = true; toast('잔업 시작! 게임을 꺼 둔 동안에도 일꾼이 번 돈이 이 층 잔업수당으로 쌓여요 (일꾼 1명 이상)'); toastT = 4; } } });
     PADS.push({ id:`${z}:gate`, ...at(STAIR_UP.x, 80, 110, 84), gate:true, label:`${z+2}층 열기`, sub:() => '계단 공사',
       cost:() => CFG.zoneCost*Math.pow(CFG.zoneCostMul, z), vis:() => z === S.zones.length-1 && Z.sp.every(s => s.on), apply:openZone });
   });
@@ -609,7 +609,7 @@ function custAlert(z){
 // ---- 층 이벤트: 기계 고장 / VIP 손님 (자동화가 끝난 층에도 가끔 들를 이유) ----
 const VIP_SPOT = {x:110, y:300};
 let evT = CFG.events.first;
-// ---- 야간 금고: 게임을 꺼 두거나 다른 화면에 있던 동안 층마다 금고에 돈이 쌓임 ----
+// ---- 잔업: 게임을 꺼 두거나 다른 화면에 있던 동안 층마다 잔업수당이 쌓임 ----
 // 일꾼이 있는 층만, 생산·일꾼 운반·손님 중 가장 느린 쪽 기준 속도 × 50%. 단계마다 최대 시간 1→2→4→8시간. 이벤트(고장·VIP·도둑·황금)는 안 일어남
 const awayHours = Z => Z.awayLv ? CFG.away.hours[Z.awayLv-1] : 0;
 function awayRate(Z, z){
@@ -629,7 +629,7 @@ function grantAway(sec){
   });
   if (!total) return;
   const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60);
-  toast(`자리 비운 ${h ? h + '시간' : ''}${m || !h ? ` ${m}분` : ''} 동안 ${parts.slice(0, 3).join(' · ')}${parts.length > 3 ? ` 외 ${parts.length-3}곳` : ''} · 층마다 금고에서 챙겨요`);
+  toast(`자리 비운 ${h ? h + '시간' : ''}${m || !h ? ` ${m}분` : ''} 동안 ${parts.slice(0, 3).join(' · ')}${parts.length > 3 ? ` 외 ${parts.length-3}곳` : ''} · 층마다 잔업수당을 챙겨요`);
   toastT = 6; sfx.mission(); save();
 }
 
@@ -831,7 +831,7 @@ function update(dt){
     fly(cashPos(cz, bills(Z, cz)), () => [P.x, P.y, 40], 'bill', 0.25, () => {});
     floatText(P.x, P.y, `+${fmt(chunk)}`, C.billFront); sfx.cash();
   }
-  // 야간 금고 챙기기
+  // 잔업 챙기기
   if (Z.safe > 0 && inRect(P.x, P.y, zr(cz, SAFE)) && P.cashT > 0.05) {
     P.cashT = 0;
     if (room() <= 0) { if (every('walletFull', 1.2)) { floatText(P.x, P.y, '지갑 MAX', C.warn); sfx.max(); } }
@@ -1088,12 +1088,22 @@ function render(){
       for (let i = 0; i < n; i++) { const [x, y, zz] = deskPos(z, i); item(x, y, zz, q[i]); }
       if (q.length > 16) text(`+${q.length-16}`, DESK.x+66, gy(z, DESK.y-10), 30, 13, C.ink);
     }});
-    if (Z.awayLv) list.push({ y:gy(z, SAFE.y), draw:() => {   // 야간 금고
+    if (Z.awayLv) list.push({ y:gy(z, SAFE.y), draw:() => {   // 잔업
       const sy = gy(z, SAFE.y);
-      floorRect(zr(z, SAFE), Z.safe > 0 ? 'rgba(232,185,35,.22)' : 'rgba(44,43,53,.08)', Z.safe > 0 ? '#b58a12' : C.lock, true, 0);   // 돈더미(초록)와 구별되게 금색
-      cube(SAFE.x, sy - 8, 0, 50, 40, '#8b93a6', '#5c6476');
-      const [dx, dy] = toS(SAFE.x, sy - 8, 20); ctx.fillStyle = C.gold; ctx.beginPath(); ctx.arc(dx, dy, 5*scale, 0, Math.PI*2); ctx.fill();
-      text(Z.safe > 0 ? `금고 ₩${fmt(Z.safe)}` : `금고 · 최대 ${awayHours(Z)}시간`, SAFE.x, sy + 26, 0, Z.safe > 0 ? 14 : 12, Z.safe > 0 ? '#8a6a0e' : C.ink);
+      const full = Z.safe > 0;
+      floorRect(zr(z, SAFE), full ? 'rgba(232,185,35,.22)' : 'rgba(44,43,53,.08)', full ? '#b58a12' : C.lock, true, 0);   // 돈더미(초록)와 구별되게 금색
+      if (full) {   // 받을 돈 있음: 금색 상자 + 위에 금화 더미(최대치 대비 많을수록 높게) + 반짝임
+        cube(SAFE.x, sy - 8, 0, 50, 40, '#f4d35e', '#c9a227', '#8a6a0e');
+        const max = awayRate(Z, z)*awayHours(Z)*3600, n = 1 + Math.round(5*Math.min(1, max > 0 ? Z.safe/max : 1));
+        for (let i = 0; i < n; i++) cube(SAFE.x + (i%2 ? 6 : -6), sy - 16, 40 + i*5, 18, 5, '#ffe58a', '#d9a21b');
+        const tw = performance.now()/300;
+        text('✦', SAFE.x + 22, sy - 20, 52 + Math.sin(tw)*4, 14, '#fff3b0');
+        text('✦', SAFE.x - 24, sy - 12, 34 + Math.sin(tw + 2)*4, 10, '#fff3b0');
+      } else {      // 비었음: 회색 닫힌 상자, 자물쇠도 회색
+        cube(SAFE.x, sy - 8, 0, 50, 40, '#a4a9b5', '#7d8391');
+        const [dx, dy] = toS(SAFE.x, sy - 8, 20); ctx.fillStyle = '#5c6476'; ctx.beginPath(); ctx.arc(dx, dy, 5*scale, 0, Math.PI*2); ctx.fill();
+      }
+      text(Z.safe > 0 ? `잔업수당 ₩${fmt(Z.safe)}` : `잔업수당 · 최대 ${awayHours(Z)}시간`, SAFE.x, sy + 26, 0, Z.safe > 0 ? 14 : 12, Z.safe > 0 ? '#8a6a0e' : C.ink, 'center', SAFE.w - 8);
     }});
     list.push({ y:gy(z, CASH.y), draw:() => {
       const n = Math.min(bills(Z, z), 18);
@@ -1235,7 +1245,7 @@ function hud(){
 // ---- 시작 ----
 let last = 0, saveT = 0;
 function frame(now){
-  // 마지막 저장 뒤 오래 지났으면(게임을 껐거나 다른 화면이었음) 야간 금고 계산. 저장 시각이 없는 예전 저장은 건너뜀
+  // 마지막 저장 뒤 오래 지났으면(게임을 껐거나 다른 화면이었음) 잔업 계산. 저장 시각이 없는 예전 저장은 건너뜀
   const away = S.seen ? (Date.now() - S.seen)/1000 : 0;
   if (away >= CFG.away.min) grantAway(away);
   if (away >= CFG.away.min || !S.seen) save();

@@ -90,6 +90,8 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 .elev button.broken{box-shadow:inset 0 0 0 3px #ffb3a6}
 .elev button.vip{background:#b58a12}
 .elev button.gold{background:#c9a227;color:var(--ink)}
+.elev button.typing{outline:3px solid #fff;outline-offset:-3px}
+.elev .ekey{font-size:12px;opacity:.75;text-align:center}
 .elev button.ruin{background:var(--warn);box-shadow:inset 0 0 0 3px #ffb3a6}
 .elev button.deliv{background:#3fa98a}
 </style>
@@ -112,7 +114,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
   <button id="reset" type="button">처음부터</button>
 </div>
 <div class="toast" id="toast" hidden></div>
-<div class="elev" id="elev" hidden><div class="etitle">엘리베이터 · 몇 층으로 갈까요?</div><div class="ebtns" id="elevBtns"></div></div>
+<div class="elev" id="elev" hidden><div class="etitle">엘리베이터 · 몇 층으로 갈까요?</div><div class="ebtns" id="elevBtns"></div><div class="ekey" id="elevKey" hidden></div></div>
 <div class="mission" id="mission" hidden>
   <div class="mrow"><span class="mlabel">미션</span><span id="mText"></span></div>
   <div class="mrow sub" id="mProg"></div>
@@ -664,9 +666,30 @@ function openElev(){
     else { const a = zoneAlert(z); if (a) b.classList.add(ALERT_CLS[a]); b.addEventListener('click', () => warp(z)); }
     box.appendChild(b);
   });
-  elevEl.hidden = false; tone(1047, 0.12, 'sine', 0.08);
+  const n = S.zones.length, kb = $('elevKey');   // 키보드가 있는 기기(마우스 포인터)만 숫자키 안내
+  kb.hidden = !matchMedia('(pointer: fine)').matches; kb.textContent = n <= 9 ? `숫자키 1~${n}로도 골라요` : `숫자키로도 골라요 (10층 이상은 1·0처럼 이어서)`;
+  elevEl.hidden = false; elevBuf = ''; tone(1047, 0.12, 'sine', 0.08);
 }
-function closeElev(){ elevEl.hidden = true; }
+function closeElev(){ elevEl.hidden = true; elevBuf = ''; clearTimeout(elevBufT); }
+// 엘리베이터 판이 열려 있을 때 숫자키로 층 이동(사용자 요청). 층이 10개 넘으면 두 자리를 이어서 누름 —
+// 더 이어 칠 수 없는 번호면 바로, 아니면 0.6초 기다렸다가 이동(9층 이하는 늘 바로)
+let elevBuf = '', elevBufT = 0;
+function elevKey(d){
+  if (elevEl.hidden) return false;
+  clearTimeout(elevBufT);
+  if (!elevBuf && d === '0') return true;
+  elevBuf += d;
+  const n = S.zones.length, f = Number(elevBuf), btns = [...$('elevBtns').children];
+  btns.forEach((b, i) => b.classList.toggle('typing', i === f - 1));
+  const go = () => {
+    const z = Number(elevBuf) - 1; elevBuf = ''; btns.forEach(b => b.classList.remove('typing'));
+    if (z < 0 || z >= n) { tone(220, 0.1, 'square', 0.06); return; }
+    if (z === curZone) { toast(`지금 ${z+1}층이에요`); tone(220, 0.1, 'square', 0.06); return; }
+    warp(z);
+  };
+  if (f*10 > n) go(); else elevBufT = setTimeout(go, 600);
+  return true;
+}
 let toastT = 0;
 function toast(msg, bad){ toastEl.textContent = msg; toastEl.classList.toggle('bad', !!bad); toastEl.hidden = false; toastEl.style.opacity = 1; toastT = 2.2; }
 
@@ -697,7 +720,7 @@ cv.addEventListener('pointerdown', e => { joy = { id:e.pointerId, ox:e.clientX, 
 cv.addEventListener('pointermove', e => { if (joy && e.pointerId === joy.id) { joy.x = e.clientX; joy.y = e.clientY; } });
 const endJoy = e => { if (joy && e.pointerId === joy.id) joy = null; };
 cv.addEventListener('pointerup', endJoy); cv.addEventListener('pointercancel', endJoy);
-addEventListener('keydown', e => keys.add(e.key.toLowerCase()));
+addEventListener('keydown', e => { if (/^[0-9]$/.test(e.key) && !e.repeat && elevKey(e.key)) { e.preventDefault(); return; } keys.add(e.key.toLowerCase()); });
 addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', () => { keys.clear(); joy = null; });
 

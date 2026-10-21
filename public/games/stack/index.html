@@ -819,42 +819,49 @@ function updCustomers(Z, z, cz, dt){
 // 길은 바깥 → (경유점) → 돈더미, 도망은 그 반대. 계단·엘리베이터(오른쪽 위 x 410~)와 프린터 줄을 가로지르지 않게:
 // 위쪽은 판매대와 엘리베이터 사이 통로(x 395)로 내려오고, 아래쪽은 오른쪽 바깥(x W+40)으로 올라옴
 const THIEF_SIDES = [['위쪽', [[395, -50], [395, 225]]], ['왼쪽', [[-50, 330]]], ['오른쪽', [[W + 50, 330]]], ['아래쪽', [[W + 40, ZH + 40]]]];
+// 도둑 종류(등장할 때 무작위): 먹튀범 = 보통 · 소매치기 = 빠르고 적게(현상금 1.5배) · 보따리 도둑 = 느리지만 왕창
+const THIEVES = {
+  mt:   { name:'먹튀범',     ga:'먹튀범이',     ul:'먹튀범을',     lost:'먹튀당했어요',     shout:'먹튀!',   speed:115, take:0.5,  grab:0.9, bounty:1,   body:'#3b3a48', dark:'#24232e' },
+  pick: { name:'소매치기',   ga:'소매치기가',   ul:'소매치기를',   lost:'소매치기당했어요', shout:'슬쩍!',   speed:160, take:0.25, grab:0.45, bounty:1.5, body:'#7a808c', dark:'#555b66' },
+  bag:  { name:'보따리 도둑', ga:'보따리 도둑이', ul:'보따리 도둑을', lost:'보따리째 털렸어요', shout:'싹쓸이!', speed:80,  take:0.8,  grab:1.6, bounty:1,   body:'#4a3f35', dark:'#2f2822' },
+};
+const TV = T => THIEVES[T.tp] || THIEVES.mt;
 const thiefPath = (side, z) => side[1].map(([x, y]) => [x, gy(z, y)]);
 function updThief(cz, dt){
   if (thiefCd > 0) thiefCd -= dt;
   if (!thief) {
     const Z = S.zones[cz], R = rt(cz);
     if (thiefCd <= 0 && Z.cash > 0 && (R.cashIdle || 0) > CFG.thief.after && Math.random() < CFG.thief.chance*dt) {
-      const side = pick(THIEF_SIDES), path = thiefPath(side, cz);
-      thief = { z:cz, x:path[0][0], y:path[0][1], path, wp:1, out:thiefPath(pick(THIEF_SIDES), cz).reverse(), owp:0, state:'come', loot:0, t:0, fx:-1, fy:0, svx:0, svy:0 };
-      toast(`먹튀범이 ${side[0]}에서 나타났어요! 돈더미를 지키세요`, true); sfx.siren();
+      const side = pick(THIEF_SIDES), path = thiefPath(side, cz), tp = pick(Object.keys(THIEVES));
+      thief = { tp, z:cz, x:path[0][0], y:path[0][1], path, wp:1, out:thiefPath(pick(THIEF_SIDES), cz).reverse(), owp:0, state:'come', loot:0, t:0, fx:-1, fy:0, svx:0, svy:0 };
+      toast(`${THIEVES[tp].ga} ${side[0]}에서 나타났어요! 돈더미를 지키세요`, true); sfx.siren();
     }
     return;
   }
-  const T = thief, Z = S.zones[T.z];
+  const T = thief, Z = S.zones[T.z], K = TV(T);
   if (T.state === 'come') {
     if (Z.cash <= 0) { T.state = 'run'; T.out = [...T.path.slice(0, T.wp)].reverse(); T.owp = 0; }   // 돈이 없어지면 온 길로 돌아감
-    else if (T.wp < T.path.length) { if (moveTo(T, T.path[T.wp][0], T.path[T.wp][1], CFG.thief.speed, dt, true)) T.wp++; }
-    else if (moveTo(T, CASH.x + 34, gy(T.z, CASH.y), CFG.thief.speed, dt, true)) { T.state = 'grab'; T.t = 0; }
+    else if (T.wp < T.path.length) { if (moveTo(T, T.path[T.wp][0], T.path[T.wp][1], K.speed, dt, true)) T.wp++; }
+    else if (moveTo(T, CASH.x + 34, gy(T.z, CASH.y), K.speed, dt, true)) { T.state = 'grab'; T.t = 0; }
   } else if (T.state === 'grab') {
-    if ((T.t += dt) > 0.9) {
-      T.loot = Math.min(Z.cash, Math.max(valueOf(T.z), Math.ceil(Z.cash*CFG.thief.take)));
+    if ((T.t += dt) > K.grab) {
+      T.loot = Math.min(Z.cash, Math.max(valueOf(T.z), Math.ceil(Z.cash*K.take)));
       T.lootBills = bills(Z, T.z); takeCash(Z, T.z, T.loot); T.lootBills -= Z.bills; T.state = 'run';
       if (T.z === cz) { floatText(T.x, T.y, `-₩${fmt(T.loot)}`, C.warn); sfx.stolen(); shake(4); }
     }
-  } else if (T.owp < T.out.length - 1) { if (moveTo(T, T.out[T.owp][0], T.out[T.owp][1], CFG.thief.speed, dt, true)) T.owp++; }
-  else if (moveTo(T, T.out[T.owp][0], T.out[T.owp][1], CFG.thief.speed, dt, true)) {
-    if (T.loot > 0) toast(`먹튀당했어요 -₩${fmt(T.loot)}`, true);
+  } else if (T.owp < T.out.length - 1) { if (moveTo(T, T.out[T.owp][0], T.out[T.owp][1], K.speed, dt, true)) T.owp++; }
+  else if (moveTo(T, T.out[T.owp][0], T.out[T.owp][1], K.speed, dt, true)) {
+    if (T.loot > 0) toast(`${K.lost} -₩${fmt(T.loot)}`, true);
     thief = null; thiefCd = CFG.thief.cooldown; return;
   }
   // 잡기
   if (T.z === cz && Math.hypot(P.x - T.x, P.y - T.y) < 28) {
     // 현상금: 그 층 물건 값 × 15 + 훔쳐 가던(또는 훔쳤을) 돈의 50% — 지갑 한도와 상관없이 바로 들어옴.
     // 훔치기 전에 막으면 기본 현상금 2배('철통 방어') — 놔뒀다 잡는 쪽이 이득이 되지 않게
-    const early = T.loot <= 0, risk = early ? Math.ceil(Z.cash*CFG.thief.take) : T.loot;
-    const bounty = Math.round(valueOf(T.z)*CFG.thief.bounty*(early ? 2 : 1) + risk*CFG.thief.lootBonus);
-    S.money += bounty; coinsFrom(T.x, T.y, 40, early ? 16 : 10); showBanner(early ? '🛡️ 철통 방어!' : '🚓 먹튀범 검거!');
-    if (T.loot > 0) { Z.cash += T.loot; Z.bills = bills(Z, T.z) + (T.lootBills || 1); toast(`먹튀범을 잡았어요! ₩${fmt(T.loot)} 되찾고 현상금 +₩${fmt(bounty)}`); }
+    const early = T.loot <= 0, risk = early ? Math.ceil(Z.cash*K.take) : T.loot;
+    const bounty = Math.round(valueOf(T.z)*CFG.thief.bounty*K.bounty*(early ? 2 : 1) + risk*CFG.thief.lootBonus);
+    S.money += bounty; coinsFrom(T.x, T.y, 40, early ? 16 : 10); showBanner(early ? '🛡️ 철통 방어!' : `🚓 ${K.name} 검거!`);
+    if (T.loot > 0) { Z.cash += T.loot; Z.bills = bills(Z, T.z) + (T.lootBills || 1); toast(`${K.ul} 잡았어요! ₩${fmt(T.loot)} 되찾고 현상금 +₩${fmt(bounty)}`); }
     else toast(`훔치기 전에 막았어요! 현상금 2배 +₩${fmt(bounty)}`);
     setTimeout(() => floatText(T.x, T.y, `현상금 +₩${fmt(bounty)}`, '#b58a12'), 250);
     floatText(T.x, T.y, '잡았다!', C.pad); sfx.caught(); shake(5); burst(T.x, T.y, 40, 16, 'spark', { color:'#fff3b0', speed:140, up:100, g:0, life:0.5 }); S.stats.thief = (S.stats.thief || 0) + 1;
@@ -863,18 +870,40 @@ function updThief(cz, dt){
 }
 function drawThief(){
   const T = thief; if (!T) return;
-  person(T, '#3b3a48', '#24232e', 'thief');
+  const K = TV(T);
+  person(T, K.body, K.dark, 'thief');
   if (ART.thief) return;
-  const [sx, sy] = toS(T.x, T.y);
-  const bob = Math.hypot(T.svx, T.svy) > 20 ? Math.abs(Math.sin(performance.now()/90))*2*scale : 0;
-  ctx.fillStyle = '#24232e'; ctx.fillRect(sx - 9*scale, sy - 44*scale - bob, 18*scale, 5*scale);      // 눈가리개
-  if (T.loot > 0) {
-    const [bx, by] = toS(T.x - T.fx*12, T.y, 34);
-    ctx.fillStyle = '#c9b48a'; ctx.beginPath(); ctx.arc(bx, by - bob, 9*scale, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = C.billFront; ctx.font = `${Math.round(10*scale)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('₩', bx, by - bob);
+  const [sx, sy] = toS(T.x, T.y), u = scale;
+  const bob = Math.hypot(T.svx, T.svy) > 20 ? Math.abs(Math.sin(performance.now()/90))*2*u : 0;
+  const hx = sx + T.fx*2*u, hy = sy - 40*u - bob + T.fy*1.5*u;
+  const [bx, by0] = toS(T.x - T.fx*12, T.y, 34), by = by0 - bob;   // 등 뒤(가는 쪽 반대) 짐 자리
+  if (T.tp === 'pick') {                           // 소매치기: 회색 후드 푹 + 흰 마스크, 훔치면 손에 지갑
+    ctx.fillStyle = K.dark; ctx.beginPath(); ctx.arc(hx, hy, 10.5*u, Math.PI*1.05, Math.PI*1.95); ctx.lineTo(hx + 10*u, hy + 2*u); ctx.lineTo(hx + 8*u, hy + 2*u); ctx.arc(hx, hy, 8*u, Math.PI*1.9, Math.PI*1.1, true); ctx.lineTo(hx - 10*u, hy + 2*u); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#f4f6f8'; rr(hx - 6*u, hy + 1*u, 12*u, 6*u, 2.5*u); ctx.fill();
+    if (T.loot > 0) {
+      const [wx, wy] = toS(T.x + T.fx*11, T.y, 18);
+      ctx.fillStyle = '#8a5a3a'; rr(wx - 6*u, wy - 4*u - bob, 12*u, 8*u, 2*u); ctx.fill();
+      ctx.fillStyle = C.billFront; ctx.fillRect(wx - 4*u, wy - 6*u - bob, 8*u, 3*u);
+    }
+  } else if (T.tp === 'bag') {                     // 보따리 도둑: 초록 당초무늬 보자기 — 머리에 쓰고(코 밑 매듭), 등에 짊어짐(훔치면 빵빵)
+    const r = (T.loot > 0 ? 13 : 8)*u, [bx, by0] = toS(T.x - T.fx*17, T.y, 24), by = by0 - bob;   // 머리를 가리지 않게 등 아래쪽
+    ctx.fillStyle = '#2f8a4e'; ctx.beginPath(); ctx.arc(bx, by - (T.loot > 0 ? 4 : 0)*u, r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#e8f3e6'; ctx.lineWidth = 1.2*u;
+    [[-0.4, -0.3], [0.35, 0.1], [-0.1, 0.45]].forEach(([dx, dy]) => { const cx = bx + dx*r, cy = by - (T.loot > 0 ? 4 : 0)*u + dy*r; ctx.beginPath(); ctx.arc(cx, cy, r*0.22, 0, Math.PI*1.5); ctx.stroke(); });
+    ctx.fillStyle = '#246b3c'; ctx.beginPath(); ctx.ellipse(bx, by - r - (T.loot > 0 ? 4 : 0)*u, 4*u, 2.5*u, 0, 0, Math.PI*2); ctx.fill();   // 위 매듭
+    ctx.fillStyle = '#2f8a4e'; ctx.beginPath(); ctx.arc(hx, hy, 9.6*u, Math.PI, 0); ctx.lineTo(hx + 9.6*u, hy + 3*u); ctx.lineTo(hx - 9.6*u, hy + 3*u); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#e8f3e6'; ctx.beginPath(); ctx.arc(hx - 3*u, hy - 4*u, 2.2*u, 0, Math.PI*1.5); ctx.stroke();
+    ctx.fillStyle = '#24232e'; ctx.fillRect(hx - 7*u, hy - 1*u, 14*u, 3*u);                         // 눈만 빼꼼
+    ctx.fillStyle = '#2f8a4e'; ctx.beginPath(); ctx.arc(hx - 2.5*u, hy + 5*u, 2.2*u, 0, Math.PI*2); ctx.arc(hx + 2.5*u, hy + 5*u, 2.2*u, 0, Math.PI*2); ctx.fill();   // 코 밑 매듭
+  } else {                                         // 먹튀범: 검은 눈가리개, 훔치면 돈 자루
+    ctx.fillStyle = '#24232e'; ctx.fillRect(sx - 9*u, sy - 44*u - bob, 18*u, 5*u);
+    if (T.loot > 0) {
+      ctx.fillStyle = '#c9b48a'; ctx.beginPath(); ctx.arc(bx, by, 9*u, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = C.billFront; ctx.font = `${Math.round(10*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('₩', bx, by);
+    }
   }
-  if (T.state !== 'run' || T.loot > 0) text('먹튀!', T.x, T.y, 62, 14, C.warn);
+  if (T.state !== 'run' || T.loot > 0) text(T.state === 'come' ? K.name : K.shout, T.x, T.y, 62, 14, C.warn);
 }
 
 // 층 경고 — 남은 시간이 짧고 놓치면 손해 큰 순서:

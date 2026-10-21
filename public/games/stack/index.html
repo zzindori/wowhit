@@ -1264,7 +1264,7 @@ function update(dt){
     const it = S.stack.splice(idx, 1)[0], q = Z.queue.length;
     fly(stackPos(P, idx), () => deskPos(cz, q), it, 0.2, () => { Z.queue.push(it + MINE); });
     sfx.drop();
-    if (!S.tut.direct) { S.tut.direct = true; toast('직접 내려놓은 물건은 2배 값에 팔려요! (파란 테두리)'); toastT = 3.5; }
+    if (!S.tut.direct) { S.tut.direct = true; toast('직접 내려놓은 물건은 2배 값에 팔려요! (파란 ×2 딱지)'); toastT = 3.5; }
     }
   }
   // 돈 줍기
@@ -1399,12 +1399,17 @@ function cube(x, y, z, s, h, top, front, edge){
   ctx.strokeStyle = edge || 'rgba(44,43,53,.22)'; ctx.lineWidth = edge ? 2 : 1;
   ctx.strokeRect(sx-w/2+.5, sy-hh-d+.5, w-1, hh+d-1);
 }
-function item(x, y, z, kind){
+// 직접 납품 딱지(값 2배): 물건 모양과 상관없이 같은 자리 — 물건 오른쪽 위 파란 '×2'
+function mineBadge(x, y, z){
+  const [sx, sy] = toS(x, y, z), u = scale, bx = sx + 7*u, by = sy - 15*u, bw = 11.5*u, bh = 7*u;
+  rr(bx - bw/2, by - bh/2, bw, bh, bh/2); ctx.fillStyle = '#2f8fe0'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2*u; ctx.stroke();
+  ctx.font = `${Math.round(6.5*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff'; ctx.fillText(`×${CFG.direct.mul}`, bx, by + 0.4*u);
+}
+function item(x, y, z, kind, noBadge){
   const v = Math.floor(kind / VAR); kind %= VAR;
-  if (kind >= MINE) {                               // 직접 납품: 파란 테두리
+  if (kind >= MINE) {                               // 직접 납품: 물건 + '×2' 딱지 (판매대는 딱지를 맨 나중에 따로 — 옆·윗줄 물건에 안 가리게)
     item(x, y, z, v*VAR + kind % MINE);
-    const [sx, sy] = toS(x, y, z), w = 14*scale, hh = 9*scale, d = 7*scale;
-    ctx.strokeStyle = '#3fb6ff'; ctx.lineWidth = 2; ctx.strokeRect(sx - w/2 - 1, sy - hh - d - 1, w + 2, hh + d + 2);
+    if (!noBadge) mineBadge(x, y, z);
     return;
   }
   if (kind >= GOLD) {
@@ -2487,7 +2492,8 @@ function render(){
       const [sx, sy] = toS(DESK.x, gy(z, DESK.y+14));
       if (!art('desk', sx, sy, 110*scale, 70*scale)) { if (DSK.complete && DSK.naturalWidth) drawDesk(z); else cube(DESK.x, gy(z, DESK.y+14), 0, 110, 26, C.deskTop, C.deskFront); }
       const q = Z.queue, n = Math.min(q.length, 16);
-      for (let i = 0; i < n; i++) { const [x, y, zz] = deskPos(z, i); item(x, y, zz, q[i]); }
+      for (let i = 0; i < n; i++) { const [x, y, zz] = deskPos(z, i); item(x, y, zz, q[i], true); }
+      for (let i = 0; i < n; i++) if (q[i] % VAR >= MINE) mineBadge(...deskPos(z, i));
       if (q.length > 16) text(`+${q.length-16}`, DESK.x-72, gy(z, DESK.y-10), 30, 13, C.ink);
     }});
     if (Z.awayLv) list.push({ y:gy(z, SAFE.y), draw:() => {   // 잔업

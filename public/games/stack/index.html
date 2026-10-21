@@ -169,19 +169,28 @@ PRN.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="
 const svgImg = svg => { const im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); return im; };
 // 1층 분식 조리대 3대(사용자 요청으로 분리): 0번 떡볶이 철판 · 1번 김밥 말이대 · 2번 순대 찜기. 받침·메뉴판은 공통 틀, 위 조리 도구만 다름.
 // 프린터와 같은 틀(240×200, 0.625배)이라 충돌·물건 자리 계산을 같이 씀. 메뉴판 글자·움직이는 부분은 animTteok/animKimbap/animSundae가 그림
-const bunsik = (defs, tool, top) => svgImg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="480" height="400"><defs><linearGradient id="st" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2f6"/><stop offset="1" stop-color="#c3ccd8"/></linearGradient><linearGradient id="bd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#46685a"/><stop offset="1" stop-color="#3a5a4c"/></linearGradient>${defs}</defs><ellipse cx="120" cy="190" rx="110" ry="8" fill="#2c2b35" opacity=".2"/><g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><path d="M18 66 H222 Q228 66 229 72 L232 124 H8 L11 72 Q12 66 18 66 Z" fill="#e3e8ee"/><path d="M14 119 H226" stroke="#fff" stroke-width="2" opacity=".7"/><rect x="38" y="40" width="7" height="76" rx="2" fill="#a87449"/><rect x="195" y="40" width="7" height="76" rx="2" fill="#a87449"/><rect x="26" y="14" width="188" height="48" rx="6" fill="url(#bd)" stroke="#8c5a3a" stroke-width="5"/><rect x="26" y="14" width="188" height="48" rx="6" fill="none"/><rect x="12" y="122" width="216" height="60" rx="8" fill="url(#st)"/><rect x="12" y="166" width="216" height="16" rx="6" fill="#f2a58c"/><circle cx="40" cy="144" r="7" fill="#4a5670"/><circle cx="62" cy="144" r="7" fill="#4a5670"/><rect x="150" y="134" width="56" height="22" rx="4" fill="#e0614a"/>${tool}</g>${top}<g fill="#fff" opacity=".5"><rect x="18" y="126" width="204" height="4" rx="2"/></g><g fill="#fff"><circle cx="158" cy="145" r="2"/><circle cx="178" cy="145" r="2"/><circle cx="198" cy="145" r="2"/></g></svg>`);
-// 떡볶이: 넓은 철판 가득 빨간 떡볶이 + 어묵 꼬치, 오른쪽 컵 받침과 종이컵 탑
+// 위에서 내려다본 넓은 작업대(사용자: '생산기를 위에서 본 듯이 책상을 넓게') — 윗판 y 44~134, 앞판 132~182, 뒤 가장자리에 작은 메뉴판.
+// 완성된 물건은 오른쪽 앞 쟁반(172~222 × 106~126) 위에 생김(spot [197, 122])
+const bunsik = (defs, tool, top) => svgImg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="480" height="400"><defs><linearGradient id="st" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2f6"/><stop offset="1" stop-color="#c3ccd8"/></linearGradient><linearGradient id="wt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfe5ec"/><stop offset="1" stop-color="#f1f4f8"/></linearGradient><linearGradient id="bd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#46685a"/><stop offset="1" stop-color="#3a5a4c"/></linearGradient>${defs}</defs><ellipse cx="120" cy="190" rx="112" ry="8" fill="#2c2b35" opacity=".2"/><g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><path d="M26 44 H214 Q222 44 223 52 L232 134 H8 L17 52 Q18 44 26 44 Z" fill="url(#wt)"/><rect x="80" y="36" width="5" height="12" fill="#8c5a3a" stroke-width="2"/><rect x="155" y="36" width="5" height="12" fill="#8c5a3a" stroke-width="2"/><rect x="64" y="14" width="112" height="26" rx="5" fill="url(#bd)" stroke="#8c5a3a" stroke-width="4"/><rect x="12" y="132" width="216" height="50" rx="8" fill="url(#st)"/><rect x="12" y="168" width="216" height="14" rx="6" fill="#f2a58c"/><circle cx="40" cy="151" r="6" fill="#4a5670"/><circle cx="60" cy="151" r="6" fill="#4a5670"/><rect x="152" y="142" width="54" height="18" rx="4" fill="#e0614a"/><rect x="172" y="106" width="50" height="20" rx="3" fill="#fff" stroke-width="2.5"/>${tool}</g>${top}<g fill="#fff" opacity=".6"><path d="M14 130 H226" stroke="#fff" stroke-width="2"/><rect x="24" y="48" width="190" height="2.5" rx="1.2"/></g><g fill="#fff"><circle cx="160" cy="151" r="2"/><circle cx="179" cy="151" r="2"/><circle cx="198" cy="151" r="2"/></g></svg>`);
+// 떡볶이: 넓은 사각 철판(위에서 봄) 가득 빨간 양념 + 떡·어묵, 오른쪽 뒤 종이컵 탑(위에서 보면 동그라미)
 const BUN_T = bunsik('',
-  '<path d="M14 112 Q14 80 38 80 H142 Q166 80 166 112 Z" fill="#4a5670"/><rect x="172" y="104" width="52" height="8" rx="2" fill="#dfe5ec" stroke-width="2.5"/><path d="M207 104 L205 74 H223 L221 104 Z" fill="#fff" stroke-width="2.5"/>',
-  '<ellipse cx="90" cy="94" rx="70" ry="11" fill="#e8452c" stroke="#38445a" stroke-width="2.5"/><g stroke="#38445a" stroke-width="1.6" fill="#fff4e0"><rect x="30" y="90" width="15" height="5" rx="2.5"/><rect x="50" y="96" width="15" height="5" rx="2.5"/><rect x="68" y="89" width="15" height="5" rx="2.5"/><rect x="88" y="97" width="15" height="5" rx="2.5"/><rect x="106" y="90" width="15" height="5" rx="2.5"/><rect x="126" y="96" width="15" height="5" rx="2.5"/><rect x="62" y="100" width="12" height="4" rx="2"/><rect x="112" y="100" width="12" height="4" rx="2"/></g><g stroke="#38445a" stroke-width="1.6" fill="#f2c27a"><path d="M80 93 l8 -3 l-1 7 z"/><path d="M140 90 l8 2 l-6 5 z"/></g><g stroke-linecap="round"><path d="M46 92 L36 66" stroke="#a87449" stroke-width="2.5"/><path d="M36.5 84 q4 -2 2 -5 q-2 -3 2 -5 q4 -2 2 -5" fill="none" stroke="#38445a" stroke-width="5"/><path d="M36.5 84 q4 -2 2 -5 q-2 -3 2 -5 q4 -2 2 -5" fill="none" stroke="#f2c27a" stroke-width="3"/><path d="M98 90 L106 64" stroke="#a87449" stroke-width="2.5"/><path d="M101.5 82 q4 -1 2 -5 q-2 -3 2 -5 q4 -1 2 -5" fill="none" stroke="#38445a" stroke-width="5"/><path d="M101.5 82 q4 -1 2 -5 q-2 -3 2 -5 q4 -1 2 -5" fill="none" stroke="#f2c27a" stroke-width="3"/></g><g stroke="#38445a" stroke-width="1.6"><path d="M206 82 H222 M206 90 H222 M207 98 H221"/></g>');
-// 김밥: 왼쪽 밥통 + 재료 통(단무지·시금치·당근·햄), 오른쪽 김발
+  '<rect x="20" y="56" width="142" height="64" rx="8" fill="#4a5670"/><rect x="27" y="62" width="128" height="52" rx="5" fill="#e8452c" stroke-width="2"/>' +
+  '<circle cx="197" cy="74" r="15" fill="#fff" stroke-width="2.5"/><circle cx="197" cy="74" r="11" fill="none" stroke="#e0614a" stroke-width="2"/><circle cx="197" cy="74" r="6" fill="#f1f4f8" stroke-width="1.5"/>',
+  '<g stroke="#38445a" stroke-width="1.4" fill="#fff4e0">' + [[36, 70], [60, 92], [84, 68], [102, 96], [126, 74], [44, 100], [118, 102], [72, 80], [140, 90]].map(([x, y], i) => `<rect x="${x}" y="${y}" width="15" height="6" rx="3" transform="rotate(${(i*37) % 50 - 25} ${x + 7} ${y + 3})"/>`).join('') + '</g>' +
+  '<g stroke="#38445a" stroke-width="1.4"><path d="M50 84 L76 78" stroke="#a87449" stroke-width="2"/><rect x="52" y="78" width="20" height="7" rx="2" fill="#f2c27a" transform="rotate(-12 62 82)"/><path d="M98 108 L126 104" stroke="#a87449" stroke-width="2"/><rect x="100" y="102" width="20" height="7" rx="2" fill="#f2c27a" transform="rotate(-8 110 105)"/></g>');
+// 김밥: 왼쪽 뒤 밥통(위에서 본 둥근 뚜껑) · 가운데 뒤 재료 통 4칸 · 앞 김발(말이대)
 const BUN_K = bunsik('<pattern id="mt" width="7" height="7" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#d7c08a"/><rect width="3" height="7" fill="#bfa66a"/></pattern>',
-  '<rect x="26" y="74" width="60" height="38" rx="12" fill="#eef2f6"/><path d="M28 82 Q56 62 84 82 Z" fill="#dfe5ec"/><rect x="49" y="66" width="14" height="5" rx="2.5" fill="#4a5670" stroke-width="2.5"/><rect x="42" y="92" width="28" height="9" rx="3" fill="#e0614a" stroke-width="2"/><rect x="92" y="92" width="36" height="20" rx="2" fill="#dfe5ec" stroke-width="2.5"/><rect x="132" y="102" width="92" height="12" rx="2" fill="url(#mt)" stroke-width="2.5"/>',
-  '<g stroke="#38445a" stroke-width="1"><rect x="95" y="95" width="30" height="3.4" rx="1" fill="#f2c230"/><rect x="95" y="99" width="30" height="3.4" rx="1" fill="#5aa85d"/><rect x="95" y="103" width="30" height="3.4" rx="1" fill="#f08a24"/><rect x="95" y="107" width="30" height="3.4" rx="1" fill="#f2a58c"/></g><g fill="#fff" opacity=".6"><rect x="32" y="84" width="4" height="20" rx="2"/></g>');
-// 순대: 왼쪽 은색 찜통(뚜껑은 animSundae가 덜컹이며 그림), 오른쪽 나무 도마
-const BUN_S = bunsik('<linearGradient id="pt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#eef2f6"/><stop offset="1" stop-color="#a9b4c4"/></linearGradient>',
-  '<rect x="14" y="76" width="12" height="7" rx="3" fill="#4a5670" stroke-width="2.5"/><rect x="114" y="76" width="12" height="7" rx="3" fill="#4a5670" stroke-width="2.5"/><rect x="24" y="70" width="92" height="42" rx="6" fill="url(#pt)"/><rect x="21" y="88" width="98" height="6" rx="3" fill="#c3ccd8" stroke-width="2.5"/><rect x="130" y="100" width="94" height="13" rx="3" fill="#d9a46a"/>',
-  '<g stroke="#b5814a" stroke-width="1.4" fill="none"><path d="M136 105 H170 M182 109 H216 M150 103 H200"/></g><g fill="#fff" opacity=".6"><rect x="30" y="74" width="4" height="34" rx="2"/></g>');
+  '<circle cx="48" cy="76" r="22" fill="#eef2f6"/><circle cx="48" cy="76" r="15" fill="#dfe5ec" stroke-width="2"/><rect x="40" y="73" width="16" height="6" rx="3" fill="#4a5670" stroke-width="2"/><rect x="62" y="88" width="10" height="8" rx="2" fill="#e0614a" stroke-width="2"/>' +
+  '<rect x="84" y="56" width="70" height="38" rx="4" fill="#dfe5ec"/><rect x="88" y="60" width="30" height="14" rx="2" fill="#f2c230" stroke-width="1.5"/><rect x="120" y="60" width="30" height="14" rx="2" fill="#5aa85d" stroke-width="1.5"/><rect x="88" y="76" width="30" height="14" rx="2" fill="#f08a24" stroke-width="1.5"/><rect x="120" y="76" width="30" height="14" rx="2" fill="#f2a58c" stroke-width="1.5"/>' +
+  '<rect x="38" y="100" width="124" height="26" rx="3" fill="url(#mt)" stroke-width="2.5"/>' +
+  '<rect x="180" y="58" width="34" height="12" rx="2" fill="#f6deb0" stroke-width="2"/><rect x="180" y="70" width="34" height="12" rx="2" fill="#f6deb0" stroke-width="2"/>',
+  '<g fill="#fff" opacity=".6"><rect x="30" y="64" width="4" height="22" rx="2"/></g>');
+// 순대: 왼쪽 큰 찜통(위에서 본 둥근 뚜껑 — 덜컹임은 animSundae) · 오른쪽 앞 나무 도마 · 오른쪽 뒤 접시 탑
+const BUN_S = bunsik('<radialGradient id="pt" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#f4f6f9"/><stop offset="1" stop-color="#a9b4c4"/></radialGradient>',
+  '<rect x="10" y="76" width="12" height="10" rx="3" fill="#4a5670" stroke-width="2.5"/><rect x="94" y="76" width="12" height="10" rx="3" fill="#4a5670" stroke-width="2.5"/><circle cx="58" cy="82" r="38" fill="url(#pt)"/>' +
+  '<rect x="104" y="98" width="62" height="28" rx="4" fill="#d9a46a"/>' +
+  '<circle cx="197" cy="74" r="15" fill="#fff" stroke-width="2.5"/><circle cx="197" cy="74" r="10" fill="none" stroke="#cfd6e0" stroke-width="2"/>',
+  '<g stroke="#b5814a" stroke-width="1.4" fill="none"><path d="M110 106 H160 M114 114 H156 M110 121 H150"/></g>');
 const BUNG = svgImg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="480" height="400"><defs><linearGradient id="ir" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d6474"/><stop offset="1" stop-color="#3b414e"/></linearGradient><pattern id="rf" width="24" height="10" patternUnits="userSpaceOnUse"><rect width="12" height="10" fill="#2d4a7a"/><rect x="12" width="12" height="10" fill="#fff"/></pattern></defs><ellipse cx="120" cy="190" rx="110" ry="8" fill="#2c2b35" opacity=".2"/><g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><path d="M20 72 H220 Q226 72 227 78 L230 122 H10 L13 78 Q14 72 20 72 Z" fill="#d9dde4"/><path d="M16 117 H224" stroke="#fff" stroke-width="2" opacity=".7"/><rect x="28" y="36" width="7" height="84" rx="2" fill="#a87449"/><rect x="205" y="36" width="7" height="84" rx="2" fill="#a87449"/><path d="M14 22 H226 V40 Q217 50 208 40 Q199 50 190 40 Q181 50 172 40 Q163 50 154 40 Q145 50 136 40 Q127 50 118 40 Q109 50 100 40 Q91 50 82 40 Q73 50 64 40 Q55 50 46 40 Q37 50 28 40 Q21 48 14 40 Z" fill="url(#rf)"/><rect x="150" y="52" width="58" height="30" rx="4" fill="#fff"/><path d="M162 40 V52 M196 40 V52" stroke-width="2"/><rect x="14" y="118" width="212" height="52" rx="8" fill="#e0614a"/><rect x="14" y="156" width="212" height="14" rx="6" fill="#b8473a"/><path d="M226 128 L238 118" stroke-width="4"/><circle cx="54" cy="176" r="14" fill="#4a5670"/><circle cx="186" cy="176" r="14" fill="#4a5670"/><circle cx="54" cy="176" r="4" fill="#cdd3dc" stroke-width="2"/><circle cx="186" cy="176" r="4" fill="#cdd3dc" stroke-width="2"/><rect x="32" y="96" width="176" height="24" rx="6" fill="url(#ir)"/><path d="M26 120 H214" stroke-width="4"/></g><g fill="#fff" opacity=".3"><rect x="20" y="122" width="200" height="4" rx="2"/></g><g fill="#2c313b" stroke="#22262e" stroke-width="1.5"><ellipse cx="62" cy="108" rx="15" ry="7"/><ellipse cx="104" cy="108" rx="15" ry="7"/><ellipse cx="146" cy="108" rx="15" ry="7"/><ellipse cx="188" cy="108" rx="13" ry="7"/></g></svg>
 `);
 const FRY = svgImg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="480" height="400"><defs><linearGradient id="st" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2f6"/><stop offset="1" stop-color="#c3ccd8"/></linearGradient><linearGradient id="ol" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd66b"/><stop offset="1" stop-color="#e3a422"/></linearGradient></defs><ellipse cx="120" cy="190" rx="110" ry="8" fill="#2c2b35" opacity=".2"/><g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><path d="M28 58 H212 Q218 58 219 64 L222 104 H18 L21 64 Q22 58 28 58 Z" fill="#e3e8ee"/><path d="M24 99 H216" stroke="#fff" stroke-width="2" opacity=".7"/><rect x="104" y="8" width="32" height="22" rx="3" fill="url(#st)"/><path d="M34 54 L54 28 H186 L206 54 Z" fill="url(#st)"/><rect x="60" y="54" width="8" height="40" fill="#cdd3dc"/><rect x="172" y="54" width="8" height="40" fill="#cdd3dc"/><rect x="24" y="100" width="192" height="84" rx="8" fill="url(#st)"/><rect x="24" y="168" width="192" height="16" rx="6" fill="#f2a58c"/><rect x="34" y="84" width="124" height="14" rx="3" fill="url(#ol)"/><rect x="166" y="88" width="44" height="8" rx="2" fill="#cdd3dc"/><circle cx="52" cy="132" r="9" fill="#4a5670"/><circle cx="78" cy="132" r="9" fill="#4a5670"/><rect x="148" y="120" width="54" height="24" rx="4" fill="#2f3b4f"/></g><path d="M172 92 H206" stroke="#38445a" stroke-width="1.5" stroke-dasharray="3 3"/><g fill="#fff" opacity=".5"><rect x="30" y="106" width="180" height="4" rx="2"/><rect x="60" y="34" width="110" height="3" rx="1.5"/></g></svg>
@@ -245,8 +254,8 @@ const CROWNM = stall({ ...MSM, tool:'<rect x="18" y="90" width="44" height="14" 
 // staff 그 층 직원 옷(셔츠·바지 색 + 앞치마/조끼/모자, staffBody/staffHead) · shop 간판 이름 · sign/ink/awn 간판 바탕·글자·차양 색 · img 생산기 몸체 · anim 움직이는 부분 · spot 물건이 생기는 자리(SVG 좌표) · reveal 물건이 차오르기 시작하는 진행도 · up 위 글자 올림
 // item은 그 층 번호 그대로일 때만(같은 종류가 반복되는 위층은 원래 모양)
 const THEMES = [
-  { staff:{ body:'#f4f6fa', dark:'#3b3f4a', apron:'#e0614a', hat:'bandana', hatCol:'#e0614a' }, shop:'층층분식', sign:'#e0614a', ink:'#fff', awn:'#e0614a', img:BUN_K, anim:animKimbap, spot:[178, 104], reveal:0.7, up:14,
-    mach:[{ img:BUN_T, anim:animTteok, spot:[188, 104] }, {}, { img:BUN_S, anim:animSundae, spot:[204, 104] }],   // 생산기 k번만 다르게(없는 값은 위 공통)
+  { staff:{ body:'#f4f6fa', dark:'#3b3f4a', apron:'#e0614a', hat:'bandana', hatCol:'#e0614a' }, shop:'층층분식', sign:'#e0614a', ink:'#fff', awn:'#e0614a', img:BUN_K, anim:animKimbap, spot:[197, 122], reveal:0.7, up:14,
+    mach:[{ img:BUN_T, anim:animTteok }, {}, { img:BUN_S, anim:animSundae }],   // 생산기 k번만 다르게(없는 값은 위 공통)
     guests:['student', 'kid'], order:['떡볶이랑 김밥, 순대 섞어서 {n}개요!', '떡볶이 국물 많이요~ {n}개!', '순대는 간도 주세요! {n}개요', '김밥 {n}줄 포장이요~'], thanks:['잘 먹을게요!', '학원 가기 전에 딱!', '떡볶이엔 순대지!'],
     item:{ name:'분식', shape:'kimbap', top:'#fff7e6', front:'#f6deb0',
       vars:[{ shape:'tteok', top:'#e8452c', front:'#ffffff' }, { shape:'kimbap', top:'#fff7e6', front:'#f6deb0' }, { shape:'sundae', top:'#fff7e6', front:'#ece6da' }] } },
@@ -1713,59 +1722,56 @@ function menuSign(S2, u, now, s, t, col = '#ffe08a', v = 39, size = 19, x = 120)
   ctx.font = `${Math.round(size*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = s.broken ? blink(now) : col; ctx.fillText(s.broken ? '고장!' : t, bx, by);
 }
-// 1층 0번 떡볶이: 양념 보글보글 + 김, 국자가 철판을 휘휘 젓다가(~60%) → 컵 위로 와서 국물을 부음 → 컵이 차오름
+// 1층 0번 떡볶이(위에서 본 철판): 양념 보글보글 + 김, 국자가 철판을 휘휘 젓다가(~60%) → 오른쪽 앞 쟁반의 컵에 국물 붓기
 function animTteok({ S2, u, now, prog, work, s }){
-  menuSign(S2, u, now, s, '떡볶이');
+  menuSign(S2, u, now, s, '떡볶이', '#ffe08a', 27, 15);
   if (!work) return;
-  steam(S2, u, now, [44, 80, 116, 148], 82);
-  for (let i = 0; i < 6; i++) {                                 // 양념 보글보글
-    const tt = (now/500 + i*0.19) % 1, [qx, qy] = S2(30 + ((i*47) % 120), 92 + (i % 3)*3);
+  steam(S2, u, now, [50, 86, 122], 70);
+  for (let i = 0; i < 7; i++) {                                 // 양념 보글보글
+    const tt = (now/500 + i*0.17) % 1, [qx, qy] = S2(34 + ((i*41) % 116), 68 + ((i*23) % 40));
     ctx.fillStyle = `rgba(255,170,150,${1 - tt})`; ctx.beginPath(); ctx.arc(qx, qy, (1 + tt*2.5)*u*1.6, 0, Math.PI*2); ctx.fill();
   }
-  const a = now/420, mv = Math.min(1, Math.max(0, (prog - 0.6)/0.1));   // 0 = 젓기, 1 = 컵 위
-  const [hx, hy] = S2(90 + Math.cos(a)*40*(1 - mv) + 98*mv, 92 + Math.sin(a)*4*(1 - mv) - 14*mv);
-  if (mv >= 1) {                                                  // 국물 줄기
-    const [cx, cy] = S2(188, 101);
-    ctx.strokeStyle = '#e8452c'; ctx.lineWidth = 3*u; ctx.beginPath(); ctx.moveTo(hx - 3*u, hy + 2*u); ctx.lineTo(cx, cy); ctx.stroke();
-  }
+  const a = now/420, mv = lerp01(prog, 0.6, 0.7);                // 0 = 젓기, 1 = 쟁반 위
+  const [hx, hy] = S2(91 + Math.cos(a)*44*(1 - mv) + 104*mv, 88 + Math.sin(a)*16*(1 - mv) + 18*mv);
+  if (mv >= 1) { const [cx, cy] = S2(197, 116); ctx.strokeStyle = '#e8452c'; ctx.lineWidth = 3*u; ctx.beginPath(); ctx.moveTo(hx, hy + 3*u); ctx.lineTo(cx, cy); ctx.stroke(); }
   ctx.strokeStyle = '#38445a'; ctx.lineWidth = 2.5*u;
-  ctx.beginPath(); ctx.moveTo(hx + 5*u, hy - 1*u); ctx.lineTo(hx + 20*u, hy - 26*u); ctx.stroke();   // 국자 자루
-  ctx.fillStyle = '#cfd6e0'; ctx.beginPath(); ctx.arc(hx, hy, 7*u, 0, Math.PI); ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#e8452c'; ctx.beginPath(); ctx.ellipse(hx, hy + 0.6*u, 5.6*u, 1.6*u, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(hx + 5*u, hy - 2*u); ctx.lineTo(hx + 24*u, hy - 22*u); ctx.stroke();   // 국자 자루
+  ctx.fillStyle = '#cfd6e0'; ctx.beginPath(); ctx.ellipse(hx, hy, 8*u, 6*u, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();   // 위에서 본 국자
+  ctx.fillStyle = '#e8452c'; ctx.beginPath(); ctx.ellipse(hx, hy, 5.5*u, 3.8*u, 0, 0, Math.PI*2); ctx.fill();
 }
-// 1층 1번 김밥: 밥통 김, 김발 위 김밥이 돌돌 말리고(~70%) → 칼로 썰기
+// 1층 1번 김밥(위에서 본 김발): 밥통 김, 김발 위에 펼친 김 + 밥이 뒤에서부터 말려 앞쪽 김밥이 굵어지고(~70%) → 칼로 썰기
 function animKimbap({ S2, u, now, prog, work, s }){
-  menuSign(S2, u, now, s, '김밥');
+  menuSign(S2, u, now, s, '김밥', '#ffe08a', 27, 15);
   if (!work) return;
-  steam(S2, u, now, [52, 62], 68);
-  ctx.strokeStyle = '#38445a';
-  const rp = Math.min(1, prog/0.7);                              // 펼친 김은 줄고 앞쪽 말린 김밥은 굵어짐
-  const [m0x, m0y] = S2(138, 104), [m1x] = S2(218, 104), mw = m1x - m0x, depth = 9*u*(1 - rp), thick = (3 + 5*rp)*u;
-  if (depth > 0.5) { ctx.fillStyle = '#2b3a2e'; ctx.fillRect(m0x, m0y - depth - thick, mw, depth);
-    ctx.fillStyle = '#fff'; ctx.fillRect(m0x + 3*u, m0y - depth - thick + 1.5*u, mw - 6*u, Math.max(0, depth - 3*u)); }
-  rr(m0x, m0y - thick, mw, thick, thick/2); ctx.fillStyle = '#2b3a2e'; ctx.fill(); ctx.lineWidth = 1.6*u; ctx.stroke();
-  if (prog > 0.7) {                                              // 칼이 오르내리며 썰기
-    const kx = m0x + mw*(0.15 + 0.7*((now/180) % 1)), ky = m0y - thick - 14*u + Math.abs(Math.sin(now/90))*10*u;
+  steam(S2, u, now, [42, 54], 66);
+  const rp = Math.min(1, prog/0.7), [m0x, m0y] = S2(44, 102), [m1x, m1y] = S2(156, 124), mw = m1x - m0x;
+  const sheet = (m1y - m0y - 6*u)*(1 - rp), thick = (5 + 6*rp)*u, ry = m1y - thick - 1*u;
+  if (sheet > 1) { ctx.fillStyle = '#2b3a2e'; ctx.fillRect(m0x, ry - sheet, mw, sheet); ctx.fillStyle = '#fff'; ctx.fillRect(m0x + 4*u, ry - sheet + 2*u, mw - 8*u, Math.max(0, sheet - 2*u));
+    ctx.fillStyle = '#f2c230'; ctx.fillRect(m0x + 4*u, ry - sheet*0.5, mw - 8*u, 1.6*u); ctx.fillStyle = '#5aa85d'; ctx.fillRect(m0x + 4*u, ry - sheet*0.35, mw - 8*u, 1.6*u); }
+  rr(m0x, ry, mw, thick, thick/2); ctx.fillStyle = '#2b3a2e'; ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.6*u; ctx.stroke();
+  if (prog > 0.7) {                                              // 칼이 오르내리며 썰기(썬 자리에 단면)
+    const f = (now/180) % 1, kx = m0x + mw*(0.1 + 0.8*f), ky = ry - 12*u + Math.abs(Math.sin(now/90))*8*u;
+    ctx.fillStyle = '#f2c230'; for (let i = 0; i < Math.floor(f*8); i++) { ctx.beginPath(); ctx.arc(m0x + mw*(0.1 + 0.1*i), ry + thick/2, 1.6*u, 0, Math.PI*2); ctx.fill(); }
     ctx.fillStyle = '#dfe5ec'; ctx.beginPath(); ctx.moveTo(kx, ky); ctx.lineTo(kx + 14*u, ky); ctx.lineTo(kx + 14*u, ky + 10*u); ctx.closePath(); ctx.fill(); ctx.lineWidth = 2*u; ctx.stroke();
     ctx.fillStyle = '#8c5a3a'; ctx.fillRect(kx + 14*u, ky - 1*u, 10*u, 4*u);
   }
 }
-// 1층 2번 순대: 찜통 뚜껑이 덜컹이며 김이 뿜어 나오고, 55%부터 도마 위 순대를 칼로 썰어 → 접시가 차오름
+// 1층 2번 순대(위에서 본 찜통): 둥근 뚜껑이 덜컹이며 김이 뿜어 나오고, 55%부터 도마 위 순대를 칼로 썰어 → 쟁반 접시가 차오름
 function animSundae({ S2, u, now, prog, work, s }){
-  menuSign(S2, u, now, s, '순대');
-  const jig = work ? Math.abs(Math.sin(now/110))*2.2*u : 0, [l0x, ly] = S2(22, 71), [l1x] = S2(118, 71), [kx, ky] = S2(70, 50), [nx, ny] = S2(70, 59);
-  ctx.strokeStyle = '#38445a'; ctx.lineWidth = 2.5*u; ctx.fillStyle = '#dfe5ec';   // 뚜껑(멈춰 있어도 그림)
-  ctx.beginPath(); ctx.moveTo(l0x, ly - jig); ctx.quadraticCurveTo(kx, ky - jig, l1x, ly - jig); ctx.closePath(); ctx.fill(); ctx.stroke();
-  rr(nx - 7*u, ny - 5*u - jig, 14*u, 6*u, 3*u); ctx.fillStyle = '#4a5670'; ctx.fill(); ctx.stroke();
+  menuSign(S2, u, now, s, '순대', '#ffe08a', 27, 15);
+  const jig = work ? Math.abs(Math.sin(now/110))*2*u : 0, [cx, cy] = S2(58, 82);
+  ctx.strokeStyle = '#38445a'; ctx.lineWidth = 2.5*u;
+  ctx.fillStyle = '#e6eaf0'; ctx.beginPath(); ctx.arc(cx + jig*0.5, cy - jig, 30*u, 0, Math.PI*2); ctx.fill(); ctx.stroke();   // 뚜껑
+  ctx.strokeStyle = 'rgba(56,68,90,.25)'; ctx.lineWidth = 1.5*u; ctx.beginPath(); ctx.arc(cx + jig*0.5, cy - jig, 21*u, 0, Math.PI*2); ctx.stroke();
+  ctx.strokeStyle = '#38445a'; ctx.lineWidth = 2*u; rr(cx - 8*u + jig*0.5, cy - 4*u - jig, 16*u, 8*u, 4*u); ctx.fillStyle = '#4a5670'; ctx.fill(); ctx.stroke();   // 손잡이
   if (!work) return;
-  steam(S2, u, now, [30, 52, 88, 110], 70);
-  const cp = Math.max(0, (prog - 0.55)/0.45);
-  const [a0x, a0y] = S2(136, 101), [a1x] = S2(190, 101), len = (a1x - a0x)*(1 - 0.6*cp), th = 7*u;
-  rr(a0x, a0y - th, len, th, th/2); ctx.fillStyle = '#4a2e36'; ctx.fill(); ctx.lineWidth = 1.6*u; ctx.stroke();
-  ctx.fillStyle = '#a0707a';
-  for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(a0x + (i + 0.5)*len/5, a0y - th/2 + (i % 2 ? 1.2 : -1.2)*u, 0.9*u, 0, Math.PI*2); ctx.fill(); }
-  if (prog > 0.55) {                                             // 순대 끝에서 칼이 오르내리며 썰기
-    const kx2 = a0x + len - 4*u, ky2 = a0y - th - 14*u + Math.abs(Math.sin(now/90))*10*u;
+  steam(S2, u, now, [36, 58, 80], 52);
+  const cp = Math.max(0, (prog - 0.55)/0.45), [a0x, a0y] = S2(110, 112), [a1x] = S2(160, 112), len = (a1x - a0x)*(1 - 0.6*cp), th = 9*u;
+  rr(a0x, a0y - th/2, len, th, th/2); ctx.fillStyle = '#4a2e36'; ctx.fill(); ctx.lineWidth = 1.6*u; ctx.stroke();
+  ctx.fillStyle = '#a0707a'; for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(a0x + (i + 0.5)*len/5, a0y + (i % 2 ? 1.5 : -1.5)*u, 1*u, 0, Math.PI*2); ctx.fill(); }
+  for (let i = 0; i < Math.floor(cp*6); i++) { const [sx, sy] = S2(146 - i*6 + (i % 2)*2, 120); ctx.fillStyle = '#4a2e36'; ctx.beginPath(); ctx.arc(sx, sy, 3.2*u, 0, Math.PI*2); ctx.fill(); ctx.stroke(); }   // 썬 조각
+  if (prog > 0.55) {
+    const kx2 = a0x + len - 4*u, ky2 = a0y - th - 12*u + Math.abs(Math.sin(now/90))*8*u;
     ctx.fillStyle = '#dfe5ec'; ctx.beginPath(); ctx.moveTo(kx2, ky2); ctx.lineTo(kx2 + 14*u, ky2); ctx.lineTo(kx2 + 14*u, ky2 + 10*u); ctx.closePath(); ctx.fill(); ctx.lineWidth = 2*u; ctx.strokeStyle = '#38445a'; ctx.stroke();
     ctx.fillStyle = '#8c5a3a'; ctx.fillRect(kx2 + 14*u, ky2 - 1*u, 10*u, 4*u);
   }

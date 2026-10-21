@@ -76,6 +76,11 @@ version: 'x.y.z+build'
 ## 작업 히스토리
 
 ### 2026-10-21
+- 층층이 2층 생산기도 1층처럼(사용자 요청 → 이어서 '모든 층 다'): 공통 틀 `bunsik()` → `deck({front, strip, board, edge, wt, deco, post, wheels, tray, tool, top})`로 일반화(1층은 `bunsik` 그대로 감쌈).
+  2층 = 빨간 손수레 작업대(`CART`: 남색 메뉴판·흰 줄·바퀴·손잡이) — 0번 호떡 `HOT2`/`animHot2`(반죽 공 여섯 → 누르개가 하나씩 꾹 → 넓적·노릇·흑설탕 → 뒤집개로 쟁반) ·
+  1번 붕어빵 `BUNG2`/`animBung2`(물고기 칸에 반죽 → 팥 → 무쇠 덮개 탁 + 틈새 김 → 노릇한 붕어빵 비늘·눈, 앞판 '3개 1,000원') · 2번 계란빵 `EGG2`/`animEgg2`(타원 여덟 칸 반죽 → 달걀 껍데기 쩍 → 부풀며 노릇).
+  공통 `spatula()`(72~80% 뒤집개가 하나 들고 쟁반으로, reveal 0.8). 조명 `lamp:'string'` = 메뉴판 위 늘어진 전구줄(`LAMPS.string`, `deckGlow`, `bulb`) — `machLamps(…, style)`. big 1.2·pop.
+  예전 `BUNG`·`HOTK`·`EGGB`·`animBung`·`animHotteok`·`animEgg`·`CUPS` 삭제
 - 층층이 층별 업그레이드 2개 추가(사용자 요청 '생산성 늘리기·알바생이 더 들고 가게'): 오른쪽 벽 아래로 두 칸(`PAD_Y` 586·670) —
   생산속도(`prod` 톱니바퀴+번개, `Z.prodLv`, 간격 `prodIv(z)` = 1.5 × 0.85^Lv, Lv5 ≈ 0.67초 MAX, 비용 60 × 2.2^Lv × 8^층) — 손님 등장 간격도 같은 비율로 줄임(손님 수가 막혀서 생산만 늘리면 수입이 안 늘어서), 생산기 움직임도 빨라짐 ·
   알바 가방(`bag` 배낭+상자, `Z.bagLv`, 일꾼 적재량 `wcap(z)` = 4 + 2 × Lv, 최대 12, 비용 80 × 2.3^Lv × 8^층). 잔업 계산(`awayRate`)에도 반영. 45초 시뮬레이션(1층, 일꾼 3): 둘 다 0 → 36개, 둘 다 MAX → 49개

@@ -210,16 +210,17 @@ const YANG = stall({ body:'url(#st)', strip:'#f2a58c', sign:'#f2c230',
 const GANJ = stall({ body:'url(#st)', strip:'#f2a58c', sign:'#f2c230',
   tool:'<rect x="22" y="94" width="128" height="10" rx="2" fill="#cdd3dc"/><rect x="154" y="80" width="18" height="24" rx="4" fill="#5a3a22"/>' + TRAY,
   top:'<path d="M32 99 H140" stroke="#8d98aa" stroke-width="1.5" stroke-dasharray="4 3"/>' });
-// 4층: 0번 삼각김밥 쇼케이스 · 2번 호빵 찜기 (편의점 흰 몸통)
-const ONIG = stall({ body:'#fdfdfd', strip:'#f2a58c', defs:GL,
-  tool:'<rect x="18" y="40" width="204" height="66" rx="6" fill="url(#gl)"/><rect x="18" y="40" width="204" height="18" rx="6" fill="#5ec1a0"/><path d="M24 82 H216" stroke-width="2.5"/>',
-  top:'<g stroke="#38445a" stroke-width="1.5" stroke-linejoin="round">' + [28, 50, 72, 94, 116, 138, 160, 182].map(x => `<path d="M${x} 81 L${x + 9} 64 L${x + 18} 81 Z" fill="#fff"/><rect x="${x + 5}" y="74" width="8" height="7" fill="#2b3a2e" stroke-width="1"/><rect x="${x + 7}" y="68" width="4" height="2.5" fill="${x % 44 ? '#e0614a' : '#5ec1a0'}" stroke="none"/>`).join('') + '</g>' });
+// 4층: 0번 편의점 핫바 온장고(민트 메뉴판, 그림은 5층 HBAR와 같은 틀) · 2번 호빵 찜기 (편의점 흰 몸통)
 const HOPP = stall({ body:'#fdfdfd', strip:'#f2a58c', defs:GL,
   tool:'<rect x="34" y="28" width="172" height="78" rx="8" fill="url(#gl)"/><rect x="34" y="28" width="172" height="18" rx="8" fill="#e0614a"/><path d="M40 78 H200" stroke-width="2.5"/>',
   top:'<g stroke="#38445a" stroke-width="1.5">' + [46, 72, 98, 124, 150, 176].map((x, i) => `<path d="M${x} 77 Q${x + 9} 58 ${x + 18} 77 Z" fill="${i % 3 === 1 ? '#f6e3b0' : '#fff8ee'}"/>`).join('') + '</g>' });
-// 5층: 0번 핫바 온장고(굴림 막대) · 2번 아이스크림 냉동고(유리 뚜껑)
-const HBAR = stall({ body:'url(#st)', strip:'#f2a58c', sign:'#1f3157',
+// 5층: 2번 아이스크림 냉동고(유리 뚜껑) — 0번 회오리감자는 아래 TORN
+const HBAR = stall({ body:'#fdfdfd', strip:'#f2a58c', sign:'#5ec1a0',
   tool:'<rect x="20" y="78" width="144" height="26" rx="4" fill="#5d6474"/>' + TRAY + '<rect x="206" y="70" width="12" height="28" rx="3" fill="#e0614a" stroke-width="2.5"/>' });
+// 5층 0번 회오리감자: 튀김 통 + 막대 꽂이 + 양념 통 (스테인리스 + 남색 메뉴판)
+const TORN = stall({ body:'url(#st)', strip:'#f2a58c', sign:'#1f3157',
+  defs:'<linearGradient id="ol" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd66b"/><stop offset="1" stop-color="#e3a422"/></linearGradient>',
+  tool:'<rect x="20" y="86" width="86" height="18" rx="3" fill="#cdd3dc"/><rect x="26" y="88" width="74" height="8" rx="2" fill="url(#ol)" stroke-width="2"/><rect x="150" y="80" width="14" height="24" rx="3" fill="#f2c230" stroke-width="2.5"/><path d="M150 86 H164" stroke-width="2"/>' + TRAY });
 const ICEF = stall({ body:'#fdfdfd', strip:'#3f7fc4', defs:GL,
   tool:'<rect x="14" y="66" width="212" height="50" rx="6" fill="#fdfdfd"/><path d="M18 60 H222 L226 72 H14 Z" fill="url(#gl)"/>',
   top:'<g stroke="#38445a" stroke-width="1">' + [40, 62, 84, 140, 162, 184].map((x, i) => `<rect x="${x}" y="62" width="12" height="7" rx="2" fill="${['#7fd67a', '#f2a58c', '#8fc0e8', '#f2c230', '#b48ae0', '#7fd67a'][i]}"/>`).join('') + '</g><path d="M14 150 Q67 138 120 150 T226 150" fill="none" stroke="#8fc0e8" stroke-width="4"/>' });
@@ -249,15 +250,15 @@ const THEMES = [
     item:{ name:'치킨', shape:'chicken', top:'#efe6d2', front:'#ffffff',
       vars:[{ shape:'chicken', top:'#f6d2c4', front:'#ffffff', band:'#c0392b', dot:'#c0392b' }, { shape:'chicken', top:'#efe6d2', front:'#ffffff' }, { shape:'chicken', top:'#e6d3b8', front:'#ffffff', band:'#5a3a22', dot:'#6b3a1f' }] } },
   { shop:'24시 층층편의점', sign:'#ffffff', ink:'#2f8f6f', awn:'#5ec1a0', img:FRG, anim:animMart, spot:[120, 170], reveal:0.6, up:6,
-    mach:[{ img:ONIG, anim:animOni, spot:[120, 104], reveal:0.65, up:2 }, {}, { img:HOPP, anim:animHop, spot:[120, 104], reveal:0.65, up:2 }],
-    guests:['student', 'office', 'youth'], order:['바나나우유 {n}개요', '삼각김밥이랑 {n}개 계산이요', '호빵 따끈한 걸로 {n}개요~', '빨대도 주세요~'], thanks:['역시 편의점!', '봉투는 괜찮아요'],
+    mach:[{ img:HBAR, anim:animHotbar, spot:[188, 98], reveal:0.75, up:15 }, {}, { img:HOPP, anim:animHop, spot:[120, 104], reveal:0.65, up:2 }],
+    guests:['student', 'office', 'youth'], order:['바나나우유 {n}개요', '핫바 하나 데워 주세요~ {n}개', '호빵 따끈한 걸로 {n}개요~', '빨대도 주세요~'], thanks:['역시 편의점!', '봉투는 괜찮아요'],
     item:{ name:'편의점 간식', shape:'bmilk', top:'#fbe38a', front:'#fbe38a',
-      vars:[{ shape:'onigiri', top:'#ffffff', front:'#ffffff' }, { shape:'bmilk', top:'#fbe38a', front:'#fbe38a' }, { shape:'hoppang', top:'#fff8ee', front:'#fff8ee' }] } },
+      vars:[{ shape:'hotbar', top:'#c98a3a', front:'#c98a3a' }, { shape:'bmilk', top:'#fbe38a', front:'#fbe38a' }, { shape:'hoppang', top:'#fff8ee', front:'#fff8ee' }] } },
   { shop:'한강라면', sign:'#1f3157', ink:'#ffd84a', awn:'#f2c230', img:RAM, anim:animRamen, spot:[169, 128], reveal:0.8, up:16,
-    mach:[{ img:HBAR, anim:animHotbar, spot:[188, 98], reveal:0.75, up:15 }, {}, { img:ICEF, anim:animIce, spot:[120, 66], reveal:0.75, up:-8 }],
-    guests:['tourist', 'youth'], order:['라면 {n}개요!', '핫바도 하나 주세요! {n}개', '아이스크림까지 {n}개!', 'Ramyeon {n}, please!'], thanks:['한강에서 라면 최고!', 'So good!'],
+    mach:[{ img:TORN, anim:animTornado, spot:[190, 98], reveal:0.75, up:15 }, {}, { img:ICEF, anim:animIce, spot:[120, 66], reveal:0.75, up:-8 }],
+    guests:['tourist', 'youth'], order:['라면 {n}개요!', '회오리감자 {n}개요!', '아이스크림까지 {n}개!', 'Ramyeon {n}, please!'], thanks:['한강에서 라면 최고!', 'So good!'],
     item:{ name:'한강 간식', shape:'ramen', top:'#e8833a', front:'#cfd6e0',
-      vars:[{ shape:'hotbar', top:'#c98a3a', front:'#c98a3a' }, { shape:'ramen', top:'#e8833a', front:'#cfd6e0' }, { shape:'icebar', top:'#7fd67a', front:'#7fd67a' }] } },
+      vars:[{ shape:'tornado', top:'#e8b04a', front:'#e8b04a' }, { shape:'ramen', top:'#e8833a', front:'#cfd6e0' }, { shape:'icebar', top:'#7fd67a', front:'#7fd67a' }] } },
   { shop:'♪ 코인노래방', sign:'#3b2a55', ink:'#ff8ad8', awn:'#b48ae0', img:KAR, anim:animKaraoke, spot:[215, 162], reveal:0.85, up:20,
     mach:[{ img:POPC, anim:animPop, spot:[196, 98], reveal:0.75, up:13 }, {}, { img:SLUS, anim:animSlush, spot:[196, 98], reveal:0.75, up:6 }],
     guests:['youth', 'office', 'student'], order:['음료 {n}개요!', '팝콘이랑 슬러시 {n}개요!', '한 곡만 더 부를게요', '목이 타요… {n}개!'], thanks:['100점 가자!', '앵콜~!'],
@@ -1433,14 +1434,6 @@ function item(x, y, z, kind){
     ctx.fillStyle = '#f2b51e'; ctx.beginPath(); ctx.arc(sx + 1.5*s, sy - 7.6*s, 1.6*s, 0, Math.PI*2); ctx.fill();
     return;
   }
-  if (K.shape === 'onigiri') {                       // 삼각김밥: 흰 삼각형 + 아래 김 + 위 빨간 딱지
-    const s = scale, tri = () => { ctx.beginPath(); ctx.moveTo(sx - 7.5*s, sy); ctx.lineTo(sx + 7.5*s, sy); ctx.lineTo(sx, sy - 13*s); ctx.closePath(); };
-    ctx.lineJoin = 'round'; tri(); ctx.fillStyle = K.front; ctx.fill();
-    ctx.save(); tri(); ctx.clip(); ctx.fillStyle = '#2b3a2e'; ctx.fillRect(sx - 3.5*s, sy - 6.5*s, 7*s, 6.5*s); ctx.restore();
-    tri(); ctx.strokeStyle = ink; ctx.lineWidth = iw; ctx.stroke();
-    ctx.fillStyle = '#e0614a'; ctx.fillRect(sx - 2*s, sy - 10*s, 4*s, 1.8*s);
-    return;
-  }
   if (K.shape === 'hoppang') {                       // 호빵: 종이 위 하얀 둥근 빵 + 갈색 도장
     const s = scale;
     ctx.fillStyle = '#f6deb0'; ctx.fillRect(sx - 7.5*s, sy - 1.6*s, 15*s, 1.6*s);
@@ -1455,6 +1448,15 @@ function item(x, y, z, kind){
     ctx.fillStyle = '#e8d5b0'; ctx.fillRect(sx - 1*s, sy - 4*s, 2*s, 4*s);
     rr(sx - 3*s, sy - 15*s, 6*s, 11.5*s, 3*s); ctx.fillStyle = K.front; ctx.fill(); ctx.strokeStyle = ink; ctx.lineWidth = iw; ctx.stroke();
     ctx.strokeStyle = '#e0614a'; ctx.lineWidth = 1.2*s; ctx.beginPath(); ctx.moveTo(sx - 2*s, sy - 13*s); ctx.lineTo(sx + 2*s, sy - 11.5*s); ctx.lineTo(sx - 2*s, sy - 10*s); ctx.lineTo(sx + 2*s, sy - 8.5*s); ctx.lineTo(sx - 2*s, sy - 7*s); ctx.stroke();
+    return;
+  }
+  if (K.shape === 'tornado') {                       // 회오리감자: 막대에 지그재그로 감긴 노릇한 감자 + 양념 점
+    const s = scale;
+    ctx.strokeStyle = '#d9c39a'; ctx.lineWidth = 1.2*s; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx, sy - 17*s); ctx.stroke();
+    for (let i = 0; i < 5; i++) { const yy = sy - 3.5*s - i*2.6*s;
+      ctx.fillStyle = i % 2 ? '#e8b04a' : '#f2c46a'; ctx.beginPath(); ctx.ellipse(sx, yy, 4.6*s, 1.4*s, (i % 2 ? 0.25 : -0.25), 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = ink; ctx.lineWidth = iw*0.8; ctx.stroke(); }
+    ctx.fillStyle = '#d65430'; [[-2, -6], [2, -9], [-1, -12]].forEach(([dx, dy]) => ctx.fillRect(sx + dx*s, sy + dy*s, 1*s, 1*s));
     return;
   }
   if (K.shape === 'icebar') {                        // 아이스크림 바: 나무 막대 + 연두 바 + 반짝
@@ -1837,13 +1839,26 @@ function animGan({ S2, u, now, prog, work, s }){
   rr(px - 4*u, py - 4*u, 8*u, 7*u, 2*u); ctx.fillStyle = '#5a3a22'; ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.5*u; ctx.stroke();
   steam(S2, u, now, [56, 104], 84);
 }
-// 4층 0번 삼각김밥 쇼케이스: 위에서 찬 바람이 솔솔 → 앞 칸에 삼각김밥이 차오름. 고장 = 냉장 꺼짐(어두워짐)
-function animOni({ S2, u, now, prog, work, s }){
-  menuSign(S2, u, now, s, '삼각김밥', '#fff', 49, 13);
-  if (s.broken) return glassOff(S2, 18, 58, 222, 106);
-  for (let i = 0; i < 6; i++) { const tt = (now/1400 + i/6) % 1, [ax, ay] = S2(34 + i*34, 60 + tt*40);
-    ctx.strokeStyle = `rgba(120,200,235,${0.8*(1 - tt)})`; ctx.lineWidth = 2*u; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax, ay + 6*u); ctx.stroke(); }
-  if (work) ding(S2, u, prog, 96);
+// 5층 0번 회오리감자: 막대에 꽂힌 감자가 빙글빙글 돌며 튀김 통에서 노릇해지고(~70%) → 양념 가루 솔솔 → 옆 받침에 회오리감자
+function animTornado({ S2, u, now, prog, work, s }){
+  menuSign(S2, u, now, s, '회오리감자', '#ffd84a', 28, 17);
+  if (!work) return;
+  for (let i = 0; i < 5; i++) {                                  // 기름 방울
+    const tt = (now/420 + i*0.21) % 1, [qx, qy] = S2(30 + ((i*17) % 66), 89);
+    ctx.fillStyle = `rgba(255,246,200,${1 - tt})`; ctx.beginPath(); ctx.arc(qx, qy - tt*3*u, (1 + tt*2)*u*1.3, 0, Math.PI*2); ctx.fill();
+  }
+  const g = lerp01(prog, 0, 0.7), [bx, by] = S2(126, 100), rot = now/160;
+  ctx.strokeStyle = '#e8d5b0'; ctx.lineWidth = 2.5*u; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by - 52*u); ctx.stroke();   // 막대
+  for (let i = 0; i < 8; i++) {                                  // 회오리: 위아래로 쌓인 얇은 감자 고리, 돌며 앞뒤로 기울어짐
+    const y = by - 10*u - i*5*u, w = (9 + Math.sin(i*0.9)*1.5)*u, tilt = Math.sin(rot + i*0.8)*2.4*u;
+    ctx.fillStyle = g > 0 ? `rgb(${Math.round(246 - 14*g)},${Math.round(222 - 46*g)},${Math.round(160 - 86*g)})` : '#f6dea0';
+    ctx.beginPath(); ctx.ellipse(bx, y, w, 2.6*u, tilt/w, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.2*u; ctx.stroke();
+  }
+  if (prog > 0.6) for (let i = 0; i < 6; i++) {                 // 양념 가루
+    const tt = (now/500 + i/6) % 1, [px, py] = S2(150 + (i % 3)*6 - tt*14, 80 + tt*14);
+    ctx.fillStyle = `rgba(214,84,48,${1 - tt})`; ctx.fillRect(px, py, 1.6*u, 1.6*u);
+  }
+  steam(S2, u, now, [50, 80], 84);
 }
 // 4층 2번 호빵 찜기: 유리 안에 김이 뭉게뭉게, 아래 열선이 주황으로 깜빡 → 앞에 호빵. 고장 = 꺼져서 어두워짐
 function animHop({ S2, u, now, prog, work, s }){
@@ -1858,9 +1873,9 @@ function animHop({ S2, u, now, prog, work, s }){
   ctx.fillStyle = `rgba(255,140,60,${0.35 + 0.25*Math.sin(now/260)})`; ctx.fillRect(hx, hy, hx1 - hx, 3*u);
   if (work) ding(S2, u, prog, 96);
 }
-// 5층 0번 핫바 온장고: 굴림 막대가 빙글빙글, 핫바 3줄이 노릇하게 익고(~70%) → 옆 받침에 케첩 뿌린 핫바
+// 4층 0번 편의점 핫바 온장고: 굴림 막대가 빙글빙글, 핫바 3줄이 노릇하게 익고(~70%) → 옆 받침에 케첩 뿌린 핫바
 function animHotbar({ S2, u, now, prog, work, s }){
-  menuSign(S2, u, now, s, '핫바', '#ffd84a', 28, 17);
+  menuSign(S2, u, now, s, '핫바', '#fff', 28, 17);
   const [r0x] = S2(26, 0), [r1x] = S2(158, 0);
   ctx.strokeStyle = '#cfd6e0'; ctx.lineWidth = 2*u;
   if (work) { ctx.setLineDash([5*u, 5*u]); ctx.lineDashOffset = -now/40; }

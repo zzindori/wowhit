@@ -440,7 +440,8 @@ let S = load();
 { const top = S.zones[S.zones.length - 1].sp, on = top.filter(s => s.on);   // 예전 저장: 맨 위층 생산기가 다 부서져 있으면 한 대를 '고장'으로 되돌림(공짜 수리)
   if (on.length && on.every(s => s.ruined)) Object.assign(on[0], { ruined:false, broken:true, fix:0, brokenT:0, warned:false }); }
 
-const P = { x:380, y:600, inc:0, fx:0, fy:1, svx:0, svy:0, t:0, payT:0, padCd:0, cashT:0, wasMax:false };
+const P = { x:380, y:600, inc:0, fx:0, fy:1, svx:0, svy:0, t:0, payT:0, padCd:0, cashT:0, wasMax:false, emo:'idle', emoT:0, still:0 };
+const emote = (e, sec) => { P.emo = e; P.emoT = sec; };   // 주인공 로봇 얼굴 화면 표정(잠깐)
 let workers = [], anims = [], floats = [], PADS = [], muds = [];
 let RT = [];                                       // 층별 실행 상태(손님 등, 저장 안 함)
 let thief = null, thiefCd = 8;
@@ -902,7 +903,7 @@ function updThief(cz, dt){
     if (thiefCd <= 0 && Z.cash > 0 && (R.cashIdle || 0) > CFG.thief.after && Math.random() < CFG.thief.chance*dt) {
       const side = pick(THIEF_SIDES), path = thiefPath(side, cz), tp = pick(Object.keys(THIEVES));
       thief = { tp, z:cz, x:path[0][0], y:path[0][1], path, wp:1, out:thiefPath(pick(THIEF_SIDES), cz).reverse(), owp:0, state:'come', loot:0, t:0, fx:-1, fy:0, svx:0, svy:0 };
-      toast(`${THIEVES[tp].ga} ${side[0]}에서 나타났어요! 돈더미를 지키세요`, true); sfx.siren();
+      toast(`${THIEVES[tp].ga} ${side[0]}에서 나타났어요! 돈더미를 지키세요`, true); sfx.siren(); emote('wow', 1.6);
     }
     return;
   }
@@ -1280,6 +1281,7 @@ function update(dt){
   if (joy) { const dx = joy.x-joy.ox, dy = joy.y-joy.oy, d = Math.hypot(dx, dy); if (d > 6) { const m = Math.min(1, d/50); ix = dx/d*m; iy = dy/d*m; } }
   else { const d = Math.hypot(ix, iy); if (d > 1) { ix /= d; iy /= d; } }
   if ((ix || iy) && !S.tut.moved) S.tut.moved = true;   // 처음 한 번 움직이면 '드래그' 안내 끝
+  P.still = ix || iy ? 0 : P.still + dt; if (P.emoT > 0) P.emoT -= dt;   // 오래 가만히 있으면 졸음 표정
   if (S.slow > 0 && (S.slow -= dt) <= 0) { S.slow = 0; floatText(P.x, P.y, '속도 회복!', C.pad); }
   // VIP 놓친 벌칙: 끝날 때까지 일꾼보다 느린 고정 속도
   const spd = S.slow > 0 ? Math.min(spdOf(S.spdLv), CFG.workerSpeed*CFG.vip.slowSpd) : spdOf(S.spdLv); steer(P, ix*spd, iy*spd, dt); collide(P, cz);
@@ -1301,7 +1303,7 @@ function update(dt){
       P.t = 0; const kind = takeItem(s, cz, k); P.inc++;
       const idx = S.stack.length + P.inc - 1;
       fly(spItemPos(cz, k, s.items), () => stackPos(P, idx), kind, 0.22, () => { S.stack.push(kind); P.inc--; P.bump = 1; });
-      if (kind % MINE >= GOLD) burst(P.x, P.y, 50, 10, 'spark', { color:'#ffe27a', speed:70, up:80, g:0, life:0.5 });
+      if (kind % MINE >= GOLD) { burst(P.x, P.y, 50, 10, 'spark', { color:'#ffe27a', speed:70, up:80, g:0, life:0.5 }); emote('star', 1.6); }
       sfx.pick(idx);
     }
   });
@@ -1331,7 +1333,7 @@ function update(dt){
     P.cashT = 0; rt(cz).cashIdle = 0; const v = valueOf(cz); const chunk = Math.min(Z.cash, Math.max(v, Math.ceil(Z.cash/6)), room());
     takeCash(Z, cz, chunk); S.money += chunk; S.tut.collected = true; S.stats.collect += chunk;
     fly(cashPos(cz, bills(Z, cz)), () => [P.x, P.y, 40], 'bill', 0.25, () => {});
-    floatSum(P.x, P.y, 'cash', chunk, C.billFront); sfx.cash(); coinsFrom(P.x, P.y, 40, 1);
+    floatSum(P.x, P.y, 'cash', chunk, C.billFront); sfx.cash(); coinsFrom(P.x, P.y, 40, 1); if (P.emo !== 'star' || P.emoT <= 0) emote('happy', 0.8);
   }
   // 잔업 챙기기
   if (Z.safe > 0 && inRect(P.x, P.y, zr(cz, SAFE)) && P.cashT > 0.05) {
@@ -1377,7 +1379,7 @@ function update(dt){
       if (S.paid[pad.id] >= c) {
         S.paid[pad.id] = 0; pad.apply(); S.tut.upgraded = true; S.stats.upgrade++; P.padCd = 0.8;
         if (pad.icon) {                                // 그림 칸 레벨 업: 빛줄기 + 그림이 톡 튀어 오름 + 'OO UP!' + 뾰로롱(사용자 요청 '뭔가 이뤘다는 느낌')
-          lvFx.push({ x:pad.x, y:pad.y, z:pad.z, icon:pad.icon, msg:`${pad.label} UP!`, sub:pad.vis() && pad.sub ? pad.sub() : '', t:0 });
+          lvFx.push({ x:pad.x, y:pad.y, z:pad.z, icon:pad.icon, msg:`${pad.label} UP!`, sub:pad.vis() && pad.sub ? pad.sub() : '', t:0 }); emote('star', 1.4);
           sfx.levelup(); buzz([20, 40, 20, 40, 60]);
           burst(pad.x, pad.y, 30, RM ? 8 : 26, 'spark', { color:'#ffe27a', speed:170, up:230, g:200, life:1.0 });
         } else if (!pad.gate) sfx.done();
@@ -2755,7 +2757,63 @@ function vipCloud(e, h){
 function carrier(e, stack, body, dark, key, gear, hb){
   const n = Math.min(stack.length, CFG.drawStackMax);
   const draw = () => { for (let i = 0; i < n; i++) { const [x, y, z] = stackPos(e, i); item(x, y, z, stack[i]); } };
-  if (e.fy < -0.3) { person(e, body, dark, key, null, 0, gear, hb); draw(); } else { draw(); person(e, body, dark, key, null, 0, gear, hb); }
+  const who = () => key === 'player' ? heroBot(e, n > 0) : person(e, body, dark, key, null, 0, gear, hb);
+  if (e.fy < -0.3) { who(); draw(); } else { draw(); who(); }
+}
+// 주인공 = 둥실이 로봇: 바닥 위에 떠다니는 흰 달걀 + 파란 띠, 얼굴은 까만 화면 속 눈(표정), 뒤돌면 등판
+function eggPath(cy, rx, ry){ ctx.beginPath(); ctx.moveTo(0, cy - ry);
+  ctx.bezierCurveTo(rx*0.78, cy - ry, rx, cy - ry*0.3, rx, cy + ry*0.18); ctx.bezierCurveTo(rx, cy + ry*0.78, rx*0.55, cy + ry, 0, cy + ry);
+  ctx.bezierCurveTo(-rx*0.55, cy + ry, -rx, cy + ry*0.78, -rx, cy + ry*0.18); ctx.bezierCurveTo(-rx, cy - ry*0.3, -rx*0.78, cy - ry, 0, cy - ry); ctx.closePath(); }
+function botEyes(cx, cy, expr, now){
+  const col = expr === 'angry' ? '#ff6b6b' : expr === 'star' ? '#ffd23f' : '#5fd4ff';
+  ctx.save(); ctx.shadowBlur = 3*scale; ctx.shadowColor = col; ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 1.3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const blink = expr === 'idle' && now % 3200 < 120;     // 가끔 눈 깜빡
+  [-1, 1].forEach(d => { const ex = cx + d*3.3;
+    if (expr === 'idle') { const h = blink ? 0.8 : 4; rr(ex - 1.25, cy - h/2, 2.5, h, Math.min(1.25, h/2)); ctx.fill(); }
+    else if (expr === 'happy') { ctx.beginPath(); ctx.arc(ex, cy + 0.8, 1.9, Math.PI*1.1, Math.PI*1.9); ctx.stroke(); }
+    else if (expr === 'star') { ctx.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI/2 + i*Math.PI/5 + now/600, q = i % 2 ? 1.2 : 2.6; ctx.lineTo(ex + Math.cos(a)*q, cy + Math.sin(a)*q); } ctx.closePath(); ctx.fill(); }
+    else if (expr === 'wow') { ctx.beginPath(); ctx.arc(ex, cy, 2.1, 0, Math.PI*2); ctx.stroke(); ctx.beginPath(); ctx.arc(ex, cy, 0.8, 0, Math.PI*2); ctx.fill(); }
+    else if (expr === 'angry') { ctx.beginPath(); ctx.moveTo(ex - d*1.6, cy - 1.8); ctx.lineTo(ex + d*1.2, cy); ctx.lineTo(ex - d*1.6, cy + 1.8); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.moveTo(ex - 1.6, cy + 0.5); ctx.lineTo(ex + 1.6, cy + 0.5); ctx.stroke(); }   // sleep
+  });
+  if (expr === 'happy' || expr === 'star') { ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(255,120,160,.55)'; [-1, 1].forEach(d => { ctx.beginPath(); ctx.ellipse(cx + d*5.6, cy + 2.4, 1.3, 0.8, 0, 0, Math.PI*2); ctx.fill(); }); }
+  ctx.restore();
+}
+function heroBot(e, carrying){
+  const [sx, sy] = toS(e.x, e.y), now = performance.now(), u = scale;
+  if (art('player', sx, sy, 40*u, 52*u)) return;
+  const moving = Math.hypot(e.svx, e.svy) > 20, h = 6 + Math.sin(now/(moving ? 160 : 320))*1.5;
+  ctx.fillStyle = 'rgba(44,43,53,.2)'; ctx.beginPath(); ctx.ellipse(sx, sy, (9.5 - h*0.2)*u, (4.2 - h*0.08)*u, 0, 0, Math.PI*2); ctx.fill();   // 높이 뜨면 그림자 작게
+  ctx.save(); ctx.translate(sx, sy); ctx.scale(u, u);
+  const g = ctx.createRadialGradient(0, -1, 0, 0, -1, 8); g.addColorStop(0, 'rgba(95,212,255,.55)'); g.addColorStop(1, 'rgba(95,212,255,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, -1, 8, 2.6, 0, 0, Math.PI*2); ctx.fill();   // 아래 떠 있는 빛
+  ctx.rotate(Math.max(-1, Math.min(1, e.svx/220))*0.14);
+  const cy = -h - 18, rx = 12, ry = 18, back = e.fy < -0.5, fx = e.fx || 0;
+  const arm = d => { ctx.save(); ctx.translate(d*13.6, cy + (carrying ? -9 : 3 + Math.sin(now/300 + d)*0.8)); ctx.rotate(carrying ? d*0.55 : d*0.18);
+    ctx.fillStyle = '#f7f9fc'; ctx.beginPath(); ctx.ellipse(0, 0, 3, 7, 0, 0, Math.PI*2); ctx.fill(); ctx.lineWidth = 0.9; ctx.strokeStyle = '#38445a'; ctx.stroke();
+    ctx.fillStyle = C.player; ctx.beginPath(); ctx.ellipse(0, carrying ? -5 : 5, 2.2, 1.4, 0, 0, Math.PI*2); ctx.fill(); ctx.restore(); };
+  arm(-1); arm(1);
+  const bg = ctx.createLinearGradient(-rx, cy - ry, rx, cy + ry); bg.addColorStop(0, '#ffffff'); bg.addColorStop(0.6, '#eef2f8'); bg.addColorStop(1, '#c9d3e4');
+  eggPath(cy, rx, ry); ctx.fillStyle = bg; ctx.fill();
+  ctx.save(); eggPath(cy, rx, ry); ctx.clip();
+  ctx.fillStyle = C.player; ctx.fillRect(-rx, cy + 3, rx*2, 2.6);                                           // 파란 띠
+  ctx.fillStyle = 'rgba(56,68,90,.12)'; ctx.beginPath(); ctx.ellipse(2, cy + ry + 2, rx + 2, 9, 0, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+  eggPath(cy, rx, ry); ctx.lineWidth = 1; ctx.strokeStyle = '#38445a'; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.ellipse(-6, cy - 11, 2, 3.4, -0.5, 0, Math.PI*2); ctx.fill();   // 빛 반사
+  if (back) {                                      // 뒤돌았을 때: 등판 + 환풍구
+    ctx.fillStyle = '#dfe6f1'; rr(-6, cy - 10, 12, 10, 3); ctx.fill(); ctx.strokeStyle = 'rgba(56,68,90,.35)'; ctx.lineWidth = 0.8;
+    [-6, -3.5, -1].forEach(d => { ctx.beginPath(); ctx.moveTo(-3.5, cy + d); ctx.lineTo(3.5, cy + d); ctx.stroke(); });
+  } else {
+    const vx = fx*2.6, expr = S.slow > 0 ? 'angry' : P.emoT > 0 ? P.emo : P.still > 8 ? 'sleep' : 'idle';
+    ctx.fillStyle = '#1d2433'; ctx.beginPath(); ctx.ellipse(vx, cy - 6, 9 - Math.abs(fx)*1.5, 6, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.ellipse(vx - 3, cy - 9, 4, 1.4, -0.2, 0, Math.PI*2); ctx.fill();
+    botEyes(vx, cy - 6, expr, now);
+    ctx.fillStyle = C.player; ctx.beginPath(); ctx.arc(vx*0.6, cy + 10, 2.4, 0, Math.PI*2); ctx.fill();   // 가슴 '층' 불빛
+    ctx.fillStyle = '#fff'; ctx.font = `3px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('층', vx*0.6, cy + 10.2);
+    if (expr === 'sleep') { ctx.fillStyle = '#38445a'; ctx.globalAlpha = 0.7; [0, 1].forEach(i => { const t = (now/1400 + i/2) % 1; ctx.globalAlpha = 0.7*(1 - t); ctx.font = `${8 + i*3}px ${FONT}`; ctx.fillText("z", 11 + t*6 + i*4, cy - ry + 4 - t*8 - i*5); }); ctx.globalAlpha = 1; }
+  }
+  ctx.restore();
 }
 // 손님 말풍선(대사): 머리 위 흰 풍선 + 꼬리, 나올 때 톡 커지고 사라질 때 흐려짐
 function speech(c, h, msg){

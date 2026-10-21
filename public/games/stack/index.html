@@ -135,6 +135,7 @@ const CFG = {
   sellMax: 5,
   prod:   { decay: 0.85, max: 5, cost: 60, mul: 2.2 },           // 생산속도(층마다): 생산 간격 × 0.85^Lv(Lv5 ≈ 0.67초), 손님도 같은 비율로 더 자주 옴
   bag:    { step: 2, max: 4, cost: 80, mul: 2.3 },                // 알바 가방(층마다): 일꾼 적재량 4 + 2 × Lv(최대 12개)
+  shelf:  { step: 6, max: 4, cost: 70, mul: 2.2 },                // 보관대(층마다): 생산기 앞 최대 개수 12 + 6 × Lv(최대 36개)
   cap:    { base: 6, step: 2, cost: 25, mul: 1.6 },               // 적재량 (상한 없음)
   speed:  { base: 150, bonus: 130, decay: 0.85, cost: 35, mul: 1.7, max: 12 }, // 이동속도 (갈수록 덜 오름, Lv12 ≈ 262에서 MAX — 그 위는 비싸기만 하고 체감 없어서 칸이 사라짐)
   worker: { cost: 100, mul: 2.1 },
@@ -434,7 +435,7 @@ const SP_ZONE = {w:110,h:86};
 const SAFE = {x:575, y:380, w:96, h:84};   // 잔업수당 상자(자리 비운 동안 수익)
 // 업그레이드 칸은 생산기↔계산대 길을 비우고 양쪽 벽을 따라 세로로(작은 그림 칸 64×64). 왼쪽 = 공통(맨 위층만), 오른쪽 = 그 층 것
 const PAD_L = 52, PAD_R = 708, PAD_Y = [250, 334, 418, 502], PAD_S = 64;
-const PAD_LOW = 880;                               // 생산속도·알바 가방 칸: 생산기 아래 오른쪽(생산기에 붙지 않게, 사용자 요청)
+const PAD_LOW = 880;                               // 보관대·생산속도·알바 가방 칸: 생산기 아래 오른쪽(생산기에 붙지 않게, 사용자 요청)
 const DESK = {x:300,y:180}, SELL = {x:300,y:258,w:140,h:76}, CASH = {x:490,y:240,w:104,h:92};
 const LINE = {x:290, y:128, gap:42};               // 손님 줄: 판매대 건너편, 왼쪽으로 늘어섬
 const gy = (z, ly) => ly - z*ZH;                   // 층 z는 위로 쌓임
@@ -462,6 +463,7 @@ function carryList(stack){
 const topOf = (stack, f) => { for (let i = stack.length - 1; i >= 0; i--) if (floorOfItem(stack[i]) === f) return i; return -1; };
 const sellIv = l => CFG.sell.base * Math.pow(CFG.sell.decay, l);
 const prodIv = z => CFG.spawnEvery * Math.pow(CFG.prod.decay, S.zones[z]?.prodLv || 0);   // 그 층 생산 간격(초)
+const spMax = z => CFG.spawnMax + (S.zones[z]?.shelfLv || 0)*CFG.shelf.step;             // 그 층 생산기 앞 최대 개수(보관대)
 const wcap = z => CFG.workerCap + (S.zones[z]?.bagLv || 0)*CFG.bag.step;                   // 그 층 일꾼 한 번에 드는 개수
 
 // 돈 표시는 한국식 단위: 9,500 → 5.5만 → 410만 → 4,100만 → 1.2억 … (단위 앞 숫자는 최대 4자리, 10 미만이면 소수 한 자리)
@@ -476,7 +478,7 @@ function fmt(n){
 }
 
 // ---- 상태 ----
-const newZone = () => ({ sp:[{on:true,items:4,t:0},{on:false,items:0,t:0},{on:false,items:0,t:0}], wrkLv:0, sellLv:0, prodLv:0, bagLv:0, cash:0, bills:0, queue:[], auto:false });
+const newZone = () => ({ sp:[{on:true,items:4,t:0},{on:false,items:0,t:0},{on:false,items:0,t:0}], wrkLv:0, sellLv:0, prodLv:0, bagLv:0, shelfLv:0, cash:0, bills:0, queue:[], auto:false });
 // 돈더미가 꽉 찼는지는 금액이 아니라 장수(결제 횟수)로 판단 — 아래층에서 황금 한 번 팔렸다고 바로 MAX가 되지 않게.
 // 예전 저장(bills 없음)은 금액 ÷ 그 층 물건 값으로 보정. 돈이 빠지면 장수도 같은 비율로 줄임
 const bills = (Z, z) => Z.bills ?? (Z.bills = Z.cash > 0 ? Math.min(CFG.cashMax, Math.ceil(Z.cash/valueOf(z))) : 0);
@@ -598,6 +600,10 @@ function rebuildPads(){
       cost:() => Math.round(CFG.worker.cost*Math.pow(CFG.worker.mul, Z.wrkLv)*zscale(z)), vis:() => Z.wrkLv < CFG.workerMax, apply:() => { Z.wrkLv++; syncWorkers(); } });
     PADS.push({ id:`${z}:sell`, ...at(PAD_R, PAD_Y[2], PAD_S, PAD_S), icon:'sell', lv:() => Z.sellLv + 1, label:'판매속도', sub:() => `Lv${Z.sellLv+1}`,
       cost:() => Math.round(CFG.sell.cost*Math.pow(CFG.sell.mul, Z.sellLv)*zscale(z)), vis:() => Z.sellLv < CFG.sellMax, apply:() => { Z.sellLv++; } });
+    PADS.push({ id:`${z}:shelf`, ...at(PAD_R - 168, PAD_LOW, PAD_S, PAD_S), icon:'shelf', lv:() => (Z.shelfLv || 0) + 1, label:'보관대',
+      sub:() => `생산기 앞 ${spMax(z)}→${spMax(z) + CFG.shelf.step}개`,
+      cost:() => Math.round(CFG.shelf.cost*Math.pow(CFG.shelf.mul, Z.shelfLv || 0)*zscale(z)), vis:() => (Z.shelfLv || 0) < CFG.shelf.max,
+      apply:() => { Z.shelfLv = (Z.shelfLv || 0) + 1; if (Z.shelfLv === 1) { toast('생산기 앞에 더 많이 쌓여요 — 다른 층에 있는 동안 덜 멈춰요'); toastT = 3; } } });
     PADS.push({ id:`${z}:prod`, ...at(PAD_R - 84, PAD_LOW, PAD_S, PAD_S), icon:'prod', lv:() => (Z.prodLv || 0) + 1, label:'생산속도',
       sub:() => `${prodIv(z).toFixed(2)}→${(prodIv(z)*CFG.prod.decay).toFixed(2)}초${(Z.prodLv || 0) + 1 >= CFG.prod.max ? ' (MAX)' : ''}`,
       cost:() => Math.round(CFG.prod.cost*Math.pow(CFG.prod.mul, Z.prodLv || 0)*zscale(z)), vis:() => (Z.prodLv || 0) < CFG.prod.max,
@@ -713,8 +719,8 @@ function stackPos(e, i){
   return [e.x - e.fx*11 - e.svx*sway, e.y - e.fy*7 - e.svy*sway*0.6, 30 + i*9*(1 - 0.2*(e.bump || 0))];
 }
 function spItemPos(z, k, i){
-  const p = SP[k]; const col = i%3, row = Math.floor(i/3)%2, layer = Math.floor(i/6);
-  return [p.x-18+col*18, gy(z, p.y-4+row*15), layer*9];
+  const p = SP[k]; const col = i%3, row = Math.floor(i/3)%3, layer = Math.floor(i/9);   // 한 단에 3×3, 보관대 MAX(36개)면 4단
+  return [p.x-18+col*18, gy(z, p.y-6+row*13), layer*9];
 }
 function deskPos(z, i){ i = Math.min(i, 15); return [DESK.x-44+(i%4)*16, gy(z, DESK.y+6), 26 + Math.floor(i/4)*9]; }
 function cashPos(z, i){ i = Math.min(i, 17); const col = i%3, row = Math.floor(i/3)%2, layer = Math.floor(i/6); return [CASH.x-20+col*20, gy(z, CASH.y-6+row*16), 3 + layer*4]; }   // 3 = 매트 높이
@@ -1317,7 +1323,7 @@ function update(dt){
       if (!s.on || s.broken || s.ruined) return; s.t += dt;
       if (s.t >= prodIv(z)) {
         s.t = 0;
-        if (s.items < CFG.spawnMax) {
+        if (s.items < spMax(z)) {
           s.items++;
           const isGold = Math.random() < CFG.gold.chance && (s.golden || 0) < 3;
           if (z === cz) {                              // 지금 층이면 프린터 받침대에서 더미로 톡 날아감
@@ -1909,7 +1915,7 @@ function drawThemed(T, s, z, k, p, py){
   if (sq) { const [bx, by] = S2(120, 190); ctx.translate(bx, by); ctx.scale(1 + sq*0.6, 1 - sq); ctx.translate(-bx, -by); }
   ctx.drawImage(T.img, l, t, 240*u, 200*u);
   if (T.lamp) machLamps(S2, u, now, s, T.lamp);
-  const full = s.items >= CFG.spawnMax, work = !s.broken && !full, prog = Math.min(1, s.t/prodIv(z));
+  const full = s.items >= spMax(z), work = !s.broken && !full, prog = Math.min(1, s.t/prodIv(z));
   ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = '#38445a';
   T.anim({ S2, u, now, prog, work, s, k, z });
   if (work && prog > T.reveal) {
@@ -2421,7 +2427,7 @@ function drawPrinter(s, z, k, p, py){
   const now = performance.now(), S2 = (u, v) => { const [x, y, h] = prnW(k, z, u, v); return toS(x, y, h); };
   const [l, t] = S2(0, 0), u = PU*scale;
   ctx.drawImage(PRN, l, t, 240*u, 200*u);
-  const full = s.items >= CFG.spawnMax, work = !s.broken && !full, prog = Math.min(1, s.t/prodIv(z));
+  const full = s.items >= spMax(z), work = !s.broken && !full, prog = Math.min(1, s.t/prodIv(z));
   const nx = work ? Math.sin(now/170)*16 : 0;                 // 일하는 동안 노즐이 좌우로 왔다 갔다
   if (s.broken) {                                             // 고장: 조종탑 화면 빨갛게 깜빡
     const [a, b] = S2(27, 70); ctx.fillStyle = Math.floor(now/250) % 2 ? 'rgba(226,80,60,.85)' : 'rgba(120,30,30,.85)';
@@ -2742,6 +2748,11 @@ function padIcon(kind, x, y, u, z){
     ctx.beginPath(); for (let i = 0; i < 16; i++) { const a = i*Math.PI/8, r = i % 2 ? 9 : 12.5; ctx.lineTo(-3 + Math.cos(a)*r, Math.sin(a)*r); } ctx.closePath(); ctx.fillStyle = '#8fa3c0'; ctx.fill(); ctx.stroke();
     ctx.beginPath(); ctx.arc(-3, 0, 4, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(14, -14); ctx.lineTo(8, -1); ctx.lineTo(13, -1); ctx.lineTo(9, 12); ctx.lineTo(18, -4); ctx.lineTo(13, -4); ctx.closePath(); ctx.fillStyle = '#ffd23f'; ctx.fill(); ctx.stroke();
+  } else if (kind === 'shelf') {                   // 나무 선반 2단 + 상자 + 넓히는 화살표
+    ctx.fillStyle = '#b07a4a'; ctx.fillRect(-15, -16, 3, 30); ctx.fillRect(9, -16, 3, 30); ctx.strokeRect(-15, -16, 3, 30); ctx.strokeRect(9, -16, 3, 30);
+    box(-16, -3, 29, 4, '#c98a5a'); box(-16, 11, 29, 4, '#c98a5a');
+    box(-11, -12, 8, 9, '#f2a35e'); box(-2, -12, 8, 9, '#f2a35e'); box(-11, 2, 8, 9, '#f2a35e'); box(-2, 2, 8, 9, '#f2a35e');
+    ctx.strokeStyle = '#4c9a66'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(-18, -21); ctx.lineTo(16, -21); ctx.moveTo(-14, -24); ctx.lineTo(-18, -21); ctx.lineTo(-14, -18); ctx.moveTo(12, -24); ctx.lineTo(16, -21); ctx.lineTo(12, -18); ctx.stroke();
   } else if (kind === 'bag') {                     // 알바 배낭 + 위에 상자 + 더하기
     box(-11, -16, 12, 8, '#f2a35e'); box(-9, -24, 12, 8, '#f2a35e');
     rr(-14, -8, 20, 20, 5); ctx.fillStyle = '#4f7fbf'; ctx.fill(); ctx.stroke(); rr(-10, 2, 12, 7, 2); ctx.fillStyle = '#3b6aa8'; ctx.fill(); ctx.stroke();
@@ -3083,9 +3094,9 @@ function render(){
           const msg = s.fix > 0 ? '수리 중…' : left <= CFG.broken.warn ? `${Math.ceil(left)}초 뒤 부서짐!` : '고장! 앞에 서서 수리';
           text(msg, p.x, py-76, 0, 13, on || s.fix > 0 ? C.hud : '#ffb3a6');
         } else {
-          const prog = s.items >= CFG.spawnMax ? 1 : Math.min(1, s.t/prodIv(z));
-          ctx.fillStyle = s.items >= CFG.spawnMax ? C.warn : C.hud; ctx.fillRect(bx, by, 56*scale*prog, 6*scale);
-          text(s.items >= CFG.spawnMax ? '가득 참' : '생산 중', p.x, py-76, 0, 13, C.hud);
+          const prog = s.items >= spMax(z) ? 1 : Math.min(1, s.t/prodIv(z));
+          ctx.fillStyle = s.items >= spMax(z) ? C.warn : C.hud; ctx.fillRect(bx, by, 56*scale*prog, 6*scale);
+          text(s.items >= spMax(z) ? '가득 참' : '생산 중', p.x, py-76, 0, 13, C.hud);
         }
       }});
       list.push({ y:py, draw:() => {

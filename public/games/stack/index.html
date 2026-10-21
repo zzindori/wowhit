@@ -1350,6 +1350,8 @@ function update(dt){
   if (!onUp && !onDn && ((!ix && !iy) || P.y > gy(cz, STAIR_UP.y + STAIR_UP.h/2 + 50))) P.stairArm = true;
   else if (P.stairArm && onUp) goFloor(cz+1, STAIR_DN.x, STAIR_DN.y + 80);
   else if (P.stairArm && onDn) goFloor(cz-1, STAIR_UP.x, STAIR_UP.y + 80);
+  // 계단 위에 서 있는데 반응이 없으면(방금 올라왔거나 계속 누르고 있음) 0.6초 뒤 안내 말풍선(사용자 요청 — 그림 칸 이름처럼)
+  P.stairWait = (onUp || onDn) && !P.stairArm ? (P.stairWait || 0) + dt : 0;
   // 엘리베이터 문 앞에 서면 층 선택판 (벗어나면 닫힘, 다시 서야 다시 열림)
   const onElev = S.warp && inRect(P.x, P.y, zr(cz, ELEV_ZONE));
   if (!onElev) { P.elevArm = true; if (!elevEl.hidden) closeElev(); }
@@ -2525,8 +2527,16 @@ function iconPad(p, left){
 }
 // 가까운 그림 칸의 이름 말풍선 — 사람들 위에 보이게 맨 나중에 그림
 function padTip(){
+  if (P.stairWait > 0.6) {                                        // 계단 안내
+    const z = curZone, up = z < S.zones.length - 1 && inRect(P.x, P.y, zr(z, STAIR_UP));   // 주인공 머리 위
+    return tipAt(P.x, P.y - 62, `계단에서 조금 내려갔다가 다시 밟으면 ${up ? `▲ ${z + 2}층` : `▼ ${z}층`}으로 가요`);
+  }
   const p = padNear; if (!p || !p.vis()) return;
-  const u = scale, msg = `${p.label}${p.sub() ? ' · ' + p.sub() : ''}`, [tx, ty] = toS(p.x, p.y - p.h/2 - 4);
+  tipAt(p.x, p.y - p.h/2 - 4, `${p.label}${p.sub() ? ' · ' + p.sub() : ''}`);
+}
+// 검은 말풍선 안내(월드 좌표 위, 화면 밖으로 안 나가게)
+function tipAt(x, y, msg){
+  const u = scale, [tx, ty] = toS(x, y);
   ctx.font = `${Math.round(12*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const tw = ctx.measureText(msg).width + 14*u, sx = Math.max(tw/2 + 4, Math.min(VW - tw/2 - 4, tx));
   rr(sx - tw/2, ty - 22*u, tw, 20*u, 10*u); ctx.fillStyle = 'rgba(44,43,53,.82)'; ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillText(msg, sx, ty - 12*u);

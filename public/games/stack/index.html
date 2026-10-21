@@ -133,6 +133,8 @@ const CFG = {
   spawnerCost: [0, 60, 240],
   workerMax: 3, workerCap: 4, workerSpeed: 95,   // 층당 일꾼 수, 일꾼 적재량, 속도
   sellMax: 5,
+  prod:   { decay: 0.85, max: 5, cost: 60, mul: 2.2 },           // 생산속도(층마다): 생산 간격 × 0.85^Lv(Lv5 ≈ 0.67초), 손님도 같은 비율로 더 자주 옴
+  bag:    { step: 2, max: 4, cost: 80, mul: 2.3 },                // 알바 가방(층마다): 일꾼 적재량 4 + 2 × Lv(최대 12개)
   cap:    { base: 6, step: 2, cost: 25, mul: 1.6 },               // 적재량 (상한 없음)
   speed:  { base: 150, bonus: 130, decay: 0.85, cost: 35, mul: 1.7, max: 12 }, // 이동속도 (갈수록 덜 오름, Lv12 ≈ 262에서 MAX — 그 위는 비싸기만 하고 체감 없어서 칸이 사라짐)
   worker: { cost: 100, mul: 2.1 },
@@ -369,7 +371,7 @@ const SP = [{x:170,y:720},{x:380,y:720},{x:590,y:720}];
 const SP_ZONE = {w:110,h:86};
 const SAFE = {x:575, y:380, w:96, h:84};   // 잔업수당 상자(자리 비운 동안 수익)
 // 업그레이드 칸은 생산기↔계산대 길을 비우고 양쪽 벽을 따라 세로로(작은 그림 칸 64×64). 왼쪽 = 공통(맨 위층만), 오른쪽 = 그 층 것
-const PAD_L = 52, PAD_R = 708, PAD_Y = [250, 334, 418, 502], PAD_S = 64;
+const PAD_L = 52, PAD_R = 708, PAD_Y = [250, 334, 418, 502, 586, 670], PAD_S = 64;
 const DESK = {x:300,y:180}, SELL = {x:300,y:258,w:140,h:76}, CASH = {x:490,y:240,w:104,h:92};
 const LINE = {x:290, y:128, gap:42};               // 손님 줄: 판매대 건너편, 왼쪽으로 늘어섬
 const gy = (z, ly) => ly - z*ZH;                   // 층 z는 위로 쌓임
@@ -389,8 +391,15 @@ const itemValue = k => {
 // 물건이 어느 층 것인지 (황금 = 1000 + 층, 직접 납품 = 10000 + …)
 const floorOfItem = k => { const b = k % MINE; return b >= GOLD ? b - GOLD : b; };
 // 등짐에서 그 층 물건 중 맨 위 것의 자리 (없으면 -1)
+// 등짐을 층별로 묶어서 글로: '5층 황금 치킨 1개 · 3층 치킨 4개'(위층부터, 같은 층은 일반 → 황금)
+function carryList(stack){
+  const m = new Map(); stack.forEach(k => { const b = k % MINE, g = b >= GOLD, f = g ? b - GOLD : b, key = f*2 + (g ? 0 : 1); m.set(key, (m.get(key) || 0) + 1); });
+  return [...m].sort((a, b) => b[0] - a[0]).map(([key, n]) => `${(key >> 1) + 1}층 ${key & 1 ? '' : '황금 '}${itemName(key >> 1)} ${n}개`).join(' · ');
+}
 const topOf = (stack, f) => { for (let i = stack.length - 1; i >= 0; i--) if (floorOfItem(stack[i]) === f) return i; return -1; };
 const sellIv = l => CFG.sell.base * Math.pow(CFG.sell.decay, l);
+const prodIv = z => CFG.spawnEvery * Math.pow(CFG.prod.decay, S.zones[z]?.prodLv || 0);   // 그 층 생산 간격(초)
+const wcap = z => CFG.workerCap + (S.zones[z]?.bagLv || 0)*CFG.bag.step;                   // 그 층 일꾼 한 번에 드는 개수
 
 // 돈 표시는 한국식 단위: 9,500 → 5.5만 → 410만 → 4,100만 → 1.2억 … (단위 앞 숫자는 최대 4자리, 10 미만이면 소수 한 자리)
 const SUF = ['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정', '재', '극'];
@@ -404,7 +413,7 @@ function fmt(n){
 }
 
 // ---- 상태 ----
-const newZone = () => ({ sp:[{on:true,items:4,t:0},{on:false,items:0,t:0},{on:false,items:0,t:0}], wrkLv:0, sellLv:0, cash:0, bills:0, queue:[], auto:false });
+const newZone = () => ({ sp:[{on:true,items:4,t:0},{on:false,items:0,t:0},{on:false,items:0,t:0}], wrkLv:0, sellLv:0, prodLv:0, bagLv:0, cash:0, bills:0, queue:[], auto:false });
 // 돈더미가 꽉 찼는지는 금액이 아니라 장수(결제 횟수)로 판단 — 아래층에서 황금 한 번 팔렸다고 바로 MAX가 되지 않게.
 // 예전 저장(bills 없음)은 금액 ÷ 그 층 물건 값으로 보정. 돈이 빠지면 장수도 같은 비율로 줄임
 const bills = (Z, z) => Z.bills ?? (Z.bills = Z.cash > 0 ? Math.min(CFG.cashMax, Math.ceil(Z.cash/valueOf(z))) : 0);
@@ -526,6 +535,14 @@ function rebuildPads(){
       cost:() => Math.round(CFG.worker.cost*Math.pow(CFG.worker.mul, Z.wrkLv)*zscale(z)), vis:() => Z.wrkLv < CFG.workerMax, apply:() => { Z.wrkLv++; syncWorkers(); } });
     PADS.push({ id:`${z}:sell`, ...at(PAD_R, PAD_Y[2], PAD_S, PAD_S), icon:'sell', lv:() => Z.sellLv + 1, label:'판매속도', sub:() => `Lv${Z.sellLv+1}`,
       cost:() => Math.round(CFG.sell.cost*Math.pow(CFG.sell.mul, Z.sellLv)*zscale(z)), vis:() => Z.sellLv < CFG.sellMax, apply:() => { Z.sellLv++; } });
+    PADS.push({ id:`${z}:prod`, ...at(PAD_R, PAD_Y[4], PAD_S, PAD_S), icon:'prod', lv:() => (Z.prodLv || 0) + 1, label:'생산속도',
+      sub:() => `${prodIv(z).toFixed(2)}→${(prodIv(z)*CFG.prod.decay).toFixed(2)}초${(Z.prodLv || 0) + 1 >= CFG.prod.max ? ' (MAX)' : ''}`,
+      cost:() => Math.round(CFG.prod.cost*Math.pow(CFG.prod.mul, Z.prodLv || 0)*zscale(z)), vis:() => (Z.prodLv || 0) < CFG.prod.max,
+      apply:() => { Z.prodLv = (Z.prodLv || 0) + 1; if (Z.prodLv === 1) { toast('생산이 빨라지면 손님도 그만큼 더 자주 와요'); toastT = 3; } } });
+    PADS.push({ id:`${z}:bag`, ...at(PAD_R, PAD_Y[5], PAD_S, PAD_S), icon:'bag', lv:() => (Z.bagLv || 0) + 1, label:'알바 가방',
+      sub:() => `한 번에 ${wcap(z)}→${wcap(z) + CFG.bag.step}개`,
+      cost:() => Math.round(CFG.bag.cost*Math.pow(CFG.bag.mul, Z.bagLv || 0)*zscale(z)), vis:() => (Z.bagLv || 0) < CFG.bag.max,
+      apply:() => { Z.bagLv = (Z.bagLv || 0) + 1; } });
     PADS.push({ id:`${z}:auto`, ...at(PAD_R, PAD_Y[0], PAD_S, PAD_S), icon:'auto', label:'자동 수금', sub:() => '다른 층에 있을 때',
       cost:() => CFG.autoCost*zscale(z), vis:() => !Z.auto, apply:() => { Z.auto = true; } });
     PADS.push({ id:`${z}:away`, ...at(PAD_R, PAD_Y[3], PAD_S, PAD_S), icon:'away', lv:() => Z.awayLv || 0, label:'잔업(오프라인)',
@@ -827,7 +844,7 @@ function updCustomers(Z, z, cz, dt){
   const onCnt = Z.sp.filter(s => s.on).length;
   R.spawnT -= dt;
   if (R.spawnT <= 0 && R.custs.filter(c => c.state !== 'leave').length < CFG.cust.maxLine) {
-    R.spawnT = CFG.cust.every/onCnt * (0.7 + Math.random()*0.6);
+    R.spawnT = CFG.cust.every/onCnt * prodIv(z)/CFG.spawnEvery * (0.7 + Math.random()*0.6);   // 생산속도를 올리면 손님도 더 자주
     const [lo, hi] = CFG.cust.want;
     const T = themeOf(z), gear = T ? pick(T.guests) : null;
     R.custs.push({ x:-30, y:gy(z, LINE.y), want:lo + Math.floor(Math.random()*(hi-lo+1)), got:0, paySum:0,
@@ -1007,9 +1024,9 @@ const awayHours = Z => Z.awayLv ? CFG.away.hours[Z.awayLv-1] : 0;
 function awayRate(Z, z){
   if (!Z.awayLv || !Z.wrkLv) return 0;
   const on = Z.sp.filter(s => s.on && !s.broken && !s.ruined).length; if (!on) return 0;
-  const prod = on/CFG.spawnEvery;
-  const carry = Z.wrkLv*CFG.workerCap/(2*(SP[1].y - SELL.y)/CFG.workerSpeed + 2);
-  const cust = Z.sp.filter(s => s.on).length/CFG.cust.every*(CFG.cust.want[0] + CFG.cust.want[1])/2;
+  const prod = on/prodIv(z);
+  const carry = Z.wrkLv*wcap(z)/(2*(SP[1].y - SELL.y)/CFG.workerSpeed + 2);
+  const cust = Z.sp.filter(s => s.on).length/CFG.cust.every*CFG.spawnEvery/prodIv(z)*(CFG.cust.want[0] + CFG.cust.want[1])/2;
   return Math.min(prod, carry, cust)*valueOf(z)*CFG.away.rate;
 }
 // 잔업을 샀는데 못 버는 이유 (없으면 '')
@@ -1235,7 +1252,7 @@ function update(dt){
       goldTick(s, z, k, cz, dt);
       if (s.broken) brokenTick(s, z, cz, dt);
       if (!s.on || s.broken || s.ruined) return; s.t += dt;
-      if (s.t >= CFG.spawnEvery) {
+      if (s.t >= prodIv(z)) {
         s.t = 0;
         if (s.items < CFG.spawnMax) {
           s.items++;
@@ -1314,7 +1331,7 @@ function update(dt){
   // 손님은 그 층 물건만 삼 — 다른 층 물건은 등에 남겨 둠(배달 주문으로만 팔 수 있음)
   if (inRect(P.x, P.y, zr(cz, SELL)) && S.stack.length > 0 && P.t > 0.07) {
     P.t = 0; const idx = topOf(S.stack, cz);
-    if (idx < 0) { if (every('otherFloor', 2.5)) { floatText(P.x, P.y, `${cz+1}층 물건만 팔려요`, C.warn); sfx.max(); } }
+    if (idx < 0) { if (every('otherFloor', 2.5)) { const fs = [...new Set(S.stack.map(floorOfItem))].sort((a, b) => a - b).map(f => f + 1); floatText(P.x, P.y, `${fs.join('·')}층 물건`, C.pad); toast(`들고 있는 것: ${carryList(S.stack)}`); sfx.max(); } }   // 안 되는 이유 대신 몇 층 물건인지 알려 줌
     else {
     const it = S.stack.splice(idx, 1)[0], q = Z.queue.length;
     fly(stackPos(P, idx), () => deskPos(cz, q), it, 0.2, () => { Z.queue.push(it + MINE); });
@@ -1425,7 +1442,7 @@ function updWorker(w, dt){
     const p = SP[w.tgt], [gx, gyy] = [p.x-24+(w.i%3)*24, gy(w.z, p.y+30)], [wx, wy] = detour(w, w.z, w.tgt, gx, gyy);
     if (moveTo(w, wx, wy, CFG.workerSpeed, dt) && wx === gx && wy === gyy) {
       const s = Z.sp[w.tgt];
-      if (normalCount(s) > 0 && w.stack.length + w.inc < CFG.workerCap) {
+      if (normalCount(s) > 0 && w.stack.length + w.inc < wcap(w.z)) {
         w.wait = 0;
         if (w.t > 0.2) {
           // 일반 물건만 집음 (황금은 맨 위에 그대로 남음)
@@ -1434,7 +1451,7 @@ function updWorker(w, dt){
         }
       } else {
         w.wait += dt;
-        if (w.inc === 0 && (w.stack.length >= CFG.workerCap || (w.stack.length > 0 && w.wait > 1.2))) { w.state = 'toSell'; w.from = w.tgt; w.tgt = null; w.wait = 0; }
+        if (w.inc === 0 && (w.stack.length >= wcap(w.z) || (w.stack.length > 0 && w.wait > 1.2))) { w.state = 'toSell'; w.from = w.tgt; w.tgt = null; w.wait = 0; }
         else if (w.stack.length === 0 && w.wait > 1.5) { w.tgt = bestSpawner(Z); w.wait = 0; }
       }
     }
@@ -1749,7 +1766,7 @@ function drawThemed(T, s, z, k, p, py){
   const [l, t] = S2(0, 0), u = PU*bigOf(z)*scale;
   ctx.drawImage(T.img, l, t, 240*u, 200*u);
   if (T.lamp) machLamps(S2, u, now, s);
-  const full = s.items >= CFG.spawnMax, work = !s.broken && !full, prog = Math.min(1, s.t/CFG.spawnEvery);
+  const full = s.items >= CFG.spawnMax, work = !s.broken && !full, prog = Math.min(1, s.t/prodIv(z));
   ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = '#38445a';
   T.anim({ S2, u, now, prog, work, s, k, z });
   if (work && prog > T.reveal) {
@@ -2279,7 +2296,7 @@ function drawPrinter(s, z, k, p, py){
   const now = performance.now(), S2 = (u, v) => { const [x, y, h] = prnW(k, z, u, v); return toS(x, y, h); };
   const [l, t] = S2(0, 0), u = PU*scale;
   ctx.drawImage(PRN, l, t, 240*u, 200*u);
-  const full = s.items >= CFG.spawnMax, work = !s.broken && !full, prog = Math.min(1, s.t/CFG.spawnEvery);
+  const full = s.items >= CFG.spawnMax, work = !s.broken && !full, prog = Math.min(1, s.t/prodIv(z));
   const nx = work ? Math.sin(now/170)*16 : 0;                 // 일하는 동안 노즐이 좌우로 왔다 갔다
   if (s.broken) {                                             // 고장: 조종탑 화면 빨갛게 깜빡
     const [a, b] = S2(27, 70); ctx.fillStyle = Math.floor(now/250) % 2 ? 'rgba(226,80,60,.85)' : 'rgba(120,30,30,.85)';
@@ -2595,6 +2612,14 @@ function padIcon(kind, x, y, u, z){
     const st = themeOf(z)?.staff; ctx.fillStyle = C.skin; ctx.beginPath(); ctx.arc(-3, 0, 10, 0, Math.PI*2); ctx.fill(); ctx.stroke();
     if (st) staffHead(st, -3, 0, 1, 0.3); else { ctx.fillStyle = C.helmet; ctx.beginPath(); ctx.arc(-3, -2, 10.5, Math.PI, 0); ctx.fill(); ctx.fillStyle = C.helmetDark; ctx.fillRect(-16, -3, 26, 3); }
     ctx.fillStyle = '#38445a'; [-7, 1].forEach(dx => { ctx.beginPath(); ctx.arc(dx, 2, 1.3, 0, Math.PI*2); ctx.fill(); });
+    ctx.fillStyle = '#4c9a66'; ctx.beginPath(); ctx.arc(12, 9, 6, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(9, 9); ctx.lineTo(15, 9); ctx.moveTo(12, 6); ctx.lineTo(12, 12); ctx.stroke();
+  } else if (kind === 'prod') {                    // 톱니바퀴 + 번개
+    ctx.beginPath(); for (let i = 0; i < 16; i++) { const a = i*Math.PI/8, r = i % 2 ? 9 : 12.5; ctx.lineTo(-3 + Math.cos(a)*r, Math.sin(a)*r); } ctx.closePath(); ctx.fillStyle = '#8fa3c0'; ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(-3, 0, 4, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(14, -14); ctx.lineTo(8, -1); ctx.lineTo(13, -1); ctx.lineTo(9, 12); ctx.lineTo(18, -4); ctx.lineTo(13, -4); ctx.closePath(); ctx.fillStyle = '#ffd23f'; ctx.fill(); ctx.stroke();
+  } else if (kind === 'bag') {                     // 알바 배낭 + 위에 상자 + 더하기
+    box(-11, -16, 12, 8, '#f2a35e'); box(-9, -24, 12, 8, '#f2a35e');
+    rr(-14, -8, 20, 20, 5); ctx.fillStyle = '#4f7fbf'; ctx.fill(); ctx.stroke(); rr(-10, 2, 12, 7, 2); ctx.fillStyle = '#3b6aa8'; ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#4c9a66'; ctx.beginPath(); ctx.arc(12, 9, 6, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(9, 9); ctx.lineTo(15, 9); ctx.moveTo(12, 6); ctx.lineTo(12, 12); ctx.stroke();
   } else if (kind === 'sell') {                    // 금전등록기 + 번개
     rr(-14, -4, 22, 14, 3); ctx.fillStyle = '#e8b923'; ctx.fill(); ctx.stroke(); rr(-10, -12, 14, 8, 2); ctx.fillStyle = '#fff8e0'; ctx.fill(); ctx.stroke();
@@ -2933,7 +2958,7 @@ function render(){
           const msg = s.fix > 0 ? '수리 중…' : left <= CFG.broken.warn ? `${Math.ceil(left)}초 뒤 부서짐!` : '고장! 앞에 서서 수리';
           text(msg, p.x, py-76, 0, 13, on || s.fix > 0 ? C.hud : '#ffb3a6');
         } else {
-          const prog = s.items >= CFG.spawnMax ? 1 : s.t/CFG.spawnEvery;
+          const prog = s.items >= CFG.spawnMax ? 1 : Math.min(1, s.t/prodIv(z));
           ctx.fillStyle = s.items >= CFG.spawnMax ? C.warn : C.hud; ctx.fillRect(bx, by, 56*scale*prog, 6*scale);
           text(s.items >= CFG.spawnMax ? '가득 참' : '생산 중', p.x, py-76, 0, 13, C.hud);
         }

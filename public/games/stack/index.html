@@ -483,12 +483,13 @@ function rebuildPads(){
       cost:() => CFG.spawnerCost[k]*zscale(z), vis:() => !Z.sp[k].on && (k === 1 || Z.sp[1].on), apply:() => { Z.sp[k].on = true; } }));
     [0, 1, 2].forEach(k => PADS.push({ id:`${z}:re${k}`, ...at(SP[k].x, SP[k].y, SP_ZONE.w, SP_ZONE.h), label:'다시 제작', sub:() => '부서진 생산기',
       cost:() => CFG.broken.rebuild*zscale(z), vis:() => !!Z.sp[k].ruined, apply:() => { Z.sp[k].ruined = false; Z.sp[k].t = 0; } }));
+    // 공통(적재량·이동속도·지갑)은 맨 위층에만 — 돈 버는 곳에서 바로 사게. 새 층을 열면 따라 올라감(레벨은 원래 하나라 저장 그대로)
     PADS.push({ id:'cap', ...at(120, 480, 96, 84), label:'적재량', sub:() => `${capOf(S.capLv)}→${capOf(S.capLv+1)}개`,
-      cost:() => Math.round(CFG.cap.cost*Math.pow(CFG.cap.mul, S.capLv)), vis:() => z === 0, apply:() => { S.capLv++; } });
+      cost:() => Math.round(CFG.cap.cost*Math.pow(CFG.cap.mul, S.capLv)), vis:() => z === S.zones.length - 1, apply:() => { S.capLv++; } });
     PADS.push({ id:'spd', ...at(250, 480, 96, 84), label:'이동속도', sub:() => `Lv${S.spdLv+1}`,
-      cost:() => Math.round(CFG.speed.cost*Math.pow(CFG.speed.mul, S.spdLv)), vis:() => z === 0, apply:() => { S.spdLv++; } });
+      cost:() => Math.round(CFG.speed.cost*Math.pow(CFG.speed.mul, S.spdLv)), vis:() => z === S.zones.length - 1, apply:() => { S.spdLv++; } });
     PADS.push({ id:'wallet', ...at(380, 480, 96, 84), label:'지갑', sub:() => `${fmt(walletOf(S.walLv))}→${fmt(walletOf(S.walLv+1))}`,
-      cost:() => Math.round(walletOf(S.walLv)*CFG.wallet.costRate), vis:() => z === 0, apply:() => { S.walLv++; } });
+      cost:() => Math.round(walletOf(S.walLv)*CFG.wallet.costRate), vis:() => z === S.zones.length - 1, apply:() => { S.walLv++; } });
     if (z === 0) PADS.push({ id:'warp', ...at(ELEV.x, 80, 100, 84), label:'엘리베이터', sub:() => '설치',
       cost:() => CFG.warpCost, vis:() => S.zones.length > 1 && !S.warp,
       apply:() => { S.warp = true; renderZoneChips(); toast('엘리베이터 설치! 층마다 계단 옆 문 앞에 서면 층을 골라 바로 가요'); P.elevArm = false; } });
@@ -895,10 +896,10 @@ function updThief(cz, dt){
   }
   // 잡기
   if (T.z === cz && Math.hypot(P.x - T.x, P.y - T.y) < 28) {
-    // 현상금: 그 층 물건 값 × 15 + 훔쳐 가던(또는 훔쳤을) 돈의 50% — 지갑 한도와 상관없이 바로 들어옴.
+    // 현상금: 지금 최고층 물건 값 × 15(어느 층 도둑이든) + 훔쳐 가던(또는 훔쳤을) 돈의 50% — 지갑 한도와 상관없이 바로 들어옴.
     // 훔치기 전에 막으면 기본 현상금 2배('철통 방어') — 놔뒀다 잡는 쪽이 이득이 되지 않게
     const early = T.loot <= 0, risk = early ? Math.ceil(Z.cash*K.take) : T.loot;
-    const bounty = Math.round(valueOf(T.z)*CFG.thief.bounty*K.bounty*(early ? 2 : 1) + risk*CFG.thief.lootBonus);
+    const bounty = Math.round(valueOf(S.zones.length - 1)*CFG.thief.bounty*K.bounty*(early ? 2 : 1) + risk*CFG.thief.lootBonus);
     S.money += bounty; coinsFrom(T.x, T.y, 40, early ? 16 : 10); showBanner(early ? '🛡️ 철통 방어!' : `🚓 ${K.name} 검거!`);
     if (T.loot > 0) { Z.cash += T.loot; Z.bills = bills(Z, T.z) + (T.lootBills || 1); toast(`${K.ul} 잡았어요! ₩${fmt(T.loot)} 되찾고 현상금 +₩${fmt(bounty)}`); }
     else toast(`훔치기 전에 막았어요! 현상금 2배 +₩${fmt(bounty)}`);
@@ -1107,7 +1108,7 @@ function drawDeliv(D, z){
   ctx.fillStyle = 'rgba(44,43,53,.2)'; ctx.fillRect(px, py, 40*scale, 5*scale);
   ctx.fillStyle = r > 0.5 ? C.ok : r > 0.25 ? C.mid : C.warn; ctx.fillRect(px, py, 40*scale*r, 5*scale);
 }
-// VIP는 일꾼이 상대 못 하고 주인공이 옆에 서서 등에 진 물건을 건네야 함. 보상은 물건 값 × 5, 지갑 한도와 상관없이 들어옴
+// VIP는 일꾼이 상대 못 하고 주인공이 옆에 서서 등에 진 물건을 건네야 함. 보상은 개당 지금 최고층 물건 값 × 5, 지갑 한도와 상관없이 들어옴
 function updVip(z, cz, dt){
   const R = rt(z), V = R.vip; if (!V) return;
   if (V.state === 'leave') { if (moveTo(V, -50, gy(z, VIP_SPOT.y), CFG.cust.speed*1.4, dt, true)) R.vip = null; return; }
@@ -1124,7 +1125,7 @@ function updVip(z, cz, dt){
   if (V.state === 'wait' && z === cz && S.stack.length && Math.hypot(P.x - V.x, P.y - V.y) < 60 && (V.serveT += dt) > 0.12) {
     V.serveT = 0; const it = S.stack.pop(); V.got++;
     const gold = it % MINE >= GOLD;                  // 황금을 건네면 그 물건 값이 또 × 5 (원래도 최고층 값 × 10)
-    V.sum += itemValue(it)*(gold ? CFG.vip.goldMul : 1);
+    V.sum += gold ? itemValue(it)*CFG.vip.goldMul : valueOf(S.zones.length - 1);   // 어느 층 건물주든 물건 하나 = 지금 최고층 값(아래층 건물주도 챙길 가치 있게)
     fly(stackPos(P, S.stack.length), () => [V.x, V.y, 30], it, 0.2, () => {}); sfx.hand();
     if (gold) { V.gold = (V.gold || 0) + 1; floatText(V.x, V.y, `황금! ×${CFG.vip.goldMul}`, '#b58a12'); sfx.gold(); buzz([30, 30, 60]); }
     if (V.got >= V.want) {

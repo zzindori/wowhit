@@ -81,6 +81,12 @@ version: 'x.y.z+build'
   테마에 `mach[k]`(그 생산기만 img·anim·spot 덮어씀, `machOf(z, k)`), 물건에 `vars`(떡볶이 컵 'tteok' · 김밥 'kimbap' · 순대 접시 'sundae').
   물건 번호에 생산기 번호를 더함: `+ (k+1) × VAR(100000)`(`vk()`) — 그림만 바뀌고 층·값·황금·직접 납품은 `% MINE`이라 그대로(`>= MINE` 비교만 `% VAR`로 고침). 예전 저장(0) = 김밥.
   손님 말풍선·배달 손님 머리 위 물건 그림은 세 가지가 돌아가며 바뀜(`mixKind`, 손님마다 박자 다름). 물건 이름 '김밥' → '분식', 1층 주문 대사 변경. apps.ts 1층 설명 수정
+- 층층이 2~6층도 생산기마다 메뉴 분리(사용자 요청 '기존 층 분리', 1층과 같은 방식 — 가운데 1번 = 원래 가게, 양옆 0·2번 새로):
+  2층 호떡 철판 `HOTK`/`animHotteok`(누르개 꾹) · 계란빵 틀 `EGGB`/`animEgg` | 3층 양념 버무림 볼 `YANG`/`animYang` · 간장 석쇠 `GANJ`/`animGan`(붓질) |
+  4층 삼각김밥 쇼케이스 `ONIG`/`animOni` · 호빵 찜기 `HOPP`/`animHop` (컵라면은 5층 라면과 겹쳐서 호빵으로) | 5층 핫바 온장고 `HBAR`/`animHotbar` · 아이스크림 냉동고 `ICEF`/`animIce` |
+  6층 팝콘 수레 `POPC`/`animPop` · 슬러시 기계 `SLUS`/`animSlush`. 공통 받침대 `stall()`(메뉴판·바퀴 선택), `menuSign()`에 자리·색·크기 인자 추가.
+  물건 그림 hotteok·eggbread·onigiri·hoppang·hotbar·icebar·popcorn·slush, 치킨은 `band`/`dot` 색으로 양념(빨강)·간장(갈색) 구분.
+  `up`(가득 참·고장 글자 높이)도 생산기별(`machOf`). 물건 이름 길거리 간식·편의점 간식·한강 간식·노래방 간식, 층별 주문 대사 추가. apps.ts 층 설명 수정
 
 ### 2026-10-20
 - 쌓고팔기 VIP 벌칙 다시 변경(20%→회복은 체감 안 됨): 10초 동안 고정 속도 = 일꾼 속도 × 60%(`CFG.vip.slowSpd`, 약 57) — 업그레이드와 상관없이 일꾼보다 느림. `slowMin`·회복 곡선 삭제

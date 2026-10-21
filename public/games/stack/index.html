@@ -301,7 +301,8 @@ const kindOf = kind => themeOf(kind)?.item || KINDS[kind % KINDS.length];
 const machOf = (z, k) => { const T = themeOf(z); return T && T.mach ? { ...T, ...T.mach[k] } : T; };
 // 판매대 = 레트로 계산대(짙은 나무 + 황동 금전등록기, 코드로 그린 SVG). 숫자판·손잡이·서랍은 drawDesk()가 움직이며 그림. ART_SRC.desk가 있으면 그걸 우선
 const DSK = new Image();
-DSK.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 170" width="480" height="340"><defs><linearGradient id="woodt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe6c6"/><stop offset="1" stop-color="#ecc58e"/></linearGradient><linearGradient id="brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#d9a52e"/></linearGradient><linearGradient id="brt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset="1" stop-color="#f2cf6a"/></linearGradient></defs><ellipse cx="120" cy="163" rx="106" ry="7" fill="#2c2b35" opacity=".2"/><g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><rect x="20" y="50" width="200" height="82" rx="9" fill="url(#woodt)"/><rect x="20" y="126" width="200" height="34" rx="7" fill="#8c4f3a"/><rect x="30" y="133" width="84" height="20" rx="4" fill="#a8604a" stroke-width="2.5"/><rect x="126" y="133" width="84" height="20" rx="4" fill="#a8604a" stroke-width="2.5"/><rect x="30" y="58" width="116" height="66" rx="6" fill="#8fbf9d" stroke-width="2.5"/><rect x="154" y="58" width="56" height="16" rx="5" fill="url(#brt)"/><rect x="154" y="70" width="56" height="34" rx="5" fill="url(#brass)"/><rect x="154" y="102" width="56" height="16" rx="4" fill="#c9962a"/></g><rect x="36" y="64" width="104" height="54" rx="4" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="5 4" opacity=".6"/><g fill="#38445a"><circle cx="162" cy="79" r="2.1"/><circle cx="170" cy="79" r="2.1"/><circle cx="178" cy="79" r="2.1"/><circle cx="186" cy="79" r="2.1"/><circle cx="194" cy="79" r="2.1"/><circle cx="202" cy="79" r="2.1"/><circle cx="162" cy="87" r="2.1"/><circle cx="170" cy="87" r="2.1"/><circle cx="178" cy="87" r="2.1"/><circle cx="186" cy="87" r="2.1"/><circle cx="194" cy="87" r="2.1"/><circle cx="202" cy="87" r="2.1"/><circle cx="162" cy="95" r="2.1"/><circle cx="170" cy="95" r="2.1"/><circle cx="178" cy="95" r="2.1"/><circle cx="186" cy="95" r="2.1"/><circle cx="194" cy="95" r="2.1"/><circle cx="202" cy="95" r="2.1"/></g><path d="M168 110 H196" stroke="#8a6a12" stroke-width="2.5" stroke-linecap="round"/><g fill="#fff" opacity=".55"><rect x="28" y="53" width="180" height="3" rx="1.5"/><rect x="158" y="74" width="3" height="26" rx="1.5"/></g><g fill="#fff" opacity=".15"><rect x="34" y="136" width="76" height="4" rx="2"/><rect x="130" y="136" width="76" height="4" rx="2"/></g></svg>`);
+DSK.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 170" width="480" height="340"><defs><linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9dfe7"/><stop offset="1" stop-color="#93c4d0"/></linearGradient><linearGradient id="top" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef9fb"/><stop offset="1" stop-color="#cfe9ef"/></linearGradient><linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9b884"/><stop offset="1" stop-color="#c98f5a"/></linearGradient><linearGradient id="woodt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe6c6"/><stop offset="1" stop-color="#efcc98"/></linearGradient><linearGradient id="brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#d9a52e"/></linearGradient><linearGradient id="mint" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9f0dc"/><stop offset="1" stop-color="#9fd9bd"/></linearGradient><linearGradient id="scr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4a66"/><stop offset="1" stop-color="#2a3448"/></linearGradient></defs><ellipse cx="120" cy="162" rx="104" ry="7" fill="#2c2b35" opacity=".2"/><g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><path d="M34 84 Q34 78 40 78 L200 78 Q206 78 206 84 L212 116 L28 116 Z" fill="url(#woodt)"/><rect x="28" y="114" width="184" height="46" rx="7" fill="#8c4f3a"/><rect x="38" y="122" width="76" height="30" rx="4" fill="#a8604a" stroke-width="2.5"/><rect x="126" y="122" width="76" height="30" rx="4" fill="#a8604a" stroke-width="2.5"/><path d="M146 112 L210 112 L206 96 L150 96 Z" fill="url(#brass)"/><rect x="152" y="66" width="52" height="32" rx="6" fill="url(#brass)"/></g><g fill="#38445a"><circle cx="160" cy="76" r="2.2"/><circle cx="168" cy="76" r="2.2"/><circle cx="176" cy="76" r="2.2"/><circle cx="184" cy="76" r="2.2"/><circle cx="192" cy="76" r="2.2"/><circle cx="160" cy="84" r="2.2"/><circle cx="168" cy="84" r="2.2"/><circle cx="176" cy="84" r="2.2"/><circle cx="184" cy="84" r="2.2"/><circle cx="192" cy="84" r="2.2"/></g><path d="M162 104 H194" stroke="#a87b1a" stroke-width="2.5" stroke-linecap="round"/><g fill="#fff" opacity=".6"><rect x="40" y="81" width="100" height="3" rx="1.5"/><rect x="156" y="70" width="4" height="22" rx="2"/></g><g fill="#fff" opacity=".15"><rect x="42" y="125" width="68" height="4" rx="2"/><rect x="130" y="125" width="68" height="4" rx="2"/></g></svg>
+`);
 Object.entries(ART_SRC).forEach(([k, src]) => { if (!src) return; const im = new Image(); im.onload = () => { ART[k] = im; }; im.src = src; });
 
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
@@ -608,9 +609,7 @@ function spItemPos(z, k, i){
   const p = SP[k]; const col = i%3, row = Math.floor(i/3)%2, layer = Math.floor(i/6);
   return [p.x-18+col*18, gy(z, p.y-4+row*15), layer*9];
 }
-// 판매대 윗판(위에서 보이는 계산 매트) 위 5×3 칸 — 뒷줄(0)부터 앞줄로, 앞줄일수록 화면 아래(높이 z가 낮음). 금전등록기는 오른쪽 뒤
-const DESK_SHOW = 15;
-function deskPos(z, i){ i = Math.min(i, DESK_SHOW - 1); return [DESK.x + (45 + (i%5)*22 - 120)*PU, gy(z, DESK.y+14), (160 - (80 + Math.floor(i/5)*18))*PU]; }
+function deskPos(z, i){ i = Math.min(i, 15); return [DESK.x-44+(i%4)*16, gy(z, DESK.y+6), 26 + Math.floor(i/4)*9]; }
 function cashPos(z, i){ i = Math.min(i, 17); const col = i%3, row = Math.floor(i/3)%2, layer = Math.floor(i/6); return [CASH.x-20+col*20, gy(z, CASH.y-6+row*16), 3 + layer*4]; }   // 3 = 매트 높이
 
 function fly(from, toFn, kind, dur, done){ anims.push({ from, toFn, kind, t:0, dur, done }); }
@@ -725,7 +724,7 @@ function moveTo(e, tx, ty, spd, dt, free){
 // ---- 충돌: 프린터 몸체는 못 지나감 (그림보다 약간 작게). 막히면 멈추지 않고 벽 따라 미끄러짐 ----
 const MACH = { hw:62, top:70, bot:28 };            // 프린터 x ±62, y는 생산기 칸 y-70 ~ y-28 (바닥 기준선 근처)
 const BODY_R = 10;                                 // 사람 몸 반지름
-const DESK_BOX = { hw:62, top:30, bot:12 };   // 윗판이 보이게 깊어진 만큼 뒤로 넓힘
+const DESK_BOX = { hw:54, top:8, bot:12 };
 function collide(e, z){
   const Z = S.zones[z]; if (!Z) return;
   Z.sp.forEach((s, k) => {
@@ -1669,16 +1668,16 @@ function drawDesk(z){
   const e = (now - (R.ring || -1e9))/700, ring = e >= 0 && e < 1;
   ctx.strokeStyle = '#38445a'; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   if (ring) {                                                 // 서랍(지폐 보임)
-    const out = 10*Math.min(1, (1-e)*3), [dx, dy] = D(152, 104 + out);
-    ctx.fillStyle = '#7fc99a'; ctx.fillRect(dx + 6*u, dy - 4*u, 48*u, 5*u);
-    rr(dx, dy, 60*u, 14*u, 3*u); ctx.fillStyle = '#e8b93c'; ctx.fill(); ctx.lineWidth = 2.5*u; ctx.stroke();
+    const out = 9*Math.min(1, (1-e)*3), [dx, dy] = D(158, 106 + out);
+    ctx.fillStyle = '#7fc99a'; ctx.fillRect(dx + 4*u, dy - 4*u, 32*u, 5*u);
+    rr(dx, dy, 40*u, 8*u, 2*u); ctx.fillStyle = '#e8b93c'; ctx.fill(); ctx.lineWidth = 2.5*u; ctx.stroke();
   }
-  const lift = ring ? 12*(1-e)*Math.min(1, e/0.12) : 0, [px, py] = D(164, 40 - lift);   // 숫자판(금전등록기 뒤로 솟음)
+  const lift = ring ? 12*(1-e)*Math.min(1, e/0.12) : 0, [px, py] = D(160, 50 - lift);   // 숫자판
   rr(px, py, 36*u, 18*u, 4*u); ctx.fillStyle = '#fff8e0'; ctx.fill(); ctx.lineWidth = 3*u; ctx.stroke();
   ctx.font = `${Math.round(14*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = ring ? '#e0614a' : '#38445a'; ctx.fillText('₩', px + 18*u, py + 10*u);
   const pl = (now - (R.pull || -1e9))/260, a = pl >= 0 && pl < 1 ? Math.sin(Math.PI*pl) : 0;   // 손잡이
-  const ang = -0.46 + a*1.2, [hx, hy] = D(210, 82);
+  const ang = -0.46 + a*1.2, [hx, hy] = D(206, 80);
   const kx = hx + Math.cos(ang)*14*u, ky = hy + Math.sin(ang)*14*u;
   ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(kx, ky); ctx.lineWidth = 3*u; ctx.stroke();
   ctx.beginPath(); ctx.arc(kx, ky, 4*u, 0, Math.PI*2); ctx.fillStyle = '#e0614a'; ctx.fill(); ctx.lineWidth = 2.5*u; ctx.stroke();
@@ -2683,10 +2682,10 @@ function render(){
     list.push({ y:gy(z, DESK.y), draw:() => {
       const [sx, sy] = toS(DESK.x, gy(z, DESK.y+14));
       if (!art('desk', sx, sy, 110*scale, 70*scale)) { if (DSK.complete && DSK.naturalWidth) drawDesk(z); else cube(DESK.x, gy(z, DESK.y+14), 0, 110, 26, C.deskTop, C.deskFront); }
-      const q = Z.queue, n = Math.min(q.length, DESK_SHOW);
+      const q = Z.queue, n = Math.min(q.length, 16);
       for (let i = 0; i < n; i++) { const [x, y, zz] = deskPos(z, i); item(x, y, zz, q[i], true); }
       for (let i = 0; i < n; i++) if (q[i] % VAR >= MINE) mineBadge(...deskPos(z, i));
-      if (q.length > DESK_SHOW) text(`+${q.length-DESK_SHOW}`, DESK.x-78, gy(z, DESK.y-10), 30, 13, C.ink);
+      if (q.length > 16) text(`+${q.length-16}`, DESK.x-72, gy(z, DESK.y-10), 30, 13, C.ink);
     }});
     if (Z.awayLv) list.push({ y:gy(z, SAFE.y), draw:() => {   // 잔업
       const sy = gy(z, SAFE.y);

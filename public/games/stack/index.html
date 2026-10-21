@@ -368,8 +368,9 @@ const ZH = CFG.zoneH, W = CFG.worldW;
 const SP = [{x:170,y:720},{x:380,y:720},{x:590,y:720}];
 const SP_ZONE = {w:110,h:86};
 const SAFE = {x:575, y:380, w:96, h:84};   // 잔업수당 상자(자리 비운 동안 수익)
-// 업그레이드 칸은 생산기↔계산대 길을 비우고 양쪽 벽을 따라 세로로(작은 그림 칸 64×64). 왼쪽 = 공통(맨 위층만), 오른쪽 = 그 층 것
-const PAD_L = 52, PAD_R = 708, PAD_Y = [250, 334, 418, 502], PAD_S = 64;
+// 업그레이드 칸은 생산기↔계산대 길을 비우고 오른쪽 벽을 따라 세로로(작은 그림 칸 64×64). 위 넷 = 그 층 것, 아래 셋 = 공통(맨 위층만).
+// 왼쪽 벽은 화면 왼쪽 아래 층 표시 칩에 가려서 안 씀(사용자)
+const PAD_R = 708, PAD_Y = [250, 334, 418, 502, 586, 670, 754], PAD_S = 64;
 const DESK = {x:300,y:180}, SELL = {x:300,y:258,w:140,h:76}, CASH = {x:490,y:240,w:104,h:92};
 const LINE = {x:290, y:128, gap:42};               // 손님 줄: 판매대 건너편, 왼쪽으로 늘어섬
 const gy = (z, ly) => ly - z*ZH;                   // 층 z는 위로 쌓임
@@ -511,11 +512,11 @@ function rebuildPads(){
     [0, 1, 2].forEach(k => PADS.push({ id:`${z}:re${k}`, ...at(SP[k].x, SP[k].y, SP_ZONE.w, SP_ZONE.h), label:'다시 제작', sub:() => '부서진 생산기',
       cost:() => CFG.broken.rebuild*zscale(z), vis:() => !!Z.sp[k].ruined, apply:() => { Z.sp[k].ruined = false; Z.sp[k].t = 0; } }));
     // 공통(적재량·이동속도·지갑)은 맨 위층에만 — 돈 버는 곳에서 바로 사게. 새 층을 열면 따라 올라감(레벨은 원래 하나라 저장 그대로)
-    PADS.push({ id:'cap', ...at(PAD_L, PAD_Y[0], PAD_S, PAD_S), icon:'cap', lv:() => S.capLv + 1, label:'적재량', sub:() => `${capOf(S.capLv)}→${capOf(S.capLv+1)}개`,
+    PADS.push({ id:'cap', ...at(PAD_R, PAD_Y[4], PAD_S, PAD_S), icon:'cap', lv:() => S.capLv + 1, label:'적재량', sub:() => `${capOf(S.capLv)}→${capOf(S.capLv+1)}개`,
       cost:() => Math.round(CFG.cap.cost*Math.pow(CFG.cap.mul, S.capLv)), vis:() => z === S.zones.length - 1, apply:() => { S.capLv++; } });
-    PADS.push({ id:'spd', ...at(PAD_L, PAD_Y[1], PAD_S, PAD_S), icon:'spd', lv:() => S.spdLv + 1, label:'이동속도', sub:() => `Lv${S.spdLv+1}${S.spdLv+1 >= CFG.speed.max ? ' (MAX)' : ''}`,
+    PADS.push({ id:'spd', ...at(PAD_R, PAD_Y[5], PAD_S, PAD_S), icon:'spd', lv:() => S.spdLv + 1, label:'이동속도', sub:() => `Lv${S.spdLv+1}${S.spdLv+1 >= CFG.speed.max ? ' (MAX)' : ''}`,
       cost:() => Math.round(CFG.speed.cost*Math.pow(CFG.speed.mul, S.spdLv)), vis:() => z === S.zones.length - 1 && S.spdLv < CFG.speed.max, apply:() => { S.spdLv++; if (S.spdLv >= CFG.speed.max) { toast('이동속도 MAX! 더 빨라질 수 없어요'); showBanner('🏃 이동속도 MAX!'); } } });
-    PADS.push({ id:'wallet', ...at(PAD_L, PAD_Y[2], PAD_S, PAD_S), icon:'wallet', lv:() => S.walLv + 1, label:'지갑', sub:() => `${fmt(walletOf(S.walLv))}→${fmt(walletOf(S.walLv+1))}`,
+    PADS.push({ id:'wallet', ...at(PAD_R, PAD_Y[6], PAD_S, PAD_S), icon:'wallet', lv:() => S.walLv + 1, label:'지갑', sub:() => `${fmt(walletOf(S.walLv))}→${fmt(walletOf(S.walLv+1))}`,
       cost:() => Math.round(walletOf(S.walLv)*CFG.wallet.costRate), vis:() => z === S.zones.length - 1, apply:() => { S.walLv++; } });
     if (z === 0) PADS.push({ id:'warp', ...at(ELEV.x, 80, 100, 84), label:'엘리베이터', sub:() => '설치',
       cost:() => CFG.warpCost, vis:() => S.zones.length > 1 && !S.warp,

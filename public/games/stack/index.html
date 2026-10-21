@@ -248,7 +248,7 @@ const THEMES = [
     guests:['office', 'ajussi'], order:['치킨 {n}마리요!', '양념 반 간장 반, {n}마리요!', '반반 무 많이요!', '오늘 축구 하잖아요, {n}마리!'], thanks:['치킨은 진리!', '오늘 야근 끝~'],
     item:{ name:'치킨', shape:'chicken', top:'#efe6d2', front:'#ffffff',
       vars:[{ shape:'chicken', top:'#f6d2c4', front:'#ffffff', band:'#c0392b', dot:'#c0392b' }, { shape:'chicken', top:'#efe6d2', front:'#ffffff' }, { shape:'chicken', top:'#e6d3b8', front:'#ffffff', band:'#5a3a22', dot:'#6b3a1f' }] } },
-  { shop:'24시 층층마트', sign:'#ffffff', ink:'#2f8f6f', awn:'#5ec1a0', img:FRG, anim:animMart, spot:[120, 170], reveal:0.6, up:6,
+  { shop:'24시 층층편의점', sign:'#ffffff', ink:'#2f8f6f', awn:'#5ec1a0', img:FRG, anim:animMart, spot:[120, 170], reveal:0.6, up:6,
     mach:[{ img:ONIG, anim:animOni, spot:[120, 104], reveal:0.65, up:2 }, {}, { img:HOPP, anim:animHop, spot:[120, 104], reveal:0.65, up:2 }],
     guests:['student', 'office', 'youth'], order:['바나나우유 {n}개요', '삼각김밥이랑 {n}개 계산이요', '호빵 따끈한 걸로 {n}개요~', '빨대도 주세요~'], thanks:['역시 편의점!', '봉투는 괜찮아요'],
     item:{ name:'편의점 간식', shape:'bmilk', top:'#fbe38a', front:'#fbe38a',
@@ -1839,7 +1839,7 @@ function animGan({ S2, u, now, prog, work, s }){
 }
 // 4층 0번 삼각김밥 쇼케이스: 위에서 찬 바람이 솔솔 → 앞 칸에 삼각김밥이 차오름. 고장 = 냉장 꺼짐(어두워짐)
 function animOni({ S2, u, now, prog, work, s }){
-  menuSign(S2, u, now, s, '삼각김밥 · 시원해요', '#fff', 49, 12);
+  menuSign(S2, u, now, s, '삼각김밥', '#fff', 49, 13);
   if (s.broken) return glassOff(S2, 18, 58, 222, 106);
   for (let i = 0; i < 6; i++) { const tt = (now/1400 + i/6) % 1, [ax, ay] = S2(34 + i*34, 60 + tt*40);
     ctx.strokeStyle = `rgba(120,200,235,${0.8*(1 - tt)})`; ctx.lineWidth = 2*u; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax, ay + 6*u); ctx.stroke(); }
@@ -1923,7 +1923,7 @@ function animSlush({ S2, u, now, prog, work, s }){
 function animMart({ S2, u, now, prog, work, s }){
   const [hx, hy] = S2(120, 33);
   ctx.font = `${Math.round(15*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillStyle = s.broken ? blink(now) : '#fff'; ctx.fillText(s.broken ? '고장! 냉장 꺼짐' : '24시 · 시원해요', hx, hy);
+  ctx.fillStyle = s.broken ? blink(now) : '#fff'; ctx.fillText(s.broken ? '고장! 냉장 꺼짐' : '바나나우유', hx, hy);
   const doors = [[28, 52], [124, 52]];
   doors.forEach(([a, b]) => {
     const [x0, y0] = S2(a, b), [x1, y1] = S2(a + 88, b + 88);

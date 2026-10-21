@@ -224,7 +224,18 @@ const CUSH = stall({ ...BTY,
   tool:'<ellipse cx="96" cy="100" rx="36" ry="7" fill="#cdd3dc"/><rect x="22" y="82" width="28" height="22" rx="5" fill="#f3d2b3"/><rect x="20" y="77" width="32" height="7" rx="3" fill="#f29bb5"/><rect x="138" y="52" width="6" height="52" fill="#cdd3dc"/><path d="M141 56 H100" stroke-width="3"/>' + TRAY });
 const TINT = stall({ ...BTY, defs:GL,
   tool:'<rect x="34" y="82" width="28" height="22" fill="#cdd3dc"/><rect x="26" y="24" width="44" height="60" rx="10" fill="url(#gl)"/><path d="M70 40 H112 V62" fill="none" stroke-width="5"/><rect x="106" y="60" width="12" height="8" rx="2" fill="#5d6474"/><rect x="76" y="96" width="88" height="8" rx="4" fill="#5d6474"/>' + TRAY });
-// 층별 가게 테마(1~7층). 없는 층(8층~)은 원래 스타일: 3D 프린터 + KINDS 기본 물건.
+// 8층 층층 한복대여(경복궁 옆 한복 대여점 분위기): 0번 여자 한복 마네킹 · 1번 남자 한복 마네킹(갓) · 2번 노리개 소품대. 받침은 한지색 + 짙은 나무 현판
+const HNB = { body:'#f3e9d6', strip:'#b8352b', sign:'#5a3a22' };
+const SCREEN = '<g stroke-width="2">' + [16, 30, 44].map((x, i) => `<rect x="${x}" y="60" width="14" height="44" fill="#f6efe0"/><path d="M${x + 3} ${92 - i*6} q4 -8 8 -2" fill="none" stroke="#5a7a4a"/><circle cx="${x + 9}" cy="${74 + i*4}" r="2" fill="#e0614a" stroke="none"/>`).join('') + '</g>';   // 작은 병풍
+const MANQ = '<ellipse cx="94" cy="101" rx="26" ry="5" fill="#a87449"/><rect x="91" y="84" width="6" height="17" fill="#a87449"/>';   // 마네킹 받침
+const MIRR = '<rect x="140" y="60" width="4" height="44" fill="#a87449"/><ellipse cx="142" cy="66" rx="13" ry="18" fill="#cfe9ef"/>';
+const HANF = stall({ ...HNB, tool:SCREEN + MANQ + MIRR + TRAY });
+const HANM = stall({ ...HNB, tool:SCREEN + MANQ + MIRR + TRAY });
+const NORI = stall({ ...HNB,
+  tool:'<rect x="20" y="82" width="54" height="22" rx="3" fill="#2c2b35"/><rect x="20" y="78" width="54" height="7" rx="3" fill="#3b3a48"/><rect x="104" y="52" width="5" height="52" fill="#a87449"/><path d="M106 54 H134" stroke-width="3"/>' +
+    '<path d="M138 104 Q138 94 146 94 L154 98 L154 104 Z" fill="#e0614a" stroke-width="2"/><path d="M152 104 Q152 94 160 94 L168 98 L168 104 Z" fill="#e0614a" stroke-width="2"/>' + TRAY,   // 자개함 · 걸이 · 꽃신 한 켤레
+  top:'<g fill="#fff">' + [[28, 90], [40, 95], [52, 88], [64, 96], [34, 99]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.6"/>`).join('') + '</g>' });
+// 층별 가게 테마(1~8층). 없는 층(9층~)은 원래 스타일: 3D 프린터 + KINDS 기본 물건.
 // shop 간판 이름 · sign/ink/awn 간판 바탕·글자·차양 색 · img 생산기 몸체 · anim 움직이는 부분 · spot 물건이 생기는 자리(SVG 좌표) · reveal 물건이 차오르기 시작하는 진행도 · up 위 글자 올림
 // item은 그 층 번호 그대로일 때만(같은 종류가 반복되는 위층은 원래 모양)
 const THEMES = [
@@ -259,7 +270,14 @@ const THEMES = [
     mach:[{ img:MASK, anim:animMask }, {}, { img:TINT, anim:animTint }],
     guests:['tourist', 'student', 'office'], order:['K-beauty! {n} please!', 'マスクパック {n}つください~', '틴트 신상 나왔어요? {n}개요', '쿠션 리필도 {n}개요'], thanks:['피부 좋아지겠다~', 'Kamsahamnida!', '세일이라 좋다!'],
     item:{ name:'화장품', shape:'cushion', top:'#f7c6d6', front:'#f29bb5',
-      vars:[{ shape:'mask', top:'#fde4ec', front:'#f7a8c0' }, { shape:'cushion', top:'#f7c6d6', front:'#f29bb5' }, { shape:'tint', top:'#f29bb5', front:'#e0315a' }] } }
+      vars:[{ shape:'mask', top:'#fde4ec', front:'#f7a8c0' }, { shape:'cushion', top:'#f7c6d6', front:'#f29bb5' }, { shape:'tint', top:'#f29bb5', front:'#e0315a' }] } },
+  // trad = 기와 지붕·단청·청사초롱 간판 + 단풍잎 · dress = 다 산 손님은 한복 입고 나감 · jingle = 층에 들어오면 가야금 소리
+  { shop:'층층 한복대여', sign:'#5a3a22', ink:'#ffe08a', awn:'#b8352b', img:HANM, anim:animHanM, spot:[196, 98], reveal:0.75, up:15, trad:true, dress:true, jingle:'gayageum',
+    mach:[{ img:HANF, anim:animHanF }, {}, { img:NORI, anim:animNori }],
+    guests:['tourist', 'student', 'youth'], order:['한복 {n}벌 빌려주세요!', 'Hanbok rental, {n} please!', '韓服 {n}着お願いします~', '경복궁 가기 전에 {n}벌요!', '노리개도 {n}개요~'],
+    thanks:['한복 입으면 궁 입장 무료래요!', '사진 잘 나오겠다~', 'So beautiful!', '인생샷 찍으러 가자!'],
+    item:{ name:'한복', shape:'hanbokM', top:'#e8eef5', front:'#2d3f6b',
+      vars:[{ shape:'hanbokF', top:'#f6d55c', front:'#d9443a' }, { shape:'hanbokM', top:'#e8eef5', front:'#2d3f6b' }, { shape:'norigae', top:'#4fae7d', front:'#d9443a' }] } }
 ];
 // 가게 미리보기(설정): 지금 층을 다른 층 가게 모습으로 바꿔 봄. 그림만 바뀌고 값·저장은 그대로. null = 층대로, -1 = 원래 스타일
 let PREVIEW = null;
@@ -294,6 +312,10 @@ const KINDS = [
 // 층 손님 종류(테마 층만): 옷 색 + personBody 장식. 테마 없는 층은 CUST_COLS 무작위 색
 const GUESTS = { student:['#2d3f6b', '#22305a'], kid:['#f08a24', '#c96f17'], office:['#f4f6fa', '#cfd6e0'], grandma:['#9b6fb5', '#7a5293'],
   ajussi:['#7a8a5a', '#5f6d44'], tourist:['#3fb6c8', '#2b8f9e'], youth:['#f2a58c', '#d9826a'] };
+// 한복대여 층 손님이 나갈 때 입는 한복: 치마(몸통) 색 · 아래 색 · 저고리 · 고름 (hanbokM = 조끼 + 갓)
+const HANBOK = [{ g:'hanbokF', body:'#d9443a', dark:'#b0322a', top:'#f6d55c', go:'#3f6fb5' }, { g:'hanbokF', body:'#3f6fb5', dark:'#2f5590', top:'#f7c6d6', go:'#d9443a' },
+  { g:'hanbokF', body:'#8a5ab5', dark:'#6e4592', top:'#e3f3e6', go:'#d9443a' }, { g:'hanbokF', body:'#f29bb5', dark:'#d97c98', top:'#fff7e6', go:'#5a7a4a' },
+  { g:'hanbokM', body:'#2d3f6b', dark:'#e3dccb', top:'#e8eef5' }, { g:'hanbokM', body:'#5a7a4a', dark:'#e3dccb', top:'#f3ead8' }];
 const HURRY = ['빨리빨리!', '아직이에요?', '빨리 좀요~'], GRUMBLE = ['에이, 안 사!', '너무 늦어요!'];
 const pick = a => a[Math.floor(Math.random()*a.length)];
 // 한 층에 말풍선은 하나씩: 새로 말하면 다른 손님 말풍선은 금방 사라짐(옆 사람끼리 겹치지 않게)
@@ -432,7 +454,9 @@ const sfx = {
   broken(){ tone(220, 0.3, 'sawtooth', 0.05, 0, 0.5); tone(160, 0.35, 'sawtooth', 0.05, 0.15, 0.5); buzz([50, 40, 50]); },
   vip(){ [1319, 1568, 2093, 2637].forEach((f, i) => tone(f, 0.14, 'triangle', 0.08, i*0.08)); buzz([20, 40, 20, 40, 20]); },
   warp(){ tone(300, 0.25, 'sine', 0.1, 0, 3); buzz(15); },
-  robot(){ tone(1400, 0.06, 'square', 0.04); tone(1860, 0.08, 'square', 0.04, 0.09); }
+  robot(){ tone(1400, 0.06, 'square', 0.04); tone(1860, 0.08, 'square', 0.04, 0.09); },
+  gayageum(){ [[659, 0], [784, 0.14], [880, 0.28], [784, 0.42], [659, 0.56], [587, 0.7], [659, 0.92]].forEach(([f, w], i) => {   // 한복대여 층 들어올 때: 가야금처럼 뜯는 5음계
+    tone(f, i === 6 ? 0.9 : 0.42, 'triangle', 0.09, w, i === 6 ? 0.97 : 0.995); tone(f*2, 0.1, 'sine', 0.03, w); }); }
 };
 
 // ---- 업그레이드 칸 (층마다 생성) ----
@@ -1151,7 +1175,8 @@ function update(dt){
   const cz = zoneOf(P.y);
   if (cz !== curZone) {
     curZone = cz; renderZoneChips();
-    if (S.zones[cz].auto) { rt(cz).spin = 1.2; sfx.robot(); }   // 자동 수금 로봇: 돌아오면 '삑' 하고 빠르게 한 바퀴
+    if (S.zones[cz].auto) { rt(cz).spin = 1.2; sfx.robot(); }
+    if (themeOf(cz)?.jingle) sfx[themeOf(cz).jingle]();   // 자동 수금 로봇: 돌아오면 '삑' 하고 빠르게 한 바퀴
     if (!S.tut.autoInfo && S.zones.length > 1) { S.tut.autoInfo = true; toast('다른 층 돈은 그 층 돈더미에 쌓여요. 층마다 자동 수금 칸을 사면 알아서 들어와요'); toastT = 4; }
   }
 
@@ -1474,6 +1499,34 @@ function item(x, y, z, kind){
     ctx.fillStyle = '#e8d5b0'; ctx.fillRect(sx - 1*s, sy - 4*s, 2*s, 4*s);
     rr(sx - 3*s, sy - 15*s, 6*s, 11.5*s, 3*s); ctx.fillStyle = K.front; ctx.fill(); ctx.strokeStyle = ink; ctx.lineWidth = iw; ctx.stroke();
     ctx.strokeStyle = '#e0614a'; ctx.lineWidth = 1.2*s; ctx.beginPath(); ctx.moveTo(sx - 2*s, sy - 13*s); ctx.lineTo(sx + 2*s, sy - 11.5*s); ctx.lineTo(sx - 2*s, sy - 10*s); ctx.lineTo(sx + 2*s, sy - 8.5*s); ctx.lineTo(sx - 2*s, sy - 7*s); ctx.stroke();
+    return;
+  }
+  if (K.shape === 'hanbokF') {                       // 여자 한복: 다홍치마(아래 넓게) + 노랑 저고리 + 흰 동정 + 고름
+    const s = scale;
+    ctx.beginPath(); ctx.moveTo(sx - 5*s, sy - 8*s); ctx.lineTo(sx + 5*s, sy - 8*s); ctx.lineTo(sx + 8*s, sy); ctx.lineTo(sx - 8*s, sy); ctx.closePath();
+    ctx.fillStyle = K.front; ctx.fill(); ctx.strokeStyle = ink; ctx.lineWidth = iw; ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 0.8; [-3, 0, 3].forEach(d => { ctx.beginPath(); ctx.moveTo(sx + d*0.7*s, sy - 7*s); ctx.lineTo(sx + d*s, sy - 0.5*s); ctx.stroke(); });
+    rr(sx - 6.5*s, sy - 14*s, 13*s, 6.5*s, 2*s); ctx.fillStyle = K.top; ctx.fill(); ctx.strokeStyle = ink; ctx.lineWidth = iw; ctx.stroke();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2*s; ctx.beginPath(); ctx.moveTo(sx - 3*s, sy - 13.5*s); ctx.lineTo(sx, sy - 10.5*s); ctx.lineTo(sx + 3*s, sy - 13.5*s); ctx.stroke();
+    ctx.fillStyle = K.front; ctx.fillRect(sx + 0.6*s, sy - 10.5*s, 1.4*s, 6*s);
+    return;
+  }
+  if (K.shape === 'hanbokM') {                       // 남자 한복: 남색 조끼 + 흰 동정, 위에 검은 갓
+    const s = scale;
+    rr(sx - 6.5*s, sy - 9*s, 13*s, 9*s, 2*s); ctx.fillStyle = K.front; ctx.fill(); ctx.strokeStyle = ink; ctx.lineWidth = iw; ctx.stroke();
+    ctx.strokeStyle = K.top; ctx.lineWidth = 1.4*s; ctx.beginPath(); ctx.moveTo(sx - 3*s, sy - 8.5*s); ctx.lineTo(sx, sy - 5*s); ctx.lineTo(sx + 3*s, sy - 8.5*s); ctx.stroke();
+    ctx.fillStyle = 'rgba(30,30,36,.88)'; ctx.beginPath(); ctx.ellipse(sx, sy - 10*s, 8.5*s, 2*s, 0, 0, Math.PI*2); ctx.fill();
+    rr(sx - 3*s, sy - 16*s, 6*s, 6.5*s, 1.5*s); ctx.fillStyle = '#1e1e24'; ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sx - 2*s, sy - 15*s, 1*s, 4*s);
+    return;
+  }
+  if (K.shape === 'norigae') {                       // 노리개: 검은 자개함 위에 매듭 + 옥 + 빨간 술
+    const s = scale;
+    rr(sx - 7*s, sy - 4.5*s, 14*s, 4.5*s, 1.2*s); ctx.fillStyle = '#2c2b35'; ctx.fill(); ctx.strokeStyle = ink; ctx.lineWidth = iw; ctx.stroke();
+    ctx.fillStyle = '#fff'; [-4, 1, 4].forEach((d, i) => { ctx.beginPath(); ctx.arc(sx + d*s, sy - (i % 2 ? 1.6 : 2.8)*s, 0.6*s, 0, Math.PI*2); ctx.fill(); });
+    ctx.fillStyle = K.front; ctx.beginPath(); ctx.moveTo(sx - 2*s, sy - 4.5*s); ctx.lineTo(sx + 2*s, sy - 4.5*s); ctx.lineTo(sx + 1*s, sy - 9*s); ctx.lineTo(sx - 1*s, sy - 9*s); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = K.top; ctx.beginPath(); ctx.arc(sx, sy - 11*s, 2.6*s, 0, Math.PI*2); ctx.fill(); ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.fillStyle = K.front; ctx.beginPath(); ctx.moveTo(sx, sy - 16.5*s); ctx.lineTo(sx + 2*s, sy - 14.5*s); ctx.lineTo(sx, sy - 13*s); ctx.lineTo(sx - 2*s, sy - 14.5*s); ctx.closePath(); ctx.fill();
     return;
   }
   if (K.shape === 'mask') {                          // 마스크팩 봉투: 분홍 봉투 + 위 톱니 실링 + 흰 얼굴 실루엣
@@ -1887,6 +1940,75 @@ function animHotbar({ S2, u, now, prog, work, s }){
   });
   steam(S2, u, now, [70, 120], 82);
 }
+// 8층 한복 마네킹 공통: 나무 목 받침 위에 옷이 입혀짐. done이면 다 입은 모습(가득 참일 때도 예쁘게), 고장이면 빈 마네킹
+const hanForm = (S2, u) => { const [hx, hy] = S2(94, 48); ctx.fillStyle = '#d9b48a'; ctx.strokeStyle = '#38445a'; ctx.lineWidth = 2*u; ctx.beginPath(); ctx.arc(hx, hy, 5*u, 0, Math.PI*2); ctx.fill(); ctx.stroke(); };
+const hanPoly = (S2, pts, fill, lw = 2) => { ctx.beginPath(); pts.forEach(([a, b], i) => { const [x, y] = S2(a, b); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = lw; ctx.strokeStyle = '#38445a'; ctx.stroke(); };
+const fillUp = (S2, u, v0, v1, f, draw) => { if (f <= 0) return; const [, a] = S2(0, v1 - (v1 - v0)*f), [l] = S2(0, 0), [r, b] = S2(240, v1 + 2); ctx.save(); ctx.beginPath(); ctx.rect(l, a, r - l, b - a); ctx.clip(); draw(); ctx.restore(); };
+const mirrorGlint = (S2, u, now) => { const t = (now/2200) % 1, [mx, my] = S2(142, 66); ctx.save(); ctx.beginPath(); ctx.ellipse(mx, my, 11*u, 16*u, 0, 0, Math.PI*2); ctx.clip();
+  ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 3*u; ctx.beginPath(); ctx.moveTo(mx - 16*u + t*32*u, my - 18*u); ctx.lineTo(mx - 24*u + t*32*u, my + 18*u); ctx.stroke(); ctx.restore(); };
+const twinkle = (S2, u, now, x, y, a) => { const [tx, ty] = S2(x, y); ctx.font = `${Math.round(12*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = `rgba(232,185,35,${a*(0.6 + 0.4*Math.sin(now/120))})`; ctx.fillText('✦', tx, ty); };
+// 8층 0번 여자 한복: 다홍치마가 아래부터 입혀지고(~50%) → 노랑 저고리(~65%) → 고름이 사르르 매어짐 → 반짝 → 옆 받침에 한복
+function animHanF({ S2, u, now, prog, work, s }){
+  menuSign(S2, u, now, s, '여자 한복', '#ffe08a', 28, 17);
+  mirrorGlint(S2, u, now); hanForm(S2, u);
+  const done = !work && !s.broken, f1 = done ? 1 : work ? lerp01(prog, 0.05, 0.5) : 0, f2 = done ? 1 : work ? lerp01(prog, 0.5, 0.65) : 0;
+  const skirt = [[84, 68], [104, 68], [118, 98], [70, 98]];
+  hanPoly(S2, skirt, '#efe8da');                                  // 빈 마네킹
+  hanPoly(S2, [[84, 54], [104, 54], [112, 64], [104, 68], [84, 68], [76, 64]], '#efe8da');
+  fillUp(S2, u, 68, 98, f1, () => { hanPoly(S2, skirt, '#d9443a');
+    ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 1.2*u; [-8, 0, 8].forEach(d => { const [a, b] = S2(94 + d*0.5, 70), [c, e] = S2(94 + d*1.4, 96); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, e); ctx.stroke(); }); });
+  if (f2 > 0) { ctx.globalAlpha = f2; hanPoly(S2, [[84, 54], [104, 54], [114, 64], [104, 68], [84, 68], [74, 64]], '#f6d55c');
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.4*u; const [a, b] = S2(88, 55), [c, d] = S2(94, 62), [e, g] = S2(100, 55); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.lineTo(e, g); ctx.stroke(); ctx.globalAlpha = 1; }
+  const tie = done ? 1 : work ? lerp01(prog, 0.65, 0.72) : 0;
+  if (tie > 0) {                                                  // 고름: 리본 + 늘어진 끈(살랑)
+    const [gx, gy0] = S2(97, 63), sw = Math.sin(now/500)*1.5*u; ctx.fillStyle = '#d9443a'; ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.2*u;
+    ctx.beginPath(); ctx.ellipse(gx - 3*u, gy0, 3.2*u*tie, 1.8*u, -0.4, 0, Math.PI*2); ctx.ellipse(gx + 3*u, gy0, 3.2*u*tie, 1.8*u, 0.4, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillRect(gx - 1*u + sw, gy0, 2*u, 12*u*tie); ctx.fillRect(gx + 1.5*u + sw*1.3, gy0, 2*u, 9*u*tie);
+  }
+  if (work && prog > 0.72) twinkle(S2, u, now, 116, 56, 1 - lerp01(prog, 0.72, 0.95));
+}
+// 8층 1번 남자 한복: 바지(~35%) → 흰 저고리(~50%) → 남색 조끼(~62%) → 위에서 갓이 쓱 내려와 씌워짐(~72%) → 옆 받침에 한복
+function animHanM({ S2, u, now, prog, work, s }){
+  menuSign(S2, u, now, s, '남자 한복', '#ffe08a', 28, 17);
+  mirrorGlint(S2, u, now); hanForm(S2, u);
+  const done = !work && !s.broken, ph = (a, b) => done ? 1 : work ? lerp01(prog, a, b) : 0;
+  const legs = [[[82, 74], [93, 74], [92, 98], [80, 98]], [[95, 74], [106, 74], [108, 98], [96, 98]]];
+  legs.forEach(l => hanPoly(S2, l, '#efe8da'));
+  hanPoly(S2, [[84, 54], [104, 54], [114, 66], [106, 76], [82, 76], [74, 66]], '#efe8da');
+  fillUp(S2, u, 74, 98, ph(0.05, 0.35), () => legs.forEach(l => hanPoly(S2, l, '#e3dccb')));
+  const j = ph(0.35, 0.5), v = ph(0.5, 0.62);
+  if (j > 0) { ctx.globalAlpha = j; hanPoly(S2, [[84, 54], [104, 54], [114, 66], [106, 76], [82, 76], [74, 66]], '#e8eef5'); ctx.globalAlpha = 1; }
+  if (v > 0) { fillUp(S2, u, 56, 76, v, () => hanPoly(S2, [[86, 56], [102, 56], [104, 76], [84, 76]], '#2d3f6b'));
+    ctx.fillStyle = '#e8b923'; [62, 68].forEach(y => { const [bx, by] = S2(95, y); ctx.beginPath(); ctx.arc(bx, by, 1.3*u*v, 0, Math.PI*2); ctx.fill(); }); }
+  const hat = ph(0.62, 0.72);
+  if (done || (work && prog > 0.58)) {                            // 갓: 넓은 검은 테(반투명) + 높은 모자
+    const ease = 1 - Math.pow(1 - hat, 2), [cx, cy] = S2(94, 30 + 14*ease);   // 현판 아래에서 내려옴
+    ctx.globalAlpha = Math.min(1, (done ? 1 : lerp01(prog, 0.58, 0.63))); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.5*u;
+    ctx.fillStyle = 'rgba(30,30,36,.82)'; ctx.beginPath(); ctx.ellipse(cx, cy, 17*u, 3.4*u, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    rr(cx - 6*u, cy - 12*u, 12*u, 12*u, 3*u); ctx.fillStyle = '#1e1e24'; ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(cx - 4*u, cy - 10*u, 1.5*u, 7*u); ctx.globalAlpha = 1;
+  }
+  if (work && prog > 0.72) twinkle(S2, u, now, 116, 50, 1 - lerp01(prog, 0.72, 0.95));
+}
+// 8층 2번 노리개: 걸이에 매듭(~5%) → 옥(~30%) → 빨간 술이 길게 땋아져 내려옴(~65%), 바람에 살랑 → 반짝 → 옆 받침에 노리개(자개함). 자개함 진주 반짝
+function animNori({ S2, u, now, prog, work, s }){
+  menuSign(S2, u, now, s, '노리개', '#ffe08a', 28, 17);
+  [[28, 90], [52, 88], [64, 96]].forEach(([x, y], i) => { const a = Math.max(0, Math.sin(now/600 + i*2)); if (a < 0.6) return; const [px, py] = S2(x, y);
+    ctx.fillStyle = `rgba(190,240,255,${(a - 0.6)*2.5})`; ctx.beginPath(); ctx.arc(px, py, 3*u, 0, Math.PI*2); ctx.fill(); });
+  const done = !work && !s.broken, ph = (a, b) => done ? 1 : work ? lerp01(prog, a, b) : 0, knot = ph(0, 0.05), jade = ph(0.25, 0.3), tas = ph(0.3, 0.65);
+  if (knot <= 0) return;
+  const [ox, oy] = S2(130, 54); ctx.save(); ctx.translate(ox, oy); ctx.rotate(Math.sin(now/650)*0.12); ctx.translate(-ox, -oy);
+  const P2 = (a, b) => S2(a, b); ctx.strokeStyle = '#d9443a'; ctx.lineWidth = 1.6*u;
+  { const [a, b] = P2(130, 54), [c, d] = P2(130, 62); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.stroke(); }
+  hanPoly(S2, [[130, 58], [137, 65], [130, 72], [123, 65]], '#d9443a', 1.4*u);
+  if (jade > 0) { const [jx, jy] = P2(130, 79); ctx.fillStyle = '#4fae7d'; ctx.beginPath(); ctx.arc(jx, jy, 7*u*jade, 0, Math.PI*2); ctx.fill(); ctx.lineWidth = 1.4*u; ctx.strokeStyle = '#38445a'; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(jx - 1.8*u, jy - 1.8*u, 1.4*u*jade, 0, Math.PI*2); ctx.fill(); }
+  if (tas > 0) { const L = 16*tas; for (let i = -3; i <= 3; i++) { const [a, b] = P2(130 + i*0.8, 87), [c, d] = P2(130 + i*1.9, 87 + L);
+      ctx.strokeStyle = i % 2 ? '#b8352b' : '#e0614a'; ctx.lineWidth = 1.6*u; ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.stroke(); }
+    const [kx, ky] = P2(130, 87); ctx.fillStyle = '#e8b923'; ctx.fillRect(kx - 4*u, ky - 1*u, 8*u, 3*u); }
+  ctx.restore();
+  if (work && prog > 0.68) twinkle(S2, u, now, 146, 70, 1 - lerp01(prog, 0.68, 0.95));
+}
 // 7층 0번 마스크팩: 에센스가 똑똑 떨어져 시트가 촉촉해지고(~40%) → 봉투에 쏙 → 실링기가 꾹(60~72%) → 옆 받침에 마스크팩
 function animMask({ S2, u, now, prog, work, s }){
   menuSign(S2, u, now, s, '마스크팩', '#fff', 28, 17);
@@ -2018,6 +2140,7 @@ function drawWreath(x, z, i){
 function shopSign(T, fTop){
   const u = scale, [x0, y1] = toS(180, fTop), [x1] = toS(400, fTop), w = x1 - x0, h = 34*u, y0 = y1 - 8*u - h;
   ctx.lineJoin = 'round'; ctx.strokeStyle = '#38445a';
+  if (T.trad) return hanokSign(T, u, x0, x1, y0, y1, w, h);
   rr(x0, y0, w, h, 7*u); ctx.fillStyle = T.sign; ctx.fill(); ctx.lineWidth = 3*u; ctx.stroke();
   ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(x0 + 6*u, y0 + 4*u, w - 12*u, 3*u);
   ctx.font = `${Math.round(22*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = T.ink;
@@ -2028,6 +2151,47 @@ function shopSign(T, fTop){
     ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + sw, ay); ctx.lineTo(ax + sw, ay + 8*u); ctx.quadraticCurveTo(ax + sw/2, ay + 15*u, ax, ay + 8*u); ctx.closePath(); ctx.fill();
   }
   ctx.lineWidth = 2*u; ctx.strokeRect(x0 - 6*u, ay, w + 12*u, 8*u);
+}
+// 한옥 간판(8층 한복대여): 처마 끝이 살짝 들린 기와 지붕 + 금테 두른 나무 현판 + 아래 단청 띠 + 양쪽 청사초롱(살랑, 은은한 불빛)
+function hanokSign(T, u, x0, x1, y0, y1, w, h){
+  const now = performance.now(), ry = y0 - 2*u, top = y0 - 15*u, rx0 = x0 - 22*u, rx1 = x1 + 22*u;
+  ctx.beginPath(); ctx.moveTo(rx0, ry - 9*u); ctx.quadraticCurveTo(rx0 + 18*u, ry + 1*u, rx0 + 44*u, ry); ctx.lineTo(rx1 - 44*u, ry); ctx.quadraticCurveTo(rx1 - 18*u, ry + 1*u, rx1, ry - 9*u);
+  ctx.lineTo(x1 + 2*u, top); ctx.lineTo(x0 - 2*u, top); ctx.closePath(); ctx.fillStyle = '#4a4f5c'; ctx.fill(); ctx.lineWidth = 3*u; ctx.stroke();
+  ctx.save(); ctx.clip(); ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 2*u;
+  for (let x = rx0 + 8*u; x < rx1; x += 9*u) { ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, ry + 2*u); ctx.stroke(); }
+  ctx.restore();
+  rr(x0 - 6*u, top - 5*u, w + 12*u, 6*u, 3*u); ctx.fillStyle = '#363a45'; ctx.fill(); ctx.lineWidth = 2.5*u; ctx.stroke();   // 용마루
+  rr(x0, y0, w, h, 4*u); ctx.fillStyle = T.sign; ctx.fill(); ctx.lineWidth = 3*u; ctx.stroke();
+  ctx.strokeStyle = '#d9a52e'; ctx.lineWidth = 1.5*u; ctx.strokeRect(x0 + 4*u, y0 + 4*u, w - 8*u, h - 8*u);
+  ctx.font = `${Math.round(21*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = T.ink;
+  ctx.fillText(T.shop, x0 + w/2, y0 + h/2 + 1*u);
+  const ay = y1 - 8*u, cols = ['#2f8a6e', '#c0392b', '#3f6fb5', '#f2c230', '#c0392b'], n = 20, sw = (w + 12*u)/n;   // 단청 띠
+  for (let i = 0; i < n; i++) { ctx.fillStyle = cols[i % cols.length]; ctx.fillRect(x0 - 6*u + i*sw, ay, sw, 8*u); }
+  ctx.strokeStyle = '#38445a'; ctx.lineWidth = 2*u; ctx.strokeRect(x0 - 6*u, ay, w + 12*u, 8*u);
+  [x0 + 8*u, x1 - 8*u].forEach((lx, i) => {                      // 청사초롱: 위 파랑 · 아래 빨강
+    const ly = ay + 8*u; ctx.save(); ctx.translate(lx, ly); ctx.rotate(Math.sin(now/800 + i*1.7)*0.09);
+    const g = ctx.createRadialGradient(0, 18*u, 2*u, 0, 18*u, 22*u); g.addColorStop(0, `rgba(255,214,120,${0.35 + 0.1*Math.sin(now/300 + i)})`); g.addColorStop(1, 'rgba(255,214,120,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 18*u, 22*u, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.5*u; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 6*u); ctx.stroke();
+    ctx.fillStyle = '#2c2b35'; ctx.fillRect(-4*u, 6*u, 8*u, 3*u);
+    ctx.save(); rr(-7*u, 9*u, 14*u, 18*u, 5*u); ctx.clip(); ctx.fillStyle = '#3f6fb5'; ctx.fillRect(-7*u, 9*u, 14*u, 7*u); ctx.fillStyle = '#d9443a'; ctx.fillRect(-7*u, 16*u, 14*u, 11*u);
+    ctx.fillStyle = 'rgba(255,240,200,.35)'; ctx.fillRect(-3*u, 10*u, 3*u, 16*u); ctx.restore();
+    rr(-7*u, 9*u, 14*u, 18*u, 5*u); ctx.lineWidth = 1.5*u; ctx.stroke();
+    ctx.fillStyle = '#2c2b35'; ctx.fillRect(-4*u, 27*u, 8*u, 2.5*u);
+    ctx.strokeStyle = '#d9443a'; ctx.lineWidth = 1.5*u; ctx.beginPath(); ctx.moveTo(0, 29.5*u); ctx.lineTo(0, 36*u); ctx.stroke();
+    ctx.restore();
+  });
+}
+// 한복대여 층에 떨어지는 단풍잎(화면 기준, 움직임 줄이기면 조금만)
+function drawLeaves(){
+  const now = performance.now()/1000, n = RM ? 4 : 12, cols = ['#d9443a', '#e8833a', '#f2c230'];
+  for (let i = 0; i < n; i++) {
+    const per = 9 + (i % 5)*1.8, t = (now/per + i*0.137) % 1, x = ((i*0.618 + 0.1) % 1)*VW + Math.sin(t*12 + i)*28*scale, y = -20*scale + t*(VH + 40*scale), sz = (4 + (i % 3))*scale;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(t*Math.PI*4*(i % 2 ? 1 : -1)); ctx.globalAlpha = 0.85; ctx.fillStyle = cols[i % 3];
+    ctx.beginPath(); for (let k = 0; k < 5; k++) { const a = -Math.PI/2 + k*Math.PI*2/5; ctx.lineTo(Math.cos(a)*sz, Math.sin(a)*sz); const b = a + Math.PI/5; ctx.lineTo(Math.cos(b)*sz*0.45, Math.sin(b)*sz*0.45); }
+    ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(90,50,30,.6)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, sz*1.4); ctx.stroke();
+    ctx.restore();
+  }
 }
 // 생산기 위 글자 · 수리 막대 · 고장 연기 (프린터·분식 조리대 공통)
 function machLabel(s, z, k, p, py, now, full){
@@ -2136,16 +2300,16 @@ function floorRect(r, fill, stroke, dashed, progress){
   ctx.setLineDash(dashed ? [8*scale, 6*scale] : []); ctx.lineWidth = 3*scale; ctx.strokeStyle = stroke;
   rr(x0, y0, w, h, 10*scale); ctx.stroke(); ctx.setLineDash([]);
 }
-function person(e, body, dark, key, skin, shake, gear){
+function person(e, body, dark, key, skin, shake, gear, hb){
   const [bx, sy] = toS(e.x, e.y), sx = bx + (shake || 0);
   ctx.fillStyle = 'rgba(44,43,53,.22)'; ctx.beginPath(); ctx.ellipse(bx, sy, 13*scale, 6*scale, 0, 0, Math.PI*2); ctx.fill();
   const bob = Math.hypot(e.svx, e.svy) > 20 ? Math.abs(Math.sin(performance.now()/90))*2*scale : 0;
   const lean = Math.max(-1, Math.min(1, e.svx/220))*0.12;   // 가는 방향으로 살짝 기울임
   ctx.save(); ctx.translate(sx, sy); ctx.rotate(lean); ctx.translate(-sx, -sy);
-  personBody(e, body, dark, key, skin, gear, sx, sy, bob);
+  personBody(e, body, dark, key, skin, gear, sx, sy, bob, hb);
   ctx.restore();
 }
-function personBody(e, body, dark, key, skin, gear, sx, sy, bob){
+function personBody(e, body, dark, key, skin, gear, sx, sy, bob, hb){
   if (art(key, sx, sy - bob, 40*scale, 52*scale)) return;
   ctx.fillStyle = dark; rr(sx-10*scale, sy-30*scale-bob, 20*scale, 28*scale, 8*scale); ctx.fill();
   ctx.fillStyle = body; rr(sx-10*scale, sy-32*scale-bob, 20*scale, 24*scale, 8*scale); ctx.fill();
@@ -2155,7 +2319,7 @@ function personBody(e, body, dark, key, skin, gear, sx, sy, bob){
     ctx.fillStyle = C.reflect; ctx.fillRect(sx-10*scale, sy-20*scale-bob, 20*scale, 2.5*scale); ctx.fillRect(sx-10*scale, sy-14*scale-bob, 20*scale, 2.5*scale);
   }
   const hx = sx + e.fx*2*scale, hy = sy-40*scale-bob + e.fy*1.5*scale, u = scale, by = sy - 32*u - bob;
-  if (gear && gear !== 'worker') guestBody(gear, sx, by, u);
+  if (gear && gear !== 'worker') guestBody(gear, sx, by, u, hb, body);
   if (gear === 'youth') { ctx.fillStyle = '#d9826a'; ctx.beginPath(); ctx.arc(hx, hy + 2*u, 11*u, 0, Math.PI*2); ctx.fill(); }   // 후드 모자(머리 뒤)
   ctx.fillStyle = skin || C.skin; ctx.beginPath(); ctx.arc(hx, hy, 9*scale, 0, Math.PI*2); ctx.fill();
   if (gear && gear !== 'worker') guestHead(gear, hx, hy, u);
@@ -2166,8 +2330,18 @@ function personBody(e, body, dark, key, skin, gear, sx, sy, bob){
   }
 }
 // 손님 옷 장식(몸통 위) — by = 몸통 윗선
-function guestBody(g, sx, by, u){
-  if (g === 'student') {                           // 교복: 흰 깃 + 빨간 넥타이
+function guestBody(g, sx, by, u, hb, body){
+  if (g === 'hanbokF') {                           // 한복(여): 아래로 넓게 퍼지는 치마 + 짧은 저고리 + 흰 동정 + 고름
+    ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(sx - 9*u, by + 9*u); ctx.lineTo(sx + 9*u, by + 9*u); ctx.lineTo(sx + 14*u, by + 31*u); ctx.lineTo(sx - 14*u, by + 31*u); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.15)'; ctx.lineWidth = 1*u; [-6, 0, 6].forEach(d => { ctx.beginPath(); ctx.moveTo(sx + d*0.6*u, by + 11*u); ctx.lineTo(sx + d*u, by + 30*u); ctx.stroke(); });
+    ctx.fillStyle = hb.top; rr(sx - 11*u, by, 22*u, 10*u, 4*u); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6*u; ctx.beginPath(); ctx.moveTo(sx - 4*u, by + 1*u); ctx.lineTo(sx, by + 6*u); ctx.lineTo(sx + 4*u, by + 1*u); ctx.stroke();
+    ctx.fillStyle = hb.go; ctx.fillRect(sx + 1*u, by + 6*u, 2*u, 11*u); ctx.fillRect(sx + 3.5*u, by + 6*u, 2*u, 8*u);
+  } else if (g === 'hanbokM') {                    // 한복(남): 조끼(몸통 색) + 양옆 흰 저고리 소매 + 동정 + 금단추
+    ctx.fillStyle = hb.top; rr(sx - 13*u, by + 2*u, 5*u, 13*u, 2*u); ctx.fill(); rr(sx + 8*u, by + 2*u, 5*u, 13*u, 2*u); ctx.fill();
+    ctx.strokeStyle = hb.top; ctx.lineWidth = 2*u; ctx.beginPath(); ctx.moveTo(sx - 4*u, by + 1*u); ctx.lineTo(sx, by + 6*u); ctx.lineTo(sx + 4*u, by + 1*u); ctx.stroke();
+    ctx.fillStyle = '#e8b923'; [9, 14].forEach(d => { ctx.beginPath(); ctx.arc(sx, by + d*u, 1.3*u, 0, Math.PI*2); ctx.fill(); });
+  } else if (g === 'student') {                           // 교복: 흰 깃 + 빨간 넥타이
     ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(sx - 6*u, by + 1*u); ctx.lineTo(sx + 6*u, by + 1*u); ctx.lineTo(sx, by + 8*u); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#e0614a'; ctx.fillRect(sx - 1.5*u, by + 4*u, 3*u, 8*u);
   } else if (g === 'kid') {                        // 초등학생: 책가방 끈
@@ -2190,6 +2364,14 @@ function guestBody(g, sx, by, u){
 function guestHead(g, hx, hy, u){
   const hair = col => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(hx, hy - 1*u, 9.4*u, Math.PI*1.05, Math.PI*1.95); ctx.lineTo(hx + 7*u, hy - 3*u); ctx.quadraticCurveTo(hx, hy - 6*u, hx - 7*u, hy - 3*u); ctx.closePath(); ctx.fill(); };
   if (g === 'student' || g === 'office' || g === 'youth') hair(g === 'youth' ? '#7a4a2e' : '#2b2b33');
+  if (g === 'hanbokF') {                           // 검은 머리 + 쪽머리 + 금 비녀
+    hair('#2b2b33'); ctx.beginPath(); ctx.arc(hx + 6*u, hy - 6*u, 4*u, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#e8b923'; ctx.lineWidth = 1.6*u; ctx.beginPath(); ctx.moveTo(hx + 1*u, hy - 8*u); ctx.lineTo(hx + 12*u, hy - 4*u); ctx.stroke();
+  } else if (g === 'hanbokM') {                    // 갓: 넓은 반투명 테 + 높은 모자 + 갓끈
+    hair('#2b2b33'); ctx.strokeStyle = '#2c2b35'; ctx.lineWidth = 1*u; ctx.beginPath(); ctx.moveTo(hx - 8*u, hy - 6*u); ctx.lineTo(hx - 3*u, hy + 9*u); ctx.moveTo(hx + 8*u, hy - 6*u); ctx.lineTo(hx + 3*u, hy + 9*u); ctx.stroke();
+    ctx.fillStyle = 'rgba(30,30,36,.8)'; ctx.beginPath(); ctx.ellipse(hx, hy - 7*u, 16*u, 3.4*u, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#1e1e24'; rr(hx - 5.5*u, hy - 18*u, 11*u, 11.5*u, 3*u); ctx.fill();
+  }
   if (g === 'kid') {                               // 노란 모자
     ctx.fillStyle = '#f2c230'; ctx.beginPath(); ctx.arc(hx, hy - 2*u, 9.6*u, Math.PI, 0); ctx.fill();
     ctx.beginPath(); ctx.ellipse(hx + 4*u, hy - 2*u, 8*u, 2.2*u, 0, 0, Math.PI*2); ctx.fill();
@@ -2242,7 +2424,9 @@ function customer(c, z){
   const r = Math.max(0, c.pat/CFG.cust.patience);
   const mad = c.angry || (c.state === 'wait' && r < 0.25);
   const shake = mad && !c.happy ? Math.sin(performance.now()/40)*1.5*scale : 0;
-  person(c, c.col[0], c.col[1], 'customer', mad ? C.angry : C.skin, shake, c.gear);
+  if (c.state === 'leave' && c.happy && themeOf(z)?.dress) {   // 한복대여 층: 다 산 손님은 빌린 한복 입고 나감
+    c.hb ??= pick(HANBOK); person(c, c.hb.body, c.hb.dark, 'customer', C.skin, 0, c.hb.g, c.hb);
+  } else person(c, c.col[0], c.col[1], 'customer', mad ? C.angry : C.skin, shake, c.gear);
   if (c.sayT > 0) speech(c, c.state === 'leave' ? 80 : 96, c.say);
   if (c.state === 'leave') {
     if (c.angry) text('!!', c.x + 12, c.y, 62, 18, C.warn);
@@ -2403,6 +2587,7 @@ function render(){
     a.kind === 'bill' ? bill(x, y, z) : item(x, y, z, a.kind);
   });
   drawParts();
+  if (themeOf(f)?.trad) drawLeaves();
   floats.forEach(f => {                              // 떠오르는 글자: 처음에 크게 튀어나왔다가 떠오르며 사라짐
     const t = f.t, pop = t < 0.12 ? 1.45 - t/0.12*0.45 : 1, [sx, sy] = toS(f.x, f.y, 60 + (1 - Math.pow(1 - t/0.9, 2))*55);
     ctx.globalAlpha = t > 0.55 ? 1 - (t - 0.55)/0.35 : 1;

@@ -402,7 +402,8 @@ const SP = [{x:170,y:720},{x:380,y:720},{x:590,y:720}];
 const SP_ZONE = {w:110,h:86};
 const SAFE = {x:575, y:380, w:96, h:84};   // 잔업수당 상자(자리 비운 동안 수익)
 // 업그레이드 칸은 생산기↔계산대 길을 비우고 양쪽 벽을 따라 세로로(작은 그림 칸 64×64). 왼쪽 = 공통(맨 위층만), 오른쪽 = 그 층 것
-const PAD_L = 52, PAD_R = 708, PAD_Y = [250, 334, 418, 502, 586, 670], PAD_S = 64;
+const PAD_L = 52, PAD_R = 708, PAD_Y = [250, 334, 418, 502], PAD_S = 64;
+const PAD_LOW = 880;                               // 생산속도·알바 가방 칸: 생산기 아래 오른쪽(생산기에 붙지 않게, 사용자 요청)
 const DESK = {x:300,y:180}, SELL = {x:300,y:258,w:140,h:76}, CASH = {x:490,y:240,w:104,h:92};
 const LINE = {x:290, y:128, gap:42};               // 손님 줄: 판매대 건너편, 왼쪽으로 늘어섬
 const gy = (z, ly) => ly - z*ZH;                   // 층 z는 위로 쌓임
@@ -566,11 +567,11 @@ function rebuildPads(){
       cost:() => Math.round(CFG.worker.cost*Math.pow(CFG.worker.mul, Z.wrkLv)*zscale(z)), vis:() => Z.wrkLv < CFG.workerMax, apply:() => { Z.wrkLv++; syncWorkers(); } });
     PADS.push({ id:`${z}:sell`, ...at(PAD_R, PAD_Y[2], PAD_S, PAD_S), icon:'sell', lv:() => Z.sellLv + 1, label:'판매속도', sub:() => `Lv${Z.sellLv+1}`,
       cost:() => Math.round(CFG.sell.cost*Math.pow(CFG.sell.mul, Z.sellLv)*zscale(z)), vis:() => Z.sellLv < CFG.sellMax, apply:() => { Z.sellLv++; } });
-    PADS.push({ id:`${z}:prod`, ...at(PAD_R, PAD_Y[4], PAD_S, PAD_S), icon:'prod', lv:() => (Z.prodLv || 0) + 1, label:'생산속도',
+    PADS.push({ id:`${z}:prod`, ...at(PAD_R - 84, PAD_LOW, PAD_S, PAD_S), icon:'prod', lv:() => (Z.prodLv || 0) + 1, label:'생산속도',
       sub:() => `${prodIv(z).toFixed(2)}→${(prodIv(z)*CFG.prod.decay).toFixed(2)}초${(Z.prodLv || 0) + 1 >= CFG.prod.max ? ' (MAX)' : ''}`,
       cost:() => Math.round(CFG.prod.cost*Math.pow(CFG.prod.mul, Z.prodLv || 0)*zscale(z)), vis:() => (Z.prodLv || 0) < CFG.prod.max,
       apply:() => { Z.prodLv = (Z.prodLv || 0) + 1; if (Z.prodLv === 1) { toast('생산이 빨라지면 손님도 그만큼 더 자주 와요'); toastT = 3; } } });
-    PADS.push({ id:`${z}:bag`, ...at(PAD_R, PAD_Y[5], PAD_S, PAD_S), icon:'bag', lv:() => (Z.bagLv || 0) + 1, label:'알바 가방',
+    PADS.push({ id:`${z}:bag`, ...at(PAD_R, PAD_LOW, PAD_S, PAD_S), icon:'bag', lv:() => (Z.bagLv || 0) + 1, label:'알바 가방',
       sub:() => `한 번에 ${wcap(z)}→${wcap(z) + CFG.bag.step}개`,
       cost:() => Math.round(CFG.bag.cost*Math.pow(CFG.bag.mul, Z.bagLv || 0)*zscale(z)), vis:() => (Z.bagLv || 0) < CFG.bag.max,
       apply:() => { Z.bagLv = (Z.bagLv || 0) + 1; } });

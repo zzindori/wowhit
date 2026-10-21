@@ -167,7 +167,7 @@ const ART = {};
 // ART_SRC.machine에 그림을 넣으면 그걸 우선 사용(예전 방식)
 const PRN = new Image();
 PRN.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="480" height="400"><defs><filter id="shd" x="-10%" y="-10%" width="130%" height="130%"><feGaussianBlur stdDeviation="2.4"/></filter> <linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9dfe7"/><stop offset="1" stop-color="#93c4d0"/></linearGradient> <linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef9fb"/><stop offset="1" stop-color="#cfe9ef"/></linearGradient> <linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c8ecf5"/></linearGradient> <pattern id="h" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="12" fill="#f2c230"/><rect x="6" width="6" height="12" fill="#38445a"/></pattern></defs> <path d="M12 182 H230 V46 L240 55 V192 H24 Z" fill="#2c2b35" opacity=".26" filter="url(#shd)"/> <g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"> <path d="M20 98 H220 Q226 98 227 104 L230 150 H10 L13 104 Q14 98 20 98 Z" fill="#e4f3f6"/><path d="M16 145 H224" stroke="#fff" stroke-width="2" opacity=".7"/> <rect x="10" y="148" width="220" height="34" rx="8" fill="url(#b)"/><rect x="10" y="168" width="220" height="14" rx="6" fill="#f2a58c"/> <rect x="150" y="153" width="64" height="11" rx="3" fill="url(#h)" stroke-width="2.5"/> <rect x="20" y="58" width="44" height="92" rx="8" fill="url(#b)"/><path d="M24 50 Q24 44 30 44 L54 44 Q60 44 60 50 L64 60 L20 60 Z" fill="url(#t)"/> <rect x="27" y="70" width="30" height="24" rx="4" fill="#2f3b4f" stroke-width="3"/><path d="M31 87 L37 80 L43 84 L51 75" fill="none" stroke="#7ff0a8" stroke-width="2.5"/> <circle cx="33" cy="106" r="4" fill="#7ff0a8" stroke-width="2"/><circle cx="45" cy="106" r="4" fill="#f2c230" stroke-width="2"/> <rect x="27" y="116" width="30" height="8" rx="3" fill="#f2a58c" stroke-width="2.5"/><rect x="198" y="52" width="18" height="80" rx="5" fill="url(#b)"/> <rect x="54" y="34" width="168" height="22" rx="7" fill="#f2a58c"/><path d="M62 45 h150" stroke="#d98a70" stroke-width="2"/> <path d="M100 124 L168 124 L172 134 L96 134 Z" fill="url(#p)" stroke-width="3"/></g> <path d="M104 129 L166 129" stroke="#8fe3f0" stroke-width="2"/> <g fill="#fff" opacity=".5"><rect x="16" y="151" width="208" height="4" rx="2"/><rect x="24" y="62" width="36" height="4" rx="2"/></g></svg>`);
-// 2층 붕어빵 손수레 · 3층 튀김기 · 4층 편의점 냉장고 · 5층 한강 즉석 라면 조리기 · 6층 노래방 기계 (모두 같은 240×200 틀)
+// 가게 생산기는 모두 같은 240×200 틀(위에서 본 넓은 작업대 `deck`)
 const svgImg = svg => { const im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); return im; };
 // 1층 분식 조리대 3대(사용자 요청으로 분리): 0번 떡볶이 철판 · 1번 김밥 말이대 · 2번 순대 찜기. 받침·메뉴판은 공통 틀, 위 조리 도구만 다름.
 // 프린터와 같은 틀(240×200, 0.625배)이라 충돌·물건 자리 계산을 같이 씀. 메뉴판 글자·움직이는 부분은 animTteok/animKimbap/animSundae가 그림
@@ -222,10 +222,6 @@ const BUN_S = bunsik('<radialGradient id="pt" cx="40%" cy="35%" r="70%"><stop of
   '<circle cx="186" cy="70" r="9" fill="#fff" stroke-width="2"/><circle cx="186" cy="70" r="5.5" fill="#f4f1ea" stroke="none"/>' + [[184, 69], [188, 71], [186, 72]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".8" fill="#9aa3b0" stroke="none"/>`).join('') +
   '<circle cx="208" cy="72" r="12" fill="#fff" stroke-width="2.5"/><circle cx="208" cy="72" r="8" fill="none" stroke="#cfd6e0" stroke-width="2"/>',
   '<g stroke="#b5814a" stroke-width="1.4" fill="none"><path d="M110 104 H160 M114 112 H156 M110 120 H150"/></g>');
-const RAM = svgImg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="480" height="400"><defs><filter id="shd" x="-10%" y="-10%" width="130%" height="130%"><feGaussianBlur stdDeviation="2.4"/></filter><linearGradient id="st" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2f6"/><stop offset="1" stop-color="#c3ccd8"/></linearGradient><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2a4d"/><stop offset="1" stop-color="#34508a"/></linearGradient></defs><path d="M14 184 H224 V20 L234 29 V194 H26 Z" fill="#2c2b35" opacity=".26" filter="url(#shd)"/><g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><path d="M124 8 H218 L224 18 H118 Z" fill="#eef2f6"/><rect x="16" y="24" width="94" height="72" rx="6" fill="url(#sk)"/><path d="M20 70 H106 Q112 70 113 76 L116 112 H10 L13 76 Q14 70 20 70 Z" fill="#e3e8ee"/><path d="M16 107 H110" stroke="#fff" stroke-width="2" opacity=".7"/><rect x="14" y="110" width="98" height="74" rx="6" fill="url(#st)"/><rect x="14" y="168" width="98" height="16" rx="6" fill="#f2a58c"/><rect x="118" y="18" width="106" height="166" rx="8" fill="url(#st)"/><rect x="118" y="18" width="106" height="24" rx="8" fill="#e0614a"/><rect x="128" y="66" width="86" height="76" rx="5" fill="#3b414e"/><rect x="130" y="48" width="44" height="14" rx="3" fill="#2f3b4f" stroke-width="2.5"/><circle cx="190" cy="55" r="5" fill="#5ec1a0" stroke-width="2.5"/><circle cx="205" cy="55" r="5" fill="#e0614a" stroke-width="2.5"/><rect x="161" y="66" width="14" height="10" rx="2" fill="#5d6474" stroke-width="2.5"/><rect x="140" y="128" width="58" height="8" rx="2" fill="#2f3b4f" stroke-width="2.5"/><rect x="118" y="168" width="106" height="16" rx="6" fill="#f2a58c"/></g><rect x="16" y="74" width="94" height="22" fill="#24406f"/><path d="M18 66 H108" stroke="#cfd6e0" stroke-width="3"/><path d="M22 66 Q36 52 50 66 Q64 52 78 66 Q92 52 106 66" fill="none" stroke="#cfd6e0" stroke-width="2"/><path d="M28 66 V74 M50 66 V74 M78 66 V74 M100 66 V74" stroke="#cfd6e0" stroke-width="2"/><g fill="#ffd84a" opacity=".55"><rect x="26" y="80" width="10" height="2"/><rect x="50" y="84" width="14" height="2"/><rect x="80" y="80" width="12" height="2"/></g><circle cx="92" cy="38" r="7" fill="#fff3b0"/><circle cx="96" cy="35" r="6" fill="#1d2d52"/><rect x="16" y="24" width="94" height="72" rx="6" fill="none" stroke="#38445a" stroke-width="3.5"/><g stroke="#38445a" stroke-width="1.8" stroke-linejoin="round"><rect x="22" y="88" width="14" height="16" rx="2" fill="#e0614a"/><rect x="38" y="90" width="14" height="14" rx="2" fill="#f2a03a"/><rect x="54" y="88" width="14" height="16" rx="2" fill="#e0614a"/><rect x="70" y="90" width="14" height="14" rx="2" fill="#2f2f2f"/><rect x="86" y="88" width="14" height="16" rx="2" fill="#f2c230"/></g><g fill="#fff" opacity=".5"><rect x="20" y="114" width="88" height="4" rx="2"/><rect x="124" y="46" width="3" height="110" rx="1.5"/></g></svg>
-`);
-const KAR = svgImg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="480" height="400"><defs><filter id="shd" x="-10%" y="-10%" width="130%" height="130%"><feGaussianBlur stdDeviation="2.4"/></filter><linearGradient id="sc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4a66"/><stop offset="1" stop-color="#253049"/></linearGradient><radialGradient id="mb" cx="35%" cy="35%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#9aa5b5"/></radialGradient><linearGradient id="gl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e3f7fb"/><stop offset="1" stop-color="#a9d9e4"/></linearGradient></defs><path d="M16 184 H214 V60 L224 69 V194 H28 Z" fill="#2c2b35" opacity=".26" filter="url(#shd)"/><g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><path d="M26 98 H186 Q192 98 193 104 L196 124 H16 L19 104 Q20 98 26 98 Z" fill="#6b5a8e"/><path d="M22 119 H190" stroke="#fff" stroke-width="2" opacity=".7"/><path d="M28 0 V12" stroke-width="2"/><circle cx="28" cy="22" r="10" fill="url(#mb)"/><rect x="44" y="24" width="140" height="84" rx="6" fill="#2a3448"/><rect x="51" y="31" width="126" height="70" rx="3" fill="url(#sc)" stroke-width="2"/><rect x="108" y="108" width="12" height="16" fill="#4a5670"/><rect x="16" y="122" width="180" height="62" rx="6" fill="#4b3a6e"/><rect x="16" y="170" width="180" height="14" rx="6" fill="#3b2a55"/><circle cx="48" cy="150" r="15" fill="#2a3448"/><circle cx="164" cy="150" r="15" fill="#2a3448"/><rect x="94" y="138" width="24" height="24" rx="4" fill="#f2c230"/><rect x="198" y="64" width="34" height="120" rx="5" fill="#fdfdfd"/><rect x="202" y="70" width="26" height="62" rx="3" fill="url(#gl)" stroke-width="2.5"/><path d="M202 92 H228 M202 112 H228" stroke-width="1.8"/><rect x="198" y="166" width="34" height="18" rx="5" fill="#b48ae0"/><path d="M140 120 L162 116" stroke-width="5"/><circle cx="166" cy="115" r="5" fill="#2a3448" stroke-width="2.5"/></g><path d="M18 22 H38 M28 12 V32 M21 15 L35 29 M35 15 L21 29" stroke="#9aa5b5" stroke-width="1"/><circle cx="48" cy="150" r="7" fill="#5d6a86" stroke="#38445a" stroke-width="2"/><circle cx="164" cy="150" r="7" fill="#5d6a86" stroke="#38445a" stroke-width="2"/><rect x="102" y="144" width="8" height="12" rx="2" fill="#38445a"/><g stroke="#38445a" stroke-width="1.3"><rect x="205" y="78" width="6" height="12" rx="2" fill="#5ec1a0"/><rect x="214" y="78" width="6" height="12" rx="2" fill="#e0614a"/><rect x="205" y="98" width="6" height="12" rx="2" fill="#f2c230"/><rect x="214" y="98" width="6" height="12" rx="2" fill="#5ec1a0"/><rect x="205" y="118" width="6" height="12" rx="2" fill="#e0614a"/></g><g fill="#fff" opacity=".35"><rect x="22" y="126" width="168" height="4" rx="2"/></g></svg>
-`);
 // 2~6층 양옆 생산기(사용자 요청 '기존 층 분리', 1층처럼 생산기마다 메뉴가 다름 — 가운데 1번은 원래 가게 그대로).
 // stall = 가게 색 받침대 + (sign 있으면) 메뉴판 + 위 조리 도구. 240×200 틀, 메뉴판 글자·움직임은 anim 함수가 그림
 const GL = '<linearGradient id="gl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e3f7fb"/><stop offset="1" stop-color="#a9d9e4"/></linearGradient>';
@@ -285,6 +281,16 @@ const MILK4 = deck({ ...CVS,
 // 2번 호빵: 유리 뚜껑 찜기(김 서린 유리 너머로 호빵 여덟 개) + 뒤 호빵 종이 받침 더미
 const HOPP4 = deck({ ...CVS, defs:'<linearGradient id="gl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eaf8fb"/><stop offset="1" stop-color="#bfe2ea"/></linearGradient>',
   tool:'<rect x="18" y="54" width="148" height="68" rx="6" fill="#e0614a"/><rect x="24" y="60" width="136" height="56" rx="3" fill="#f1f4f8" stroke-width="2"/><rect x="176" y="58" width="40" height="34" rx="3" fill="#fff8ee"/><rect x="180" y="62" width="40" height="34" rx="3" fill="#fff8ee"/>' });
+// 5층 한강라면 — 남색 메뉴판(노란 글자) + 남색 앞판, 왼쪽 즉석 라면 조리기(검은 인덕션 + 뒤 물 꼭지), 가운데 라면 봉지 진열, 뒤 젓가락 통
+const RAM5 = deck({ board:'#1f3157', edge:'#f2c230', front:'#2d3f6b', strip:'#f2c230', deco:'<rect x="24" y="140" width="64" height="22" rx="4" fill="#111827"/><g fill="#ffd84a" stroke="none"><circle cx="160" cy="151" r="3"/><circle cx="176" cy="151" r="3"/><circle cx="192" cy="151" r="3"/></g>',
+  tool:'<rect x="18" y="54" width="86" height="68" rx="8" fill="#2c2b35"/><circle cx="61" cy="92" r="24" fill="#3b414e" stroke-width="2"/><rect x="50" y="48" width="22" height="14" rx="4" fill="#8d98aa"/>' + '<rect x="112" y="58" width="11" height="18" rx="2" fill="#e0402c" stroke-width="1.2"/><rect x="112" y="78" width="11" height="18" rx="2" fill="#e0402c" stroke-width="1.2"/><rect x="112" y="98" width="11" height="18" rx="2" fill="#e0402c" stroke-width="1.2"/><rect x="125" y="58" width="11" height="18" rx="2" fill="#2c2b35" stroke-width="1.2"/><rect x="125" y="78" width="11" height="18" rx="2" fill="#2c2b35" stroke-width="1.2"/><rect x="125" y="98" width="11" height="18" rx="2" fill="#2c2b35" stroke-width="1.2"/><rect x="138" y="58" width="11" height="18" rx="2" fill="#e0402c" stroke-width="1.2"/><rect x="138" y="78" width="11" height="18" rx="2" fill="#e0402c" stroke-width="1.2"/><rect x="138" y="98" width="11" height="18" rx="2" fill="#e0402c" stroke-width="1.2"/><rect x="151" y="58" width="11" height="18" rx="2" fill="#f2c230" stroke-width="1.2"/><rect x="151" y="78" width="11" height="18" rx="2" fill="#f2c230" stroke-width="1.2"/><rect x="151" y="98" width="11" height="18" rx="2" fill="#f2c230" stroke-width="1.2"/>' +
+    '<rect x="172" y="56" width="18" height="32" rx="4" fill="#a87449"/><rect x="196" y="58" width="24" height="30" rx="4" fill="#fff"/>',
+  top:'<circle cx="61" cy="92" r="24" fill="none" stroke="#e0614a" stroke-width="1.5" opacity=".6"/><circle cx="61" cy="62" r="3" fill="#cfe9f2" stroke="#38445a" stroke-width="1"/><g stroke="#38445a" stroke-width="1"><path d="M176 58 L174 50 M181 58 L182 49 M186 58 L188 51" stroke="#e8c79a" stroke-width="2.4"/></g><g fill="#5aa85d"><rect x="199" y="62" width="18" height="8" rx="2"/></g><g fill="#e0402c"><rect x="199" y="74" width="18" height="10" rx="2"/></g>' });
+// 6층 코인노래방 — 보라 메뉴판(분홍 글자) + 보라 앞판(스피커), 왼쪽 곡 선택 태블릿, 마이크 두 개·탬버린, 오른쪽 뒤 얼음 쿨러(캔)
+const KAR6 = deck({ board:'#3b2a55', edge:'#b48ae0', front:'#4a3a6a', strip:'#b48ae0', deco:'<circle cx="40" cy="152" r="12" fill="#2c2b35"/><circle cx="40" cy="152" r="5" fill="#6b5a8a"/><circle cx="200" cy="152" r="12" fill="#2c2b35"/><circle cx="200" cy="152" r="5" fill="#6b5a8a"/>',
+  tool:'<rect x="20" y="56" width="70" height="46" rx="6" fill="#2c2b35"/><rect x="25" y="61" width="60" height="36" rx="3" fill="#253049" stroke-width="2"/>' +
+    '<circle cx="132" cy="104" r="14" fill="#e9c98a"/><circle cx="132" cy="104" r="9" fill="#f6e7c4" stroke-width="1.5"/><rect x="170" y="54" width="52" height="40" rx="5" fill="#5ec1d0"/><rect x="175" y="59" width="42" height="30" rx="3" fill="#dff6fb" stroke-width="2"/>' + '<circle cx="182" cy="66" r="6" fill="#cfd6e0" stroke-width="1.2"/><circle cx="196" cy="66" r="6" fill="#cfd6e0" stroke-width="1.2"/><circle cx="210" cy="66" r="6" fill="#cfd6e0" stroke-width="1.2"/><circle cx="189" cy="80" r="6" fill="#cfd6e0" stroke-width="1.2"/><circle cx="203" cy="80" r="6" fill="#cfd6e0" stroke-width="1.2"/>',
+  top:'<g fill="#cfd6e0" stroke="#38445a" stroke-width="1">' + [0, 1, 2, 3, 4, 5].map(i => `<circle cx="${132 + Math.cos(i*1.05)*12}" cy="${104 + Math.sin(i*1.05)*12}" r="2.4"/>`).join('') + '</g>' });
 // item은 그 층 번호 그대로일 때만(같은 종류가 반복되는 위층은 원래 모양)
 const THEMES = [
   { staff:{ body:'#f4f6fa', dark:'#3b3f4a', apron:'#e0614a', hat:'bandana', hatCol:'#e0614a' }, big:1.2, lamp:true, pop:true, shop:'층층분식', sign:'#e0614a', ink:'#fff', awn:'#e0614a', img:BUN_K, anim:animKimbap, spot:[197, 122], reveal:0.7, up:14,
@@ -307,10 +313,10 @@ const THEMES = [
     guests:['student', 'office', 'youth'], order:['바나나우유 {n}개요', '핫바 하나 데워 주세요~ {n}개', '호빵 따끈한 걸로 {n}개요~', '빨대도 주세요~'], thanks:['역시 편의점!', '봉투는 괜찮아요'],
     item:{ name:'편의점 간식', shape:'bmilk', top:'#fbe38a', front:'#fbe38a',
       vars:[{ shape:'hotbar', top:'#c98a3a', front:'#c98a3a' }, { shape:'bmilk', top:'#fbe38a', front:'#fbe38a' }, { shape:'hoppang', top:'#fff8ee', front:'#fff8ee' }] } },
-  { staff:{ body:'#e8e2d0', dark:'#2d3f6b', apron:'#1f3157', hat:'baseball', hatCol:'#1f3157' }, shop:'한강라면', sign:'#1f3157', ink:'#ffd84a', awn:'#f2c230', img:RAM, anim:animRamen, spot:[169, 128], reveal:0.8, up:16,
+  { staff:{ body:'#e8e2d0', dark:'#2d3f6b', apron:'#1f3157', hat:'baseball', hatCol:'#1f3157' }, big:1.2, lamp:'fairy', pop:true, shop:'한강라면', sign:'#1f3157', ink:'#ffd84a', awn:'#f2c230', img:RAM5, anim:animRamen5, spot:[197, 122], reveal:0.8, up:14,
     guests:['tourist', 'youth'], order:['라면 {n}개요!', '계란 넣어 주세요!', 'Ramyeon {n}, please!'], thanks:['한강에서 라면 최고!', 'So good!'],
     item:{ name:'라면', shape:'ramen', top:'#e8833a', front:'#cfd6e0' } },
-  { staff:{ body:'#f4f6fa', dark:'#2c2b35', vest:'#6b4a9a', bow:'#ff8ad8', hat:'hair' }, shop:'♪ 코인노래방', sign:'#3b2a55', ink:'#ff8ad8', awn:'#b48ae0', img:KAR, anim:animKaraoke, spot:[215, 162], reveal:0.85, up:20,
+  { staff:{ body:'#f4f6fa', dark:'#2c2b35', vest:'#6b4a9a', bow:'#ff8ad8', hat:'hair' }, big:1.2, lamp:'neon', pop:true, shop:'♪ 코인노래방', sign:'#3b2a55', ink:'#ff8ad8', awn:'#b48ae0', img:KAR6, anim:animKar6, spot:[197, 122], reveal:0.8, up:14,
     guests:['youth', 'office', 'student'], order:['음료 {n}개요!', '식혜 있어요? {n}개요', '포도맛으로 {n}개!', '목이 타요… {n}개!'], thanks:['100점 가자!', '앵콜~!'],
     item:{ name:'음료', shape:'can', top:'#cfd6e0', front:'#5ec1a0',   // 노래방 기계 3대 그대로, 나오는 캔만 식혜(금빛+밥알) · 민트 · 포도(보라)
       vars:[{ shape:'can', top:'#cfd6e0', front:'#e3c27a', rice:true }, { shape:'can', top:'#cfd6e0', front:'#5ec1a0' }, { shape:'can', top:'#cfd6e0', front:'#8a5ab5' }] } },
@@ -1809,6 +1815,20 @@ LAMPS.tube = (S2, u, now, s, off) => {
   rr(l, t - 4*u, r - l, 8*u, 4*u); ctx.fillStyle = '#dfe5ec'; ctx.fill(); ctx.stroke();
   if (!off) { ctx.save(); ctx.shadowBlur = 14*u; ctx.shadowColor = 'rgba(220,240,255,.9)'; rr(l + 4*u, t - 2*u, r - l - 8*u, 4*u, 2*u); ctx.fillStyle = '#f7fbff'; ctx.fill(); ctx.restore(); }
 };
+// 5층 한강: 차가운 색 요정 전구줄(밤 강변) / 6층 노래방: 메뉴판 둘레 네온(분홍·하늘 번갈아) + 작업대 위를 도는 미러볼 빛 점
+LAMPS.fairy = (S2, u, now, s, off) => {
+  if (!off) deckGlow(S2, u, now, '170,200,255', 0.12);
+  const pt = t => S2(8 + t*224, -12 + Math.sin(Math.PI*t)*10 + Math.sin(now/900)*1.5*Math.sin(Math.PI*t));
+  ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.2*u; ctx.beginPath(); for (let i = 0; i <= 20; i++) { const [x, y] = pt(i/20); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
+  for (let i = 0; i < 12; i++) { const [x, y] = pt((i + 0.5)/12), tw = 0.6 + 0.4*Math.sin(now/260 + i*1.9); ctx.globalAlpha = off ? 1 : tw; bulb(x, y + 3*u, 3*u, i % 3 ? 'rgb(190,225,255)' : 'rgb(255,236,170)', !off, u); ctx.globalAlpha = 1; }
+};
+LAMPS.neon = (S2, u, now, s, off) => {
+  if (!off) { deckGlow(S2, u, now, '255,120,220', 0.1);
+    for (let i = 0; i < 7; i++) { const a = now/1100 + i*0.9, [x, y] = S2(120 + Math.cos(a)*(60 + i*7), 92 + Math.sin(a*1.3)*28);
+      ctx.fillStyle = ['rgba(255,138,216,.45)', 'rgba(127,240,255,.45)', 'rgba(255,224,138,.45)'][i % 3]; ctx.beginPath(); ctx.arc(x, y, 4*u, 0, Math.PI*2); ctx.fill(); } }
+  const [l, t] = S2(46, -2), [r, b] = S2(194, 46), c = Math.floor(now/700) % 2 ? '#ff8ad8' : '#7fe0ff';
+  ctx.save(); if (!off) { ctx.shadowBlur = 12*u; ctx.shadowColor = c; } ctx.strokeStyle = off ? '#6b6f7a' : c; ctx.lineWidth = 3*u; rr(l, t, r - l, b - t, 10*u); ctx.stroke(); ctx.restore();
+};
 // 2층 공통: 뒤집개(위에서 봄)가 철판 위 물건을 쟁반으로 옮김 — 진행도 a~b 동안, 들고 가는 그림은 draw(x, y)
 function spatula(S2, u, prog, from, a, b, draw){
   const t = lerp01(prog, a, b); if (prog < a || prog > b + 0.02) return false;
@@ -2058,66 +2078,57 @@ function animGan3({ S2, u, now, prog, work, s }){
     ctx.fillStyle = `rgba(200,200,210,${0.45*(1 - tt)})`; ctx.beginPath(); ctx.arc(wx, wy, (5 + tt*8)*u, 0, Math.PI*2); ctx.fill(); }
   tongs(S2, u, prog, GAN_AT[6], (x, y) => chick(x, y, 8*u, u, 0.4, '#d9a25a', 1, '#6b3a1f'));
 }
-// 5층 한강 즉석 라면: 창밖 한강 다리 불빛 반짝, 은박 그릇에 물이 쏟아지고(~30%) → 보글보글 끓으며 김 → 뚜껑 덮인 완성 라면
-function animRamen({ S2, u, now, prog, work, s }){
-  const [hx, hy] = S2(171, 30);
-  ctx.font = `${Math.round(15*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillStyle = s.broken ? blink(now) : '#fff'; ctx.fillText(s.broken ? '고장!' : '즉석 라면', hx, hy);
-  const [dx, dy] = S2(152, 55);
-  ctx.font = `${Math.round(10*u)}px ${FONT}`; ctx.fillStyle = s.broken ? '#ff7a66' : work ? '#7ff0a8' : '#9aa7b8';
-  ctx.fillText(s.broken ? 'OFF' : !work ? '대기' : prog < 0.3 ? '물 붓기' : prog < reveal5 ? '끓는 중' : '완성!', dx, dy);
-  for (let i = 0; i < 9; i++) {                                  // 다리 불빛
-    const [lx, ly] = S2(22 + i*10, 66); ctx.fillStyle = `rgba(255,216,74,${0.4 + 0.6*((Math.sin(now/300 + i*1.3) + 1)/2)})`;
-    ctx.beginPath(); ctx.arc(lx, ly, 1.6*u, 0, Math.PI*2); ctx.fill();
-  }
-  if (!work || prog >= reveal5) return;
-  const [px, py] = S2(169, 128);                                 // 인덕션 빨간 링
-  ctx.strokeStyle = `rgba(255,110,80,${0.5 + 0.4*Math.sin(now/200)})`; ctx.lineWidth = 2*u; ctx.beginPath(); ctx.ellipse(px, py - 2*u, 22*u, 4*u, 0, 0, Math.PI*2); ctx.stroke();
-  const [bx, by] = S2(169, 127), w = 30*u, h = 13*u;           // 은박 그릇
-  ctx.fillStyle = '#cfd6e0'; ctx.beginPath(); ctx.moveTo(bx - w/2, by - h); ctx.lineTo(bx + w/2, by - h); ctx.lineTo(bx + w*0.36, by); ctx.lineTo(bx - w*0.36, by); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#38445a'; ctx.lineWidth = 2*u; ctx.stroke();
-  const boil = prog >= 0.3;
-  ctx.fillStyle = boil ? '#e8833a' : '#bfe6f2'; ctx.beginPath(); ctx.ellipse(bx, by - h, w/2 - 1*u, 3.5*u, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-  ctx.strokeStyle = '#ffe08a'; ctx.lineWidth = 1.6*u; ctx.beginPath();     // 면
-  for (let i = 0; i <= 8; i++) { const x = bx - 10*u + i*2.5*u, y = by - h + (boil ? Math.sin(i*1.7 + now/150) : Math.sin(i*1.7))*1.6*u; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
-  ctx.stroke();
-  if (!boil) {                                                    // 물줄기
-    const [sx, sy] = S2(168, 76); ctx.fillStyle = 'rgba(191,230,242,.85)'; ctx.fillRect(sx - 2*u, sy, 4*u, by - h - sy);
-  } else {
-    for (let i = 0; i < 4; i++) { const tt = (now/350 + i*0.25) % 1, qx = bx - 9*u + i*6*u;
-      ctx.fillStyle = `rgba(255,220,180,${1 - tt})`; ctx.beginPath(); ctx.arc(qx, by - h - tt*3*u, (1 + tt*2)*u*1.4, 0, Math.PI*2); ctx.fill(); }
-    steam(S2, u, now, [158, 178], 112);
-  }
+// 5층 한강라면(위에서 본 즉석 조리기): 은박 그릇에 면 블록(0~12%) → 꼭지에서 물(12~30%) → 인덕션 빨갛게, 빨간 국물 보글보글 + 면 꼬불꼬불, 달걀 톡(50%)·파 → 그릇째 쟁반으로(72~80%)
+function ramenBowl(x, y, u, k, st, now){   // st: 0 빈 그릇+면 블록, 1 물, 2 국물
+  ctx.fillStyle = '#cfd6e0'; ctx.beginPath(); ctx.arc(x, y, 19*u*k, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.6*u; ctx.stroke();
+  ctx.strokeStyle = 'rgba(56,68,90,.25)'; ctx.lineWidth = 1*u; for (let i = 0; i < 12; i++) { const a = i*Math.PI/6; ctx.beginPath(); ctx.moveTo(x + Math.cos(a)*15*u*k, y + Math.sin(a)*15*u*k); ctx.lineTo(x + Math.cos(a)*19*u*k, y + Math.sin(a)*19*u*k); ctx.stroke(); }
+  if (st >= 1) { ctx.fillStyle = st >= 2 ? '#e0602c' : '#bfe6f2'; ctx.beginPath(); ctx.arc(x, y, 15*u*k, 0, Math.PI*2); ctx.fill(); }
+  ctx.strokeStyle = '#ffd86b'; ctx.lineWidth = 1.6*u*k;
+  if (st < 2) { rr(x - 8*u*k, y - 8*u*k, 16*u*k, 16*u*k, 2*u*k); ctx.fillStyle = '#f6d36b'; ctx.fill(); ctx.stroke(); ctx.strokeStyle = '#e3b84a'; ctx.beginPath(); for (let i = 0; i < 4; i++) { ctx.moveTo(x - 6*u*k, y - 5*u*k + i*3.4*u*k); ctx.quadraticCurveTo(x, y - 7*u*k + i*3.4*u*k, x + 6*u*k, y - 5*u*k + i*3.4*u*k); } ctx.stroke(); }
+  else { ctx.beginPath(); for (let i = 0; i < 4; i++) for (let j = 0; j <= 8; j++) { const xx = x - 10*u*k + j*2.5*u*k, yy = y - 6*u*k + i*4*u*k + Math.sin(j*1.6 + i + now/180)*1.4*u*k; j ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); } ctx.stroke(); }
 }
-const reveal5 = 0.8;
-// 6층 노래방: 미러볼 빛이 돌고, 화면 가사가 분홍으로 차오르며 스피커에서 ♪ → 끝나면 '100점!' → 옆 냉장고 아래에 음료 캔
-function animKaraoke({ S2, u, now, prog, work, s }){
-  const [mx, my] = S2(28, 22);
-  for (let i = 0; i < 6; i++) {                                  // 미러볼 빛 점
-    const a = now/900 + i*Math.PI/3, d = (16 + (i % 2)*10)*u;
-    ctx.fillStyle = ['rgba(255,138,216,.7)', 'rgba(127,240,255,.7)', 'rgba(255,224,138,.7)'][i % 3];
-    ctx.beginPath(); ctx.arc(mx + Math.cos(a)*d*1.6, my + 12*u + Math.sin(a)*d*0.6, 2.2*u, 0, Math.PI*2); ctx.fill();
+function animRamen5({ S2, u, now, prog, work, s }){
+  menuSign(S2, u, now, s, '한강라면', '#ffd84a', 23, 23);
+  { const [dx, dy] = S2(56, 151); ctx.font = `${Math.round(11*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = s.broken ? '#ff7a66' : work ? '#7ff0a8' : '#9aa7b8'; ctx.fillText(s.broken ? 'OFF' : !work ? '대기' : prog < 0.3 ? '물 붓기' : prog < 0.72 ? '끓는 중' : '완성!', dx, dy); }
+  const st = !work ? 2 : prog < 0.12 || prog >= 0.8 ? 0 : prog < 0.3 ? 1 : 2, [bx, by] = S2(61, 92);
+  if (work && prog > 0.3 && prog < 0.72) { ctx.strokeStyle = `rgba(255,90,60,${0.5 + 0.4*Math.sin(now/200)})`; ctx.lineWidth = 3*u; ctx.beginPath(); ctx.arc(bx, by, 23*u, 0, Math.PI*2); ctx.stroke(); }   // 인덕션 빨간 링
+  const moving = work && prog > 0.72 && prog < 0.8;
+  if (!moving) ramenBowl(bx, by, u, 1, st, now);
+  if (!work) return;
+  if (st === 1) { const [sx, sy] = S2(61, 62); ctx.fillStyle = 'rgba(191,230,242,.9)'; ctx.fillRect(sx - 2*u, sy, 4*u, by - sy); }   // 물줄기
+  if (st === 2 && !moving) {
+    for (let i = 0; i < 6; i++) { const tt = (now/350 + i*0.17) % 1, a = i*1.1; ctx.fillStyle = `rgba(255,210,170,${1 - tt})`; ctx.beginPath(); ctx.arc(bx + Math.cos(a)*9*u, by + Math.sin(a)*9*u, (1 + tt*2)*u*1.3, 0, Math.PI*2); ctx.fill(); }
+    if (prog > 0.5) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(bx + 5*u, by - 3*u, 6*u, 4.5*u, 0.3, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#f2b51e'; ctx.beginPath(); ctx.arc(bx + 5*u, by - 3*u, 2.4*u, 0, Math.PI*2); ctx.fill(); }
+    if (prog > 0.58) { ctx.fillStyle = '#5aa85d'; [[-7, 4], [-3, 8], [2, 6], [-9, -2]].forEach(([dx, dy]) => ctx.fillRect(bx + dx*u, by + dy*u, 2.4*u, 1.6*u)); }
+    steam(S2, u, now, [52, 70], 84);
   }
-  const [x0, y0] = S2(51, 31), [x1, y1] = S2(177, 101), cx = (x0 + x1)/2;
+  if (moving) { const t = lerp01(prog, 0.72, 0.8), [x, y] = S2(61 + (197 - 61)*t, 92 + (114 - 92)*t - Math.sin(Math.PI*t)*12); ramenBowl(x, y, u, 0.6, 2, now); }
+}
+// 6층 코인노래방: 태블릿에 가사가 분홍으로 차오르고 마이크가 들썩, ♪가 떠오름 → '100점!'(65~72%) → 얼음 쿨러에서 캔 하나가 쟁반으로(72~80%). 캔 색은 그 생산기 음료(식혜·민트·포도)
+function animKar6({ S2, u, now, prog, work, s, k, z }){
+  menuSign(S2, u, now, s, '♪ 노래방', '#ff8ad8', 23, 23);
+  const col = themeOf(z)?.item?.vars?.[k]?.front || '#5ec1a0', [c0x, c0y] = S2(182, 66);
+  [[182, 66], [196, 66], [210, 66], [189, 80], [203, 80]].forEach(([cx, cy], i) => { if (work && i === 4 && prog > 0.72) return; const [x, y] = S2(cx, cy);   // 쿨러 속 캔 뚜껑에 음료 색 테두리
+    ctx.strokeStyle = col; ctx.lineWidth = 2*u; ctx.beginPath(); ctx.arc(x, y, 6*u, 0, Math.PI*2); ctx.stroke(); ctx.fillStyle = '#8d98aa'; ctx.fillRect(x - 2*u, y - 0.8*u, 4*u, 1.6*u); });
+  const [x0, y0] = S2(25, 61), [x1, y1] = S2(85, 97), cx = (x0 + x1)/2;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  if (s.broken) { ctx.font = `${Math.round(22*u)}px ${FONT}`; ctx.fillStyle = blink(now); ctx.fillText('고장!', cx, (y0 + y1)/2); return; }
-  if (!work) { ctx.font = `${Math.round(13*u)}px ${FONT}`; ctx.fillStyle = '#9aa7b8'; ctx.fillText('곡을 선택하세요', cx, (y0 + y1)/2); return; }
-  if (prog < 0.8) {                                               // 가사 두 줄, 분홍으로 차오름
-    const sing = prog/0.8;
-    [[0.42, 0, 0.5], [0.66, 0.5, 1]].forEach(([fy, a, b]) => {
-      const lx = x0 + 14*u, lw = x1 - x0 - 28*u, ly = y0 + (y1 - y0)*fy, f = Math.max(0, Math.min(1, (sing - a)/(b - a)));
-      rr(lx, ly - 3*u, lw, 6*u, 3*u); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill();
-      if (f > 0) { rr(lx, ly - 3*u, lw*f, 6*u, 3*u); ctx.fillStyle = '#ff8ad8'; ctx.fill(); }
-    });
-    ctx.font = `${Math.round(10*u)}px ${FONT}`; ctx.fillStyle = '#ffe08a'; ctx.fillText('♪ 층층이 노래 ♪', cx, y0 + 10*u);
-    for (let i = 0; i < 2; i++) {                                // 스피커에서 ♪
-      const tt = (now/1100 + i/2) % 1, [nx, ny] = S2(i ? 164 : 48, 132 - tt*40);
-      ctx.font = `${Math.round(14*u)}px ${FONT}`; ctx.fillStyle = `rgba(255,138,216,${1 - tt})`; ctx.fillText('♪', nx + Math.sin(now/200 + i)*4*u, ny);
-    }
-  } else {
-    const pop = 1 + 0.15*Math.sin(now/90);
-    ctx.font = `${Math.round(24*u*pop)}px ${FONT}`; ctx.fillStyle = Math.floor(now/160) % 2 ? '#ffe08a' : '#ff8ad8'; ctx.fillText('100점!', cx, (y0 + y1)/2);
-  }
+  if (s.broken) { ctx.font = `${Math.round(13*u)}px ${FONT}`; ctx.fillStyle = blink(now); ctx.fillText('고장!', cx, (y0 + y1)/2); }
+  else if (!work) { ctx.font = `${Math.round(8*u)}px ${FONT}`; ctx.fillStyle = '#9aa7b8'; ctx.fillText('곡을 고르세요', cx, (y0 + y1)/2); }
+  else if (prog < 0.65) { const sing = prog/0.65;
+    [[0.4, 0, 0.5], [0.7, 0.5, 1]].forEach(([fy, a, b]) => { const lx = x0 + 6*u, lw = x1 - x0 - 12*u, ly = y0 + (y1 - y0)*fy, f = Math.max(0, Math.min(1, (sing - a)/(b - a)));
+      rr(lx, ly - 2.5*u, lw, 5*u, 2.5*u); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill(); if (f > 0) { rr(lx, ly - 2.5*u, lw*f, 5*u, 2.5*u); ctx.fillStyle = '#ff8ad8'; ctx.fill(); } });
+    ctx.font = `${Math.round(7*u)}px ${FONT}`; ctx.fillStyle = '#ffe08a'; ctx.fillText('♪ 층층이 노래', cx, y0 + 6*u); }
+  else { const pop = 1 + 0.15*Math.sin(now/90); ctx.font = `${Math.round(14*u*pop)}px ${FONT}`; ctx.fillStyle = Math.floor(now/160) % 2 ? '#ffe08a' : '#ff8ad8'; ctx.fillText('100점!', cx, (y0 + y1)/2); }
+  [[44, 116, '#ff8ad8', 0], [82, 114, '#7fe0ff', 1]].forEach(([mx, my, mc, i]) => {   // 마이크 두 개(노래하면 들썩)
+    const hop = work && prog < 0.65 ? Math.max(0, Math.sin(now/120 + i*2))*3*u : 0, [x, y] = S2(mx, my);
+    ctx.save(); ctx.translate(x, y - hop); ctx.rotate(-0.5 + i*0.3);
+    rr(-3*u, -2*u, 22*u, 6*u, 3*u); ctx.fillStyle = '#2c2b35'; ctx.fill(); ctx.beginPath(); ctx.arc(-4*u, 1*u, 6*u, 0, Math.PI*2); ctx.fillStyle = mc; ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.4*u; ctx.stroke(); ctx.restore(); });
+  if (!work) return;
+  if (prog < 0.65) for (let i = 0; i < 3; i++) { const tt = (now/1100 + i/3) % 1, [nx, ny] = S2(60 + i*40, 120 - tt*70);
+    ctx.font = `${Math.round(14*u)}px ${FONT}`; ctx.fillStyle = `rgba(255,138,216,${1 - tt})`; ctx.fillText(i % 2 ? '♬' : '♪', nx + Math.sin(now/200 + i)*4*u, ny); }
+  if (prog > 0.72 && prog < 0.8) { const t = lerp01(prog, 0.72, 0.8), [x, y] = S2(203 - 6*t, 80 + (114 - 80)*t - Math.sin(Math.PI*t)*14);
+    rr(x - 5*u, y - 8*u, 10*u, 14*u, 2*u); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.4*u; ctx.stroke(); ctx.fillStyle = '#cfd6e0'; ctx.fillRect(x - 5*u, y - 8*u, 10*u, 3*u); }
 }
 // ---- 2~6층 양옆 생산기 움직임 ----
 const lerp01 = (p, a, b) => Math.min(1, Math.max(0, (p - a)/(b - a)));

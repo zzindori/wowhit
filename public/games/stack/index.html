@@ -413,6 +413,8 @@ function load(){
 }
 function save(){ try { S.px = P.x; S.py = P.y; S.seen = Date.now(); localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
 let S = load();
+{ const top = S.zones[S.zones.length - 1].sp, on = top.filter(s => s.on);   // 예전 저장: 맨 위층 생산기가 다 부서져 있으면 한 대를 '고장'으로 되돌림(공짜 수리)
+  if (on.length && on.every(s => s.ruined)) Object.assign(on[0], { ruined:false, broken:true, fix:0, brokenT:0, warned:false }); }
 
 const P = { x:380, y:600, inc:0, fx:0, fy:1, svx:0, svy:0, t:0, payT:0, padCd:0, cashT:0, wasMax:false };
 let workers = [], anims = [], floats = [], PADS = [], muds = [];
@@ -1000,7 +1002,11 @@ function grantAway(sec){
 }
 
 // 고장 난 채로 오래 두면 부서짐: 쌓인 물건(황금 포함)은 사라지고, 그 자리 '다시 제작' 칸에서 돈을 내야 다시 돌아감
+// 단, 맨 위층의 마지막 한 대(다른 생산기가 다 부서졌거나 아직 안 열림)는 부서지지 않음 — 고장 상태로 남아 공짜 수리 가능.
+// 맨 위층이 다 부서지면 벌 곳이 없어(아래층은 값이 5배씩 작음) 다시 제작비를 못 모으고 게임이 멈추던 문제(사용자 제보: 8층 1.5억)
+const lastStand = (s, z) => z === S.zones.length - 1 && !S.zones[z].sp.some(o => o !== s && o.on && !o.ruined);
 function brokenTick(s, z, cz, dt){
+  if (lastStand(s, z)) { s.brokenT = 0; s.warned = false; return; }
   s.brokenT = (s.brokenT || 0) + dt;
   const left = CFG.broken.ruin - s.brokenT;
   if (left <= CFG.broken.warn && !s.warned) { s.warned = true; toast(`${z+1}층 고장 난 생산기가 ${CFG.broken.warn}초 뒤 부서져요!`, true); }
@@ -1022,7 +1028,7 @@ function updEvents(dt){
     const ks = [0, 1, 2].filter(k => ok(Z.sp[k]));
     const k = ks[Math.floor(Math.random()*ks.length)];
     Object.assign(Z.sp[k], { broken:true, fix:0, brokenT:0, warned:false });
-    toast(`${z+1}층 생산기가 고장 났어요! 그 앞에 서 있으면 고쳐요 (${CFG.broken.ruin}초 넘게 두면 부서져요)`, true); sfx.broken();
+    toast(`${z+1}층 생산기가 고장 났어요! 그 앞에 서 있으면 고쳐요 (${lastStand(Z.sp[k], z) ? '마지막 한 대라 부서지지는 않아요' : `${CFG.broken.ruin}초 넘게 두면 부서져요`})`, true); sfx.broken();
     if (z === curZone) { shake(4); burst(SP[k].x, gy(z, SP[k].y - 34), 40, 10, 'dust', { color:'#5b6070', speed:50, up:60, g:0, life:0.9, size:8 }); }
   } else {
     const z = Math.floor(Math.random()*S.zones.length), R = rt(z);

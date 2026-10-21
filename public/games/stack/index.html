@@ -265,7 +265,7 @@ const CROWNM = stall({ ...MSM, tool:'<rect x="18" y="90" width="44" height="14" 
 // staff 그 층 직원 옷(셔츠·바지 색 + 앞치마/조끼/모자, staffBody/staffHead) · shop 간판 이름 · sign/ink/awn 간판 바탕·글자·차양 색 · img 생산기 몸체 · anim 움직이는 부분 · spot 물건이 생기는 자리(SVG 좌표) · reveal 물건이 차오르기 시작하는 진행도 · up 위 글자 올림
 // item은 그 층 번호 그대로일 때만(같은 종류가 반복되는 위층은 원래 모양)
 const THEMES = [
-  { staff:{ body:'#f4f6fa', dark:'#3b3f4a', apron:'#e0614a', hat:'bandana', hatCol:'#e0614a' }, shop:'층층분식', sign:'#e0614a', ink:'#fff', awn:'#e0614a', img:BUN_K, anim:animKimbap, spot:[197, 122], reveal:0.7, up:14,
+  { staff:{ body:'#f4f6fa', dark:'#3b3f4a', apron:'#e0614a', hat:'bandana', hatCol:'#e0614a' }, big:1.2, lamp:true, pop:true, shop:'층층분식', sign:'#e0614a', ink:'#fff', awn:'#e0614a', img:BUN_K, anim:animKimbap, spot:[197, 122], reveal:0.7, up:14,
     mach:[{ img:BUN_T, anim:animTteok }, {}, { img:BUN_S, anim:animSundae }],   // 생산기 k번만 다르게(없는 값은 위 공통)
     guests:['student', 'kid'], order:['떡볶이랑 김밥, 순대 섞어서 {n}개요!', '떡볶이 국물 많이요~ {n}개!', '순대는 간도 주세요! {n}개요', '김밥 {n}줄 포장이요~'], thanks:['잘 먹을게요!', '학원 가기 전에 딱!', '떡볶이엔 순대지!'],
     item:{ name:'분식', shape:'kimbap', top:'#fff7e6', front:'#f6deb0',
@@ -297,6 +297,7 @@ const THEMES = [
     guests:['tourist', 'student', 'office'], order:['K-beauty! {n} please!', 'マスクパック {n}つください~', '틴트 신상 나왔어요? {n}개요', '쿠션 리필도 {n}개요'], thanks:['피부 좋아지겠다~', 'Kamsahamnida!', '세일이라 좋다!'],
     item:{ name:'화장품', shape:'cushion', top:'#f7c6d6', front:'#f29bb5',
       vars:[{ shape:'mask', top:'#fde4ec', front:'#f7a8c0' }, { shape:'cushion', top:'#f7c6d6', front:'#f29bb5' }, { shape:'tint', top:'#f29bb5', front:'#e0315a' }] } },
+  // big = 생산기 크기 배수 · lamp = 생산기 위 백열등 · pop = 완성 연출(반짝·딩) — 1층에 먼저 넣어 봄
   // trad = 기와 지붕·단청·청사초롱 간판 + 단풍잎 · dress = 다 산 손님은 한복 입고 나감 · jingle = 층에 들어오면 가야금 소리
   { staff:{ body:'#b9cdb0', dark:'#5a6a50', hanbok:true, hat:'hair' }, shop:'층층 한복대여', sign:'#5a3a22', ink:'#ffe08a', awn:'#b8352b', img:HANM, anim:animHanM, spot:[196, 98], reveal:0.75, up:15, trad:true, dress:true, jingle:'gayageum',
     mach:[{ img:HANF, anim:animHanF }, {}, { img:NORI, anim:animNori }],
@@ -494,6 +495,7 @@ const sfx = {
   vip(){ [1319, 1568, 2093, 2637].forEach((f, i) => tone(f, 0.14, 'triangle', 0.08, i*0.08)); buzz([20, 40, 20, 40, 20]); },
   warp(){ tone(300, 0.25, 'sine', 0.1, 0, 3); buzz(15); },
   robot(){ tone(1400, 0.06, 'square', 0.04); tone(1860, 0.08, 'square', 0.04, 0.09); },
+  ding(){ if (every('ding', 0.22)) { tone(1760, 0.09, 'sine', 0.03); tone(2349, 0.12, 'sine', 0.02, 0.05); } },   // 생산기 완성(가게 층 pop)
   museum(){ [[988, 0], [784, 0.35], [1319, 0.7]].forEach(([f, w]) => { tone(f, 1.2, 'sine', 0.07, w); tone(f*2.01, 0.5, 'sine', 0.02, w); }); },   // 박물관 층: 은은한 종소리 세 번
   gayageum(){ [[659, 0], [784, 0.14], [880, 0.28], [784, 0.42], [659, 0.56], [587, 0.7], [659, 0.92]].forEach(([f, w], i) => {   // 한복대여 층 들어올 때: 가야금처럼 뜯는 5음계
     tone(f, i === 6 ? 0.9 : 0.42, 'triangle', 0.09, w, i === 6 ? 0.97 : 0.995); tone(f*2, 0.1, 'sine', 0.03, w); }); }
@@ -752,8 +754,8 @@ function collide(e, z){
   const Z = S.zones[z]; if (!Z) return;
   Z.sp.forEach((s, k) => {
     if (!s.on || s.ruined) return;
-    const y0 = gy(z, SP[k].y) - MACH.top - BODY_R, y1 = gy(z, SP[k].y) - MACH.bot + BODY_R;
-    const x0 = SP[k].x - MACH.hw - BODY_R, x1 = SP[k].x + MACH.hw + BODY_R;
+    const b = bigOf(z), y0 = gy(z, SP[k].y) - MACH.top*b - BODY_R, y1 = gy(z, SP[k].y) - MACH.bot + BODY_R;
+    const x0 = SP[k].x - MACH.hw*b - BODY_R, x1 = SP[k].x + MACH.hw*b + BODY_R;
     pushOut(e, x0, x1, y0, y1);
   });
   if (S.warp) pushOut(e, ELEV.x - 35 - BODY_R, ELEV.x + 35 + BODY_R, gy(z, ELEV.y - 40) - BODY_R, gy(z, ELEV.y) + BODY_R);   // 엘리베이터 문(벽에 붙은 상자)
@@ -768,7 +770,7 @@ function pushOut(e, x0, x1, y0, y1){
 // 일꾼 길찾기: 프린터 줄 위아래를 오갈 땐 프린터 사이 통로로 돌아감 (판매대에 가까운 쪽 통로)
 const CORRIDOR = [275, 275, 485];
 function detour(e, z, k, tx, ty){
-  const yb = gy(z, SP[0].y), top = yb - MACH.top - BODY_R - 6, bot = yb - MACH.bot + BODY_R + 6, cx = CORRIDOR[k];
+  const yb = gy(z, SP[0].y), top = yb - MACH.top*bigOf(z) - BODY_R - 6, bot = yb - MACH.bot + BODY_R + 6, cx = CORRIDOR[k];
   const below = e.y > bot, above = e.y < top, tBelow = ty > bot;
   if (tBelow ? below : above) return [tx, ty];
   if (Math.abs(e.x - cx) > 4 && (below || above)) return [cx, e.y];   // 먼저 통로 앞으로 옆걸음
@@ -1238,7 +1240,12 @@ function update(dt){
           const isGold = Math.random() < CFG.gold.chance && (s.golden || 0) < 3;
           if (z === cz) {                              // 지금 층이면 프린터 받침대에서 더미로 톡 날아감
             const R = rt(z), pf = R.pfly || (R.pfly = [0, 0, 0]); pf[k]++;
-            fly(prnW(k, z, ...(machOf(z, k)?.spot || PRN_ITEM)), () => spItemPos(z, k, s.items - 1), isGold ? GOLD + z : vk(z, k), 0.35, () => { pf[k] = Math.max(0, pf[k] - 1); });
+            const from = prnW(k, z, ...(machOf(z, k)?.spot || PRN_ITEM));
+            fly(from, () => spItemPos(z, k, s.items - 1), isGold ? GOLD + z : vk(z, k), 0.35, () => { pf[k] = Math.max(0, pf[k] - 1); });
+            if (themeOf(z)?.pop) {                     // 완성 연출: 쟁반에서 반짝 + 작은 '딩'
+              burst(from[0], from[1], from[2] + 6, RM ? 3 : 8, 'spark', { color:'#ffe27a', speed:70, up:90, g:80, life:0.55 });
+              sfx.ding();
+            }
           }
           if (isGold) {
             s.golden = (s.golden || 0) + 1; (s.goldLife || (s.goldLife = [])).push(CFG.gold.life);
@@ -1682,8 +1689,10 @@ function item(x, y, z, kind, noBadge){
 }
 // ---- 3D 프린터 생산기 ----
 // SVG 좌표(240×200)를 월드로: 가로 0.625배, 그림 바닥이 생산기 칸 30 위
+// 테마의 big(생산기 크기 배수 — 1층 1.2, 사용자 요청 '생산기가 메인이니 크게'). 바닥 기준선은 그대로, 위·옆으로 커짐
+const bigOf = z => themeOf(z)?.big || 1;
 const PU = 0.625, prnBase = (z, k) => gy(z, SP[k].y) - 30;
-const prnW = (k, z, u, v) => [SP[k].x + (u - 120)*PU, prnBase(z, k), (200 - v)*PU];   // SVG (u,v) → 월드 [x, y, 높이]
+const prnW = (k, z, u, v) => { const b = PU*bigOf(z); return [SP[k].x + (u - 120)*b, prnBase(z, k), (200 - v)*b]; };   // SVG (u,v) → 월드 [x, y, 높이]   // SVG (u,v) → 월드 [x, y, 높이]
 const PRN_ITEM = [134, 124];                                  // 받침대 위 물건이 만들어지는 자리
 // 레트로 계산대: 물건 하나 건넬 때마다 손잡이 당김, 결제하면 숫자판이 튀어오르고(₩ 빨강) 서랍이 툭 나왔다 들어감
 function drawDesk(z){
@@ -1707,11 +1716,30 @@ function drawDesk(z){
   ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(kx, ky); ctx.lineWidth = 3*u; ctx.stroke();
   ctx.beginPath(); ctx.arc(kx, ky, 4*u, 0, Math.PI*2); ctx.fillStyle = '#e0614a'; ctx.fill(); ctx.lineWidth = 2.5*u; ctx.stroke();
 }
+// 생산기 조명(테마 lamp): 메뉴판 양옆에 매달린 백열등 두 개 + 작업대에 비치는 따뜻한 불빛. 고장이면 꺼짐(가끔 깜빡)
+function machLamps(S2, u, now, s){
+  const off = s.broken && Math.floor(now/180) % 5 !== 0;
+  if (!off) {
+    const [cx, cy] = S2(120, 92), g = ctx.createRadialGradient(cx, cy, 6*u, cx, cy, 120*u);
+    g.addColorStop(0, `rgba(255,205,120,${0.15 + 0.02*Math.sin(now/400)})`); g.addColorStop(1, 'rgba(255,214,130,0)');
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, cy, 120*u, 62*u, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+  }
+  [38, 202].forEach((x, i) => {
+    const sw = Math.sin(now/900 + i)*1.5, [tx, ty] = S2(x, -30), [bx, by] = S2(x + sw, 14);
+    ctx.strokeStyle = '#38445a'; ctx.lineWidth = 2*u; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(bx, by - 12*u); ctx.stroke();
+    if (!off) { const h = ctx.createRadialGradient(bx, by + 4*u, 2*u, bx, by + 4*u, 34*u); h.addColorStop(0, 'rgba(255,226,150,.85)'); h.addColorStop(1, 'rgba(255,226,150,0)');
+      ctx.fillStyle = h; ctx.beginPath(); ctx.arc(bx, by + 4*u, 34*u, 0, Math.PI*2); ctx.fill(); }
+    ctx.fillStyle = off ? '#9aa3b0' : '#fff3c4'; ctx.beginPath(); ctx.arc(bx, by + 4*u, 7*u, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.5*u; ctx.stroke();   // 전구
+    ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.moveTo(bx - 15*u, by); ctx.lineTo(bx + 15*u, by); ctx.lineTo(bx + 6*u, by - 12*u); ctx.lineTo(bx - 6*u, by - 12*u); ctx.closePath(); ctx.fill(); ctx.lineWidth = 2*u; ctx.stroke();   // 빨간 갓(분식집 느낌)
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(bx - 8*u, by - 9*u, 3*u, 7*u);
+  });
+}
 // 가게 생산기 공통: 몸체 그림 → 테마별 움직임 → 진행도 reveal부터 물건이 아래부터 차오름 → 위 글자
 function drawThemed(T, s, z, k, p, py){
   const now = performance.now(), S2 = (u, v) => { const [x, y, h] = prnW(k, z, u, v); return toS(x, y, h); };
-  const [l, t] = S2(0, 0), u = PU*scale;
+  const [l, t] = S2(0, 0), u = PU*bigOf(z)*scale;
   ctx.drawImage(T.img, l, t, 240*u, 200*u);
+  if (T.lamp) machLamps(S2, u, now, s);
   const full = s.items >= CFG.spawnMax, work = !s.broken && !full, prog = Math.min(1, s.t/CFG.spawnEvery);
   ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = '#38445a';
   T.anim({ S2, u, now, prog, work, s, k, z });
@@ -2385,7 +2413,7 @@ function drawLeaves(){
 }
 // 생산기 위 글자 · 수리 막대 · 고장 연기 (프린터·분식 조리대 공통)
 function machLabel(s, z, k, p, py, now, full){
-  const top = py - 160 - (machOf(z, k)?.up || 0);               // 가게 생산기는 프린터보다 높은 만큼 올림
+  const top = py - (160 + (machOf(z, k)?.up || 0))*bigOf(z);    // 가게 생산기는 프린터보다 높은 만큼 올림(큰 생산기는 더)
   if (s.broken) {
     for (let i = 0; i < 3; i++) { const tt = (now/900 + i/3) % 1, [cx, cy] = toS(p.x - 10 + i*10, prnBase(z, k), 80 + tt*40);
       ctx.fillStyle = `rgba(90,90,100,${0.5*(1-tt)})`; ctx.beginPath(); ctx.arc(cx, cy, (6 + tt*8)*scale, 0, Math.PI*2); ctx.fill(); }

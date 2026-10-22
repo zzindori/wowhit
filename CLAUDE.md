@@ -15,6 +15,7 @@
 - `app/data/prints.ts` — 3D 프린팅 갤러리 데이터 (카테고리·이미지·MakerWorld 링크)
 - `app/pages/index.vue` — 메인 페이지 (앱 카드 + 하단 3D 대표 미리보기)
 - `app/pages/[slug].vue` — 앱 상세 페이지 (댓글 포함)
+- `app/components/StackGuide.vue` — 층층이 전용 소개(캡처 + 번호 말풍선), 캡처는 `public/games/stack/guide/`, 다시 찍는 스크립트 `scripts/stack-guide/`
 - `app/pages/3d.vue` — 3D Printing 갤러리 (카테고리별 섹션)
 - `app/components/AppLogo.vue` — 헤더 로고
 - `app/app.vue` — 전체 레이아웃 (헤더: 이용 안내·3D·QR, 푸터)
@@ -76,6 +77,11 @@ version: 'x.y.z+build'
 ## 작업 히스토리
 
 ### 2026-10-22
+- 층층이 소개 페이지(/stack)를 그림 위주로 바꿈(사용자: '글이 너무 많고 복잡, 캡처에 마우스 올리면 설명'): `app/components/StackGuide.vue`, `[slug].vue`에서 slug 'stack'일 때만 사용.
+  한 줄 소개 + '바로 게임 하기' → 4단계(만들기·나르기·팔기·키우기) → 화면 둘러보기(실제 게임 캡처 위 번호 점 16개, PC는 마우스 올리면 / 폰은 탭하면 말풍선, 옆 목록과 같이 강조) →
+  층마다 다른 가게(1~10층 생산기 캡처 카드) → 이런 일이 생겨요(배달·건물주·도둑·고장·황금 캡처) → 맨 아래 '자세한 설명 전부 보기'(예전 longDescription 그대로 접어 둠).
+  캡처: `public/games/stack/guide/*.webp`(총 356KB). 다시 찍기: `scripts/stack-guide/`의 cap_main.py(메인 + 점 좌표 출력 → StackGuide.vue `spots`에 반영)·cap_scenes.py → to_webp.py(헤드리스 playwright, 게임 화면 760×1240 · scale 1).
+  게임 화면 배치(칸 위치 등)를 바꾸면 캡처와 `spots` 좌표도 다시 맞출 것
 - 층층이 엘리베이터 숫자키 이동(사용자 요청 — 키보드로 할 때): 층 선택판이 열려 있을 때만 숫자키(`elevKey`). 10층 이상은 두 자리 이어서 —
   더 이어 칠 수 없는 번호면 바로, 아니면 0.6초 기다렸다 이동(9층 이하는 늘 바로), 누르는 중인 층 버튼 흰 테두리(`.typing`), 지금 층이면 '지금 N층이에요', 없는 층이면 낮은 삐 소리.
   선택판 아래 안내 '숫자키 1~N로도 골라요'는 마우스 기기(`pointer: fine`)에서만. 헤드리스로 3층(3·1·2)·12층(10·12·1·5·11) 이동 확인, 오류 0

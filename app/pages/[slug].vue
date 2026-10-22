@@ -247,7 +247,18 @@ useSeoMeta({ title: `${app.name} — wowhit` })
           </div>
         </div>
 
-        <div class="mb-8">
+        <!-- 층층이는 캡처 위 번호 설명 + 그림 카드, 긴 글은 맨 아래에 접어 둠 -->
+        <StackGuide
+          v-if="app.slug === 'stack'"
+          :text="app.longDescription"
+          :play-url="app.webUrl"
+          class="mb-10"
+        />
+
+        <div
+          v-else
+          class="mb-8"
+        >
           <template v-if="app.longDescription">
             <p
               v-for="(line, i) in app.longDescription.split('\n\n')"

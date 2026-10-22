@@ -1178,6 +1178,7 @@ function updEvents(dt){
 // ---- 배달 주문: 어느 층 손님이 다른 층 물건을 시킴 (예: 6층 노래방에서 3층 치킨). 주인공만 가져다줄 수 있고 보상은 물건 값 × 3 (+빨리 오면 배달팁) ----
 const DELIV_SPOT = {x:180, y:390};
 const delivEach = () => valueOf(S.zones.length - 1)*CFG.deliv.mul;   // 배달 한 개 값: 어느 층 물건이든 지금 최고층 값 × 6
+const goldHand = it => itemValue(it)*CFG.direct.mul;                 // 배달·떨이로 넘긴 황금은 판매대에 직접 판 것과 같은 값(최고층 값 × 10 × 2)
 const shopLabel = z => `${z+1}층${THEMES[z] ? ' ' + THEMES[z].shop : ''}`;
 const itemName = z => (THEMES[z]?.item || KINDS[z % KINDS.length]).name;
 const mixKind = (z, ph = 0) => kindOf(z).vars ? z + (1 + Math.floor(performance.now()/900 + ph) % kindOf(z).vars.length)*VAR : z;   // ph = 손님마다 바뀌는 박자
@@ -1204,8 +1205,9 @@ function updDeliv(z, cz, dt){
   const idx = topOf(S.stack, D.src);
   if (idx < 0) { if (S.stack.length && every('delivWrong', 2.5)) floatText(D.x, D.y, `${itemName(D.src)}만 받아요`, C.warn); return; }
   if ((D.serveT += dt) <= 0.12) return;
-  D.serveT = 0; const it = S.stack.splice(idx, 1)[0]; D.got++; D.sum += delivEach();
+  D.serveT = 0; const it = S.stack.splice(idx, 1)[0], gold = it % MINE >= GOLD; D.got++; D.sum += gold ? goldHand(it) : delivEach();
   fly(stackPos(P, idx), () => [D.x, D.y, 30], it, 0.2, () => {}); sfx.hand();
+  if (gold) { floatText(D.x, D.y, '황금!', '#b58a12'); sfx.gold(); }
   if (D.got >= D.want) {
     const fast = D.t > D.time/2, reward = Math.round(D.sum*(fast ? 1 + CFG.deliv.tip : 1));
     S.money += reward; S.stats.deliv = (S.stats.deliv || 0) + 1;     // 지갑 한도와 상관없이 들어옴(VIP처럼)
@@ -1224,8 +1226,10 @@ function delivExtra(D, z, cz, dt){
   const near = z === cz && Math.hypot(P.x - D.x, P.y - D.y) < 60, idx = near ? topOf(S.stack, D.src) : -1;
   if (idx >= 0) {
     if ((D.serveT += dt) <= 0.09) return;
-    D.serveT = 0; const it = S.stack.splice(idx, 1)[0]; D.extra++; D.extraSum += itemValue(it)*0.5;
+    D.serveT = 0; const it = S.stack.splice(idx, 1)[0]; D.extra++;
+    const gold = it % MINE >= GOLD; D.extraSum += gold ? goldHand(it) : itemValue(it)*0.5;   // 황금은 떨이라도 제값
     fly(stackPos(P, idx), () => [D.x, D.y, 30], it, 0.18, () => {}); sfx.hand();
+    if (gold) { floatText(D.x, D.y, '황금!', '#b58a12'); sfx.gold(); }
     return;
   }
   if (D.serveT < 0 && near) { D.serveT += dt; return; }       // 말 걸고 잠깐 기다렸다가

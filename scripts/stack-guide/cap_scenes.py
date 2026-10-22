@@ -40,7 +40,7 @@ with sync_playwright() as p:
     crop(pg,'g/ev_thief.png',490,250,300,240,Z)
     # 층별 가게 (PREVIEW)
     pg.evaluate("__t('thief = null; S.zones[2].cash = 0; S.zones[2].sp.forEach(s => Object.assign(s, { broken:false, golden:0, goldLife:[], items:5 })); P.x = 380; P.y = gy(2, 470); CFG.cust.every = 1e9; rt(2).custs = []; workers.length = 0')")
-    for f in list(range(9))+[-1]:
-        pg.evaluate(f"__t('PREVIEW = {f}')"); pg.wait_for_timeout(1300)
-        crop(pg,f'g/floor{f+1 if f>=0 else 10}.png',380,720-80,600,290,Z)
+    for f in list(range(10))+[-1]:
+        pg.evaluate(f"__t('PREVIEW = {f}; S.zones[2].sp.forEach(s => s.items = 5)')"); pg.wait_for_timeout(1300)   # 층마다 물건 수 다시(쌓여서 '가득 참' 안 뜨게)
+        crop(pg,f'g/floor{f+1 if f>=0 else 11}.png',380,720-80,600,290,Z)
     print('ok')

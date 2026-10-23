@@ -661,16 +661,18 @@ const ram5 = () => deck({ board:'#1f3157', edge:'#f2c230', front:'url(#rv)', str
     '<g stroke="#4a5262" stroke-width="1" opacity=".8"><path d="M50 96 V116 M61 95 V117 M72 96 V116"/></g>' +   // 조리 칸 뒷벽 골
     '<rect x="33" y="120.5" width="56" height="2.6" rx="1" fill="#8d98aa" stroke-width="1"/>' + [0, 1, 2, 3, 4, 5, 6].map(i => `<rect x="${36 + i*7.4}" y="121" width="4" height="1.6" fill="#3b414e" stroke="none"/>`).join('') +   // 물받이 철망
     '<rect x="27" y="127.5" width="10" height="3" rx="1.5" fill="#2c313b" stroke="none"/><rect x="85" y="127.5" width="10" height="3" rx="1.5" fill="#2c313b" stroke="none"/>' +   // 고무발
-    '</g><g transform="translate(140 108) scale(.85) translate(-106 -126)"><path d="M110 123 H172 L180 130 H118 Z" fill="#1e2433" opacity=".3" stroke="none" filter="url(#shd)"/>' +   // 봉지라면 진열대: 조리기 오른쪽 뒤로 조금 작게(쟁반 위로 안 겹치게)
-    (() => { const dv = 30, b = x => (x + pvx(x, 124 - dv) - pvx(x, 124)).toFixed(1), d = dv*0.62, y = (80 - d).toFixed(1); return `<path d="M${b(106)} ${y} H${b(168)} M${b(106)} ${y} L106 80 M${b(168)} ${y} L168 80 M${b(VO < 0 ? 106 : 168)} ${y} V${(126 - d).toFixed(1)} M${b(VO < 0 ? 106 : 168)} ${(126 - d).toFixed(1)} L${VO < 0 ? 106 : 168} 126" stroke="#7d8798" stroke-width="1.8"/>` +   // 진열대 뒤 틀(시점 쪽으로)
+    '</g>' + `<g transform="translate(${(pvx(208, 80) - 208).toFixed(1)} 0)">` + '<path d="M196 104 L199 94 H217 L220 104 Z" fill="#cfd6e0" stroke-width="1.6"/>' + [0, 1, 2, 3].map(i => `<path d="M${197 + i*0.4} ${94 - i*3} L${199.5 + i*0.4} ${88 - i*3} H${216.5 - i*0.4} L${219 - i*0.4} ${94 - i*3} Z" fill="${i % 2 ? '#dfe5ec' : '#eef2f6'}" stroke-width="1.4"/>`).join('') + '</g>' +   // 빈 용기 더미(상판 뒤쪽 깊이만큼 옮김, 진열대보다 먼저 = 뒤)
+    '<g transform="translate(140 108) scale(.85) translate(-106 -126)"><path d="M110 123 H172 L180 130 H118 Z" fill="#1e2433" opacity=".3" stroke="none" filter="url(#shd)"/>' +   // 봉지라면 진열대: 조리기 오른쪽 뒤로 조금 작게(쟁반 위로 안 겹치게)
+    (() => { const dv = 30, b = x => (x + pvx(x, 124 - dv) - pvx(x, 124)).toFixed(1), d = dv*0.62, y = (80 - d).toFixed(1), yb = (126 - d).toFixed(1), sx = VO < 0 ? 106 : 168;
+      return `<path d="M${b(106)} ${y} H${b(168)} V${yb} H${b(106)} Z" fill="#2d3f6b" stroke-width="1.6"/>` +   // 뒤판·시점 쪽 옆판·윗판(사용자: 틀만 있어 투명해 보임)
+        (VO ? `<path d="M${sx} 80 L${b(sx)} ${y} V${yb} L${sx} 126 Z" fill="#3b5185" stroke-width="1.6"/>` : '') + `<path d="M106 80 H168 L${b(168)} ${y} H${b(106)} Z" fill="#dfe5ec" stroke-width="1.6"/>` + `<path d="M${b(106)} ${y} H${b(168)} M${b(106)} ${y} L106 80 M${b(168)} ${y} L168 80 M${b(VO < 0 ? 106 : 168)} ${y} V${(126 - d).toFixed(1)} M${b(VO < 0 ? 106 : 168)} ${(126 - d).toFixed(1)} L${VO < 0 ? 106 : 168} 126" stroke="#7d8798" stroke-width="1.8"/>` +   // 진열대 뒤 틀(시점 쪽으로)
       [101, 125].map(yb => `<path d="M106 ${yb} H168 L${b(168)} ${(yb - d).toFixed(1)} H${b(106)} Z" fill="#c99a1e" stroke-width="1.2"/>`).join(''); })() +   // 선반 판 윗면
     '<path d="M106 126 V80 M168 126 V80" stroke-width="2.2"/><path d="M106 80 H168" stroke-width="2.2"/>' +
     [101, 125].map(yb => [[109, 0, -4], [122, 1, 3], [135, 2, -2], [148, 0, 4], [158, 1, -3]].map(([x, c, r]) => { const cx = x + 6.5, cy = yb - 10, col = ['#e0402c', '#f2c230', '#2c2b35'][(c + (yb > 110 ? 1 : 0)) % 3];
       const sd = Math.sign(VO)*2.4, th = sd ? `<path d="M${x + sd} ${yb - 20} Q${cx + sd} ${yb - 22} ${x + 13 + sd} ${yb - 20} L${x + 13.6 + sd} ${yb - 2} Q${cx + sd} ${yb} ${x - 0.6 + sd} ${yb - 2} Z" fill="#1e2433" opacity=".55" stroke-width="1"/>` : '';   // 봉지 두께(시점 쪽)
       return `<g transform="rotate(${r} ${cx} ${cy})">${th}<path d="M${x} ${yb - 19} Q${cx} ${yb - 21} ${x + 13} ${yb - 19} L${x + 13.6} ${yb - 1} Q${cx} ${yb + 1} ${x - 0.6} ${yb - 1} Z" fill="${col}" stroke-width="1.2"/><path d="M${x + 1} ${yb - 17} H${x + 12} M${x + 1} ${yb - 3} H${x + 12}" stroke="#fff" stroke-width=".9" opacity=".6" stroke-dasharray="1.2 1"/><circle cx="${cx}" cy="${cy}" r="4" fill="#fff" stroke="none"/><path d="M${cx - 3} ${cy} q1.5 -1.4 3 0 t3 0" stroke="#e0402c" stroke-width="1.1" fill="none"/><rect x="${x + 2}" y="${yb - 15.5}" width="9" height="2.4" rx="1" fill="#fff" stroke="none" opacity=".75"/></g>`; }).join('') +
       `<rect x="106" y="${yb}" width="62" height="3.5" fill="#f2c230" stroke-width="1.4"/>`).join('') +
-    '</g>' +
-    '<path d="M196 104 L199 94 H217 L220 104 Z" fill="#cfd6e0" stroke-width="1.6"/>' + [0, 1, 2, 3].map(i => `<path d="M${197 + i*0.4} ${94 - i*3} L${199.5 + i*0.4} ${88 - i*3} H${216.5 - i*0.4} L${219 - i*0.4} ${94 - i*3} Z" fill="${i % 2 ? '#dfe5ec' : '#eef2f6'}" stroke-width="1.4"/>`).join('')) });
+    '</g>') });
 const RAM5 = ram5(), RAM5L = withVO(VOFF, ram5), RAM5R = withVO(-VOFF, ram5);
 // 6층 층층 찜질방(사용자: 노래방은 기계와 물건(캔)이 따로 놀아서 교체 — 맥반석 계란·식혜·팥빙수, 양머리는 표현이 어려워 팥빙수로) — 나무 메뉴판(크림 글자) + 황토 벽돌 앞판. 세 대 모두 윗판 위에 서 있는 기계(post)
 const JJM = { board:'#6b4226', edge:'#e0a85a', front:'url(#brk)', strip:'#8c5a3a', tilt:0.62,
@@ -770,7 +772,7 @@ const THEMES = [
     guests:['student', 'office', 'youth'], order:['바나나우유 {n}개요', '핫바 하나 데워 주세요~ {n}개', '호빵 따끈한 걸로 {n}개요~', '빨대도 주세요~'], thanks:['역시 편의점!', '봉투는 괜찮아요'],
     item:{ name:'편의점 간식', shape:'bmilk', top:'#fbe38a', front:'#fbe38a',
       vars:[{ shape:'hotbar', top:'#c98a3a', front:'#c98a3a' }, { shape:'bmilk', top:'#fbe38a', front:'#fbe38a' }, { shape:'hoppang', top:'#fff8ee', front:'#fff8ee' }] } },
-  { staff:{ body:'#e8e2d0', dark:'#2d3f6b', apron:'#1f3157', hat:'baseball', hatCol:'#1f3157' }, big:1.2, lamp:'fairy', pop:true, lampUp:RAM_UP, shop:'한강라면', sign:'#1f3157', ink:'#ffd84a', awn:'#f2c230', img:RAM5, anim:animRamen5, tilt:0.62, spot:[pvx(197, 116), 127], reveal:0.8, up:-6,
+  { staff:{ body:'#e8e2d0', dark:'#2d3f6b', apron:'#1f3157', hat:'baseball', hatCol:'#1f3157' }, big:1.2, lamp:'fairy', pop:true, lampUp:RAM_UP, shop:'한강라면', sign:'#1f3157', ink:'#ffd84a', awn:'#f2c230', img:RAM5, anim:animRamen5, tilt:0.62, spot:[pvx(197, 116), 127], reveal:2, up:-6,
     mach:[{ img:RAM5L, vo:VOFF }, { vo:0 }, { img:RAM5R, vo:-VOFF }],   // 왼쪽·정면·오른쪽 원근
     guests:['tourist', 'youth'], order:['라면 {n}개요!', '계란 넣어 주세요!', 'Ramyeon {n}, please!'], thanks:['한강에서 라면 최고!', 'So good!'],
     item:{ name:'라면', shape:'ramen', top:'#e8833a', front:'#cfd6e0' } },
@@ -3075,7 +3077,10 @@ function animRamen5({ S2, R2: R2o, u: uo, now, prog, work, s }){   // 조리기�
         ctx.strokeStyle = `rgba(255,255,255,${0.8*(1 - tt)})`; ctx.lineWidth = (2.5 + tt*3)*u; ctx.beginPath(); ctx.moveTo(wx, wy); ctx.quadraticCurveTo(wx - 5*u, wy - 6*u, wx, wy - 11*u); ctx.stroke(); }
     }
     if (s.broken) { const [l, t] = R2(31, 91), [r, b] = R2(91, 123); ctx.fillStyle = 'rgba(30,34,44,.4)'; ctx.fillRect(l, t, r - l, b - t); }   // 고장: 칸 불 꺼짐
-    if (moving) upToTray(R2o, prog, [K5.ax + (61 - K5.ax)*K5.k, K5.ay + (105 - K5.ay)*K5.k], (x, y) => foilBowl(x, y - 4*uo, uo, 0.55*K5.k, 2, now));
+    if (moving) upToTray(R2o, prog, [K5.ax + (61 - K5.ax)*K5.k, K5.ay + (105 - K5.ay)*K5.k], (x, y) => foilBowl(x, y - 4*uo, uo, 1.1, 2, now));
+    if (work && prog >= 0.8) { const [x, y] = R2o(pvx(197, 116), 134 - 18*0.62); foilBowl(x, y - 4*uo, uo, 1.1, 2, now);   // 쟁반 위 완성 라면은 크게(사용자: 너무 작음 — 작은 그림은 아래 칸에 쌓일 때만), reveal 2
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x + 5*uo, y - 3.6*uo, 6*uo, 2.4*uo, 0.1, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#f2b51e'; ctx.beginPath(); ctx.ellipse(x + 5*uo, y - 3.9*uo, 2.4*uo, 1.3*uo, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#5aa85d'; [[-9, -2.5], [-4, -1], [1, -5.5], [-12, -4.5], [10, -1.5]].forEach(([dx, dy]) => ctx.fillRect(x + dx*uo, y + dy*uo, 2.6*uo, 1.2*uo)); }
   });
 }
 // ---- 6층 찜질방: 0번 황토 불가마 맥반석 계란 · 1번 살얼음 식혜 기계 · 2번 빙수기 + 토핑대 ----

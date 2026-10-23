@@ -693,18 +693,26 @@ const eggStack6 = (x1, x2, v1, v2, n) => {   // 삶기 전 날달걀 30구 종�
     let d = `M${f(pts[0][0])} ${f(pts[0][1] - 2.6)} L${f(pts[k][0])} ${f(pts[k][1] - 2.6)} L${f(pts[k][0])} ${f(pts[k][1])}`;
     for (let i = k; i > 0; i--) { const [x0, y0] = pts[i], [x1_, y1_] = pts[i - 1]; d += ` Q${f((x0 + x1_)/2)} ${f((y0 + y1_)/2 + 2.2)} ${f(x1_)} ${f(y1_)}`; }
     return `<path d="${d} Z" fill="#cdbf9e" stroke-width=".9"/>`; };
-  for (let L = 0; L < n; L++) { const h0 = L*LH;
-    if (sideX != null) { const A = P(sideX, v2, 0), B = P(sideX, v1, 0); for (let i = 0; i < 5; i++) { const t = (i + 0.5)/5; out += egg(A[0] + (B[0] - A[0])*t, A[1] + (B[1] - A[1])*t - h0 - 3.2, 1.6, 2.8); } out += band(A, B, h0 + LH, 5); }   // 옆면 달걀 줄 + 판
-    const A = P(x1, v2, 0), B = P(x2, v2, 0); for (let i = 0; i < 6; i++) { const t = (i + 0.5)/6; out += egg(A[0] + (B[0] - A[0])*t, A[1] - h0 - 3.2); }   // 앞 달걀 줄
-    out += band(A, B, h0 + LH, 6); }
-  const H = n*LH, T = [P(x1, v2, H), P(x2, v2, H), P(x2, v1, H), P(x1, v1, H)];
-  out += `<path d="M${T.map(([a, b]) => f(a) + ' ' + f(b - 2.6)).join(' L')} Z" fill="#d9cba9" stroke-width="1"/>`;   // 맨 위 판
-  for (let r = 0; r < 5; r++) for (let c = 0; c < 6; c++) { const [a, b] = P(x1 + 4 + c*(x2 - x1 - 8)/5, v1 + 3 + r*(v2 - v1 - 6)/4, H + 2.6); out += egg(a, b - 1, 2.5, 1.9); }   // 맨 위 달걀 30개
+  // 아래부터: 판(맨 아래도 판) → 그 판 위 달걀 줄 → 다음 판이 달걀 윗부분을 덮음 … 맨 위 판은 달걀 30개가 그대로 보임(사용자: 위에 종이판이 덮이고 맨 아래 판이 없어 이상)
+  const A = P(x1, v2, 0), B = P(x2, v2, 0), SA = sideX != null ? P(sideX, v2, 0) : null, SB = sideX != null ? P(sideX, v1, 0) : null;
+  for (let L = 0; L < n; L++) { const h0 = L*LH, top = L === n - 1;
+    if (SA) out += band(SA, SB, h0 - 2.6 + 2.6, 5);   // 옆면 판
+    out += band(A, B, h0, 6);                          // 앞 판(아래가 물결 — 아래 달걀에 얹힘)
+    if (top) { const T = [P(x1, v2, h0 + 2.6), P(x2, v2, h0 + 2.6), P(x2, v1, h0 + 2.6), P(x1, v1, h0 + 2.6)];
+      out += `<path d="M${T.map(([a, b]) => f(a) + ' ' + f(b - 2.6)).join(' L')} Z" fill="#d9cba9" stroke-width="1"/>`;   // 맨 위 판 바닥
+      for (let r = 0; r < 5; r++) for (let c = 0; c < 6; c++) { const [a, b] = P(x1 + 4 + c*(x2 - x1 - 8)/5, v1 + 3 + r*(v2 - v1 - 6)/4, h0 + 5.2); out += egg(a, b - 1, 2.5, 2.4); } }   // 맨 위 달걀 30개(뒤 줄부터)
+    else { if (SA) for (let i = 0; i < 5; i++) { const t = (i + 0.5)/5; out += egg(SA[0] + (SB[0] - SA[0])*t, SA[1] + (SB[1] - SA[1])*t - h0 - 5.6, 1.6, 2.8); }   // 옆면 달걀 줄
+      for (let i = 0; i < 6; i++) { const t = (i + 0.5)/6; out += egg(A[0] + (B[0] - A[0])*t, A[1] - h0 - 5.6); } } }   // 앞 달걀 줄(다음 판이 윗부분을 덮음)
+  const H = n*LH;
   return out; };
 const cast6 = (x0, x1, y) => `<path d="M${x0 + 4} ${y - 3} H${x1 + 6} L${x1 + 12} ${y + 4} H${x0 + 10} Z" fill="#1e2433" opacity=".3" stroke="none" filter="url(#shd)"/>`;
-const log6 = (x, y, r, v) => { const dx = pvx(x, v - 14) - pvx(x, v), dy = 14*0.62, L = Math.hypot(dx, dy) || 1, nx = dy/L*r, ny = dx/L*r, f = n => n.toFixed(1);   // 통나무(앞 마구리 + 뒤로 이어진 몸통 — 시점 쪽으로)
-  return `<circle cx="${f(x + dx)}" cy="${f(y - dy)}" r="${r}" fill="#7a4a2a" stroke-width="1.2"/><path d="M${f(x + nx)} ${f(y + ny)} L${f(x + dx + nx)} ${f(y - dy + ny)} L${f(x + dx - nx)} ${f(y - dy - ny)} L${f(x - nx)} ${f(y - ny)} Z" fill="#8a5634" stroke-width="1.2"/>` +
-    `<circle cx="${x}" cy="${y}" r="${r}" fill="#c99a6a" stroke-width="1.3"/><circle cx="${x}" cy="${y}" r="${r*0.6}" fill="none" stroke="#a87449" stroke-width=".8"/><circle cx="${x}" cy="${y}" r="${r*0.25}" fill="#a87449" stroke="none"/>`; };
+const log6 = (x, y, r, v, len = 14, seed = 0) => { const dx = pvx(x, v - len) - pvx(x, v), dy = len*0.62, L = Math.hypot(dx, dy) || 1, nx = dy/L*r, ny = dx/L*r, f = n => n.toFixed(1);   // 통나무(사용자: 진짜같이) — 껍질 몸통(뒤로 이어짐) + 껍질 결 + 마구리 나이테·갈라짐
+  const a = seed*2.1, cr = [Math.cos(a), Math.sin(a)];
+  return `<circle cx="${f(x + dx)}" cy="${f(y - dy)}" r="${r}" fill="#5a3420" stroke-width="1.2"/><path d="M${f(x + nx)} ${f(y + ny)} L${f(x + dx + nx)} ${f(y - dy + ny)} L${f(x + dx - nx)} ${f(y - dy - ny)} L${f(x - nx)} ${f(y - ny)} Z" fill="${seed % 2 ? '#6e4426' : '#7a4c2c'}" stroke-width="1.2"/>` +
+    [0.45, -0.3].map(k => `<path d="M${f(x + nx*k)} ${f(y + ny*k)} L${f(x + dx*0.85 + nx*k)} ${f(y - dy*0.85 + ny*k)}" stroke="#4a2a18" stroke-width=".7" opacity=".7"/>`).join('') +   // 껍질 결
+    `<circle cx="${x}" cy="${y}" r="${r}" fill="#d9a86c" stroke="#5a3420" stroke-width="1.6"/><circle cx="${x}" cy="${y}" r="${f(r*0.62)}" fill="none" stroke="#b07a44" stroke-width=".7"/><circle cx="${x}" cy="${y}" r="${f(r*0.3)}" fill="none" stroke="#b07a44" stroke-width=".6"/><circle cx="${x}" cy="${y}" r=".7" fill="#a06a38" stroke="none"/>` +
+    `<path d="M${x} ${y} L${f(x + cr[0]*r*0.9)} ${f(y + cr[1]*r*0.9)}" stroke="#8a5634" stroke-width=".8"/>`; };   // 갈라진 금
+const WOOD6 = [[106, 124.4, 4.6, 16], [115.6, 124, 4.2, 13], [125, 124.6, 4.9, 18], [134.6, 124.2, 4.3, 15], [110.6, 116.2, 4.4, 17], [120.4, 116.6, 4.7, 14], [130.2, 116, 4.1, 16], [115.4, 108.4, 4.3, 15], [125.2, 108.8, 4.5, 13]];   // 장작 4-3-2(굵기·길이·높이 제각각)
 // 0번 맥반석 계란: 황토 가마(둥근 지붕 + 아치 아궁이) + 장작 더미, 뒤에 달걀판
 const egg6 = () => deck({ ...JJM6,
   post: UPR(m6(M6.egg) + cast6(22, 102, 128) + standBox(22, 102, 96, 128, 124, 22, '#c98f5a', '#a8683a') + '<rect x="22" y="96" width="80" height="32" rx="4" fill="url(#brk)"/><path d="M24 99 Q24 70 62 68 Q100 70 100 99 Z" fill="url(#cl)"/>' +
@@ -712,12 +720,14 @@ const egg6 = () => deck({ ...JJM6,
     '<g fill="#b87a48" stroke="none"><circle cx="44" cy="86" r="2.4"/><circle cx="58" cy="78" r="2"/><circle cx="76" cy="82" r="2.6"/><circle cx="88" cy="92" r="2"/><circle cx="36" cy="94" r="1.8"/><circle cx="66" cy="90" r="2.2"/></g>' +
     '<path d="M40 127 V112 Q40 99 62 99 Q84 99 84 112 V127" fill="none" stroke="#4a5262" stroke-width="3.5"/><path d="M42 126 V112 Q42 101 62 101 Q82 101 82 112 V126 Z" fill="#2a1a12"/><rect x="50" y="72" width="24" height="9" rx="2" fill="#6b4226" stroke-width="1.5"/></g>' +
     eggStack6(160, 204, 62, 84, 5) +   // 뒤 오른쪽: 날달걀 판 더미
-    '<g transform="translate(20 -3)">' + [[119, 110], [114.5, 117], [123.5, 117], [110, 124], [119, 124], [128, 124]].map(([x, y]) => log6(x, y, 4, 120)).join('') + '</g>') });   // 장작(가마 옆, 조금 앞)
+    '<g transform="translate(18 -3)">' + cast6(102, 140, 128) + WOOD6.map(([x, y, r, len], i) => log6(x, y, r, 120, len, i)).join('') +
+      '<g fill="#a87449" stroke="none"><path d="M100 128 l3 -1 l1 1.2 Z"/><path d="M141 127.6 l2.6 -.8 l.6 1.2 Z"/><rect x="104" y="127.4" width="2" height=".8" rx=".4"/><rect x="138" y="128.2" width="2.4" height=".8" rx=".4"/></g></g>') });   // 장작(가마 옆, 조금 앞) + 부스러기
 const EGG6 = withVO(VOFF, egg6);
 // 1번 식혜: 투명 원통 식혜 기계(돌며 살얼음) + 꼭지 아래 컵 + 옆 장독·종이컵 탑
 const SIK6 = deck({ ...JJM6,
   post: UPR('<g transform="translate(14 -12)">' + cast6(116, 160, 128) +   // 장독 대신(사용자) 빈 플라스틱 컵 탑 + 뚜껑 더미(뒤)
-    [0, 1, 2, 3, 4, 5, 6, 7].map(i => `<path d="M${116.5} ${126 - i*3} L${115} ${110 - i*3} H${133} L${131.5} ${126 - i*3}" fill="rgba(226,242,248,.55)" stroke-width="1"/>`).join('') + '<ellipse cx="124" cy="89" rx="9" ry="1.8" fill="rgba(240,248,252,.8)" stroke-width="1"/><path d="M118 112 V93" stroke="#fff" stroke-width="1.4" opacity=".6"/>' +
+    [[118, 0, 7], [131, 0.6, 6], [124.5, -7, 6]].sort((p, q) => p[1] - q[1]).map(([cx, dy, n]) => [...Array(n)].map((_, i) => { const yb = 126 + dy - i*2.6;   // 뒤집어 겹쳐 쌓은 빈 컵 탑 셋(사용자: 보관할 땐 뒤집어, 여러 줄) — 입구(넓은 쪽)가 아래
+      return `<path d="M${cx - 7.6} ${yb} L${cx - 5.8} ${yb - 13} H${cx + 5.8} L${cx + 7.6} ${yb} Z" fill="rgba(226,242,248,.5)" stroke-width="1"/><path d="M${cx - 7.6} ${yb} H${cx + 7.6}" stroke-width="1.2"/>`; }).join('') + `<ellipse cx="${cx}" cy="${126 + dy - (n - 1)*2.6 - 13}" rx="5.8" ry="1.3" fill="rgba(240,248,252,.85)" stroke-width="1"/><path d="M${cx - 5} ${126 + dy - 3} L${cx - 4} ${126 + dy - (n - 1)*2.6 - 11}" stroke="#fff" stroke-width="1.2" opacity=".6"/>`).join('') +
     [0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => `<ellipse cx="${151 + (i % 2)*0.6}" cy="${126 - i*2.2}" rx="9.5" ry="2.2" fill="${i % 2 ? '#f4f9fc' : '#e4eff5'}" stroke-width=".9"/>`).join('') + '<ellipse cx="151" cy="106.2" rx="6.6" ry="1.8" fill="#ffffff" stroke-width=".9"/></g>' +
     m6(M6.sik) + cast6(34, 90, 128) + standBox(36, 88, 104, 128, 124, 18, '#e9e2d4', '#cfc4ae') + '<rect x="36" y="104" width="52" height="24" rx="3" fill="#f4efe6"/><rect x="40" y="113" width="14" height="7" rx="1.5" fill="#1e2433" stroke-width="1"/><g fill="#c9d2de" stroke="none"><rect x="58" y="124.6" width="2" height="1.6"/><rect x="62" y="124.6" width="2" height="1.6"/><rect x="66" y="124.6" width="2" height="1.6"/></g><rect x="36" y="124" width="52" height="4" fill="#8c5a3a" stroke="none"/><rect x="46" y="121" width="32" height="3" rx="1" fill="#8d98aa" stroke-width="1"/>' +
     '<path d="M34 76 V104 A28 5 0 0 0 90 104 V76 Z" fill="#e9f4f8" opacity=".7"/><ellipse cx="62" cy="76" rx="28" ry="5" fill="#dfeef4" stroke-width="1.5"/><path d="M38 76 Q40 66 62 65 Q84 66 86 76 A24 4 0 0 1 38 76 Z" fill="#f4efe6"/><rect x="58" y="61" width="8" height="5" rx="2" fill="#8c5a3a" stroke-width="1.2"/>' +
@@ -3170,7 +3180,8 @@ function animSik6({ S2, R2: R2o, u: uo, now, prog, work, s }){   // 기계는 M6
     const spin = work || !s.broken ? now/900 : 0; ctx.fillStyle = '#fff';
     for (let i = 0; i < 18; i++) { const a = spin + i*2.4, d = 0.3 + (i % 5)*0.15, x = cx + Math.cos(a)*rx*d, y = ly + 4*u + ((i*7) % 20)*u*0.9 + Math.sin(a)*2*u; if (y < bot + ry) { ctx.beginPath(); ctx.ellipse(x, y, 1.1*u, 0.6*u, a, 0, Math.PI*2); ctx.fill(); } }   // 밥알이 빙빙
     const frost = s.broken ? 0 : work ? lerp01(prog, 0, 0.35) : 0.6; ctx.fillStyle = `rgba(255,255,255,${0.75*frost})`;   // 살얼음
-    for (let i = 0; i < 10; i++) { const x = cx - rx*0.85 + i*rx*0.19; ctx.beginPath(); ctx.moveTo(x, ly - 0.8*u); ctx.lineTo(x + 3*u, ly + 0.6*u); ctx.lineTo(x + 0.6*u, ly + 1.8*u); ctx.closePath(); ctx.fill(); }
+    [[-0.7, -0.3, 3.2], [-0.45, 0.4, 2.4], [-0.15, -0.5, 2.8], [0.1, 0.3, 3.6], [0.38, -0.2, 2.6], [0.62, 0.45, 2.2], [0.75, -0.4, 2], [-0.3, 0.05, 1.8], [0.25, 0.6, 1.6]].forEach(([fx, fy, w], i) => {   // 살얼음: 윗면에 불규칙하게 뜬 얼음 조각(예전 줄지은 삼각형은 화살표처럼 보임)
+      const x = cx + fx*rx, y = ly + fy*ry*0.8; ctx.beginPath(); ctx.moveTo(x - w*u, y); ctx.lineTo(x - w*0.3*u, y - 0.9*u); ctx.lineTo(x + w*0.8*u, y - 0.5*u); ctx.lineTo(x + w*u, y + 0.5*u); ctx.lineTo(x, y + 0.9*u); ctx.closePath(); ctx.fill(); });
     if (s.broken) { ctx.fillStyle = 'rgba(40,46,58,.3)'; ctx.fillRect(cx - rx, top - ry, rx*2, bot - top + ry*2); }
     ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(cx - rx + 5*u, top + 2*u, 3*u, bot - top - 2*u); ctx.restore();   // 유리 반사
     ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.6*u; ctx.beginPath(); ctx.moveTo(cx - rx, top); ctx.lineTo(cx - rx, bot); ctx.ellipse(cx, bot, rx, ry, 0, Math.PI, 0, true); ctx.lineTo(cx + rx, top); ctx.stroke();

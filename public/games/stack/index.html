@@ -716,11 +716,12 @@ const egg6 = () => deck({ ...JJM6,
 const EGG6 = withVO(VOFF, egg6);
 // 1번 식혜: 투명 원통 식혜 기계(돌며 살얼음) + 꼭지 아래 컵 + 옆 장독·종이컵 탑
 const SIK6 = deck({ ...JJM6,
-  post: UPR('<g transform="translate(14 -12)">' + cast6(108, 150, 128) + '<path d="M118 128 Q108 126 108 112 Q108 98 118 95 H140 Q150 98 150 112 Q150 126 140 128 Z" fill="url(#og)"/><ellipse cx="129" cy="95" rx="12" ry="3" fill="#5a3420" stroke-width="1.5"/><path d="M118 93 Q129 86 140 93 Z" fill="#6b4226" stroke-width="1.5"/><path d="M112 108 Q129 112 146 108" stroke="#c99a6a" stroke-width="1.3" fill="none"/><path d="M113 104 Q115 112 114 120" stroke="#fff" stroke-width="1.6" fill="none" opacity=".35"/></g>' +   // 장독(뒤)
+  post: UPR('<g transform="translate(14 -12)">' + cast6(116, 160, 128) +   // 장독 대신(사용자) 빈 플라스틱 컵 탑 + 뚜껑 더미(뒤)
+    [0, 1, 2, 3, 4, 5, 6, 7].map(i => `<path d="M${116.5} ${126 - i*3} L${115} ${110 - i*3} H${133} L${131.5} ${126 - i*3}" fill="rgba(226,242,248,.55)" stroke-width="1"/>`).join('') + '<ellipse cx="124" cy="89" rx="9" ry="1.8" fill="rgba(240,248,252,.8)" stroke-width="1"/><path d="M118 112 V93" stroke="#fff" stroke-width="1.4" opacity=".6"/>' +
+    [0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => `<ellipse cx="${151 + (i % 2)*0.6}" cy="${126 - i*2.2}" rx="9.5" ry="2.2" fill="${i % 2 ? '#f4f9fc' : '#e4eff5'}" stroke-width=".9"/>`).join('') + '<ellipse cx="151" cy="106.2" rx="6.6" ry="1.8" fill="#ffffff" stroke-width=".9"/></g>' +
     m6(M6.sik) + cast6(34, 90, 128) + standBox(36, 88, 104, 128, 124, 18, '#e9e2d4', '#cfc4ae') + '<rect x="36" y="104" width="52" height="24" rx="3" fill="#f4efe6"/><rect x="40" y="113" width="14" height="7" rx="1.5" fill="#1e2433" stroke-width="1"/><g fill="#c9d2de" stroke="none"><rect x="58" y="124.6" width="2" height="1.6"/><rect x="62" y="124.6" width="2" height="1.6"/><rect x="66" y="124.6" width="2" height="1.6"/></g><rect x="36" y="124" width="52" height="4" fill="#8c5a3a" stroke="none"/><rect x="46" y="121" width="32" height="3" rx="1" fill="#8d98aa" stroke-width="1"/>' +
     '<path d="M34 76 V104 A28 5 0 0 0 90 104 V76 Z" fill="#e9f4f8" opacity=".7"/><ellipse cx="62" cy="76" rx="28" ry="5" fill="#dfeef4" stroke-width="1.5"/><path d="M38 76 Q40 66 62 65 Q84 66 86 76 A24 4 0 0 1 38 76 Z" fill="#f4efe6"/><rect x="58" y="61" width="8" height="5" rx="2" fill="#8c5a3a" stroke-width="1.2"/>' +
-    '<rect x="58" y="106" width="8" height="6" rx="1.5" fill="#cfd6e0" stroke-width="1.3"/><path d="M66 107 L74 103" stroke-width="2.4"/></g>' +
-    '<g transform="translate(-44 1)">' + [0, 1, 2, 3, 4, 5].map(i => `<path d="M${154 + 0} ${126 - i*3.2} L${155.2} ${120 - i*3.2} H${164.8} L${166} ${126 - i*3.2}" fill="#fff" stroke-width="1"/>`).join('') + '<ellipse cx="160" cy="107" rx="6.6" ry="1.6" fill="rgba(255,255,255,.9)" stroke-width="1"/></g>') });   // 플라스틱 컵 탑(앞) + 뚜껑
+    '<rect x="58" y="106" width="8" height="6" rx="1.5" fill="#cfd6e0" stroke-width="1.3"/><path d="M66 107 L74 103" stroke-width="2.4"/></g>') });
 // 2번 팥빙수: 빙수기(위 얼음 통 + 칼날, 아래 그릇 받침) + 옆 토핑대(팥 냄비·인절미 떡·콩가루·연유)
 const bing6 = () => deck({ ...JJM6,
   post: UPR('<g transform="translate(16 -14)">' + cast6(134, 146, 128) + '<path d="M134 126 V110 Q134 106 140 106 Q146 106 146 110 V126 Z" fill="#e8c26a"/><ellipse cx="140" cy="107" rx="6" ry="1.8" fill="#f2d68a" stroke-width="1"/></g>' +   // 콩가루 통(뒤)
@@ -3158,7 +3159,8 @@ function animSik6({ S2, R2: R2o, u: uo, now, prog, work, s }){   // 기계는 M6
   menuSign(S2, uo, now, s, '♨ 살얼음 식혜', '#ffe9c2', 23 - BOARD6, 19);
   unsq(() => {
     { const [px, py] = R2o(62, 152); ctx.font = `${Math.round(9.5*uo)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('한 잔 2,000원', px, py); }
-    const pour = work ? lerp01(prog, 0.38, 0.68) : 0, lvl = 0.86 - 0.12*pour, [cx, top] = R2(62, 76), [, bot] = R2(62, 104), rx = 28*u, ry = 5*u, ly = bot - (bot - top)*lvl;
+    const pour = work ? lerp01(prog, 0.38, 0.68) : 0, lvl = 0.66 - 0.1*pour,   // 통은 2/3쯤(사용자: 가득 말고)
+      [cx, top] = R2(62, 76), [, bot] = R2(62, 104), rx = 28*u, ry = 5*u, ly = bot - (bot - top)*lvl;
     ctx.save(); ctx.beginPath(); ctx.moveTo(cx - rx, top); ctx.lineTo(cx - rx, bot); ctx.ellipse(cx, bot, rx, ry, 0, Math.PI, 0, true); ctx.lineTo(cx + rx, top); ctx.closePath(); ctx.clip();
     ctx.fillStyle = 'rgba(214,236,244,.35)'; ctx.fillRect(cx - rx, top - ry, rx*2, ly - top + ry);   // 식혜 위 빈 유리(사용자: 줄어들면 크림색 윗면이 뚜껑처럼 보임 → 빈 칸은 유리색)
     ctx.strokeStyle = 'rgba(56,68,90,.35)'; ctx.lineWidth = 1*u; ctx.beginPath(); ctx.ellipse(cx, top, rx - 1*u, ry - 0.6*u, 0, Math.PI, 0); ctx.stroke();   // 안쪽 뒤 테두리
@@ -3174,8 +3176,8 @@ function animSik6({ S2, R2: R2o, u: uo, now, prog, work, s }){   // 기계는 M6
     ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.6*u; ctx.beginPath(); ctx.moveTo(cx - rx, top); ctx.lineTo(cx - rx, bot); ctx.ellipse(cx, bot, rx, ry, 0, Math.PI, 0, true); ctx.lineTo(cx + rx, top); ctx.stroke();
     const [tx, ty] = R2(62, 112), [, cb] = R2(62, 121);
     if (work && prog > 0.38 && prog < 0.68) { ctx.fillStyle = '#e8c98a'; ctx.fillRect(tx - 1*u, ty, 2*u, cb - ty - 13*u*pour); }   // 꼭지에서 졸졸
-    if (!(work && prog > 0.72)) sikCup(tx, cb, u, work ? pour : 1, true, work ? lerp01(prog, 0.68, 0.71) : 1);   // 다 차면 뚜껑 탁
-    if (work) { const d = (x, y) => sikCup(x, y, uo*1.3, 1, true, 1); upToTray(R2o, prog, map6(M6.sik, 62, 121), d, TRAY_C()); if (prog >= 0.8) d(...R2o(...TRAY_C())); }
+    if (!(work && prog > 0.72)) sikCup(tx, cb, u, work ? pour : 1, true);   // 꼭지 아래에선 뚜껑 없이
+    if (work) { upToTray(R2o, prog, map6(M6.sik, 62, 121), (x, y) => sikCup(x, y, uo*1.3, 1, true), TRAY_C()); if (prog >= 0.8) sikCup(...R2o(...TRAY_C()), uo*1.3, 1, true, lerp01(prog, 0.8, 0.85)); }   // 쟁반에 올린 뒤 뚜껑이 위에서 내려와 닫힘(사용자)
   });
 }
 // 팥빙수: 옆에서 비스듬히 본 유리 그릇(yb = 바닥) + 눈꽃 얼음 산(h = 0~1) + 토핑(팥·떡·콩가루·연유 단계 0~4)

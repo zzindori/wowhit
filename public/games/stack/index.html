@@ -3135,8 +3135,11 @@ function animSik6({ S2, R2, u, now, prog, work, s }){
     { const [px, py] = R2(62, 152); ctx.font = `${Math.round(9.5*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('한 잔 2,000원', px, py); }
     const pour = work ? lerp01(prog, 0.38, 0.68) : 0, lvl = 0.86 - 0.12*pour, [cx, top] = R2(62, 76), [, bot] = R2(62, 104), rx = 28*u, ry = 5*u, ly = bot - (bot - top)*lvl;
     ctx.save(); ctx.beginPath(); ctx.moveTo(cx - rx, top); ctx.lineTo(cx - rx, bot); ctx.ellipse(cx, bot, rx, ry, 0, Math.PI, 0, true); ctx.lineTo(cx + rx, top); ctx.closePath(); ctx.clip();
-    const g = ctx.createLinearGradient(0, ly, 0, bot + ry); g.addColorStop(0, '#f2dba8'); g.addColorStop(1, '#d9b06a'); ctx.fillStyle = g; ctx.fillRect(cx - rx, ly, rx*2, bot - ly + ry);
-    ctx.fillStyle = '#f7e6c0'; ctx.beginPath(); ctx.ellipse(cx, ly, rx, ry*0.9, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(214,236,244,.35)'; ctx.fillRect(cx - rx, top - ry, rx*2, ly - top + ry);   // 식혜 위 빈 유리(사용자: 줄어들면 크림색 윗면이 뚜껑처럼 보임 → 빈 칸은 유리색)
+    ctx.strokeStyle = 'rgba(56,68,90,.35)'; ctx.lineWidth = 1*u; ctx.beginPath(); ctx.ellipse(cx, top, rx - 1*u, ry - 0.6*u, 0, Math.PI, 0); ctx.stroke();   // 안쪽 뒤 테두리
+    const g = ctx.createLinearGradient(0, ly, 0, bot + ry); g.addColorStop(0, '#e9cc8e'); g.addColorStop(1, '#d9b06a'); ctx.fillStyle = g; ctx.fillRect(cx - rx, ly, rx*2, bot - ly + ry);
+    { const sg = ctx.createLinearGradient(0, ly - ry, 0, ly + ry); sg.addColorStop(0, '#d9b47a'); sg.addColorStop(1, '#efd59c'); ctx.fillStyle = sg; ctx.beginPath(); ctx.ellipse(cx, ly, rx, ry*0.9, 0, 0, Math.PI*2); ctx.fill();   // 액체 윗면(뒤가 어둡고 앞이 밝음)
+      ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1*u; ctx.beginPath(); ctx.ellipse(cx, ly, rx - 2*u, ry*0.7, 0, Math.PI*0.15, Math.PI*0.85); ctx.stroke(); }
     const spin = work || !s.broken ? now/900 : 0; ctx.fillStyle = '#fff';
     for (let i = 0; i < 18; i++) { const a = spin + i*2.4, d = 0.3 + (i % 5)*0.15, x = cx + Math.cos(a)*rx*d, y = ly + 4*u + ((i*7) % 20)*u*0.9 + Math.sin(a)*2*u; if (y < bot + ry) { ctx.beginPath(); ctx.ellipse(x, y, 1.1*u, 0.6*u, a, 0, Math.PI*2); ctx.fill(); } }   // 밥알이 빙빙
     const frost = s.broken ? 0 : work ? lerp01(prog, 0, 0.35) : 0.6; ctx.fillStyle = `rgba(255,255,255,${0.75*frost})`;   // 살얼음
@@ -3171,18 +3174,22 @@ function animBing6({ S2, R2, u, now, prog, work, s }){
   menuSign(S2, u, now, s, '❄ 눈꽃 팥빙수', '#ffe9c2', 23, 19);
   unsq(() => {
     { const [px, py] = R2(62, 152); ctx.font = `${Math.round(9.5*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('한 그릇 5,000원', px, py); }
-    const shave = work ? lerp01(prog, 0, 0.4) : 1, top = !work ? 4 : prog < 0.44 ? 0 : prog < 0.52 ? 1 : prog < 0.6 ? 2 : prog < 0.66 ? 3 : 4, [bx, by] = R2(46, 121), bu = u*1.4;
+    // 순서(사용자: 쟁반에 올린 뒤 고명): 얼음 갈기(0~40%) → 쟁반으로(40~48%) → 쟁반 위에서 팥(48~56)·인절미(56~62)·콩가루(62~68)·연유(68~74%)
+    const shave = work ? lerp01(prog, 0, 0.4) : 1, top = !work ? 4 : prog < 0.48 ? 0 : prog < 0.56 ? 1 : prog < 0.62 ? 2 : prog < 0.68 ? 3 : 4, [bx, by] = R2(46, 121), bu = u*1.4;
+    const [tx, ty] = R2(...TRAY_C()), tu = u*1.3;
     if (work && prog < 0.4) { const [cx, cy] = R2(46, 94); for (let i = 0; i < 9; i++) { const tt = (now/260 + i/9) % 1, xx = cx + Math.sin(i*2.3 + now/140)*3*u*(1 + tt), yy = cy + tt*Math.max(2*u, by - cy - 9*bu - 12*bu*shave);   // 눈꽃 얼음이 사르르
         ctx.fillStyle = `rgba(255,255,255,${1 - tt*0.4})`; ctx.beginPath(); ctx.arc(xx, yy, (0.8 + Math.random()*0.5)*u, 0, Math.PI*2); ctx.fill(); }
       const [ix, iy] = R2(40, 80); ctx.strokeStyle = 'rgba(120,180,200,.8)'; ctx.lineWidth = 1*u; ctx.beginPath(); ctx.arc(ix, iy, 5*u, now/60, now/60 + 1.5); ctx.stroke(); }   // 얼음 통 속 칼날 돌아감
     if (s.broken) { const [l, t] = R2(26, 73), [r, b] = R2(54, 87); ctx.fillStyle = 'rgba(40,46,58,.4)'; ctx.fillRect(l, t, r - l, b - t); }
-    if (!(work && prog > 0.72)) bingsu(bx, by, bu, shave, top, now);
+    if (!work) bingsu(bx, by, bu, 1, 4, now);
+    else if (prog < 0.4) bingsu(bx, by, bu, shave, 0, now);   // 빙수기 밑에서 얼음 쌓임
+    else if (prog < 0.48) { const t = lerp01(prog, 0.4, 0.48), e = t*t*(3 - 2*t); bingsu(bx + (tx - bx)*e, by + (ty - by)*e - Math.sin(Math.PI*t)*18*u, bu + (tu - bu)*e, 1, 0, now); }   // 쟁반으로
+    else bingsu(tx, ty, tu, 1, top, now);   // 쟁반 위에서 고명 → 완성(그대로 끝까지)
     if (work) {
-      const pour = (from, a, b, col, dots) => { if (prog < a || prog > b) return; const t = (prog - a)/(b - a), [fx, fy] = R2(...from), tx = bx, ty = by - 21*bu;   // 토핑대에서 그릇으로 톡톡
-        for (let i = 0; i < dots; i++) { const tt = (t*3 + i/dots) % 1, x = fx + (tx - fx)*tt, y = fy + (ty - fy)*tt - Math.sin(Math.PI*tt)*16*u; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 1.2*u, 0, Math.PI*2); ctx.fill(); } };
-      pour([94, 104], 0.44, 0.52, '#6b2a2a', 4); pour([120, 110], 0.52, 0.6, '#f2e2b0', 3); pour([140, 105], 0.6, 0.66, '#d9aa50', 5); pour([154.5, 93], 0.66, 0.72, '#fffbe8', 4);
-      if (prog > 0.66 && prog < 0.72) for (let i = 0; i < 4; i++) { const a = now/260 + i*1.6; ctx.fillStyle = 'rgba(200,236,255,.95)'; ctx.font = `${Math.round(7*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.fillText('❄', bx + Math.cos(a)*20*u, by - 28*u + Math.sin(a)*9*u); }
-      { const d = (x, y) => bingsu(x, y, u*1.3, 1, 4, now); upToTray(R2, prog, [46, 118], d, TRAY_C()); if (prog >= 0.8) d(...R2(...TRAY_C())); }
+      const pour = (from, a, b, col, dots) => { if (prog < a || prog > b) return; const t = (prog - a)/(b - a), [fx, fy] = R2(...from), ttx = tx, tty = ty - 21*tu;   // 토핑대에서 쟁반 위 그릇으로 톡톡
+        for (let i = 0; i < dots; i++) { const tt = (t*3 + i/dots) % 1, x = fx + (ttx - fx)*tt, y = fy + (tty - fy)*tt - Math.sin(Math.PI*tt)*16*u; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 1.2*u, 0, Math.PI*2); ctx.fill(); } };
+      pour([94, 104], 0.48, 0.56, '#6b2a2a', 4); pour([120, 110], 0.56, 0.62, '#f2e2b0', 3); pour([140, 105], 0.62, 0.68, '#d9aa50', 5); pour([154.5, 93], 0.68, 0.74, '#fffbe8', 4);
+      if (prog > 0.74 && prog < 0.8) for (let i = 0; i < 4; i++) { const a = now/260 + i*1.6; ctx.fillStyle = 'rgba(200,236,255,.95)'; ctx.font = `${Math.round(7*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.fillText('❄', tx + Math.cos(a)*18*u, ty - 30*u + Math.sin(a)*8*u); }   // 완성 반짝
     }
   });
 }

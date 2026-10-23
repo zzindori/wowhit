@@ -2439,7 +2439,16 @@ function animTteok({ S2, u, now, prog, work, s }){
     const tt = (now/420) % 1; ctx.save(); ctx.translate(sx + (tx - sx)*tt, sy + (ty - 13*u - sy)*tt*tt); ctx.rotate(tt*3); rr(-3*u, -1.3*u, 6*u, 2.6*u, 1.3*u); ctx.fillStyle = '#fff1dc'; ctx.fill(); ctx.strokeStyle = 'rgba(110,25,8,.7)'; ctx.lineWidth = 0.7*u; ctx.stroke(); ctx.restore();
     for (let i = 0; i < 3; i++) { const t2 = (now/300 + i/3) % 1; ctx.fillStyle = `rgba(217,58,31,${1 - t2})`; ctx.beginPath(); ctx.arc(tx + (i - 1)*4*u*t2, ty - 13*u - t2*4*u, 1*u, 0, Math.PI*2); ctx.fill(); } }   // 튀는 국물
 }
-// 1층 1번 김밥: 뒤 스테인리스 밥통(김 + 주걱) · 재료 통(여섯 칸) · 앞 김발 위에 김 → 밥 → 속재료(0~35%) → 돌돌 말림(35~55%) → 참기름 붓질·깨(55~62%) → 은박에 둘둘(62~72%, 사용자: 김밥 포장은 한 줄 그대로)
+// 1층 1번 김밥: 뒤 스테인리스 밥통(김 + 주걱) · 재료 통(여섯 칸) · 앞 김발 위에 김 → 주걱으로 밥 떠서 펴기 → 속재료(0~35%) → 돌돌 말림(35~55%) → 참기름 붓질·깨(55~62%) → 은박에 둘둘(62~72%, 사용자: 김밥 포장은 한 줄 그대로)
+function paddle(x, y, u, rot, lump){   // 밥주걱: (x, y) = 머리 가운데, rot = 기울기(0 = 자루가 바로 위), lump 0~1 = 머리 위 밥 덩이
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+  rr(-1.8*u, -22*u, 3.6*u, 16*u, 1.8*u); ctx.fillStyle = '#d9b884'; ctx.fill(); inkStroke(1, u);   // 나무 자루
+  ctx.beginPath(); ctx.ellipse(0, 0, 6*u, 7.5*u, 0, 0, Math.PI*2); ctx.fillStyle = '#f3ead8'; ctx.fill(); inkStroke(1.2, u);   // 넓적한 머리
+  ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 1*u; ctx.beginPath(); ctx.ellipse(-1.5*u, -1*u, 3*u, 4.5*u, 0, Math.PI*1.1, Math.PI*1.6); ctx.stroke();
+  if (lump > 0.02) { ctx.beginPath(); ctx.ellipse(0, 1*u, 5.4*u*Math.sqrt(lump), 4.6*u*Math.sqrt(lump), 0, 0, Math.PI*2); ctx.fillStyle = '#fffdf6'; ctx.fill(); ctx.strokeStyle = 'rgba(56,68,90,.5)'; ctx.lineWidth = 0.8*u; ctx.stroke();
+    ctx.fillStyle = '#e8e0cc'; for (let i = 0; i < 6; i++) ctx.fillRect((((i*7) % 7) - 3.5)*u*lump, (((i*5) % 6) - 2)*u*lump, 1.4*u, 0.9*u); }   // 밥알
+  ctx.restore();
+}
 const KIM_FILL = ['#f7c62a', '#3f9a4a', '#f07a1a', '#e9b8c4', '#8a5a3a'];
 function animKimbap({ S2, u, now, prog, work, s }){
   menuSign(S2, u, now, s, '김밥', '#ffe08a', 23, 23);
@@ -2449,10 +2458,9 @@ function animKimbap({ S2, u, now, prog, work, s }){
     const g = ctx.createLinearGradient(bx - rx, 0, bx + rx, 0); g.addColorStop(0, '#9aa6b8'); g.addColorStop(0.35, '#f1f4f8'); g.addColorStop(1, '#8d98aa'); ctx.fillStyle = g; ctx.fill(); inkStroke(1.8, u);
     ctx.beginPath(); ctx.ellipse(bx, by - 14*u, rx, ry, 0, 0, Math.PI*2); ctx.fillStyle = '#dfe5ec'; ctx.fill(); inkStroke(1.8, u);
     ctx.beginPath(); ctx.ellipse(bx, by - 13*u, rx - 3*u, ry - 2*u, 0, 0, Math.PI*2); ctx.fillStyle = '#fffdf6'; ctx.fill(); ctx.fillStyle = '#e8e0cc'; for (let i = 0; i < 12; i++) ctx.fillRect(bx + (((i*13) % 34) - 17)*u, by - 13*u + (((i*7) % 8) - 4)*u, 1.6*u, 1*u);
-    const sc = work && prog < 0.25 ? Math.sin(now/200)*4*u : 0; ctx.strokeStyle = '#d9b884'; ctx.lineWidth = 3*u; ctx.beginPath(); ctx.moveTo(bx + 4*u + sc, by - 14*u); ctx.lineTo(bx + 16*u + sc, by - 34*u); ctx.stroke(); ctx.lineWidth = 1*u; ctx.strokeStyle = INK; ctx.stroke();
     if (work) steam(S2, u, now, [44, 60], 82, 94); }
   const W = (x, d) => S2(...BP(x, d)), fl = (a, b) => work ? lerp01(prog, a, b) : 1;   // 김발 위(W = 작업대 위 점 → 화면)
-  const lay = fl(0, 0.12), rice = fl(0.08, 0.22), ing = fl(0.2, 0.35), roll = work ? lerp01(prog, 0.35, 0.55) : 0, oil = work ? lerp01(prog, 0.55, 0.62) : 0, wrap = work ? lerp01(prog, 0.62, 0.72) : 0;
+  const lay = fl(0, 0.12), rice = fl(0.13, 0.22), ing = fl(0.2, 0.35), roll = work ? lerp01(prog, 0.35, 0.55) : 0, oil = work ? lerp01(prog, 0.55, 0.62) : 0, wrap = work ? lerp01(prog, 0.62, 0.72) : 0;
   const sheet = (d0, d1, col) => { const [a, b] = W(36, d0), [c] = W(108, d0), [e, f] = W(108, d1), [g] = W(36, d1); ctx.beginPath(); ctx.moveTo(a, b - 3*u); ctx.lineTo(c, b - 3*u); ctx.lineTo(e, f - 3*u); ctx.lineTo(g, f - 3*u); ctx.closePath(); ctx.fillStyle = col; ctx.fill(); };
   const dBack = 0.3 - roll*0.24;   // 말린 만큼 뒤쪽이 줄어듦
   if (!work || roll < 1) {
@@ -2468,6 +2476,18 @@ function animKimbap({ S2, u, now, prog, work, s }){
       ctx.fillStyle = '#fffaf0'; for (let i = 0; i < Math.floor(oil*12); i++) { ctx.beginPath(); ctx.ellipse(mx - 30*u + i*5*u, my - 10*u - (i % 2)*3*u, 0.9*u, 0.5*u, 0.5, 0, Math.PI*2); ctx.fill(); }   // 깨
       ctx.save(); ctx.translate(bx, my - 22*u); ctx.rotate(0.5); rr(-2*u, -9*u, 4*u, 12*u, 1.5*u); ctx.fillStyle = '#c99a6a'; ctx.fill(); inkStroke(0.9, u); rr(-3*u, 2*u, 6*u, 4*u, 1*u); ctx.fillStyle = '#f2c230'; ctx.fill(); ctx.restore(); }   // 붓
     if (wrap > 0) { const [fx, fy] = W(72 - 30 + 60*wrap, 0.02); ctx.fillStyle = 'rgba(240,244,248,.9)'; ctx.beginPath(); ctx.moveTo(fx, fy - 2*u); ctx.lineTo(fx + 6*u, fy - 18*u); ctx.lineTo(fx + 9*u, fy - 2*u); ctx.closePath(); ctx.fill(); inkStroke(0.9, u); }   // 감기는 은박 끝
+  }
+  { const [bx, by] = S2(...BP(52, 0.72)), rest = [bx + 7*u, by - 17*u], e = t => t*t*(3 - 2*t);   // 주걱(사용자: 밥은 주걱으로) — 밥통에서 한 덩이 떠서(6~10%) → 김 위로(10~13%) → 좌우로 문지르며 앞에서 뒤로 펴기(13~22%) → 밥통으로(22~25%)
+    let P = rest, rot = 0.45, lump = 0;
+    if (work && prog > 0.06 && prog < 0.25) {
+      const [sx, sy] = W(42, 0.11), dip = Math.sin(Math.PI*lerp01(prog, 0.06, 0.1));
+      if (prog < 0.1) { P = [rest[0], rest[1] + dip*5*u]; lump = lerp01(prog, 0.08, 0.1); }
+      else if (prog < 0.13) { const t = e(lerp01(prog, 0.1, 0.13)); P = [rest[0] + (sx - rest[0])*t, rest[1] + (sy - 6*u - rest[1])*t - Math.sin(Math.PI*t)*16*u]; rot = 0.45 + 0.65*t; lump = 1; }
+      else if (prog < 0.22) { const t = lerp01(prog, 0.13, 0.22), [qx, qy] = W(72 + Math.sin(t*Math.PI*7)*28, 0.11 + 0.15*t); P = [qx, qy - 6*u]; rot = 1.1 + Math.sin(t*Math.PI*7)*0.15; lump = 1 - t; }
+      else { const t = e(lerp01(prog, 0.22, 0.25)), [ex, ey] = W(72, 0.26); P = [ex + (rest[0] - ex)*t, ey - 6*u + (rest[1] - ey + 6*u)*t - Math.sin(Math.PI*t)*16*u]; rot = 1.1 - 0.65*t; }
+    }
+    paddle(P[0], P[1], u*1.3, rot, lump);   // 폰에서도 주걱으로 보이게 조금 크게
+    if (!(work && prog > 0.06 && prog < 0.25)) { ctx.beginPath(); ctx.ellipse(rest[0], rest[1] + 5*u, 7*u, 2.2*u, 0, 0, Math.PI*2); ctx.fillStyle = '#fffdf6'; ctx.fill(); }   // 밥에 꽂힌 주걱(머리 아래가 밥에 묻힘)
   }
   { const [px, py] = S2(...BP(176, 0.12));   // 앞 오른쪽 나무 판: 포장해 둔 김밥(늘 두 줄) + 새로 나온 것은 그 옆 자리(완성품 자리)
     foilRoll(px + 2*u, py + 2*u, u, 1.3); foilRoll(px + 6*u, py - 7*u, u, 1.3); }

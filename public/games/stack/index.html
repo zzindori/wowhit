@@ -478,12 +478,12 @@ const ICON3 = {
   gan: '<path d="M106 166 L100 172" stroke-width="3.2"/><circle cx="98" cy="173.5" r="2.6" fill="#fffaf0" stroke-width="1.2"/><circle cx="101.5" cy="175" r="2.4" fill="#fffaf0" stroke-width="1.2"/><path d="M104 165 Q99 151 112 144 Q127 140 130 152 Q131 164 116 167 Z" fill="#6b3a1f" stroke-width="1.6"/><path d="M110 148 Q118 145 124 148" stroke="#fff" stroke-width="1.2" fill="none" opacity=".7"/>' + MFACE(117, 155, 0.62, 'wink'),
 };
 // 3층 지붕은 기계마다(사용자: 큰 후드는 머리가 무겁고 일률적) — 튀김기 = 메뉴판 뒤 작은 후드 · 버무림기 = 기둥 둘 메뉴판만 · 화로 = 위에서 내려온 은색 주름 연기 덕트
-const FAN3 = { x: 120, v: -14, r: 15 };   // 튀김기 환풍기(메뉴판 위, 화면 그림 좌표 = v + 메뉴판 내려온 양) — 날개·보호망은 animFry3가 돌리며 그림
+const FAN3 = { xs: [70, 120, 170], v: -14, r: 15 };   // 튀김기 환풍기 셋(사용자: 2~3개) — 메뉴판 위( 화면 그림 좌표 = v + 메뉴판 내려온 양) — 날개·보호망은 animFry3가 돌리며 그림
 const roof3 = kind => { const o = VO*PERSP, BKt = `translate(${o} ${90*(1 - 0.62)})`;
-  if (kind === 'fryer') { const { x, v, r } = FAN3;   // 후드 대신 메뉴판 위 네모 환풍기(사용자: 후드가 들어 올린 바구니를 가림 → 후드 빼고 팬)
-    return `<g transform="${BKt}"><rect x="60" y="36" width="6" height="16" fill="#9aa6b8" stroke-width="2"/><rect x="174" y="36" width="6" height="16" fill="#9aa6b8" stroke-width="2"/>` +
-      `<rect x="${x - r - 4}" y="0" width="5" height="8" fill="#9aa6b8" stroke-width="1.8"/><rect x="${x + r - 1}" y="0" width="5" height="8" fill="#9aa6b8" stroke-width="1.8"/>` +
-      `<rect x="${x - r - 4}" y="${v - r - 4}" width="${2*r + 8}" height="${2*r + 8}" rx="4" fill="url(#hd)" stroke-width="2.4"/><circle cx="${x}" cy="${v}" r="${r}" fill="#2c313b" stroke-width="2"/></g>`; }
+  if (kind === 'fryer') { const { xs, v, r } = FAN3;   // 후드 대신 메뉴판 위 네모 환풍기(사용자: 후드가 들어 올린 바구니를 가림 → 후드 빼고 팬)
+    return `<g transform="${BKt}"><rect x="60" y="36" width="6" height="16" fill="#9aa6b8" stroke-width="2"/><rect x="174" y="36" width="6" height="16" fill="#9aa6b8" stroke-width="2"/>` + xs.map(x =>
+      `<rect x="${x - r + 2}" y="0" width="5" height="8" fill="#9aa6b8" stroke-width="1.8"/><rect x="${x + r - 7}" y="0" width="5" height="8" fill="#9aa6b8" stroke-width="1.8"/>` +
+      `<rect x="${x - r - 4}" y="${v - r - 4}" width="${2*r + 8}" height="${2*r + 8}" rx="4" fill="url(#hd)" stroke-width="2.4"/><circle cx="${x}" cy="${v}" r="${r}" fill="#2c313b" stroke-width="2"/>`).join('') + `</g>`; }
   if (kind === 'mixer') return `<g transform="${BKt}"><rect x="60" y="36" width="6" height="16" fill="#c0392b" stroke-width="2"/><rect x="174" y="36" width="6" height="16" fill="#c0392b" stroke-width="2"/></g>`;
   const fx = pvx(34, 74), fy = 134 - (134 - 74)*0.62 - 28;   // 화로: 덕트 깔때기(석쇠 왼쪽 위, 메뉴판 안 가리게 낮게)
   return `<path d="M-14 -4 C-16 30 ${fx - 40} ${fy - 30} ${fx - 6} ${fy - 6}" fill="none" stroke-width="15"/><path d="M-14 -4 C-16 30 ${fx - 40} ${fy - 30} ${fx - 6} ${fy - 6}" fill="none" stroke="#c9d2de" stroke-width="11" stroke-dasharray="2.4 2.2"/>` +
@@ -2834,8 +2834,8 @@ function animFry3({ S2, R2, u, now, prog, work, s, z }){
   menuSign(S2, u, now, s, '후라이드', '#c0392b', 23, 22); tempSign(S2, u, now, s, '180℃');
   const Q = Q3(R2);
   fan3(S2, u, now, s, work, s.items >= spMax(z));
-  if (work) unsq(() => { const [fx, f0] = S2(FAN3.x, FAN3.v), fy = f0 + (TILT ? TILT.dv*u : 0);   // 튀김 김 → 환풍기로 빨려 올라감
-    for (let i = 0; i < 6; i++) { const tt = (now/1500 + i/6) % 1, [sx0, sy0] = Q(40 + i*22, 84), x = sx0 + (fx - sx0)*tt*tt, y = sy0 + (fy - sy0)*tt;
+  if (work) unsq(() => { const n = FAN3.xs.length;   // 튀김 김 → 가까운 환풍기로 빨려 올라감
+    for (let i = 0; i < 6; i++) { const tt = (now/1500 + i/6) % 1, [sx0, sy0] = Q(40 + i*22, 84), [fx, f0] = S2(FAN3.xs[Math.min(n - 1, Math.floor(i*n/6))], FAN3.v), fy = f0 + (TILT ? TILT.dv*u : 0), x = sx0 + (fx - sx0)*tt*tt, y = sy0 + (fy - sy0)*tt;
       ctx.fillStyle = `rgba(255,255,255,${0.5*(1 - tt)})`; ctx.beginPath(); ctx.arc(x, y, (4 + tt*6)*u, 0, Math.PI*2); ctx.fill(); } });
   unsq(() => [[57, 0], [129, 0.04]].forEach(([vx, d]) => {
     const p = Math.max(0, prog - d), sink = work ? lerp01(p, 0.1, 0.15) - lerp01(p, 0.63, 0.7) : 0, gold = work ? lerp01(p, 0.15, 0.63) : 1, lift = (1 - sink)*30*u;
@@ -2863,9 +2863,9 @@ function animFry3({ S2, R2, u, now, prog, work, s, z }){
   unsq(() => tongs(Q, u, prog, [141, 100], (x, y) => chick(x, y, 10*u, u, 0.4, '#e2a04a', 0, '', true)));
 }
 function fan3(S2, u, now, s, work, full){   // 메뉴판 위 환풍기: 돌아가는 날개 + 보호망, 일할 땐 튀김 김이 빨려 들어감(고장 = 멈춤, 가득 참 = 천천히)
-  const [cx, c0] = S2(FAN3.x, FAN3.v), cy = c0 + (TILT ? TILT.dv*u : 0), r = FAN3.r*u;
+  FAN3.xs.forEach((fx, j) => { const [cx, c0] = S2(fx, FAN3.v), cy = c0 + (TILT ? TILT.dv*u : 0), r = FAN3.r*u;
   unsq(() => {
-    const a = s.broken ? 0.4 : now/(work ? 70 : full ? 600 : 260);
+    const a = s.broken ? 0.4 + j : now/(work ? 70 : full ? 600 : 260) + j*0.7;   // 셋이 박자가 조금씩 다르게
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r - 1*u, 0, Math.PI*2); ctx.clip();
     if (work) { ctx.fillStyle = 'rgba(201,210,222,.28)'; ctx.fill(); }   // 빨리 돌 땐 날개가 흐릿한 원
     for (let i = 0; i < 4; i++) { ctx.save(); ctx.translate(cx, cy); ctx.rotate(a + i*Math.PI/2); ctx.beginPath(); ctx.moveTo(0, 0); ctx.bezierCurveTo(r*0.35, -r*0.5, r*0.95, -r*0.35, r*0.9, 0); ctx.bezierCurveTo(r*0.6, r*0.12, r*0.25, r*0.1, 0, 0);
@@ -2874,7 +2874,7 @@ function fan3(S2, u, now, s, work, full){   // 메뉴판 위 환풍기: 돌아�
     ctx.fillStyle = '#8d98aa'; ctx.beginPath(); ctx.arc(cx, cy, r*0.2, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.2*u; ctx.stroke();   // 가운데 축
     ctx.strokeStyle = 'rgba(220,226,234,.9)'; ctx.lineWidth = 1*u; [0.5, 0.82].forEach(k => { ctx.beginPath(); ctx.arc(cx, cy, r*k, 0, Math.PI*2); ctx.stroke(); });   // 보호망
     ctx.beginPath(); ctx.moveTo(cx - r, cy); ctx.lineTo(cx + r, cy); ctx.moveTo(cx, cy - r); ctx.lineTo(cx, cy + r); ctx.stroke();
-  });
+  }); });
 }
 // 3층 2번(오른쪽) 간장치킨 = 숯불 화로: 숯불 틈이 깜빡, 석쇠 위 치킨이 노릇 + 석쇠 자국, 붓이 오가며 간장(10~65%) → 반질반질 → 연기는 덕트로 빨려 올라감 → 집게로 쟁반
 const GAN_AT = [[46, 72], [86, 70], [126, 72], [62, 100], [104, 102], [144, 100]];

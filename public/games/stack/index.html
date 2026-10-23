@@ -2365,10 +2365,10 @@ function paperCup(x, yb, u, k, f, now){   // 옆에서 본 종이컵(빨간 띠)
   if (f > 0) { ctx.fillStyle = '#d93a1f'; ctx.beginPath(); ctx.ellipse(x, yb - 13*q, 7*q, 2.2*q, 0, 0, Math.PI*2); ctx.fill();
     for (let i = 0; i < Math.round(4*f); i++) { ctx.save(); ctx.translate(x - 4*q + i*2.8*q, yb - 14*q - (i % 2)*1.5*q); ctx.rotate(-0.5 + i*0.4); rr(-3*q, -1.3*q, 6*q, 2.6*q, 1.3*q); ctx.fillStyle = '#fff1dc'; ctx.fill(); ctx.restore(); } }
 }
-// 국자: (x, y) = 머리 테두리 가운데. dip 0~1 = 국물에 잠긴 정도(잠긴 아래쪽은 양념색으로 덮임), full = 국물을 떴는지, tilt 0~1 = 컵에 부으려고 기울임
-function ladle(x, y, u, dip, full, tilt){
-  const rx = 9*u, ry = 3.2*u, d = 8*u, a = tilt*0.7;
-  ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+// 국자: (x, y) = 머리 테두리 가운데. dip 0~1 = 국물에 잠긴 정도(잠긴 아래쪽은 양념색으로 덮임), full = 국물을 떴는지, tilt 0~1 = 컵에 부으려고 기울임, flip = 자루가 오른쪽(붓는 쪽은 왼쪽)
+function ladle(x, y, u, dip, full, tilt, flip = false){
+  const rx = 9*u, ry = 3.2*u, d = 8*u, a = tilt*(flip ? 0.38 : 0.7);   // 자루가 오른쪽이면 덜 기울임(많이 기울이면 자루가 왼쪽으로 넘어가 보임)
+  ctx.save(); ctx.translate(x, y); if (flip) ctx.scale(-1, 1); ctx.rotate(a);
   ctx.strokeStyle = INK; ctx.lineWidth = 4.2*u; ctx.beginPath(); ctx.moveTo(-rx + 1*u, -0.5*u); ctx.quadraticCurveTo(-rx - 4*u, -16*u, -rx + 6*u, -38*u); ctx.stroke();   // 자루(뒤로 휘어 올라감)
   ctx.strokeStyle = '#b9c2cf'; ctx.lineWidth = 2.4*u; ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 0.8*u; ctx.stroke();
   ctx.beginPath(); ctx.arc(-rx + 6*u, -41*u, 3*u, 0, Math.PI*2); ctx.strokeStyle = INK; ctx.lineWidth = 2.6*u; ctx.stroke(); ctx.strokeStyle = '#b9c2cf'; ctx.lineWidth = 1.4*u; ctx.stroke();   // 끝 고리
@@ -2840,9 +2840,9 @@ function animYang3({ S2, R2, u, now, prog, work, s }){
       else if (prog < 0.34) { L = over; dip = 0; full = prog < 0.3; tilt = Math.min(lerp01(prog, 0.22, 0.25), 1 - lerp01(prog, 0.32, 0.34)); }
       else { const t = e(lerp01(prog, 0.34, 0.4)); L = [over[0] + (rest[0] - over[0])*t, over[1] + (rest[1] - over[1])*t - Math.sin(Math.PI*t)*14*u]; dip = 0; }
     }
-    ladle(L[0], L[1], u, dip, full, tilt);
-    if (work && prog > 0.23 && prog < 0.33) { const sx = L[0] + 9*u, sy = L[1] + 1*u, w = Math.sin(now/90)*1.2*u;   // 국자에서 웍으로 주르륵
-      ctx.strokeStyle = '#c0281a'; ctx.lineWidth = (3 + Math.sin(now/120)*0.6)*u; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx + 3*u + w, sy + 10*u, sx - 2*u, cy - 2*u); ctx.stroke(); ctx.strokeStyle = 'rgba(255,200,170,.6)'; ctx.lineWidth = 0.8*u; ctx.stroke();
+    ladle(L[0], L[1], u, dip, full, tilt, true);   // 자루는 오른쪽(사용자: 반대로) — 냄비 쪽에서 들고 왼쪽 끝으로 부음
+    if (work && prog > 0.23 && prog < 0.33) { const sx = L[0] - 9*u, sy = L[1] + 1*u, w = Math.sin(now/90)*1.2*u;   // 국자에서 웍으로 주르륵
+      ctx.strokeStyle = '#c0281a'; ctx.lineWidth = (3 + Math.sin(now/120)*0.6)*u; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx - 3*u - w, sy + 10*u, sx + 2*u, cy - 2*u); ctx.stroke(); ctx.strokeStyle = 'rgba(255,200,170,.6)'; ctx.lineWidth = 0.8*u; ctx.stroke();
       for (let i = 0; i < 3; i++) { const t2 = (now/300 + i/3) % 1; ctx.fillStyle = `rgba(192,40,26,${1 - t2})`; ctx.beginPath(); ctx.arc(sx - 2*u + (i - 1)*5*u*t2, cy - 3*u - t2*5*u, 1.2*u, 0, Math.PI*2); ctx.fill(); } }   // 튀는 양념
     if (work) tongs(Q, u, prog, [WOK3.x + 10, WOK3.v - 4], (x2, y2) => chick(x2, y2, 10*u, u, 0.4, '#e2a04a', 1, '#c0281a', true));
   });

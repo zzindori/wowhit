@@ -505,14 +505,9 @@ const PROP3 = {
         `<path d="M${pt(tl)} L${pt(tr)} L${pt(br)} L${pt(bl)} Z" fill="${i === 2 ? '#fffdf6' : '#f6efe0'}" stroke-width="1.1"/>`; }).join('') +
       (() => { const [c1, c2] = P((x1 + x2)/2 - 0.5, (v1 + v2)/2, 3*H); return `<circle cx="${c1.toFixed(1)}" cy="${c2.toFixed(1)}" r="2.6" fill="#7a3e18" stroke="none"/>`; })(); },   // 맨 위 상자 도장
 };
-function machine3(kind, { emb, props = '' }){
-  const k = 0.62, dv = 90*(1 - k), SQ = ` transform="matrix(1 0 0 ${k} 0 ${134*(1 - k)})"`, BK = ` transform="translate(${VO*PERSP} ${dv})"`, sy = v => 134 - (134 - v)*k;
-  const shelfX = 168, x0 = 18, x1 = 168;
-  const defs = CHK.mat + `<filter id="shd" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.6"/></filter><filter id="drop" x="-20%" y="-20%" width="150%" height="150%"><feOffset in="SourceAlpha" dx="2.5" dy="3.5"/><feGaussianBlur stdDeviation="1.8"/><feComponentTransfer><feFuncA type="linear" slope=".28"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>` +
-    `<linearGradient id="tr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e6ebf1"/></linearGradient><linearGradient id="ss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1f4f8"/><stop offset="1" stop-color="#b9c2cf"/></linearGradient>` +
-    `<linearGradient id="dw3" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8d98aa"/><stop offset=".3" stop-color="#f1f4f8"/><stop offset=".65" stop-color="#c9d2de"/><stop offset="1" stop-color="#7d8798"/></linearGradient><linearGradient id="hd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9d2de"/><stop offset=".5" stop-color="#eef1f5"/><stop offset="1" stop-color="#aab4c3"/></linearGradient><linearGradient id="ir" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5262"/><stop offset="1" stop-color="#2c313b"/></linearGradient>`;
-  const embAt = (x, y) => `<g transform="translate(${x - 120} ${y - 155})">${EMB2(emb)}</g>`;
-  const shelf = (() => { const R = 226, L = shelfX + 1, bv = 70, by = sy(bv), bL = pvx(L, bv), bR = pvx(R, bv), fl = 188, bfl = fl - (134 - by);   // 보조 테이블(사용자: 구도가 이상) — 다리 넷 + 시점 쪽 옆면
+// 3·4층 보조 테이블(오른쪽, 다리 넷 + 시점 쪽 옆면 + 앞 흰 쟁반) — L = 왼쪽 끝 x
+function sideTable3(L){ const k = 0.62, SQ = ` transform="matrix(1 0 0 ${k} 0 ${134*(1 - k)})"`, sy = v => 134 - (134 - v)*k;
+  const R = 226, bv = 70, by = sy(bv), bL = pvx(L, bv), bR = pvx(R, bv), fl = 188, bfl = fl - (134 - by);   // 보조 테이블(사용자: 구도가 이상) — 다리 넷 + 시점 쪽 옆면
     const leg = (x, y0, y1, w = 4) => `<rect x="${(x - w/2).toFixed(1)}" y="${y0.toFixed(1)}" width="${w}" height="${(y1 - y0).toFixed(1)}" rx="1.5" fill="#9aa6b8" stroke-width="1.8"/>`;
     const side = VO > 0 ? `<path d="M${R} 134 L${bR.toFixed(1)} ${by.toFixed(1)} V${(by + 8).toFixed(1)} L${R} 142 Z" fill="#aab4c3"/>` : VO < 0 ? '' : '';
     return (VO < 0 ? '' : leg(bL + 3, by + 6, bfl)) + leg(bR - 3, by + 6, bfl) +   // 뒤 다리(짧게 보임 — 오른쪽 기계는 왼쪽 뒤 다리가 기계에 가려짐)
@@ -522,7 +517,15 @@ function machine3(kind, { emb, props = '' }){
       side + `<rect x="${L}" y="134" width="${R - L}" height="8" rx="1.5" fill="url(#ss)"/>` +
       leg(L + 4, 142, fl) + leg(R - 4, 142, fl) + `<path d="M${L + 4} 172 H${R - 4}" stroke="#9aa6b8" stroke-width="2.4"/>` +   // 앞 다리 + 아래 가로대
       `<ellipse cx="${L + 5}" cy="${fl + 1}" rx="4" ry="1.2" fill="#1e2433" opacity=".3" stroke="none"/><ellipse cx="${R - 3}" cy="${fl + 1}" rx="4" ry="1.2" fill="#1e2433" opacity=".3" stroke="none"/>`;
-  })();
+}
+function machine3(kind, { emb, props = '' }){
+  const k = 0.62, dv = 90*(1 - k), SQ = ` transform="matrix(1 0 0 ${k} 0 ${134*(1 - k)})"`, BK = ` transform="translate(${VO*PERSP} ${dv})"`, sy = v => 134 - (134 - v)*k;
+  const shelfX = 168, x0 = 18, x1 = 168;
+  const defs = CHK.mat + `<filter id="shd" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.6"/></filter><filter id="drop" x="-20%" y="-20%" width="150%" height="150%"><feOffset in="SourceAlpha" dx="2.5" dy="3.5"/><feGaussianBlur stdDeviation="1.8"/><feComponentTransfer><feFuncA type="linear" slope=".28"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>` +
+    `<linearGradient id="tr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e6ebf1"/></linearGradient><linearGradient id="ss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1f4f8"/><stop offset="1" stop-color="#b9c2cf"/></linearGradient>` +
+    `<linearGradient id="dw3" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8d98aa"/><stop offset=".3" stop-color="#f1f4f8"/><stop offset=".65" stop-color="#c9d2de"/><stop offset="1" stop-color="#7d8798"/></linearGradient><linearGradient id="hd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9d2de"/><stop offset=".5" stop-color="#eef1f5"/><stop offset="1" stop-color="#aab4c3"/></linearGradient><linearGradient id="ir" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5262"/><stop offset="1" stop-color="#2c313b"/></linearGradient>`;
+  const embAt = (x, y) => `<g transform="translate(${x - 120} ${y - 155})">${EMB2(emb)}</g>`;
+  const shelf = sideTable3(shelfX + 1);
   const gsh = () => { const bl = pvx(x0, 44), br = pvx(228, 44), ox = 12, oy = 6;
     return `<path d="M${x0 + ox} ${186 + oy} H${228 + ox} L${(br + ox).toFixed(1)} ${130 + oy} H${(bl + ox).toFixed(1)} Z" fill="#2c2b35" opacity=".18" filter="url(#shd)"/><rect x="${x0 + 2}" y="184" width="${x1 - x0 - 4}" height="6" rx="3" fill="#1e2433" opacity=".3" filter="url(#shd)"/>` +
       ''; };
@@ -565,30 +568,73 @@ const GAN3 = withVO(-VOFF, () => machine3('brazier', { emb: ICON3.gan, props: PR
 const CVS = { board:'#5ec1a0', edge:'#2f8f6f', strip:'#2f8f6f', front:'url(#mn)', tilt:0.62,
   mat:'<pattern id="mn" width="16" height="10" patternUnits="userSpaceOnUse"><rect width="16" height="10" fill="#fdfdfd"/><rect x="8" width="8" height="10" fill="#e2f5ee"/></pattern><linearGradient id="fz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4fcff"/><stop offset="1" stop-color="#c6e6f2"/></linearGradient><linearGradient id="hw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe2a8"/><stop offset="1" stop-color="#f0a050"/></linearGradient><linearGradient id="mt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b9c2cf"/><stop offset=".35" stop-color="#eef2f6"/><stop offset="1" stop-color="#9aa6b8"/></linearGradient>',
   deco:'<rect x="12" y="140" width="216" height="6" fill="#5ec1a0" stroke="none"/><rect x="26" y="148" width="40" height="16" rx="3" fill="#ffd23f" stroke-width="2"/>' };
-// 4층은 가게마다 진짜 기계 모양(사용자: '냉장고·둥근 호빵 찜기·핫바 케이스, 지금은 너무 일률적') — 윗판에 서 있는 기계라 post(납작하게 안 하는 층)에 그림.
-// 좌표는 화면 그대로(윗판은 v 78~134로 보임). 움직이는 속(단지·호빵·핫바)은 anim이 R2 + unsq로 그 위에 그림
 const UPR = svg => `<g stroke="#38445a" stroke-width="2.5" stroke-linejoin="round">${svg}</g>`;
-// 0번 핫바: 유리 온장 케이스(뜨거운 주황 불빛 + 롤러 두 단) + 오른쪽 케첩·머스터드·꼬치 컵
-const HBAR4 = deck({ ...CVS, under: TRAY_UNDER + pAt(194, 70, '<circle cx="184" cy="80" r="8" fill="#8a2a1e"/><circle cx="204" cy="80" r="8" fill="#a8841e"/>') + pAt(214, 92, '<circle cx="214" cy="101" r="7" fill="#b8c2cf"/>'),
-  tool: pAt(194, 70, '<circle cx="184" cy="70" r="8" fill="#e0402c"/><circle cx="204" cy="70" r="8" fill="#f2c230"/>') + pAt(214, 92, '<circle cx="214" cy="92" r="7" fill="#fff"/>'),
-  top: pAt(214, 92, '<g stroke="#a87449" stroke-width="1.4"><path d="M211 92 L209 84 M214 92 L215 83 M217 92 L220 85"/></g>') + pAt(194, 70, '<circle cx="184" cy="70" r="2.5" fill="#fff" opacity=".6"/><circle cx="204" cy="70" r="2.5" fill="#fff" opacity=".6"/>'),
-  post: UPR('<rect x="22" y="124" width="142" height="8" rx="4" fill="#1e2433" opacity=".2" stroke="none"/><path d="M32 76 H148 L156 84 H24 Z" fill="url(#mt)"/><rect x="24" y="84" width="132" height="44" rx="3" fill="#8d98aa"/>' +
+// 4층 편의점 다시(사용자 2026-10-23: 실내라 천막·지붕 없음, 위쪽 비움 — 이름은 기계 자체에) — 기계마다 몸통 다르게 + 원근(왼쪽·정면·오른쪽):
+// 0번 핫바 = 계산대 끝 카운터(위 유리 롤러 그릴 케이스 · 앞 껌·사탕 진열) · 1번 바나나우유 = 바닥에 선 키 큰 유리문 냉장고 · 2번 호빵 = 수납장 위 둥근 유리 찜기 + 옆 테이블 전자레인지
+// 서 있는 상자(케이스·냉장고)는 앞면 좌표 그대로 두고 윗면·시점 쪽 옆면만 원근으로(standBox) — 그래서 속 움직임(anim) 좌표는 예전 그대로
+const sy4 = v => 134 - (134 - v)*0.62;
+function standBox(x0, x1, yT, yB, vF, dv, top, side){   // 앞면 (x0~x1, yT~yB)인 상자의 윗면·옆면(깊이 dv)
+  const dx = x => pvx(x, vF - dv) - pvx(x, vF), dy = dv*0.62, f = n => n.toFixed(1);
+  let s = `<path d="M${x0} ${yT} H${x1} L${f(x1 + dx(x1))} ${f(yT - dy)} H${f(x0 + dx(x0))} Z" fill="${top}"/>`;
+  if (dx(x1) > 0.5) s += `<path d="M${x1} ${yT} L${f(x1 + dx(x1))} ${f(yT - dy)} V${f(yB - dy)} L${x1} ${yB} Z" fill="${side}"/>`;
+  if (dx(x0) < -0.5) s += `<path d="M${x0} ${yT} L${f(x0 + dx(x0))} ${f(yT - dy)} V${f(yB - dy)} L${x0} ${yB} Z" fill="${side}"/>`;
+  return s;
+}
+function tpBox(x1, x2, v1, v2, h, front, top, side){   // 상판 위에 놓인 상자(바닥 네 모서리를 상판 원근으로) — 앞면 꼭짓점도 돌려줌
+  const P = (x, v, hh) => { const [a, b] = TP(x, v); return [a, b - hh]; }, pt = ([a, b]) => `${a.toFixed(1)} ${b.toFixed(1)}`;
+  const fl = P(x1, v2, 0), fr = P(x2, v2, 0), tl = P(x1, v2, h), tr = P(x2, v2, h), bl = P(x1, v1, h), br = P(x2, v1, h), bl0 = P(x1, v1, 0), br0 = P(x2, v1, 0);
+  const sd = bl[0] < tl[0] - 0.3 ? `<path d="M${pt(fl)} L${pt(tl)} L${pt(bl)} L${pt(bl0)} Z" fill="${side}"/>` : br[0] > tr[0] + 0.3 ? `<path d="M${pt(fr)} L${pt(tr)} L${pt(br)} L${pt(br0)} Z" fill="${side}"/>` : '';
+  return { svg: sd + `<path d="M${pt(tl)} L${pt(tr)} L${pt(br)} L${pt(bl)} Z" fill="${top}"/><path d="M${pt(fl)} L${pt(fr)} L${pt(tr)} L${pt(tl)} Z" fill="${front}"/>`, fl, fr, tl, tr };
+}
+const PROP4 = {
+  bottle: (x, v, col, cap) => { const [a, b] = TP(x, v); return `<ellipse cx="${a + 1.5}" cy="${b + 1}" rx="7" ry="2" fill="#1e2433" opacity=".22" stroke="none"/><path d="M${a - 5} ${b} V${b - 14} Q${a - 5} ${b - 18} ${a - 2} ${b - 19} H${a + 2} Q${a + 5} ${b - 18} ${a + 5} ${b - 14} V${b} Z" fill="${col}" stroke-width="1.6"/><path d="M${a - 2} ${b - 19} L${a - 1} ${b - 25} H${a + 1} L${a + 2} ${b - 19}" fill="${cap}" stroke-width="1.4"/><path d="M${a - 3} ${b - 14} V${b - 4}" stroke="#fff" stroke-width="1.2" opacity=".6"/>`; },   // 케첩·머스터드
+  skewers: (x, v) => { const [a, b] = TP(x, v); return `<ellipse cx="${a + 1.5}" cy="${b + 1}" rx="7" ry="2" fill="#1e2433" opacity=".22" stroke="none"/><g stroke="#a87449" stroke-width="1.4"><path d="M${a - 2} ${b - 10} L${a - 4} ${b - 20} M${a} ${b - 10} L${a + 1} ${b - 21} M${a + 2} ${b - 10} L${a + 5} ${b - 19}"/></g><path d="M${a - 5} ${b} L${a - 6} ${b - 11} H${a + 6} L${a + 5} ${b} Z" fill="#fff" stroke-width="1.5"/><rect x="${a - 5.5}" y="${b - 8}" width="11" height="3" fill="#5ec1a0" stroke="none"/>`; },   // 꼬치 컵
+  carton: (x1, x2, v1, v2, h) => { const B = tpBox(x1, x2, v1, v2, h, '#d9b884', '#c49a5e', '#b98a50'); const [a, b] = B.tl, [c] = B.tr; return B.svg + `<path d="M${((a + c)/2).toFixed(1)} ${b.toFixed(1)} V${(b + h - 2).toFixed(1)}" stroke="#a8875a" stroke-width="1.4"/><rect x="${(a + 3).toFixed(1)}" y="${(b + 4).toFixed(1)}" width="${((c - a)/2 - 6).toFixed(1)}" height="${(h - 9).toFixed(1)}" rx="2" fill="#fbe38a" stroke-width="1"/>`; },   // 바나나우유 상자
+  micro: (x1, x2, v1, v2, h) => { const B = tpBox(x1, x2, v1, v2, h, '#f4f7fa', '#dfe5ec', '#b9c2cf'); const [a, b] = B.tl, [c] = B.tr, w = c - a;   // 전자레인지(앞 창 + 버튼)
+    return B.svg + `<rect x="${(a + 3).toFixed(1)}" y="${(b + 3).toFixed(1)}" width="${(w*0.62).toFixed(1)}" height="${(h - 6).toFixed(1)}" rx="2" fill="#2c313b" stroke-width="1.2"/><rect x="${(a + 5).toFixed(1)}" y="${(b + 5).toFixed(1)}" width="${(w*0.3).toFixed(1)}" height="2" fill="#fff" stroke="none" opacity=".4"/>` +
+      `<rect x="${(a + w*0.7).toFixed(1)}" y="${(b + 3).toFixed(1)}" width="${(w*0.24).toFixed(1)}" height="5" rx="1" fill="#111827" stroke-width="1"/>` + [0, 1, 2].map(i => `<circle cx="${(a + w*0.82).toFixed(1)}" cy="${(b + 11 + i*4).toFixed(1)}" r="1.4" fill="#9aa6b8" stroke="none"/>`).join(''); },
+};
+function machine4(kind, { props = '' }){
+  const k = 0.62, SQ = ` transform="matrix(1 0 0 ${k} 0 ${134*(1 - k)})"`, x0 = kind === 'counter' ? 14 : 18, x1 = kind === 'counter' ? 226 : kind === 'fridge' ? 170 : 168;
+  const defs = CVS.mat + `<filter id="shd" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.6"/></filter><filter id="drop" x="-20%" y="-20%" width="150%" height="150%"><feOffset in="SourceAlpha" dx="2.5" dy="3.5"/><feGaussianBlur stdDeviation="1.8"/><feComponentTransfer><feFuncA type="linear" slope=".28"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>` +
+    `<linearGradient id="tr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e6ebf1"/></linearGradient><linearGradient id="ss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1f4f8"/><stop offset="1" stop-color="#b9c2cf"/></linearGradient>` +
+    `<linearGradient id="wt4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e9eef3"/></linearGradient><linearGradient id="hd4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fd6b8"/><stop offset="1" stop-color="#46ad8b"/></linearGradient>`;
+  const gsh = () => { const R = kind === 'counter' ? x1 : 228, bl = pvx(x0, 44), br = pvx(R, 44), ox = 12, oy = 6;
+    return `<path d="M${x0 + ox} ${186 + oy} H${R + ox} L${(br + ox).toFixed(1)} ${130 + oy} H${(bl + ox).toFixed(1)} Z" fill="#2c2b35" opacity=".18" filter="url(#shd)"/><rect x="${x0 + 2}" y="184" width="${x1 - x0 - 4}" height="6" rx="3" fill="#1e2433" opacity=".3" filter="url(#shd)"/>`; };
+  const SB = VO < 0 ? pvx(x0, 44) : pvx(x1, 44), SE = VO < 0 ? x0 : x1, side = VO < 0 ? SB < SE - 0.5 : VO > 0 && SB > SE + 0.5;
+  const sideFace = col => side ? `<path d="M${SE} 134 L${SB.toFixed(1)} ${sy4(44)} V${sy4(44) + 52} L${SE} 186 Z" fill="${col}"/>` : '';
+  const tray = pAt(197, 116, `<rect x="172" y="114" width="50" height="20" rx="4" fill="#b8c2cf"/>`) + pAt(197, 116, `<g filter="url(#drop)"><rect x="172" y="106" width="50" height="20" rx="4" fill="url(#tr)" stroke-width="2.5"/></g><rect x="176" y="109" width="42" height="14" rx="3" fill="none" stroke="#c9d2de" stroke-width="1.2"/>`);
+  const counterTop = `<g${SQ}><path d="${pTrap(x0, 44, x1, 134, 5)}" fill="url(#wt4)"/><path d="M${pvx(x0 + 4, 130).toFixed(1)} 130 H${pvx(x1 - 4, 130).toFixed(1)}" stroke="#5ec1a0" stroke-width="3"/>`;
+  let body;
+  if (kind === 'counter') body = sideFace('#cfe9df') + counterTop + tray + `</g>` + props +   // 계산대: 윗면(+ 쟁반) · 케첩·꼬치(props)
+    `<rect x="${x0}" y="132" width="${x1 - x0}" height="54" rx="4" fill="#fdfdfd"/><rect x="${x0}" y="132" width="${x1 - x0}" height="6" rx="3" fill="#5ec1a0"/><rect x="${x0}" y="178" width="${x1 - x0}" height="8" rx="2" fill="#4a5670"/>` +
+    `<rect x="24" y="142" width="66" height="24" rx="4" fill="#2f3b4f"/><rect x="96" y="146" width="34" height="16" rx="3" fill="#ffd23f" stroke-width="2"/>` +   // 이름 표시창 · 1+1 딱지(글자는 anim)
+    `<rect x="138" y="142" width="82" height="32" rx="2" fill="#e9eef3" stroke-width="2"/><path d="M140 157 H218 M140 172 H218" stroke="#9aa6b8" stroke-width="2"/>` +   // 앞 껌·사탕 진열
+    [0, 1].map(r => [0, 1, 2, 3, 4, 5].map(i => `<rect x="${142 + i*12.6}" y="${145 + r*15}" width="10" height="11" rx="1.5" fill="${['#e0402c', '#5ec1a0', '#f2c230', '#7a5cc8', '#ff8a3a', '#4a90d9'][(i + r*3) % 6]}" stroke-width="1"/>`).join('')).join('') +
+    standBox(24, 156, 76, 128, 124, 22, '#dfe5ec', '#9aa6b8') +   // 유리 롤러 그릴 케이스(앞면은 예전 좌표 그대로)
+    `<rect x="24" y="76" width="132" height="52" rx="3" fill="#8d98aa"/><rect x="24" y="76" width="132" height="8" rx="3" fill="url(#hd4)"/>` +
     '<rect x="29" y="88" width="122" height="24" rx="2" fill="url(#hw)" stroke-width="2"/><path d="M31 99.5 H149 M31 110 H149" stroke="#b9c2cf" stroke-width="2.2"/>' +
-    '<rect x="24" y="113" width="132" height="15" rx="2" fill="#3b414e"/><rect x="30" y="116" width="34" height="9" rx="2" fill="#1e2433" stroke-width="1.5"/><circle cx="138" cy="120.5" r="2.4" fill="#ff8a3a" stroke-width="1"/><circle cx="147" cy="120.5" r="2.4" fill="#5ec1a0" stroke-width="1"/>') });
-// 1번 바나나우유: 편의점 유리문 냉장고(두 칸 문, 선반 두 단) + 오른쪽 뒤 단지 상자
-const MILK4 = deck({ ...CVS, under: TRAY_UNDER + pAt(196, 75, '<rect x="172" y="68" width="48" height="38" rx="3" fill="#a8875a"/>'),
-  tool: pAt(196, 75, '<rect x="172" y="56" width="48" height="38" rx="3" fill="#d9b884"/>'),
-  top: pAt(196, 75, '<path d="M172 75 H220 M196 56 V94" stroke="#a8875a" stroke-width="1.5"/>'),
-  post: UPR('<rect x="22" y="124" width="142" height="8" rx="4" fill="#1e2433" opacity=".2" stroke="none"/><path d="M30 76 H150 L156 84 H24 Z" fill="#e9eef3"/><rect x="24" y="84" width="132" height="44" rx="3" fill="#f4f7fa"/>' +
-    '<rect x="24" y="84" width="132" height="8" rx="3" fill="#5ec1a0"/><path d="M86 88 H94 M90 84.8 V91.2 M87.6 85.6 L92.4 90.4 M92.4 85.6 L87.6 90.4" stroke="#fff" stroke-width="1.2"/>' +
-    '<rect x="28" y="94" width="60" height="30" fill="url(#fz)" stroke="none"/><rect x="92" y="94" width="60" height="30" fill="url(#fz)" stroke="none"/><path d="M29 108.5 H87 M93 108.5 H151" stroke="#b9c2cf" stroke-width="1.6"/>' +
-    '<rect x="24" y="124" width="132" height="4" fill="#4a5670" stroke="none"/>') });
-// 2번 호빵: 둥근 유리 호빵 찜기(빨간 받침·뚜껑, 선반 두 단) + 오른쪽 뒤 호빵 종이 받침 더미
-const HOPP4 = deck({ ...CVS, under: TRAY_UNDER + pAt(198, 77, '<rect x="178" y="72" width="42" height="36" rx="3" fill="#d9cdb8"/>'),
-  tool: pAt(198, 77, '<rect x="176" y="58" width="40" height="34" rx="3" fill="#fff8ee"/><rect x="180" y="62" width="40" height="34" rx="3" fill="#fff8ee"/>'),
-  post: UPR('<ellipse cx="84" cy="127" rx="56" ry="7" fill="#1e2433" opacity=".2" stroke="none"/><path d="M34 88 V120 A50 9 0 0 0 134 120 V88 Z" fill="#fbf6ec"/><ellipse cx="84" cy="88" rx="50" ry="9" fill="#efe6d6" stroke-width="1.5"/>' +
+    '<rect x="24" y="113" width="132" height="15" rx="2" fill="#3b414e"/><rect x="30" y="116" width="34" height="9" rx="2" fill="#1e2433" stroke-width="1.5"/><circle cx="138" cy="120.5" r="2.4" fill="#ff8a3a" stroke-width="1"/><circle cx="147" cy="120.5" r="2.4" fill="#5ec1a0" stroke-width="1"/>';
+  else if (kind === 'fridge') body = standBox(22, 170, 26, 186, 134, 26, '#e9eef3', '#cfd6e0') +   // 바닥에 선 유리문 냉장고 — 위 민트 간판(글자·불빛 anim) · 안쪽 선반 넷(단지·문은 anim) · 아래 환기 그릴
+    `<rect x="22" y="26" width="148" height="160" rx="4" fill="#f4f7fa"/><rect x="22" y="26" width="148" height="22" rx="4" fill="url(#hd4)"/><rect x="28" y="52" width="136" height="116" rx="2" fill="#dff1f7"/>` +
+    [78, 104, 130, 156].map(y => `<path d="M29 ${y} H163" stroke="#b9c2cf" stroke-width="2"/>`).join('') + `<path d="M95 52 V168" stroke="#cfd6e0" stroke-width="3"/>` +
+    `<rect x="22" y="170" width="148" height="16" rx="2" fill="#4a5670"/>` + [0, 1, 2, 3, 4, 5, 6, 7].map(i => `<rect x="${36 + i*16}" y="175" width="10" height="3" rx="1.5" fill="#2c313b" stroke="none"/>`).join('') +
+    `<rect x="141" y="29.5" width="25" height="14" rx="3" fill="#ffd23f" stroke-width="1.8"/>` +   // 간판 오른쪽 끝 1+1 딱지(문에 붙이면 아래 칸 단지에 가림)
+    sideTable3(174) + props;
+  else body = sideFace('#cfe9df') + counterTop + `</g>` +   // 수납장 + 둥근 유리 찜기(예전 좌표 그대로) + 옆 테이블(전자레인지 · 쟁반)
+    `<rect x="${x0}" y="132" width="${x1 - x0}" height="54" rx="4" fill="#fdfdfd"/><rect x="${x0}" y="132" width="${x1 - x0}" height="6" rx="3" fill="#5ec1a0"/><rect x="${x0}" y="178" width="${x1 - x0}" height="8" rx="2" fill="#4a5670"/>` +
+    `<rect x="24" y="142" width="68" height="34" rx="3" fill="#eef3f6" stroke-width="2"/><rect x="96" y="142" width="66" height="34" rx="3" fill="#eef3f6" stroke-width="2"/><rect x="84" y="152" width="4" height="12" rx="2" fill="#9aa6b8" stroke-width="1.2"/><rect x="100" y="152" width="4" height="12" rx="2" fill="#9aa6b8" stroke-width="1.2"/>` +
+    `<rect x="34" y="150" width="34" height="16" rx="3" fill="#ffd23f" stroke-width="2"/>` +
+    '<ellipse cx="84" cy="127" rx="56" ry="7" fill="#1e2433" opacity=".2" stroke="none"/><path d="M34 88 V120 A50 9 0 0 0 134 120 V88 Z" fill="#fbf6ec"/><ellipse cx="84" cy="88" rx="50" ry="9" fill="#efe6d6" stroke-width="1.5"/>' +
     '<ellipse cx="84" cy="104" rx="48" ry="7.5" fill="#dfe5ec" stroke-width="1.5"/><ellipse cx="84" cy="119" rx="48" ry="7.5" fill="#dfe5ec" stroke-width="1.5"/>' +
-    '<path d="M34 120 A50 9 0 0 0 134 120 V127 A50 9 0 0 1 34 127 Z" fill="#e0614a"/><path d="M34 88 Q36 72 84 71 Q132 72 134 88 A50 9 0 0 1 34 88 Z" fill="#e0614a"/><path d="M48 80 Q60 75 76 74" stroke="#fff" stroke-width="2" fill="none" opacity=".6"/><rect x="79" y="66" width="10" height="6" rx="2" fill="#3b414e"/>') });
+    '<path d="M34 120 A50 9 0 0 0 134 120 V127 A50 9 0 0 1 34 127 Z" fill="#e0614a"/><path d="M34 88 Q36 70 84 69 Q132 70 134 88 A50 9 0 0 1 34 88 Z" fill="#e0614a"/><path d="M48 80 Q60 75 76 74" stroke="#fff" stroke-width="2" fill="none" opacity=".6"/><rect x="79" y="64" width="10" height="6" rx="2" fill="#3b414e"/>' +
+    sideTable3(169) + props;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 0 288 200" width="576" height="400"><defs>${defs}</defs>` + gsh() + `<g stroke="${INK}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">` + body + `</g></svg>`;
+  return Object.assign(svgImg(svg), { vx:-24, vw:288 });
+}
+const HBAR4 = withVO(VOFF, () => machine4('counter', { props: PROP4.bottle(180, 66, '#e0402c', '#c0392b') + PROP4.bottle(194, 64, '#f2c230', '#c99a1e') + PROP4.skewers(212, 70) }));
+const MILK4 = machine4('fridge', { props: PROP4.carton(184, 218, 74, 92, 18) });
+const HOPP4 = withVO(-VOFF, () => machine4('steamer', { props: PROP4.micro(178, 222, 72, 94, 24) }));
 // 5층 한강라면 — 남색 메뉴판(노란 글자) + 남색 앞판, 왼쪽 즉석 라면 조리기(서 있는 기계: 뒤 기둥 + 위 물 꼭지 머리 + 앞 인덕션 받침), 가운데 라면 봉지 철망 진열대, 뒤 젓가락 통
 const RAM5 = deck({ board:'#1f3157', edge:'#f2c230', front:'url(#rv)', strip:'#f2c230', tilt:0.62,
   mat:'<pattern id="rv" width="26" height="10" patternUnits="userSpaceOnUse"><rect width="26" height="10" fill="#2d3f6b"/><path d="M0 7 q6.5 -4 13 0 t13 0" stroke="#4d6cab" stroke-width="1.5" fill="none"/></pattern><linearGradient id="ss" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b9c2cf"/><stop offset=".4" stop-color="#f1f4f8"/><stop offset="1" stop-color="#9aa6b8"/></linearGradient><radialGradient id="ind" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#4a5262"/><stop offset="1" stop-color="#22262e"/></radialGradient>',
@@ -699,8 +745,8 @@ const THEMES = [
     guests:['office', 'ajussi'], order:['치킨 {n}마리요!', '양념 반 간장 반, {n}마리요!', '반반 무 많이요!', '오늘 축구 하잖아요, {n}마리!'], thanks:['치킨은 진리!', '오늘 야근 끝~'],
     item:{ name:'치킨', shape:'chicken', top:'#efe6d2', front:'#ffffff',
       vars:[{ shape:'chicken', top:'#efe6d2', front:'#ffffff', band:'#e8a33a', dot:'#d98a2b' }, { shape:'chicken', top:'#f6d2c4', front:'#ffffff', band:'#c0392b', dot:'#c0392b' }, { shape:'chicken', top:'#e6d3b8', front:'#ffffff', band:'#5a3a22', dot:'#6b3a1f' }] } },
-  { staff:{ body:'#f4f6fa', dark:'#3b3f4a', vest:'#5ec1a0', badge:'#fff', hat:'hair' }, big:1.2, lamp:'tube', pop:true, shop:'24시 층층편의점', sign:'#ffffff', ink:'#2f8f6f', awn:'#5ec1a0', img:MILK4, anim:animMilk4, tilt:0.62, spot:[pvx(197, 116), 127], reveal:0.8, up:-6,
-    mach:[{ img:HBAR4, anim:animBar4 }, {}, { img:HOPP4, anim:animHop4 }],
+  { staff:{ body:'#f4f6fa', dark:'#3b3f4a', vest:'#5ec1a0', badge:'#fff', hat:'hair' }, big:1.2, pop:true, shop:'24시 층층편의점', sign:'#ffffff', ink:'#2f8f6f', awn:'#5ec1a0', img:MILK4, anim:animMilk4, tilt:0.62, spot:[pvx(197, 116), 127], reveal:0.8, up:-6,
+    mach:[{ img:HBAR4, anim:animBar4, vo:VOFF }, { vo:0 }, { img:HOPP4, anim:animHop4, vo:-VOFF }],   // 핫바 계산대 · 바나나우유 냉장고 · 호빵 찜기(실내라 천막·조명 없음)
     guests:['student', 'office', 'youth'], order:['바나나우유 {n}개요', '핫바 하나 데워 주세요~ {n}개', '호빵 따끈한 걸로 {n}개요~', '빨대도 주세요~'], thanks:['역시 편의점!', '봉투는 괜찮아요'],
     item:{ name:'편의점 간식', shape:'bmilk', top:'#fbe38a', front:'#fbe38a',
       vars:[{ shape:'hotbar', top:'#c98a3a', front:'#c98a3a' }, { shape:'bmilk', top:'#fbe38a', front:'#fbe38a' }, { shape:'hoppang', top:'#fff8ee', front:'#fff8ee' }] } },
@@ -3081,10 +3127,11 @@ function animBing6({ S2, R2, u, now, prog, work, s }){
 // ---- 생산기 움직임 공통 ----
 const quad = (S2, x0, y0, x1, y1) => { ctx.beginPath(); [S2(x0, y0), S2(x1, y0), S2(x1, y1), S2(x0, y1)].forEach(([x, y], j) => j ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); };   // S2 좌표 네모 → 화면 경로(45도 층은 뒤가 좁은 사다리꼴)
 const lerp01 = (p, a, b) => Math.min(1, Math.max(0, (p - a)/(b - a)));
+const name4 = (R2, u, now, s, x, y, t, col, size) => unsq(() => { const [a, b] = R2(x, y); ctx.font = `${Math.round(size*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = s.broken ? blink(now) : col; ctx.fillText(s.broken ? '고장!' : t, a, b); });   // 4층: 기계에 붙은 이름(고장이면 '고장!' 깜빡)
+const tag4 = (R2, u, x, y) => unsq(() => { const [a, b] = R2(x, y); ctx.font = `${Math.round(11*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('1+1', a, b); });   // 노란 1+1 딱지 글자
 const plus1 = (S2, u) => { const [x, y] = S2(46, 156); unsq(() => { ctx.font = `${Math.round(11*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('1+1', x, y); }); };
 // 4층 공통: 기계 속(화면 그대로 좌표 R2, 납작하게 안 함) → 쟁반(윗판 위 화면 좌표)으로 옮기기
-const TRAY_UP = [pvx(197, 116), 134 - 18*0.62];
-const upToTray = (R2, prog, from, draw) => { if (prog < 0.72 || prog > 0.8) return; const t = lerp01(prog, 0.72, 0.8), e = t*t*(3 - 2*t),
+const upToTray = (R2, prog, from, draw) => { if (prog < 0.72 || prog > 0.8) return; const t = lerp01(prog, 0.72, 0.8), e = t*t*(3 - 2*t), TRAY_UP = [pvx(197, 116), 134 - 18*0.62],   // 쟁반 자리는 그리는 시점(VO)대로
   [x, y] = R2(from[0] + (TRAY_UP[0] - from[0])*e, from[1] + (TRAY_UP[1] - from[1])*e - Math.sin(Math.PI*t)*16); draw(x, y); };
 const glassFront = (R2, u, x0, y0, x1, y1, a = 1) => { const [l, t] = R2(x0, y0), [r, b] = R2(x1, y1);   // 유리 반사 + 테두리
   ctx.fillStyle = `rgba(255,255,255,${0.14*a})`; ctx.fillRect(l, t, r - l, b - t);
@@ -3100,7 +3147,7 @@ function hotbarSide(x, y, u, br, roll, k = 1){ const w = 32*u*k, h = 6.4*u*k;
   if (br > 0.4) { ctx.save(); ctx.clip(); ctx.strokeStyle = 'rgba(90,50,20,.6)'; for (let i = -3; i <= 3; i++) { const o = ((i*6 + roll*6) % 42 + 42) % 42 - 21; ctx.beginPath(); ctx.moveTo(x + o*u*k, y - h/2); ctx.lineTo(x + (o - 2)*u*k, y + h/2); ctx.stroke(); } ctx.restore(); }
   ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(x - w/2 + 3*u, y - h/2 + 1.2*u*k, w*0.55, 1.3*u*k); }
 function animBar4({ S2, R2, u, now, prog, work, s }){
-  menuSign(S2, u, now, s, '핫바', '#fff', 23, 23); plus1(S2, u);
+  name4(R2, u, now, s, 57, 154, '핫바', '#7ff0a8', 17); tag4(R2, u, 113, 154.5);
   const brown = work ? lerp01(prog, 0.25, 0.7) : 0;
   unsq(() => {
     const roll = work ? now/240 : 0, door = work ? lerp01(prog, 0.66, 0.7) - lerp01(prog, 0.84, 0.88) : 0;
@@ -3118,27 +3165,28 @@ function animBar4({ S2, R2, u, now, prog, work, s }){
   });
   if (work && brown > 0.3) steam(S2, u, now, [70, 120], 60);
 }
-// 4층 1번 바나나우유(편의점 유리문 냉장고): 선반에 단지가 한 칸씩 채워지고(0~65%, 안쪽 불빛·찬 기운) → 오른쪽 문이 열려(66~72%) 하나가 쟁반으로 쏙
-const MILK_UP = []; [107.5, 123].forEach(yb => [0, 64].forEach(dx => [34.5, 46, 57.5, 69, 80.5].forEach(x => MILK_UP.push([x + dx, yb]))));
+// 4층 1번 바나나우유(바닥에 선 키 큰 유리문 냉장고): 위 간판 불빛, 선반 네 단에 단지가 한 칸씩 채워지고(0~65%, 찬 기운) → 오른쪽 문이 열려(66~72%) 하나가 옆 테이블 쟁반으로
+const MILK_UP = []; [78, 104, 130, 156].forEach(yb => [[33, 90], [100, 160]].forEach(([a, b]) => { for (let i = 0; i < 5; i++) MILK_UP.push([a + 5 + i*(b - a - 10)/4, yb]); }));
 function milkSide(x, yb, u, k = 1){ const q = u*k, g = ctx.createLinearGradient(x - 5*q, 0, x + 5*q, 0); g.addColorStop(0, '#f2c84a'); g.addColorStop(0.4, '#fff3b0'); g.addColorStop(1, '#e8b838');   // 옆에서 본 단지(아래가 통통)
   ctx.beginPath(); ctx.moveTo(x - 4.4*q, yb); ctx.quadraticCurveTo(x - 5.6*q, yb - 5*q, x - 3.8*q, yb - 7.6*q); ctx.lineTo(x - 2.8*q, yb - 9*q); ctx.lineTo(x + 2.8*q, yb - 9*q); ctx.lineTo(x + 3.8*q, yb - 7.6*q); ctx.quadraticCurveTo(x + 5.6*q, yb - 5*q, x + 4.4*q, yb); ctx.closePath();
   ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1*u; ctx.stroke();
   ctx.fillStyle = '#fff'; ctx.fillRect(x - 3.6*q, yb - 7.4*q, 7.2*q, 1.6*q);
   ctx.fillStyle = '#dfe5ec'; rr(x - 3*q, yb - 11*q, 6*q, 2.2*q, 1*q); ctx.fill(); ctx.stroke(); }
 function animMilk4({ S2, R2, u, now, prog, work, s }){
-  menuSign(S2, u, now, s, '바나나우유', '#fff', 23, 21); plus1(S2, u);
   unsq(() => {
-    const N = MILK_UP.length, n = work ? Math.floor(lerp01(prog, 0, 0.65)*N) : 12, door = work ? lerp01(prog, 0.66, 0.7) - lerp01(prog, 0.84, 0.88) : 0;
-    if (!s.broken) { const [l, t] = R2(28, 94), [r] = R2(152, 94); ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.1*Math.sin(now/500)})`; ctx.fillRect(l, t, r - l, 3*u); }   // 안쪽 불빛
+    if (!s.broken) { const [l, t] = R2(22, 26), [r, b] = R2(170, 48), g = ctx.createLinearGradient(0, b, 0, b + 30*u); g.addColorStop(0, `rgba(200,255,235,${0.35 + 0.08*Math.sin(now/600)})`); g.addColorStop(1, 'rgba(200,255,235,0)'); ctx.fillStyle = g; ctx.fillRect(l, b, r - l, 30*u); }   // 간판 불빛
+    const N = MILK_UP.length, n = work ? Math.floor(lerp01(prog, 0, 0.65)*N) : 24, door = work ? lerp01(prog, 0.66, 0.7) - lerp01(prog, 0.84, 0.88) : 0;
+    if (!s.broken) { const [l, t] = R2(28, 53), [r] = R2(164, 53); ctx.fillStyle = `rgba(255,255,255,${0.45 + 0.1*Math.sin(now/500)})`; ctx.fillRect(l, t, r - l, 3*u); }   // 안쪽 불빛
     MILK_UP.forEach(([mx, yb], i) => { if (i > n || (i === n && !(work && prog < 0.65))) return; if (work && i === n - 1 && prog > 0.72) return;
-      const k = i === n ? (lerp01(prog, 0, 0.65)*N) % 1 : 1, [x, y] = R2(mx, yb); ctx.globalAlpha = Math.min(1, k*2); milkSide(x, y, u, 0.6 + 0.4*k); ctx.globalAlpha = 1; });
-    if (s.broken) { const [l, t] = R2(28, 94), [r, b] = R2(152, 124); ctx.fillStyle = 'rgba(40,46,58,.45)'; ctx.fillRect(l, t, r - l, b - t); }   // 고장: 불 꺼짐
-    [[28, 0], [92, door]].forEach(([x0, op]) => {                 // 유리문 두 칸(오른쪽 문은 경첩이 오른쪽 — 열리면 좁아짐)
-      const w = 60*(1 - 0.85*op), dx = x0 + 60 - w;
-      glassFront(R2, u, x0 ? dx : x0, 94, (x0 ? dx : x0) + w, 124, 1 - 0.4*op);
-      const [hx, ht] = R2(x0 ? dx + 4 : x0 + 56, 100), [, hb] = R2(0, 118); ctx.strokeStyle = '#8d98aa'; ctx.lineWidth = 2.6*u; ctx.beginPath(); ctx.moveTo(hx, ht); ctx.lineTo(hx, hb); ctx.stroke(); });
-    if (work) { for (let i = 0; i < 3; i++) { const tt = (now/1500 + i/3) % 1, [wx, wy] = R2(50 + i*40 + Math.sin(now/600 + i)*5, 92 - tt*18);   // 찬 기운
-        ctx.fillStyle = `rgba(230,248,255,${0.55*(1 - tt)})`; ctx.beginPath(); ctx.arc(wx, wy, (4 + tt*5)*u, 0, Math.PI*2); ctx.fill(); }
+      const k = i === n ? (lerp01(prog, 0, 0.65)*N) % 1 : 1, [x, y] = R2(mx, yb); ctx.globalAlpha = Math.min(1, k*2); milkSide(x, y, u, (0.6 + 0.4*k)*1.25); ctx.globalAlpha = 1; });
+    if (s.broken) { const [l, t] = R2(28, 52), [r, b] = R2(164, 168); ctx.fillStyle = 'rgba(40,46,58,.45)'; ctx.fillRect(l, t, r - l, b - t); }   // 고장: 불 꺼짐
+    [[28, 0], [96, door]].forEach(([x0, op]) => {                 // 유리문 두 짝(오른쪽 문은 경첩이 오른쪽 — 열리면 좁아짐)
+      const w = 68*(1 - 0.85*op), dx = x0 + 68 - w;
+      glassFront(R2, u, x0 ? dx : x0, 52, (x0 ? dx : x0) + w, 168, 1 - 0.4*op);
+      const [hx, ht] = R2(x0 ? dx + 5 : x0 + 63, 92), [, hb] = R2(0, 128); ctx.strokeStyle = '#8d98aa'; ctx.lineWidth = 3*u; ctx.beginPath(); ctx.moveTo(hx, ht); ctx.lineTo(hx, hb); ctx.stroke(); });
+    name4(R2, u, now, s, 90, 37.5, '바나나우유', '#fff', 16); tag4(R2, u, 153.5, 37);
+    if (work) { for (let i = 0; i < 3; i++) { const tt = (now/1500 + i/3) % 1, [wx, wy] = R2(150 + i*6 + Math.sin(now/600 + i)*5, 140 - tt*30);   // 열린 쪽 찬 기운
+        if (door > 0.2) { ctx.fillStyle = `rgba(230,248,255,${0.6*(1 - tt)})`; ctx.beginPath(); ctx.arc(wx, wy, (4 + tt*5)*u, 0, Math.PI*2); ctx.fill(); } }
       upToTray(R2, prog, MILK_UP[Math.max(0, n - 1)], (x, y) => milkSide(x, y + 5*u, u, 0.9)); }
   });
 }
@@ -3149,7 +3197,7 @@ function hoppangSide(x, yb, u, k, i){ const rx = 9*u*k, ry = 9.5*u*k, g = ctx.cr
   ctx.fillStyle = ['#8a3a3a', '#5aa85d', '#e0614a'][i % 3]; ctx.beginPath(); ctx.arc(x, yb - ry*0.82, 2*u*k, 0, Math.PI*2); ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.ellipse(x - rx*0.45, yb - ry*0.55, 2*u*k, 1.3*u*k, -0.6, 0, Math.PI*2); ctx.fill(); }
 function animHop4({ S2, R2, u, now, prog, work, s }){
-  menuSign(S2, u, now, s, '호빵', '#fff', 23, 23); plus1(S2, u);
+  name4(R2, u, now, s, 84, 79, '호빵', '#fff', 15); tag4(R2, u, 51, 158.5);
   unsq(() => {
     const puff = work ? 0.6 + 0.4*lerp01(prog, 0, 0.6) : 1, open = work ? lerp01(prog, 0.66, 0.7) - lerp01(prog, 0.84, 0.88) : 0, last = HOP_UP.length - 1;
     HOP_UP.forEach(([hx, yb, k], i) => { if (work && i === last && prog > 0.72) return; const [x, y] = R2(hx, yb); hoppangSide(x, y, u, puff*k, i); });

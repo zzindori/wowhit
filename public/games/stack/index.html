@@ -684,11 +684,22 @@ const JJM6 = { ...JJM, fine:true, ptray:true, side:'#a8683a', boardUp:30 };
 // 기계 확대·뒤로(사용자: 간판·등 없애고 크게, 전부 앞 끝선에 맞춰 있어 이상) — (ax, 바닥 128) 기준 k배 + d만큼 뒤로(위로). 속 움직임도 map6로 같은 변환
 const BOARD6 = 30, M6 = { egg: { k: 1.25, ax: 18, d: 8 }, sik: { k: 1.25, ax: 26, d: 8 }, bing: { k: 1.2, ax: 16, d: 8 } };
 const m6 = c => `<g transform="matrix(${c.k} 0 0 ${c.k} ${c.ax*(1 - c.k)} ${128*(1 - c.k) - c.d})">`, map6 = (c, x, y) => [c.ax + (x - c.ax)*c.k, 128 + (y - 128)*c.k - c.d];
-const eggStack6 = (x1, x2, v1, v2, n) => {   // 삶기 전 날달걀 30구 판을 쌓아 둠(사용자) — 판마다 상판 원근(tpBox), 맨 위 판에 달걀 6 × 5
-  const [sa, sb] = TP((x1 + x2)/2, v2); let out = `<ellipse cx="${(sa + 6).toFixed(1)}" cy="${(sb - 1).toFixed(1)}" rx="${(x2 - x1)*0.62}" ry="4.5" fill="#1e2433" opacity=".25" stroke="none" filter="url(#shd)"/>`;
-  for (let i = 0; i < n; i++) { const B = tpBox(x1 + (i % 2 ? 0.8 : 0), x2 + (i % 2 ? 0.8 : 0), v1, v2, 3.4*(i + 1), '#d6c29a', '#e3d2ad', '#bba57c'); out += B.svg + `<path d="M${B.tl[0].toFixed(1)} ${(B.tl[1] + 1.7).toFixed(1)} H${B.tr[0].toFixed(1)}" stroke="#a88f62" stroke-width=".8" stroke-dasharray="2 1.4"/>`; }
-  const H = 3.4*n; for (let r = 0; r < 5; r++) for (let c = 0; c < 6; c++) { const x = x1 + 4 + c*(x2 - x1 - 8)/5, v = v1 + 3 + r*(v2 - v1 - 6)/4, [a, b] = TP(x, v);
-    out += `<ellipse cx="${a.toFixed(1)}" cy="${(b - H - 1.2).toFixed(1)}" rx="2.6" ry="1.9" fill="#fff6e8" stroke-width=".8"/><ellipse cx="${(a - 0.7).toFixed(1)}" cy="${(b - H - 1.8).toFixed(1)}" rx=".8" ry=".5" fill="#fff" stroke="none"/>`; }
+const eggStack6 = (x1, x2, v1, v2, n) => {   // 삶기 전 날달걀 30구 종이 판을 층층이 쌓음(사용자: '그 계란판 쌓아 올린 것') — 판 물결 가장자리 사이로 달걀 줄이 보임, 시점 쪽 옆면도
+  const f = q => q.toFixed(1), LH = 6.4, P = (x, v, h) => { const [a, b] = TP(x, v); return [a, b - h]; };
+  const sideX = TP(x2, v1)[0] > TP(x2, v2)[0] + 0.3 ? x2 : TP(x1, v1)[0] < TP(x1, v2)[0] - 0.3 ? x1 : null;   // 보이는 옆면(시점 쪽)
+  const [sa, sb] = P((x1 + x2)/2, v2, 0); let out = `<ellipse cx="${f(sa + 6)}" cy="${f(sb - 1)}" rx="${(x2 - x1)*0.62}" ry="4.5" fill="#1e2433" opacity=".25" stroke="none" filter="url(#shd)"/>`;
+  const egg = (x, y, rx = 2.7, ry = 3) => `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${rx}" ry="${ry}" fill="#fff4e2" stroke-width=".8"/><ellipse cx="${f(x - 0.8)}" cy="${f(y - 1)}" rx=".8" ry="1" fill="#fff" stroke="none"/>`;
+  const band = (A, B, h, k) => { const [ax, ay] = A, [bx, by] = B, pts = []; for (let i = 0; i <= k; i++) { const t = i/k; pts.push([ax + (bx - ax)*t, ay + (by - ay)*t - h]); }   // 판 가장자리(아래가 달걀 칸 물결)
+    let d = `M${f(pts[0][0])} ${f(pts[0][1] - 2.6)} L${f(pts[k][0])} ${f(pts[k][1] - 2.6)} L${f(pts[k][0])} ${f(pts[k][1])}`;
+    for (let i = k; i > 0; i--) { const [x0, y0] = pts[i], [x1_, y1_] = pts[i - 1]; d += ` Q${f((x0 + x1_)/2)} ${f((y0 + y1_)/2 + 2.2)} ${f(x1_)} ${f(y1_)}`; }
+    return `<path d="${d} Z" fill="#cdbf9e" stroke-width=".9"/>`; };
+  for (let L = 0; L < n; L++) { const h0 = L*LH;
+    if (sideX != null) { const A = P(sideX, v2, 0), B = P(sideX, v1, 0); for (let i = 0; i < 5; i++) { const t = (i + 0.5)/5; out += egg(A[0] + (B[0] - A[0])*t, A[1] + (B[1] - A[1])*t - h0 - 3.2, 1.6, 2.8); } out += band(A, B, h0 + LH, 5); }   // 옆면 달걀 줄 + 판
+    const A = P(x1, v2, 0), B = P(x2, v2, 0); for (let i = 0; i < 6; i++) { const t = (i + 0.5)/6; out += egg(A[0] + (B[0] - A[0])*t, A[1] - h0 - 3.2); }   // 앞 달걀 줄
+    out += band(A, B, h0 + LH, 6); }
+  const H = n*LH, T = [P(x1, v2, H), P(x2, v2, H), P(x2, v1, H), P(x1, v1, H)];
+  out += `<path d="M${T.map(([a, b]) => f(a) + ' ' + f(b - 2.6)).join(' L')} Z" fill="#d9cba9" stroke-width="1"/>`;   // 맨 위 판
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 6; c++) { const [a, b] = P(x1 + 4 + c*(x2 - x1 - 8)/5, v1 + 3 + r*(v2 - v1 - 6)/4, H + 2.6); out += egg(a, b - 1, 2.5, 1.9); }   // 맨 위 달걀 30개
   return out; };
 const cast6 = (x0, x1, y) => `<path d="M${x0 + 4} ${y - 3} H${x1 + 6} L${x1 + 12} ${y + 4} H${x0 + 10} Z" fill="#1e2433" opacity=".3" stroke="none" filter="url(#shd)"/>`;
 const log6 = (x, y, r, v) => { const dx = pvx(x, v - 14) - pvx(x, v), dy = 14*0.62, L = Math.hypot(dx, dy) || 1, nx = dy/L*r, ny = dx/L*r, f = n => n.toFixed(1);   // 통나무(앞 마구리 + 뒤로 이어진 몸통 — 시점 쪽으로)
@@ -700,7 +711,7 @@ const egg6 = () => deck({ ...JJM6,
     '<g fill="none" stroke="#b87a48" stroke-width="1" opacity=".8"><path d="M27 90 Q62 84 97 90"/><path d="M33 80 Q62 74 91 80"/><path d="M45 72 Q62 69 79 72"/></g>' +   // 돔 벽돌 줄
     '<g fill="#b87a48" stroke="none"><circle cx="44" cy="86" r="2.4"/><circle cx="58" cy="78" r="2"/><circle cx="76" cy="82" r="2.6"/><circle cx="88" cy="92" r="2"/><circle cx="36" cy="94" r="1.8"/><circle cx="66" cy="90" r="2.2"/></g>' +
     '<path d="M40 127 V112 Q40 99 62 99 Q84 99 84 112 V127" fill="none" stroke="#4a5262" stroke-width="3.5"/><path d="M42 126 V112 Q42 101 62 101 Q82 101 82 112 V126 Z" fill="#2a1a12"/><rect x="50" y="72" width="24" height="9" rx="2" fill="#6b4226" stroke-width="1.5"/></g>' +
-    eggStack6(160, 206, 60, 84, 6) +   // 뒤 오른쪽: 날달걀 판 더미
+    eggStack6(160, 204, 62, 84, 5) +   // 뒤 오른쪽: 날달걀 판 더미
     '<g transform="translate(20 -3)">' + [[119, 110], [114.5, 117], [123.5, 117], [110, 124], [119, 124], [128, 124]].map(([x, y]) => log6(x, y, 4, 120)).join('') + '</g>') });   // 장작(가마 옆, 조금 앞)
 const EGG6 = withVO(VOFF, egg6);
 // 1번 식혜: 투명 원통 식혜 기계(돌며 살얼음) + 꼭지 아래 컵 + 옆 장독·종이컵 탑

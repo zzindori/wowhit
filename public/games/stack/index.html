@@ -478,8 +478,9 @@ const ICON3 = {
   gan: '<path d="M106 166 L100 172" stroke-width="3.2"/><circle cx="98" cy="173.5" r="2.6" fill="#fffaf0" stroke-width="1.2"/><circle cx="101.5" cy="175" r="2.4" fill="#fffaf0" stroke-width="1.2"/><path d="M104 165 Q99 151 112 144 Q127 140 130 152 Q131 164 116 167 Z" fill="#6b3a1f" stroke-width="1.6"/><path d="M110 148 Q118 145 124 148" stroke="#fff" stroke-width="1.2" fill="none" opacity=".7"/>' + MFACE(117, 155, 0.62, 'wink'),
 };
 // 3층 지붕은 기계마다(사용자: 큰 후드는 머리가 무겁고 일률적) — 튀김기 = 메뉴판 뒤 작은 후드 · 버무림기 = 기둥 둘 메뉴판만 · 화로 = 위에서 내려온 은색 주름 연기 덕트
+const HOOD_UP = 30, FRY_VY = -8;   // 튀김기 후드를 메뉴판보다 30 위로(사용자: 후드가 낮아 들어 올린 바구니가 후드에 가림 — 바구니 들 자리 확보), 그림 칸도 위로 8 넓힘
 const roof3 = kind => { const o = VO*PERSP, BKt = `translate(${o} ${90*(1 - 0.62)})`;
-  if (kind === 'fryer') return `<g transform="${BKt}"><path d="M44 -10 H196 L214 38 H26 Z" fill="url(#hd)" stroke-width="2.4"/>` + [0, 1, 2, 3, 4].map(i => `<path d="M${92 + i*14} -5 V2" stroke="#7d8798" stroke-width="2"/>`).join('') + `<rect x="24" y="37" width="192" height="7" rx="2" fill="#dfe5ec" stroke-width="2.2"/></g>`;
+  if (kind === 'fryer') return `<g transform="translate(${o} ${90*(1 - 0.62) - HOOD_UP})"><path d="M44 -10 H196 L214 38 H26 Z" fill="url(#hd)" stroke-width="2.4"/>` + [0, 1, 2, 3, 4].map(i => `<path d="M${92 + i*14} -5 V2" stroke="#7d8798" stroke-width="2"/>`).join('') + `<rect x="24" y="37" width="192" height="7" rx="2" fill="#dfe5ec" stroke-width="2.2"/></g>`;
   if (kind === 'mixer') return `<g transform="${BKt}"><rect x="60" y="36" width="6" height="16" fill="#c0392b" stroke-width="2"/><rect x="174" y="36" width="6" height="16" fill="#c0392b" stroke-width="2"/></g>`;
   const fx = pvx(34, 74), fy = 134 - (134 - 74)*0.62 - 28;   // 화로: 덕트 깔때기(석쇠 왼쪽 위, 메뉴판 안 가리게 낮게)
   return `<path d="M-14 -4 C-16 30 ${fx - 40} ${fy - 30} ${fx - 6} ${fy - 6}" fill="none" stroke-width="15"/><path d="M-14 -4 C-16 30 ${fx - 40} ${fy - 30} ${fx - 6} ${fy - 6}" fill="none" stroke="#c9d2de" stroke-width="11" stroke-dasharray="2.4 2.2"/>` +
@@ -542,9 +543,10 @@ function machine3(kind, { emb, props = '' }){
       `<ellipse cx="${D.x}" cy="${D.y}" rx="${D.rx}" ry="${D.ry}" fill="#dfe5ec" stroke-width="2.6"/><ellipse cx="${D.x}" cy="${D.y + 1}" rx="${D.rx - 5}" ry="${D.ry - 4}" fill="#5d6474" stroke-width="1.6"/>` +   // 입구 테 + 속
       embAt(D.x, D.y + D.dep + 2);
   })();
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 0 288 200" width="576" height="400"><defs>${defs}</defs>` + gsh() +
+  const vy = kind === 'fryer' ? FRY_VY : 0;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 ${vy} 288 ${200 - vy}" width="576" height="${(200 - vy)*2}"><defs>${defs}</defs>` + gsh() +
     `<g stroke="${INK}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">` + (kind === 'brazier' ? '' : roof3(kind)) + `<g${BK}><rect x="52" y="4" width="136" height="36" rx="6" fill="${CHK.board}" stroke="${CHK.edge}" stroke-width="4"/></g>` + body + shelf + props + (kind === 'brazier' ? roof3(kind) : '') + `</g></svg>`;
-  return Object.assign(svgImg(svg), { vx:-24, vw:288 });
+  return Object.assign(svgImg(svg), { vx:-24, vw:288, vy, vh:200 - vy });
 }
 const FRY3 = withVO(VOFF, () => machine3('fryer', { emb: ICON3.fry, props: PROP3.sack(200, 78) + PROP3.cola(222, 84) }));
 const YANG3 = machine3('mixer', { emb: ICON3.yang, props: PROP2.jar(176, 76, '#c0392b', 18) + PROP3.radish(210, 80) });
@@ -2226,8 +2228,8 @@ LAMPS.arch = (S2, u, now, s, off) => {
 // 3층 후드 아래 형광등: 후드 테두리 밑에 차가운 흰 빛 줄 + 아래로 퍼지는 빛
 LAMPS.hood = (S2, u, now, s, off) => {
   if (!off) deckGlow(S2, u, now, '235,245,255', 0.12);
-  const [a, b] = S2(26, 44), [c] = S2(214, 44); ctx.fillStyle = off ? '#9aa3b0' : (s.broken && Math.random() < 0.2 ? '#cfd6e0' : '#fdfdf6'); rr(a, b, c - a, 3.4*u, 1.7*u); ctx.fill();
-  if (!off) { const g = ctx.createLinearGradient(0, b, 0, b + 40*u); g.addColorStop(0, 'rgba(240,250,255,.32)'); g.addColorStop(1, 'rgba(240,250,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(a, b + 3*u); ctx.lineTo(c, b + 3*u); ctx.lineTo(c + 10*u, b + 40*u); ctx.lineTo(a - 10*u, b + 40*u); ctx.closePath(); ctx.fill(); }
+  const [a, b] = S2(26, 44 - HOOD_UP), [c] = S2(214, 44 - HOOD_UP); ctx.fillStyle = off ? '#9aa3b0' : (s.broken && Math.random() < 0.2 ? '#cfd6e0' : '#fdfdf6'); rr(a, b, c - a, 3.4*u, 1.7*u); ctx.fill();
+  if (!off) { const g = ctx.createLinearGradient(0, b, 0, b + 40*u); g.addColorStop(0, 'rgba(240,250,255,.18)'); g.addColorStop(1, 'rgba(240,250,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(a, b + 3*u); ctx.lineTo(c, b + 3*u); ctx.lineTo(c + 10*u, b + 40*u); ctx.lineTo(a - 10*u, b + 40*u); ctx.closePath(); ctx.fill(); }
 };
 // 3·4층: 메뉴판 위에 매달린 형광등(차가운 흰빛, 고장이면 껌뻑)
 LAMPS.tube = (S2, u, now, s, off) => {
@@ -2285,7 +2287,7 @@ function drawThemed(T, s, z, k, p, py){
   const bt = (now - (rt(z).pbump?.[k] || -1e9))/320, sq = bt >= 0 && bt < 1 && !RM ? Math.sin(bt*Math.PI*2)*(1 - bt)*0.07 : 0;   // 완성 '통'
   ctx.save();
   if (sq) { const [bx, by] = S0(120, 190); ctx.translate(bx, by); ctx.scale(1 + sq*0.6, 1 - sq); ctx.translate(-bx, -by); }
-  { const vx = T.img.vx || 0; ctx.drawImage(T.img, S0(vx, 0)[0], t, (T.img.vw || 240)*u, 200*u); }   // 넓힌 그림 칸(deck)은 왼쪽 끝 vx부터
+  { const vx = T.img.vx || 0, vy = T.img.vy || 0; ctx.drawImage(T.img, S0(vx, 0)[0], t + vy*u, (T.img.vw || 240)*u, (T.img.vh || 200)*u); }   // 넓힌 그림 칸(deck)은 왼쪽 끝 vx부터, 위로 넓힌 칸(vy < 0)은 그만큼 위부터
   const tk = T.tilt, dv = tk ? 90*(1 - tk) : 0;                  // 45도(tilt): 그림과 같은 비율로 — 메뉴판 쪽은 내려오고, 윗판은 앞 모서리 기준 납작
   const vo = T.vo || 0; VO = vo;   // 45도 층 시점(그리는 동안만)
   if (T.lamp) machLamps(tk ? (a, v) => S2(a + vo*PERSP*pvd(v), v < 44 ? v + dv : v <= 134 ? 134 - (134 - v)*tk : v) : S2, u, now, s, T.lamp);
@@ -3412,7 +3414,7 @@ function drawLeaves(){
   }
 }
 // 생산기 위 글자 · 수리 막대 · 고장 연기 (프린터·분식 조리대 공통)
-const LAMP_LIFT = { hood:4, arch:10, string:18, fairy:18, vanity:14, chorong:28, spot:32 };   // 조명이 그림 위로 올라온 양(월드 단위)
+const LAMP_LIFT = { hood:10, arch:10, string:18, fairy:18, vanity:14, chorong:28, spot:32 };   // 조명이 그림 위로 올라온 양(월드 단위)
 function labelPill(str, x, y, size, color){   // 생산기 위 알림 글자: 밝은 알약 바탕 + 테두리(천막·간판·전광판 어떤 배경에서도 읽히게)
   const [sx, sy] = toS(x, y, 0); ctx.font = `${Math.round(size*scale)}px ${FONT}`; const w = ctx.measureText(str).width + 14*scale, h = size*1.5*scale;
   rr(sx - w/2, sy - h/2, w, h, h/2); ctx.fillStyle = 'rgba(255,250,240,.94)'; ctx.fill(); ctx.strokeStyle = color; ctx.lineWidth = 1.5*scale; ctx.stroke();

@@ -628,13 +628,15 @@ function machine4(kind, { props = '' }){
     `<rect x="22" y="170" width="148" height="16" rx="2" fill="#4a5670"/>` + [0, 1, 2, 3, 4, 5, 6, 7].map(i => `<rect x="${36 + i*16}" y="175" width="10" height="3" rx="1.5" fill="#2c313b" stroke="none"/>`).join('') +
     `<rect x="141" y="29.5" width="25" height="14" rx="3" fill="#ffd23f" stroke-width="1.8"/>` +   // 간판 오른쪽 끝 1+1 딱지(문에 붙이면 아래 칸 단지에 가림)
     sideTable3(174) + props;
-  else body = sideFace('#cfe9df') + counterTop + `</g>` + cast(34, 66, 134, 127) +   // 수납장 + 둥근 유리 찜기(예전 좌표 그대로) + 옆 테이블(전자레인지 · 쟁반)
+  else body = sideFace('#cfe9df') + counterTop + `</g>` + cast(40, 19, 128, 128) +   // 수납장 + 둥근 유리 찜기(예전 좌표 그대로) + 옆 테이블(전자레인지 · 쟁반)
     `<rect x="${x0}" y="132" width="${x1 - x0}" height="54" rx="4" fill="#fdfdfd"/>` + shadeF + `<rect x="${x0}" y="132" width="${x1 - x0}" height="6" rx="3" fill="#5ec1a0"/><rect x="${x0}" y="178" width="${x1 - x0}" height="8" rx="2" fill="#4a5670"/>` +
     `<rect x="24" y="142" width="68" height="34" rx="3" fill="#eef3f6" stroke-width="2"/><rect x="96" y="142" width="66" height="34" rx="3" fill="#eef3f6" stroke-width="2"/><rect x="84" y="152" width="4" height="12" rx="2" fill="#9aa6b8" stroke-width="1.2"/><rect x="100" y="152" width="4" height="12" rx="2" fill="#9aa6b8" stroke-width="1.2"/>` +
     `<rect x="34" y="150" width="34" height="16" rx="3" fill="#ffd23f" stroke-width="2"/>` +
-    '<path d="M34 88 V120 A50 9 0 0 0 134 120 V88 Z" fill="#fbf6ec"/><ellipse cx="84" cy="88" rx="50" ry="9" fill="#efe6d6" stroke-width="1.5"/>' +
-    '<ellipse cx="84" cy="104" rx="48" ry="7.5" fill="#dfe5ec" stroke-width="1.5"/><ellipse cx="84" cy="119" rx="48" ry="7.5" fill="#dfe5ec" stroke-width="1.5"/>' +
-    '<path d="M34 120 A50 9 0 0 0 134 120 V127 A50 9 0 0 1 34 127 Z" fill="#e0614a"/><path d="M110 121 A50 9 0 0 1 84 129 V126 A50 9 0 0 0 110 120 Z" fill="#1e2433" opacity=".18" stroke="none"/><path d="M34 88 Q36 70 84 69 Q132 70 134 88 A50 9 0 0 1 34 88 Z" fill="#e0614a"/><path d="M48 80 Q60 75 76 74" stroke="#fff" stroke-width="2" fill="none" opacity=".6"/><rect x="79" y="64" width="10" height="6" rx="2" fill="#3b414e"/>' +
+    // 호빵 찜기(사용자: 실물처럼 높게) — 키 큰 유리 원통 3단(선반 66·93·119) + 빨간 받침·돔 뚜껑, 가운데 은색 기둥
+    '<path d="M40 40 V120 A44 8 0 0 0 128 120 V40 Z" fill="#fbf6ec"/><path d="M104 40 V120 A44 8 0 0 0 128 120 V40 Z" fill="#1e2433" opacity=".07" stroke="none"/><ellipse cx="84" cy="40" rx="44" ry="8" fill="#efe6d6" stroke-width="1.5"/><rect x="82" y="40" width="4" height="80" fill="#cfd6e0" stroke-width="1"/>' +
+    '<ellipse cx="84" cy="66" rx="42" ry="7" fill="#dfe5ec" stroke-width="1.5"/><ellipse cx="84" cy="93" rx="42" ry="7" fill="#dfe5ec" stroke-width="1.5"/><ellipse cx="84" cy="119" rx="42" ry="7" fill="#dfe5ec" stroke-width="1.5"/>' +
+    '<path d="M40 120 A44 8 0 0 0 128 120 V128 A44 8 0 0 1 40 128 Z" fill="#e0614a"/><path d="M106 122 A44 8 0 0 1 84 130 V126 A44 8 0 0 0 106 120 Z" fill="#1e2433" opacity=".18" stroke="none"/>' +
+    '<path d="M40 40 Q42 20 84 19 Q126 20 128 40 A44 8 0 0 1 40 40 Z" fill="#e0614a"/><path d="M110 24 Q124 30 126 40 A44 8 0 0 1 106 46 Z" fill="#1e2433" opacity=".14" stroke="none"/><path d="M52 31 Q62 25 76 24" stroke="#fff" stroke-width="2" fill="none" opacity=".6"/><rect x="79" y="14" width="10" height="6" rx="2" fill="#3b414e"/>' +
     sideTable3(169) + props;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 0 288 200" width="576" height="400"><defs>${defs}</defs>` + gsh() + `<g stroke="${INK}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">` + body + `</g></svg>`;
   return Object.assign(svgImg(svg), { vx:-24, vw:288 });
@@ -2052,16 +2054,28 @@ function item(x, y, z, kind, noBadge){
   if (K.shape === 'eggnet') { eggNet(sx, sy, scale*1.1); return; }
   if (K.shape === 'sikhye') { sikCup(sx, sy, scale*1.05, 1, true); return; }
   if (K.shape === 'bingsu') { bingsu(sx, sy, scale*1.05, 1, 4); return; }
-  if (K.shape === 'bmilk') {                         // 바나나우유 단지: 아래가 통통한 항아리, 입구 넓음, 위 은박 뚜껑, 몸통 위쪽 흰 띠 (상표 글자는 없음)
-    const s = scale, top = sy - 12.5*s;
-    const body = () => { ctx.beginPath(); ctx.moveTo(sx - 4.6*s, top); ctx.quadraticCurveTo(sx - 7.6*s, sy - 9*s, sx - 7.2*s, sy - 5*s);
-      ctx.bezierCurveTo(sx - 7*s, sy - 1.2*s, sx - 5.2*s, sy, sx - 3.4*s, sy); ctx.lineTo(sx + 3.4*s, sy);
-      ctx.bezierCurveTo(sx + 5.2*s, sy, sx + 7*s, sy - 1.2*s, sx + 7.2*s, sy - 5*s); ctx.quadraticCurveTo(sx + 7.6*s, sy - 9*s, sx + 4.6*s, top); ctx.closePath(); };
-    body(); ctx.fillStyle = '#fbe38a'; ctx.fill();
-    ctx.save(); body(); ctx.clip(); ctx.fillStyle = '#fff'; ctx.fillRect(sx - 8*s, sy - 9.5*s, 16*s, 2.2*s);
-    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(sx - 5*s, sy - 6.5*s, 1.4*s, 4*s); ctx.restore();
-    body(); ctx.strokeStyle = edge || '#38445a'; ctx.lineWidth = edge ? 2 : 1; ctx.stroke();
-    rr(sx - 5.2*s, top - 1.6*s, 10.4*s, 2.2*s, 1*s); ctx.fillStyle = '#eef2f6'; ctx.fill(); ctx.stroke();
+  if (K.shape === 'bmilk') {                         // 바나나우유 단지(사용자: 뚱뚱하고 볼품없음 → 날씬하게·디테일) — 아래 통통 · 어깨 잘록 · 입구 살짝 벌어짐, 노란 몸통 음영 + 크림 띠(작은 바나나) + 은박 뚜껑 (상표 글자 없음)
+    const s = scale, T = sy - 15*s, ink = edge || '#38445a';
+    const body = () => { ctx.beginPath(); ctx.moveTo(sx - 4.4*s, T + 1.2*s);
+      ctx.quadraticCurveTo(sx - 3.7*s, T + 3*s, sx - 4.3*s, T + 4.6*s);                            // 넓은 입구 → 짧게 잘록한 목
+      ctx.bezierCurveTo(sx - 6.9*s, sy - 8*s, sx - 6.9*s, sy - 1.4*s, sx - 3.6*s, sy);          // 통통한 아래
+      ctx.lineTo(sx + 3.6*s, sy);
+      ctx.bezierCurveTo(sx + 6.9*s, sy - 1.4*s, sx + 6.9*s, sy - 8*s, sx + 4.3*s, T + 4.6*s);
+      ctx.quadraticCurveTo(sx + 3.7*s, T + 3*s, sx + 4.4*s, T + 1.2*s); ctx.closePath(); };
+    body(); { const g = ctx.createLinearGradient(sx - 6*s, 0, sx + 6*s, 0); g.addColorStop(0, '#e9b93a'); g.addColorStop(0.28, '#fff4b8'); g.addColorStop(0.55, '#fbe08a'); g.addColorStop(1, '#d49a22'); ctx.fillStyle = g; ctx.fill(); }
+    ctx.save(); body(); ctx.clip();
+    { const g = ctx.createLinearGradient(0, sy - 4*s, 0, sy); g.addColorStop(0, 'rgba(150,90,10,0)'); g.addColorStop(1, 'rgba(150,90,10,.35)'); ctx.fillStyle = g; ctx.fillRect(sx - 7*s, sy - 4*s, 14*s, 4*s); }   // 바닥 그늘
+    ctx.fillStyle = '#fffaf0'; ctx.fillRect(sx - 7*s, sy - 9.4*s, 14*s, 3.6*s); ctx.fillStyle = 'rgba(150,90,10,.18)'; ctx.fillRect(sx + 2.5*s, sy - 9.4*s, 5*s, 3.6*s);   // 크림 띠(오른쪽 그늘)
+    if (s > 0.6) { ctx.strokeStyle = '#f2c230'; ctx.lineWidth = 1.3*s; ctx.beginPath(); ctx.arc(sx, sy - 9.6*s, 2.4*s, Math.PI*0.2, Math.PI*0.8); ctx.stroke();   // 작은 바나나
+      ctx.strokeStyle = '#7a4a1a'; ctx.lineWidth = 0.7*s; ctx.beginPath(); ctx.moveTo(sx - 1.9*s, sy - 8.3*s); ctx.lineTo(sx - 2.4*s, sy - 8.8*s); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.ellipse(sx - 3.3*s, sy - 4*s, 0.9*s, 2.6*s, 0.15, 0, Math.PI*2); ctx.fill();   // 세로 반사광
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(sx - 2.6*s, T + 2*s, 0.9*s, 3*s);
+    ctx.restore();
+    body(); ctx.strokeStyle = ink; ctx.lineWidth = edge ? 2 : 1; ctx.stroke();
+    { const g = ctx.createLinearGradient(sx - 4.4*s, 0, sx + 4.4*s, 0); g.addColorStop(0, '#b9c2cf'); g.addColorStop(0.35, '#ffffff'); g.addColorStop(1, '#8d98aa');   // 은박 뚜껑: 테두리 두께 + 윗면
+      rr(sx - 4.9*s, T - 0.2*s, 9.8*s, 1.8*s, 0.8*s); ctx.fillStyle = g; ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(sx, T - 0.2*s, 4.9*s, 1.2*s, 0, 0, Math.PI*2); ctx.fillStyle = '#eef2f6'; ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 0.6*s; ctx.beginPath(); ctx.ellipse(sx - 0.8*s, T - 0.4*s, 2.2*s, 0.5*s, 0, Math.PI, Math.PI*1.9); ctx.stroke(); }
     return;
   }
   const ink = edge || '#38445a', iw = edge ? 2 : 1;
@@ -3230,28 +3244,28 @@ function animMilk4({ S2, R2, u, now, prog, work, s }){
   });
 }
 // 4층 2번 호빵(둥근 유리 찜기): 선반 두 단의 작은 반죽이 부풀어 동글(0~60%, 단팥·야채·피자 점), 유리에 김이 서렸다 걷힘 → 앞 유리문이 옆으로 돌아가며 열리고(66~72%) 쟁반
-const HOP_UP = [[62, 99, 0.82], [84, 99, 0.82], [106, 99, 0.82], [50, 103, 1], [72, 103, 1], [96, 103, 1], [118, 103, 1], [62, 114, 0.82], [84, 114, 0.82], [106, 114, 0.82], [50, 118, 1], [72, 118, 1], [96, 118, 1], [118, 118, 1]];
+const HOP_UP = []; [66, 93, 119].forEach(y => { [62, 84, 106].forEach(x => HOP_UP.push([x, y - 4, 0.8])); [53, 74, 94, 115].forEach(x => HOP_UP.push([x, y, 0.95])); });   // 3단 × (뒤 3 + 앞 4)
 function hoppangSide(x, yb, u, k, i){ const rx = 9*u*k, ry = 9.5*u*k, g = ctx.createRadialGradient(x - rx*0.35, yb - ry*0.7, rx*0.1, x, yb - ry*0.4, rx*1.2); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#eadcc4');   // 옆에서 본 호빵(둥근 지붕)
   ctx.beginPath(); ctx.ellipse(x, yb, rx, ry, 0, Math.PI, 0); ctx.quadraticCurveTo(x, yb + 2.4*u*k, x - rx, yb); ctx.closePath(); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.1*u; ctx.stroke();
   ctx.fillStyle = ['#8a3a3a', '#5aa85d', '#e0614a'][i % 3]; ctx.beginPath(); ctx.arc(x, yb - ry*0.82, 2*u*k, 0, Math.PI*2); ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.ellipse(x - rx*0.45, yb - ry*0.55, 2*u*k, 1.3*u*k, -0.6, 0, Math.PI*2); ctx.fill(); }
 function animHop4({ S2, R2, u, now, prog, work, s }){
-  name4(R2, u, now, s, 84, 79, '호빵', '#fff', 15); tag4(R2, u, 51, 158.5);
+  name4(R2, u, now, s, 84, 30, '호빵', '#fff', 15); tag4(R2, u, 51, 158.5);
   unsq(() => {
     const puff = work ? 0.6 + 0.4*lerp01(prog, 0, 0.6) : 1, open = work ? lerp01(prog, 0.66, 0.7) - lerp01(prog, 0.84, 0.88) : 0, last = HOP_UP.length - 1;
     HOP_UP.forEach(([hx, yb, k], i) => { if (work && i === last && prog > 0.72) return; const [x, y] = R2(hx, yb); hoppangSide(x, y, u, puff*k, i); });
-    const [cx, top] = R2(84, 88), [, bot] = R2(84, 120), rx = 50*u, ry = 9*u;
+    const [cx, top] = R2(84, 40), [, bot] = R2(84, 120), rx = 44*u, ry = 8*u;
     ctx.save(); ctx.beginPath(); ctx.moveTo(cx - rx, top); ctx.lineTo(cx - rx, bot); ctx.ellipse(cx, bot, rx, ry, 0, Math.PI, 0, true); ctx.lineTo(cx + rx, top); ctx.ellipse(cx, top, rx, ry, 0, 0, Math.PI); ctx.closePath(); ctx.clip();
     const fog = work ? 0.3 + 0.2*Math.sin(now/700) : s.broken ? 0.05 : 0.15;   // 김 서림
     ctx.fillStyle = `rgba(244,250,252,${fog*(1 - 0.7*open)})`; ctx.fillRect(cx - rx, top - ry, rx*2, bot - top + ry*2);
     if (s.broken) { ctx.fillStyle = 'rgba(40,46,58,.35)'; ctx.fillRect(cx - rx, top - ry, rx*2, bot - top + ry*2); }
-    const dw = open*60*u; ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(cx - 30*u + dw, top, 60*u, bot - top + ry);   // 앞 유리문(옆으로 돌아감)
-    ctx.strokeStyle = 'rgba(56,68,90,.55)'; ctx.lineWidth = 1.4*u; ctx.strokeRect(cx - 30*u + dw, top, 60*u, bot - top + ry);
+    const dw = open*54*u; ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(cx - 27*u + dw, top, 54*u, bot - top + ry);   // 앞 유리문(옆으로 돌아감)
+    ctx.strokeStyle = 'rgba(56,68,90,.55)'; ctx.lineWidth = 1.4*u; ctx.strokeRect(cx - 27*u + dw, top, 54*u, bot - top + ry);
     ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 2.6*u; ctx.beginPath(); ctx.moveTo(cx - rx + 9*u, top + 4*u); ctx.lineTo(cx - rx + 9*u, bot - 2*u); ctx.moveTo(cx - rx + 15*u, top + 6*u); ctx.lineTo(cx - rx + 15*u, top + 18*u); ctx.stroke();
     ctx.restore();
     ctx.strokeStyle = '#38445a'; ctx.lineWidth = 2.4*u; ctx.beginPath(); ctx.moveTo(cx - rx, top); ctx.lineTo(cx - rx, bot); ctx.moveTo(cx + rx, top); ctx.lineTo(cx + rx, bot); ctx.stroke();
     if (work) { upToTray(R2, prog, HOP_UP[last], (x, y) => hoppangSide(x, y + 4*u, u, 0.8, last));
-      for (let i = 0; i < 3; i++) { const tt = (now/1300 + i/3) % 1, [wx, wy] = R2(64 + i*20 + Math.sin(now/300 + i)*4, 66 - tt*30);   // 뚜껑 위 김
+      for (let i = 0; i < 3; i++) { const tt = (now/1300 + i/3) % 1, [wx, wy] = R2(64 + i*20 + Math.sin(now/300 + i)*4, 16 - tt*14);   // 뚜껑 위 김
         ctx.strokeStyle = `rgba(255,255,255,${0.8*(1 - tt)})`; ctx.lineWidth = (3 + tt*3)*u; ctx.beginPath(); ctx.moveTo(wx, wy); ctx.quadraticCurveTo(wx - 6*u, wy - 8*u, wx, wy - 16*u); ctx.stroke(); } }
   });
 }

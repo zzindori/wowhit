@@ -3077,10 +3077,11 @@ function animRamen5({ S2, R2: R2o, u: uo, now, prog, work, s }){   // 조리기�
         ctx.strokeStyle = `rgba(255,255,255,${0.8*(1 - tt)})`; ctx.lineWidth = (2.5 + tt*3)*u; ctx.beginPath(); ctx.moveTo(wx, wy); ctx.quadraticCurveTo(wx - 5*u, wy - 6*u, wx, wy - 11*u); ctx.stroke(); }
     }
     if (s.broken) { const [l, t] = R2(31, 91), [r, b] = R2(91, 123); ctx.fillStyle = 'rgba(30,34,44,.4)'; ctx.fillRect(l, t, r - l, b - t); }   // 고장: 칸 불 꺼짐
-    if (moving) upToTray(R2o, prog, [K5.ax + (61 - K5.ax)*K5.k, K5.ay + (105 - K5.ay)*K5.k], (x, y) => foilBowl(x, y - 4*uo, uo, 1.1, 2, now));
-    if (work && prog >= 0.8) { const [x, y] = R2o(pvx(197, 116), 134 - 18*0.62); foilBowl(x, y - 4*uo, uo, 1.1, 2, now);   // 쟁반 위 완성 라면은 크게(사용자: 너무 작음 — 작은 그림은 아래 칸에 쌓일 때만), reveal 2
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x + 5*uo, y - 3.6*uo, 6*uo, 2.4*uo, 0.1, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#f2b51e'; ctx.beginPath(); ctx.ellipse(x + 5*uo, y - 3.9*uo, 2.4*uo, 1.3*uo, 0, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#5aa85d'; [[-9, -2.5], [-4, -1], [1, -5.5], [-12, -4.5], [10, -1.5]].forEach(([dx, dy]) => ctx.fillRect(x + dx*uo, y + dy*uo, 2.6*uo, 1.2*uo)); }
+    const TK = 1.1, sit = (x, y) => [x, y - 12*TK*uo];   // 쟁반 위 완성 라면(사용자: 쟁반 위에 정확히, 크게 — 작은 그림은 아래 칸 적재 때만, reveal 2): 그릇 바닥 가운데를 쟁반 가운데에
+    if (moving) upToTray(R2o, prog, [K5.ax + (61 - K5.ax)*K5.k, K5.ay + (105 - K5.ay)*K5.k], (x, y) => { const [a, b] = sit(x, y); foilBowl(a, b, uo, TK, 2, now); }, [pvx(197, 114), 134 - 20*0.62]);
+    if (work && prog >= 0.8) { const [x, y] = sit(...R2o(pvx(197, 114), 134 - 20*0.62)); foilBowl(x, y, uo, TK, 2, now);   // 쟁반(pTray v 98~130) 가운데
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x + 5*uo, y + 0.5*uo, 6.6*uo, 2.6*uo, 0.1, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#f2b51e'; ctx.beginPath(); ctx.ellipse(x + 5*uo, y + 0.2*uo, 2.6*uo, 1.4*uo, 0, 0, Math.PI*2); ctx.fill();   // 달걀
+      ctx.fillStyle = '#5aa85d'; [[-10, 1.5], [-4, 3], [1, -1.5], [-13, -0.5], [11, 2.5]].forEach(([dx, dy]) => ctx.fillRect(x + dx*uo, y + dy*uo, 2.6*uo, 1.2*uo)); }   // 파
   });
 }
 // ---- 6층 찜질방: 0번 황토 불가마 맥반석 계란 · 1번 살얼음 식혜 기계 · 2번 빙수기 + 토핑대 ----
@@ -3181,7 +3182,7 @@ const name4 = (R2, u, now, s, x, y, t, col, size) => unsq(() => { const [a, b] =
 const tag4 = (R2, u, x, y) => unsq(() => { const [a, b] = R2(x, y); ctx.font = `${Math.round(11*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('1+1', a, b); });   // 노란 1+1 딱지 글자
 const plus1 = (S2, u) => { const [x, y] = S2(46, 156); unsq(() => { ctx.font = `${Math.round(11*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('1+1', x, y); }); };
 // 4층 공통: 기계 속(화면 그대로 좌표 R2, 납작하게 안 함) → 쟁반(윗판 위 화면 좌표)으로 옮기기
-const upToTray = (R2, prog, from, draw) => { if (prog < 0.72 || prog > 0.8) return; const t = lerp01(prog, 0.72, 0.8), e = t*t*(3 - 2*t), TRAY_UP = [pvx(197, 116), 134 - 18*0.62],   // 쟁반 자리는 그리는 시점(VO)대로
+const upToTray = (R2, prog, from, draw, to) => { if (prog < 0.72 || prog > 0.8) return; const t = lerp01(prog, 0.72, 0.8), e = t*t*(3 - 2*t), TRAY_UP = to || [pvx(197, 116), 134 - 18*0.62],   // 쟁반 자리는 그리는 시점(VO)대로
   [x, y] = R2(from[0] + (TRAY_UP[0] - from[0])*e, from[1] + (TRAY_UP[1] - from[1])*e - Math.sin(Math.PI*t)*16); draw(x, y); };
 const glassFront = (R2, u, x0, y0, x1, y1, a = 1) => { const [l, t] = R2(x0, y0), [r, b] = R2(x1, y1);   // 유리 반사 + 테두리
   ctx.fillStyle = `rgba(255,255,255,${0.14*a})`; ctx.fillRect(l, t, r - l, b - t);

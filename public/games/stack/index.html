@@ -678,30 +678,41 @@ const RAM5 = ram5(), RAM5L = withVO(VOFF, ram5), RAM5R = withVO(-VOFF, ram5);
 const JJM = { board:'#6b4226', edge:'#e0a85a', front:'url(#brk)', strip:'#8c5a3a', tilt:0.62,
   mat:'<pattern id="brk" width="24" height="12" patternUnits="userSpaceOnUse"><rect width="24" height="12" fill="#d9a06a"/><path d="M0 0.5 H24 M0 6.5 H24 M6 0.5 V6.5 M18 6.5 V12" stroke="#b87a48" stroke-width="1.2"/></pattern><linearGradient id="cl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dba06a"/><stop offset="1" stop-color="#a8683a"/></linearGradient><linearGradient id="gl6" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#eaf6fa" stop-opacity=".55"/><stop offset=".4" stop-color="#ffffff" stop-opacity=".25"/><stop offset="1" stop-color="#cfe6ee" stop-opacity=".55"/></linearGradient><linearGradient id="og" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5a3420"/><stop offset=".4" stop-color="#8a5634"/><stop offset="1" stop-color="#4a2a18"/></linearGradient>',
   deco:'<path d="M12 137 H228" stroke="#8c5a3a" stroke-width="3"/><rect x="22" y="142" width="80" height="20" rx="4" fill="#fff4e0" stroke-width="2"/><g fill="none" stroke="#fff" stroke-width="2.2" opacity=".85"><path d="M190 160 q-4 -6 0 -12 t0 -12"/><path d="M200 160 q-4 -6 0 -12 t0 -12"/><path d="M210 160 q-4 -6 0 -12 t0 -12"/></g>' };
-const SHD6 = '<rect x="18" y="124" width="150" height="8" rx="4" fill="#1e2433" opacity=".2" stroke="none"/>';
+// 6층 원근·현실감(사용자: 왼쪽·오른쪽 방향, 그림자, 접시 방향 + 정교하게): 세 대 왼쪽·정면·오른쪽(withVO), 바닥 그림자 시점대로(fine), 원근 쟁반(ptray),
+// 서 있는 것은 앞면 그대로 + 윗면·시점 쪽 옆면(standBox), 납작한 회색 띠 대신 오른쪽 아래로 드리우는 흐린 그림자(cast6)
+const JJM6 = { ...JJM, fine:true, ptray:true, side:'#a8683a' };
+const cast6 = (x0, x1, y) => `<path d="M${x0 + 4} ${y - 3} H${x1 + 6} L${x1 + 12} ${y + 4} H${x0 + 10} Z" fill="#1e2433" opacity=".3" stroke="none" filter="url(#shd)"/>`;
+const log6 = (x, y, r, v) => { const dx = pvx(x, v - 14) - pvx(x, v), dy = 14*0.62, L = Math.hypot(dx, dy) || 1, nx = dy/L*r, ny = dx/L*r, f = n => n.toFixed(1);   // 통나무(앞 마구리 + 뒤로 이어진 몸통 — 시점 쪽으로)
+  return `<circle cx="${f(x + dx)}" cy="${f(y - dy)}" r="${r}" fill="#7a4a2a" stroke-width="1.2"/><path d="M${f(x + nx)} ${f(y + ny)} L${f(x + dx + nx)} ${f(y - dy + ny)} L${f(x + dx - nx)} ${f(y - dy - ny)} L${f(x - nx)} ${f(y - ny)} Z" fill="#8a5634" stroke-width="1.2"/>` +
+    `<circle cx="${x}" cy="${y}" r="${r}" fill="#c99a6a" stroke-width="1.3"/><circle cx="${x}" cy="${y}" r="${r*0.6}" fill="none" stroke="#a87449" stroke-width=".8"/><circle cx="${x}" cy="${y}" r="${r*0.25}" fill="#a87449" stroke="none"/>`; };
 // 0번 맥반석 계란: 황토 가마(둥근 지붕 + 아치 아궁이) + 장작 더미, 뒤에 달걀판
-const EGG6 = deck({ ...JJM, under: TRAY_UNDER, tool: pAt(148, 72, '<rect x="130" y="60" width="36" height="24" rx="3" fill="#d9c49a"/>' + [136, 145, 154, 163].flatMap(x => [66, 77].map(y => `<ellipse cx="${x - 2}" cy="${y}" rx="3.6" ry="4.2" fill="#fff8ee" stroke-width="1"/>`)).join('')),
-  post: UPR(SHD6 + '<rect x="22" y="96" width="80" height="32" rx="4" fill="url(#brk)"/><path d="M24 99 Q24 70 62 68 Q100 70 100 99 Z" fill="url(#cl)"/>' +
+const egg6 = () => deck({ ...JJM6, tool: pAt(148, 72, '<rect x="130" y="60" width="36" height="24" rx="3" fill="#d9c49a"/>' + [136, 145, 154, 163].flatMap(x => [66, 77].map(y => `<ellipse cx="${x - 2}" cy="${y}" rx="3.6" ry="4.2" fill="#fff8ee" stroke-width="1"/>`)).join('')),
+  post: UPR(cast6(22, 132, 128) + `<g transform="translate(${(pvx(92, 100) - 92).toFixed(1)} 0)"><rect x="88" y="52" width="9" height="30" fill="#6b4226" stroke-width="1.6"/><rect x="86" y="49" width="13" height="5" rx="1.5" fill="#4a2a18" stroke-width="1.4"/></g>` +   // 뒤쪽 굴뚝
+    standBox(22, 102, 96, 128, 124, 22, '#c98f5a', '#a8683a') + '<rect x="22" y="96" width="80" height="32" rx="4" fill="url(#brk)"/><path d="M24 99 Q24 70 62 68 Q100 70 100 99 Z" fill="url(#cl)"/>' +
+    '<g fill="none" stroke="#b87a48" stroke-width="1" opacity=".8"><path d="M27 90 Q62 84 97 90"/><path d="M33 80 Q62 74 91 80"/><path d="M45 72 Q62 69 79 72"/></g>' +   // 돔 벽돌 줄
     '<g fill="#b87a48" stroke="none"><circle cx="44" cy="86" r="2.4"/><circle cx="58" cy="78" r="2"/><circle cx="76" cy="82" r="2.6"/><circle cx="88" cy="92" r="2"/><circle cx="36" cy="94" r="1.8"/><circle cx="66" cy="90" r="2.2"/></g>' +
-    '<path d="M42 126 V112 Q42 101 62 101 Q82 101 82 112 V126 Z" fill="#2a1a12"/><rect x="50" y="72" width="24" height="9" rx="2" fill="#6b4226" stroke-width="1.5"/>' +
-    '<g stroke-width="1.4"><circle cx="110" cy="124" r="4" fill="#a87449"/><circle cx="119" cy="124" r="4" fill="#a87449"/><circle cx="128" cy="124" r="4" fill="#a87449"/><circle cx="114.5" cy="117" r="4" fill="#b8844f"/><circle cx="123.5" cy="117" r="4" fill="#b8844f"/><circle cx="119" cy="110" r="4" fill="#a87449"/></g>' +
-    '<g fill="#e3c08a" stroke="none"><circle cx="110" cy="124" r="1.4"/><circle cx="119" cy="124" r="1.4"/><circle cx="128" cy="124" r="1.4"/><circle cx="114.5" cy="117" r="1.4"/><circle cx="123.5" cy="117" r="1.4"/><circle cx="119" cy="110" r="1.4"/></g>') });
+    '<path d="M40 127 V112 Q40 99 62 99 Q84 99 84 112 V127" fill="none" stroke="#4a5262" stroke-width="3.5"/><path d="M42 126 V112 Q42 101 62 101 Q82 101 82 112 V126 Z" fill="#2a1a12"/><rect x="50" y="72" width="24" height="9" rx="2" fill="#6b4226" stroke-width="1.5"/>' +
+    [[119, 110], [114.5, 117], [123.5, 117], [110, 124], [119, 124], [128, 124]].map(([x, y]) => log6(x, y, 4, 120)).join('')) });   // 장작(통나무)
+const EGG6 = withVO(VOFF, egg6);
 // 1번 식혜: 투명 원통 식혜 기계(돌며 살얼음) + 꼭지 아래 컵 + 옆 장독·종이컵 탑
-const SIK6 = deck({ ...JJM, under: TRAY_UNDER,
-  post: UPR(SHD6 + '<rect x="36" y="104" width="52" height="24" rx="3" fill="#f4efe6"/><rect x="36" y="124" width="52" height="4" fill="#8c5a3a" stroke="none"/><rect x="46" y="121" width="32" height="3" rx="1" fill="#8d98aa" stroke-width="1"/>' +
+const SIK6 = deck({ ...JJM6,
+  post: UPR(cast6(34, 150, 128) + standBox(36, 88, 104, 128, 124, 18, '#e9e2d4', '#cfc4ae') + '<rect x="36" y="104" width="52" height="24" rx="3" fill="#f4efe6"/><rect x="40" y="113" width="14" height="7" rx="1.5" fill="#1e2433" stroke-width="1"/><g fill="#c9d2de" stroke="none"><rect x="58" y="124.6" width="2" height="1.6"/><rect x="62" y="124.6" width="2" height="1.6"/><rect x="66" y="124.6" width="2" height="1.6"/></g><rect x="36" y="124" width="52" height="4" fill="#8c5a3a" stroke="none"/><rect x="46" y="121" width="32" height="3" rx="1" fill="#8d98aa" stroke-width="1"/>' +
     '<path d="M34 76 V104 A28 5 0 0 0 90 104 V76 Z" fill="#e9f4f8" opacity=".7"/><ellipse cx="62" cy="76" rx="28" ry="5" fill="#dfeef4" stroke-width="1.5"/><path d="M38 76 Q40 66 62 65 Q84 66 86 76 A24 4 0 0 1 38 76 Z" fill="#f4efe6"/><rect x="58" y="61" width="8" height="5" rx="2" fill="#8c5a3a" stroke-width="1.2"/>' +
     '<rect x="58" y="106" width="8" height="6" rx="1.5" fill="#cfd6e0" stroke-width="1.3"/><path d="M66 107 L74 103" stroke-width="2.4"/>' +
     '<path d="M118 128 Q108 126 108 112 Q108 98 118 95 H140 Q150 98 150 112 Q150 126 140 128 Z" fill="url(#og)"/><ellipse cx="129" cy="95" rx="12" ry="3" fill="#5a3420" stroke-width="1.5"/><path d="M118 93 Q129 86 140 93 Z" fill="#6b4226" stroke-width="1.5"/><path d="M112 108 Q129 112 146 108" stroke="#c99a6a" stroke-width="1.3" fill="none"/>' +
     [0, 1, 2, 3, 4, 5].map(i => `<path d="M${154 + 0} ${126 - i*3.2} L${155.2} ${120 - i*3.2} H${164.8} L${166} ${126 - i*3.2}" fill="#fff" stroke-width="1"/>`).join('')) });
 // 2번 팥빙수: 빙수기(위 얼음 통 + 칼날, 아래 그릇 받침) + 옆 토핑대(팥 냄비·인절미 떡·콩가루·연유)
-const BING6 = deck({ ...JJM, under: TRAY_UNDER,
-  post: UPR(SHD6 + '<rect x="20" y="120" width="60" height="8" rx="2" fill="#8d98aa"/><rect x="68" y="88" width="11" height="34" fill="#dfe5ec"/>' +
-    '<path d="M24 66 H76 L79 70 H21 Z" fill="#eef2f6"/><rect x="21" y="70" width="58" height="20" rx="3" fill="#5ec1d0"/><rect x="26" y="73" width="28" height="14" rx="2" fill="#e6f6fb" stroke-width="1.4"/><rect x="31" y="75.5" width="18" height="9.5" rx="1" fill="#ffffff" stroke="#9fd0de" stroke-width="1"/><circle cx="64" cy="77" r="3" fill="#e0402c" stroke-width="1"/><circle cx="72" cy="77" r="3" fill="#5ec1a0" stroke-width="1"/><rect x="58" y="82" width="18" height="4" rx="1.5" fill="#2f8f9e" stroke="none"/>' +
+const bing6 = () => deck({ ...JJM6,
+  post: UPR(cast6(20, 158, 128) + standBox(20, 80, 120, 128, 124, 18, '#b9c2cf', '#7d8798') + '<rect x="20" y="120" width="60" height="8" rx="2" fill="#8d98aa"/>' + standBox(68, 79, 88, 122, 112, 10, '#eef2f6', '#b9c2cf') + '<rect x="68" y="88" width="11" height="34" fill="#dfe5ec"/>' +
+    standBox(21, 79, 70, 90, 112, 7, '#eef2f6', '#3f9fae') + '' +
+    '<ellipse cx="46" cy="92" rx="9" ry="2" fill="#b9c2cf" stroke-width="1"/>' +   // 칼날 원판
+    '<rect x="21" y="70" width="58" height="20" rx="3" fill="#5ec1d0"/><rect x="26" y="73" width="28" height="14" rx="2" fill="#e6f6fb" stroke-width="1.4"/><rect x="31" y="75.5" width="18" height="9.5" rx="1" fill="#ffffff" stroke="#9fd0de" stroke-width="1"/><circle cx="64" cy="77" r="3" fill="#e0402c" stroke-width="1"/><circle cx="72" cy="77" r="3" fill="#5ec1a0" stroke-width="1"/><rect x="58" y="82" width="18" height="4" rx="1.5" fill="#2f8f9e" stroke="none"/>' +
     '<path d="M38 90 H54 L52 94 H40 Z" fill="#cfd6e0" stroke-width="1.4"/>' +
     '<path d="M82 126 V108 Q82 104 94 104 Q106 104 106 108 V126 Q94 129 82 126 Z" fill="#8d98aa"/><ellipse cx="94" cy="106" rx="12" ry="3" fill="#6b2a2a" stroke-width="1.4"/><g fill="#8a3a3a" stroke="none"><circle cx="90" cy="105.5" r="1"/><circle cx="96" cy="106.5" r="1"/><circle cx="99" cy="105" r="1"/></g><path d="M100 104 L108 92" stroke="#a87449" stroke-width="2.2"/>' +
     '<rect x="110" y="116" width="20" height="10" rx="2" fill="#f4efe6"/>' + [0, 1, 2, 3].map(i => `<rect x="${112 + i*4.4}" y="${112 - (i % 2)}" width="4" height="4" rx=".8" fill="#f2e2b0" stroke-width=".8"/>`).join('') +
     '<path d="M134 126 V110 Q134 106 140 106 Q146 106 146 110 V126 Z" fill="#e8c26a"/><ellipse cx="140" cy="107" rx="6" ry="1.8" fill="#f2d68a" stroke-width="1"/>' +
     '<rect x="150" y="100" width="9" height="26" rx="3" fill="#ffffff"/><path d="M152 100 L154.5 93 L157 100 Z" fill="#e0402c" stroke-width="1"/><rect x="151" y="108" width="7" height="8" rx="1" fill="#5ec1d0" stroke="none"/>') });
+const BING6 = withVO(-VOFF, bing6);
 // 7층 층층 뷰티 — 연분홍 작업대 + 분홍 메뉴판(흰 글자), 앞판 진열 선반(작은 화장품 병)
 const BTY7 = { board:'#f29bb5', edge:'#c2456b', front:'url(#mr)', strip:'url(#rg)', wt:'#fdf1f5',
   mat:'<linearGradient id="mr" x1="0" y1="0" x2="1" y2=".6"><stop offset="0" stop-color="#fde9ef"/><stop offset=".38" stop-color="#f7c6d6"/><stop offset=".42" stop-color="#fff"/><stop offset=".47" stop-color="#f7c6d6"/><stop offset=".55" stop-color="#fff" stop-opacity=".9"/><stop offset=".58" stop-color="#f4b8cb"/><stop offset="1" stop-color="#f29bb5"/></linearGradient><linearGradient id="rg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d98a7e"/><stop offset=".5" stop-color="#f6c9b8"/><stop offset="1" stop-color="#d98a7e"/></linearGradient><radialGradient id="es" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#eefaff"/><stop offset="1" stop-color="#a8dcec"/></radialGradient><radialGradient id="tt" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e6d6dd"/></radialGradient>',
@@ -776,8 +787,8 @@ const THEMES = [
     mach:[{ img:RAM5L, vo:VOFF }, { vo:0 }, { img:RAM5R, vo:-VOFF }],   // 왼쪽·정면·오른쪽 원근
     guests:['tourist', 'youth'], order:['라면 {n}개요!', '계란 넣어 주세요!', 'Ramyeon {n}, please!'], thanks:['한강에서 라면 최고!', 'So good!'],
     item:{ name:'라면', shape:'ramen', top:'#e8833a', front:'#cfd6e0' } },
-  { staff:{ body:'#f2a35a', dark:'#7a4a2a', apron:'#6b4226', hat:'hair' }, big:1.2, lamp:'tube', pop:true, shop:'♨ 층층 찜질방', sign:'#6b4226', ink:'#ffe9c2', awn:'#e0a85a', img:SIK6, anim:animSik6, tilt:0.62, spot:[pvx(197, 116), 127], reveal:0.8, up:-6,
-    mach:[{ img:EGG6, anim:animEgg6 }, {}, { img:BING6, anim:animBing6 }],
+  { staff:{ body:'#f2a35a', dark:'#7a4a2a', apron:'#6b4226', hat:'hair' }, big:1.2, lamp:'tube', pop:true, shop:'♨ 층층 찜질방', sign:'#6b4226', ink:'#ffe9c2', awn:'#e0a85a', img:SIK6, anim:animSik6, tilt:0.62, spot:[pvx(197, 116), 127], reveal:2, up:-6,
+    mach:[{ img:EGG6, anim:animEgg6, vo:VOFF }, { vo:0 }, { img:BING6, anim:animBing6, vo:-VOFF }],   // 왼쪽·정면·오른쪽 원근, 완성품은 anim이 쟁반 위에 크게(reveal 2)
     guests:['jjimO', 'jjimP', 'grandma', 'tourist'], order:['맥반석 계란 {n}개요!', '식혜 {n}잔이요~', '팥빙수 {n}그릇이요!', 'Jjimjilbang! Egg {n} please!'], thanks:['아~ 시원하다!', '역시 찜질방엔 계란이지!', '빙수 시원하다~'],
     item:{ name:'찜질방 간식', shape:'sikhye', top:'#fff', front:'#e8c98a', vars:[{ shape:'eggnet' }, { shape:'sikhye' }, { shape:'bingsu' }] } },
   { staff:{ body:'#f7c6d6', dark:'#2c2b35', apron:'#2c2b35', hat:'ponytail' }, big:1.2, lamp:'vanity', pop:true, shop:'층층 뷰티', sign:'#fde4ec', ink:'#c2456b', awn:'#f29bb5', img:CUSH7, anim:animCush7, spot:[197, 122], reveal:0.8, up:14,
@@ -3103,7 +3114,7 @@ function animEgg6({ S2, R2, u, now, prog, work, s }){
         if (brown > 0 && brown <= 0.5) { ctx.fillStyle = `rgba(160,100,50,${brown*1.6})`; ctx.fill(); } ctx.strokeStyle = '#38445a'; ctx.lineWidth = 0.8*u; ctx.stroke(); } }
     if (work && prog > 0.15 && prog < 0.7) for (let i = 0; i < 3; i++) { const tt = (now/1500 + i/3) % 1, [wx, wy] = R2(56 + i*8 + Math.sin(now/400 + i)*4, 70 - tt*26);   // 지붕 위 연기
       ctx.fillStyle = `rgba(230,225,215,${0.5*(1 - tt)})`; ctx.beginPath(); ctx.arc(wx, wy, (3 + tt*6)*u, 0, Math.PI*2); ctx.fill(); }
-    if (work) upToTray(R2, prog, [73, 116], (x, y) => eggNet(x, y + 3*u, u*1.1));
+    if (work) { const d = (x, y) => eggNet(x, y, u*1.5); upToTray(R2, prog, [73, 116], d, TRAY_C()); if (prog >= 0.8) d(...R2(...TRAY_C())); }   // 쟁반 가운데에 크게
   });
 }
 const eggNet = (x, y, u) => {   // 망에 담긴 구운 달걀 셋(작업대 위 · 손님 그림 공통)
@@ -3136,7 +3147,7 @@ function animSik6({ S2, R2, u, now, prog, work, s }){
     const [tx, ty] = R2(62, 112), [, cb] = R2(62, 121);
     if (work && prog > 0.38 && prog < 0.68) { ctx.fillStyle = '#e8c98a'; ctx.fillRect(tx - 1*u, ty, 2*u, cb - ty - 13*u*pour); }   // 꼭지에서 졸졸
     if (!(work && prog > 0.72)) sikCup(tx, cb, u, work ? pour : 1, true);
-    if (work) upToTray(R2, prog, [62, 121], (x, y) => sikCup(x, y + 2*u, u*0.9, 1, true));
+    if (work) { const d = (x, y) => sikCup(x, y, u*1.3, 1, true); upToTray(R2, prog, [62, 121], d, TRAY_C()); if (prog >= 0.8) d(...R2(...TRAY_C())); }
   });
 }
 // 팥빙수: 옆에서 비스듬히 본 유리 그릇(yb = 바닥) + 눈꽃 얼음 산(h = 0~1) + 토핑(팥·떡·콩가루·연유 단계 0~4)
@@ -3171,7 +3182,7 @@ function animBing6({ S2, R2, u, now, prog, work, s }){
         for (let i = 0; i < dots; i++) { const tt = (t*3 + i/dots) % 1, x = fx + (tx - fx)*tt, y = fy + (ty - fy)*tt - Math.sin(Math.PI*tt)*16*u; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 1.2*u, 0, Math.PI*2); ctx.fill(); } };
       pour([94, 104], 0.44, 0.52, '#6b2a2a', 4); pour([120, 110], 0.52, 0.6, '#f2e2b0', 3); pour([140, 105], 0.6, 0.66, '#d9aa50', 5); pour([154.5, 93], 0.66, 0.72, '#fffbe8', 4);
       if (prog > 0.66 && prog < 0.72) for (let i = 0; i < 4; i++) { const a = now/260 + i*1.6; ctx.fillStyle = 'rgba(200,236,255,.95)'; ctx.font = `${Math.round(7*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.fillText('❄', bx + Math.cos(a)*20*u, by - 28*u + Math.sin(a)*9*u); }
-      upToTray(R2, prog, [46, 118], (x, y) => bingsu(x, y + 6*u, u*0.95, 1, 4, now));
+      { const d = (x, y) => bingsu(x, y, u*1.3, 1, 4, now); upToTray(R2, prog, [46, 118], d, TRAY_C()); if (prog >= 0.8) d(...R2(...TRAY_C())); }
     }
   });
 }
@@ -3182,6 +3193,7 @@ const name4 = (R2, u, now, s, x, y, t, col, size) => unsq(() => { const [a, b] =
 const tag4 = (R2, u, x, y) => unsq(() => { const [a, b] = R2(x, y); ctx.font = `${Math.round(11*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('1+1', a, b); });   // 노란 1+1 딱지 글자
 const plus1 = (S2, u) => { const [x, y] = S2(46, 156); unsq(() => { ctx.font = `${Math.round(11*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('1+1', x, y); }); };
 // 4층 공통: 기계 속(화면 그대로 좌표 R2, 납작하게 안 함) → 쟁반(윗판 위 화면 좌표)으로 옮기기
+const TRAY_C = () => [pvx(197, 114), 134 - 20*0.62];   // 원근 쟁반(pTray v 98~130) 가운데(화면 그림 좌표)
 const upToTray = (R2, prog, from, draw, to) => { if (prog < 0.72 || prog > 0.8) return; const t = lerp01(prog, 0.72, 0.8), e = t*t*(3 - 2*t), TRAY_UP = to || [pvx(197, 116), 134 - 18*0.62],   // 쟁반 자리는 그리는 시점(VO)대로
   [x, y] = R2(from[0] + (TRAY_UP[0] - from[0])*e, from[1] + (TRAY_UP[1] - from[1])*e - Math.sin(Math.PI*t)*16); draw(x, y); };
 const glassFront = (R2, u, x0, y0, x1, y1, a = 1) => { const [l, t] = R2(x0, y0), [r, b] = R2(x1, y1);   // 유리 반사 + 테두리

@@ -151,7 +151,7 @@ const CFG = {
   warpCost: 1500,                                // 엘리베이터(층 버튼으로 이동) 비용
   events: { first: 60, every: 50 },              // 층 이벤트(고장·VIP): 처음 몇 초 뒤부터, 평균 몇 초마다
   broken: { fixTime: 2, ruin: 120, warn: 30, rebuild: 100 }, // 수리: 앞에 몇 초 서 있기 / 고장 난 채로 몇 초 지나면 부서짐(몇 초 전부터 경고) / 다시 제작 비용(× 8^층)
-  deliv: { time: 60, perFloor: 15, want: [2, 4], mul: 6, tip: 0.5 }, // 배달 주문: 기본 제한 시간 + 층 차이당 추가 초, 개수, 보상 = 개당 '지금 최고층 물건 값' × 6(황금처럼 아래층 배달도 값어치 있게), 절반 넘게 남기고 끝내면 배달팁 50%
+  deliv: { time: 60, perFloor: 15, want: [2, 4], mul: 10, tip: 0.5, dum: 0.25, dumMax: 1.5 }, // 배달 주문: 기본 제한 시간 + 층 차이당 추가 초, 개수, 보상 = 개당 '지금 최고층 물건 값' × 10(사용자: 배달이 제일 힘든데 박함 → 6에서 올림), 절반 넘게 남기고 끝내면 배달팁 50%, 덤 1개당 기분 팁 = 배달 보상 × 25%(최대 150%)
   vip: { time: 40, want: [3, 6], mul: 5, goldMul: 5, slow: 10, slowSpd: 0.6 }, // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5), 황금을 건네면 그 물건만 또 × 5,
                                                  //      놓치면 10초 동안 일꾼 속도의 60%로 (업그레이드와 상관없이 일꾼보다 느림)
   autoCost: 1500,                                // 층 자동 수금 칸 비용 (× 8^층)
@@ -1607,7 +1607,7 @@ function updEvents(dt){
 // ---- 배달 주문: 어느 층 손님이 다른 층 물건을 시킴 (예: 6층 찜질방에서 3층 치킨). 주인공만 가져다줄 수 있고 보상은 물건 값 × 3 (+빨리 오면 배달팁) ----
 const DELIV_SPOT = {x:180, y:390};
 const delivEach = () => valueOf(S.zones.length - 1)*CFG.deliv.mul;   // 배달 한 개 값: 어느 층 물건이든 지금 최고층 값 × 6
-const goldHand = it => itemValue(it)*CFG.direct.mul;                 // 배달·떨이로 넘긴 황금은 판매대에 직접 판 것과 같은 값(최고층 값 × 10 × 2)
+const goldHand = it => itemValue(it)*CFG.direct.mul;                 // 배달·덤으로 넘긴 황금은 판매대에 직접 판 것과 같은 값(최고층 값 × 10 × 2)
 const shopLabel = z => `${z+1}층${THEMES[z] ? ' ' + THEMES[z].shop : ''}`;
 const itemName = z => (THEMES[z]?.item || KINDS[z % KINDS.length]).name;
 const mixKind = (z, ph = 0) => kindOf(z).vars ? z + (1 + Math.floor(performance.now()/900 + ph) % kindOf(z).vars.length)*VAR : z;   // ph = 손님마다 바뀌는 박자
@@ -1641,30 +1641,42 @@ function updDeliv(z, cz, dt){
     const fast = D.t > D.time/2, reward = Math.round(D.sum*(fast ? 1 + CFG.deliv.tip : 1));
     S.money += reward; S.stats.deliv = (S.stats.deliv || 0) + 1;     // 지갑 한도와 상관없이 들어옴(VIP처럼)
     D.state = 'leave'; D.happy = true; D.say = fast ? '벌써 왔어요? 최고!' : '잘 먹을게요!'; D.sayT = 2.4;
-    if (topOf(S.stack, D.src) >= 0) { D.state = 'extra'; D.extra = 0; D.extraSum = 0; D.serveT = -0.6; D.say = pick(DDEOLI_ASK); D.sayT = 2.6; }   // 남은 같은 물건은 떨이로
+    if (topOf(S.stack, D.src) >= 0) { D.state = 'extra'; D.extra = 0; D.goldSum = 0; D.base = reward; D.serveT = -0.6; D.say = pick(DUM_ASK); D.sayT = 2.6; }   // 남은 같은 물건은 덤으로
     floatText(D.x, D.y, `배달${fast ? '팁' : ''} +₩${fmt(reward)}`, '#2f8f6f'); coinsFrom(D.x, D.y, 50, 10); shake(4);
     burst(D.x, D.y, 50, 20, 'spark', { color:'#7fe0c0', speed:130, up:110, g:60, life:0.8 });
     showBanner(fast ? '🛵 총알 배달!' : '🛵 배달 완료!');
     toast(`배달 완료! +₩${fmt(reward)}${fast ? ' (배달팁 포함)' : ''}`); sfx.mission(); save();
   }
 }
-// 떨이: 배달을 끝낸 뒤 등에 같은 층 물건이 남아 있으면 배달 손님이 반값에 다 사 감(옆에 있는 동안). 다 주거나 멀어지면 정산하고 떠남
-const DDEOLI_ASK = ['남은 거 떨이로 다 주세요!', '어? 그것도 떨이 안 돼요?', '남은 것도 싸게 주세요~'];
-const DDEOLI_DONE = ['떨이 득템! 땡큐~', '덤까지 감사해요!', '오늘 장사 잘 됐네요~'];
+// 덤(사용자: 떨이는 마음에 걸림 → 덤을 주면 손님이 기분 좋아 팁): 배달을 끝낸 뒤 등에 같은 층 물건이 남아 있으면 옆에 있는 동안 하나씩 덤으로 건넴(값은 안 받음).
+// 다 주거나 멀어지면 기분 팁 = 배달 보상 × 덤 개수 × 25%(최대 150%), 황금 덤이 섞이면 감동 팁 = 황금 제값(최고층 값 × 20) + 배달 보상 한 번 더
+const DUM_ASK = ['어? 남은 것도 주시게요?', '그거… 덤으로 주시는 거예요?', '우와, 하나 더요?'];
+const DUM_DONE = ['덤까지! 사장님 최고!', '기분 좋아서 팁 드릴게요~', '단골 할게요!'];
+const DUM_GOLD = ['황금이라니!! 대박!', '이건 진짜 감동이에요!', '평생 단골 할게요!!'];
 function delivExtra(D, z, cz, dt){
   const near = z === cz && Math.hypot(P.x - D.x, P.y - D.y) < 60, idx = near ? topOf(S.stack, D.src) : -1;
   if (idx >= 0) {
     if ((D.serveT += dt) <= 0.09) return;
     D.serveT = 0; const it = S.stack.splice(idx, 1)[0]; D.extra++;
-    const gold = it % MINE >= GOLD; D.extraSum += gold ? goldHand(it) : itemValue(it)*0.5;   // 황금은 떨이라도 제값
+    const gold = it % MINE >= GOLD; if (gold) D.goldSum += goldHand(it);
     fly(stackPos(P, idx), () => [D.x, D.y, 30], it, 0.18, () => {}); sfx.hand();
-    if (gold) { floatText(D.x, D.y, '황금!', '#b58a12'); sfx.gold(); }
+    floatText(D.x, D.y, gold ? '황금 덤!' : `덤 ${'♥'.repeat(Math.min(5, D.extra))}`, gold ? '#b58a12' : '#e0607a');
+    burst(D.x, D.y, 46, gold ? 10 : 4, 'spark', { color: gold ? '#ffd84a' : '#ff8fb0', speed: 90, up: 90, g: 60, life: 0.6 });
+    if (gold) sfx.gold();
     return;
   }
   if (D.serveT < 0 && near) { D.serveT += dt; return; }       // 말 걸고 잠깐 기다렸다가
-  const pay = Math.max(D.extra ? 1 : 0, Math.round(D.extraSum));
-  if (pay) { S.money += pay; floatText(D.x, D.y, `떨이 ${D.extra}개 +₩${fmt(pay)}`, '#b58a12'); coinsFrom(D.x, D.y, 40, 4); sfx.cash(); }
-  D.state = 'leave'; D.say = D.extra ? pick(DDEOLI_DONE) : '그럼 다음에~'; D.sayT = 2.4;
+  if (D.extra) {
+    const mood = Math.round(D.base*Math.min(CFG.deliv.dumMax, D.extra*CFG.deliv.dum)), wow = D.goldSum > 0 ? Math.round(D.goldSum + D.base) : 0, pay = mood + wow;
+    S.money += pay;                                            // 지갑 한도와 상관없이(배달 보상처럼)
+    floatText(D.x, D.y, `덤 ${D.extra}개 · 기분 팁 +₩${fmt(mood)}`, '#e0607a');
+    if (wow) setTimeout(() => floatText(D.x, D.y, `감동 팁 +₩${fmt(wow)}`, '#b58a12'), 350);
+    coinsFrom(D.x, D.y, 40, wow ? 14 : 6); sfx.cash(); if (wow) { sfx.gold(); shake(3); }
+    burst(D.x, D.y, 56, wow ? 26 : 12, 'spark', { color: wow ? '#ffd84a' : '#ff8fb0', speed: 140, up: 120, g: 60, life: 0.9 });
+    showBanner(wow ? '🌟 감동 팁!' : '💗 기분 팁!');
+    toast(`덤 ${D.extra}개 → 손님이 기분 좋아 팁 +₩${fmt(pay)}${wow ? ' (황금 감동 팁 포함)' : ''}`); save();
+  }
+  D.state = 'leave'; D.say = !D.extra ? '그럼 다음에~' : D.goldSum > 0 ? pick(DUM_GOLD) : pick(DUM_DONE); D.sayT = 2.4;
 }
 function drawDeliv(D, z){
   if (D.state === 'wait') floorRect({ x:DELIV_SPOT.x, y:gy(z, DELIV_SPOT.y), w:96, h:76 }, 'rgba(63,169,138,.16)', '#3fa98a', true, 0);

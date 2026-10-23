@@ -189,7 +189,12 @@ const roundPoly = (P, r) => P.map((p, i) => { const a = P[(i + P.length - 1) % P
   q = (o, t) => { const d = Math.hypot(o[0] - p[0], o[1] - p[1]); return [p[0] + (o[0] - p[0])*t/d, p[1] + (o[1] - p[1])*t/d].map(n => n.toFixed(1)).join(' '); };
   return `${i ? 'L' : 'M'}${q(a, r)} Q${p[0].toFixed(1)} ${p[1].toFixed(1)} ${q(b, r)}`; }).join(' ') + ' Z';
 const pTrap = (x0, y0, x1, y1, r = 0, dy = 0) => roundPoly([[pvx(x0, y0), y0 + dy], [pvx(x1, y0), y0 + dy], [pvx(x1, y1), y1 + dy], [pvx(x0, y1), y1 + dy]], r);   // 원근 사다리꼴(dy = 같은 모양을 아래로 — 두께)
-const deck = ({ mat = '', defs = '', tool = '', top = '', front = 'url(#st)', strip = '#f2a58c', board = 'url(#bd)', edge = '#8c5a3a', wt = 'url(#wt)', deco = '', post = '', wheels = false, tray = '#fff', tilt = 0, under = '', side = '#8d98aa' }) => { const k = tilt || 1, dv = 90*(1 - k), SE = VO > 0 ? 228 : 12, SB = pvx(SE, 44), SIDE = tilt && (VO > 0 ? SB > SE + 0.5 : VO < 0 && SB < SE - 0.5) ? `<path d="M${SE} 134 L${SB.toFixed(1)} ${134 - 90*k} V${134 - 90*k + 48} L${SE} 182 Z" fill="${side}"/>` : '', SQ = tilt ? ` transform="matrix(1 0 0 ${k} 0 ${134*(1 - k)})"` : '', BK = tilt ? ` transform="translate(${VO*PERSP} ${dv})"` : '', TOP = tilt ? roundPoly([[pvx(8, 44), 44], [pvx(232, 44), 44], [232, 134], [8, 134]], 8) : 'M26 44 H214 Q222 44 223 52 L232 134 H8 L17 52 Q18 44 26 44 Z'; return svgImg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="480" height="400"><defs><filter id="shd" x="-10%" y="-10%" width="130%" height="130%"><feGaussianBlur stdDeviation="2.4"/></filter><linearGradient id="st" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2f6"/><stop offset="1" stop-color="#c3ccd8"/></linearGradient><linearGradient id="wt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfe5ec"/><stop offset="1" stop-color="#f1f4f8"/></linearGradient><linearGradient id="bd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#46685a"/><stop offset="1" stop-color="#3a5a4c"/></linearGradient><linearGradient id="ir" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d6474"/><stop offset="1" stop-color="#3b414e"/></linearGradient><filter id="drop" x="-20%" y="-20%" width="150%" height="150%"><feOffset in="SourceAlpha" dx="2.5" dy="3.5"/><feGaussianBlur stdDeviation="1.8"/><feComponentTransfer><feFuncA type="linear" slope=".28"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><pattern id="br" width="9" height="3" patternUnits="userSpaceOnUse"><path d="M0 1 H5 M6 2.4 H9" stroke="#fff" stroke-width=".7" opacity=".45"/></pattern><linearGradient id="be" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e2433" stop-opacity=".22"/><stop offset="1" stop-color="#1e2433" stop-opacity="0"/></linearGradient><linearGradient id="fs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".25" stop-color="#fff" stop-opacity="0"/><stop offset=".8" stop-color="#1e2433" stop-opacity="0"/><stop offset="1" stop-color="#1e2433" stop-opacity=".18"/></linearGradient><linearGradient id="tr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e6ebf1"/></linearGradient>${mat}${defs}</defs><path d="M12 182 H230 V${46 + dv} L240 ${55 + dv} V194 H24 Z" fill="#2c2b35" opacity=".26" filter="url(#shd)"/><g stroke="#38445a" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><g${BK}><rect x="58" y="36" width="6" height="14" fill="${edge}" stroke-width="2"/><rect x="176" y="36" width="6" height="14" fill="${edge}" stroke-width="2"/><rect x="52" y="4" width="136" height="36" rx="6" fill="${board}" stroke="${edge}" stroke-width="4"/></g>${wheels ? '<circle cx="38" cy="183" r="13" fill="#4a5670"/><circle cx="202" cy="183" r="13" fill="#4a5670"/><path d="M228 150 L238 140" stroke-width="5"/>' : ''}${wheels ? '' : '<rect x="20" y="178" width="14" height="10" rx="2" fill="#4a5670"/><rect x="206" y="178" width="14" height="10" rx="2" fill="#4a5670"/>'}${SIDE}<g${SQ}><path d="${TOP}" fill="${wt}"/><path d="${TOP}" fill="url(#br)" stroke="none"/><path d="${tilt ? pTrap(10, 46, 230, 62, 6) : 'M27 46 H213 Q220 46 221 52 L222 62 H18 L19 52 Q20 46 27 46 Z'}" fill="url(#be)" stroke="none"/></g><rect x="12" y="132" width="216" height="50" rx="8" fill="${front}"/><rect x="12" y="132" width="216" height="50" rx="8" fill="url(#fs)" stroke="none"/><path d="M84 138 V164 M156 138 V164" stroke="#1e2433" stroke-width="1" opacity=".12"/><rect x="12" y="168" width="216" height="14" rx="6" fill="${strip}"/>${deco}<g${SQ}>${under}${tray ? (g => tilt ? pAt(197, 116, g) : g)(`<g filter="url(#drop)"><rect x="172" y="106" width="50" height="20" rx="4" fill="${tray === '#fff' ? 'url(#tr)' : tray}" stroke-width="2.5"/></g><rect x="176" y="109" width="42" height="14" rx="3" fill="none" stroke="#c9d2de" stroke-width="1.2"/>`) : ''}<g filter="url(#drop)">${tool}</g></g></g><g${SQ}>${top}${tilt ? `<path d="M${pvx(26, 48)} 48 H${pvx(214, 48)}" stroke="#fff" stroke-width="2.5" opacity=".6"/>` : '<rect x="24" y="48" width="190" height="2.5" rx="1.2" fill="#fff" opacity=".6"/>'}</g><path d="M14 130 H226" stroke="#fff" stroke-width="2" opacity=".6"/>${post}</svg>`); };
+// 생산기 그림자 디테일(사용자 2026-10-23): 넓고 옅은 그림자(오른쪽 아래로 길게) + 몸통 바로 밑 진한 접지 그림자 + 바퀴·다리 밑 작은 그림자
+const DECK_SHADOW = (wheels, dv) => { const bl = pvx(12, 44), br = pvx(228, 44), gb = 186 - 56, ox = 14, oy = 6;   // 바닥 그림자 = 몸통 밑면(앞 186 · 뒤 130, 뒤는 시점만큼 옮겨짐)을 빛 반대쪽으로 민 것
+  return `<path d="M${12 + ox} ${186 + oy} H${228 + ox} L${(br + ox).toFixed(1)} ${gb + oy} H${(bl + ox).toFixed(1)} Z" fill="#2c2b35" opacity=".2" filter="url(#shd)"/>` +
+  `<path d="M14 180 H228 L234 192 H22 Z" fill="#2c2b35" opacity=".22" filter="url(#shd)"/><rect x="16" y="181" width="210" height="5" rx="2.5" fill="#1e2433" opacity=".32"/>` +
+  (wheels ? '<ellipse cx="40" cy="196" rx="15" ry="3" fill="#1e2433" opacity=".35"/><ellipse cx="204" cy="196" rx="15" ry="3" fill="#1e2433" opacity=".35"/>' : '<ellipse cx="28" cy="189" rx="10" ry="2.2" fill="#1e2433" opacity=".3"/><ellipse cx="214" cy="189" rx="10" ry="2.2" fill="#1e2433" opacity=".3"/>'); };
+const deck = ({ mat = '', defs = '', tool = '', top = '', front = 'url(#st)', strip = '#f2a58c', board = 'url(#bd)', edge = '#8c5a3a', wt = 'url(#wt)', deco = '', post = '', wheels = false, tray = '#fff', tilt = 0, under = '', side = '#8d98aa', ink = '#38445a', fine = false }) => { const k = tilt || 1, dv = 90*(1 - k), SE = VO > 0 ? 228 : 12, SB = pvx(SE, 44), SIDE = tilt && (VO > 0 ? SB > SE + 0.5 : VO < 0 && SB < SE - 0.5) ? `<path d="M${SE} 134 L${SB.toFixed(1)} ${134 - 90*k} V${134 - 90*k + 48} L${SE} 182 Z" fill="${side}"/>` : '', SQ = tilt ? ` transform="matrix(1 0 0 ${k} 0 ${134*(1 - k)})"` : '', BK = tilt ? ` transform="translate(${VO*PERSP} ${dv})"` : '', TOP = tilt ? roundPoly([[pvx(8, 44), 44], [pvx(232, 44), 44], [232, 134], [8, 134]], 8) : 'M26 44 H214 Q222 44 223 52 L232 134 H8 L17 52 Q18 44 26 44 Z'; return Object.assign(svgImg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 0 288 200" width="576" height="400"><defs><filter id="shd" x="-10%" y="-10%" width="130%" height="130%"><feGaussianBlur stdDeviation="2.4"/></filter><linearGradient id="st" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2f6"/><stop offset="1" stop-color="#c3ccd8"/></linearGradient><linearGradient id="wt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfe5ec"/><stop offset="1" stop-color="#f1f4f8"/></linearGradient><linearGradient id="bd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#46685a"/><stop offset="1" stop-color="#3a5a4c"/></linearGradient><linearGradient id="ir" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d6474"/><stop offset="1" stop-color="#3b414e"/></linearGradient><filter id="drop" x="-20%" y="-20%" width="150%" height="150%"><feOffset in="SourceAlpha" dx="2.5" dy="3.5"/><feGaussianBlur stdDeviation="1.8"/><feComponentTransfer><feFuncA type="linear" slope=".28"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><pattern id="br" width="9" height="3" patternUnits="userSpaceOnUse"><path d="M0 1 H5 M6 2.4 H9" stroke="#fff" stroke-width=".7" opacity=".45"/></pattern><linearGradient id="be" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e2433" stop-opacity=".22"/><stop offset="1" stop-color="#1e2433" stop-opacity="0"/></linearGradient><linearGradient id="fs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".25" stop-color="#fff" stop-opacity="0"/><stop offset=".8" stop-color="#1e2433" stop-opacity="0"/><stop offset="1" stop-color="#1e2433" stop-opacity=".18"/></linearGradient><linearGradient id="tr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e6ebf1"/></linearGradient>${mat}${defs}</defs>${fine ? DECK_SHADOW(wheels, dv) : `<path d="M12 182 H230 V${46 + dv} L240 ${55 + dv} V194 H24 Z" fill="#2c2b35" opacity=".26" filter="url(#shd)"/>`}<g stroke="${ink}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><g${BK}><rect x="58" y="36" width="6" height="14" fill="${edge}" stroke-width="2"/><rect x="176" y="36" width="6" height="14" fill="${edge}" stroke-width="2"/><rect x="52" y="4" width="136" height="36" rx="6" fill="${board}" stroke="${edge}" stroke-width="4"/></g>${wheels ? '<circle cx="38" cy="183" r="13" fill="#4a5670"/><circle cx="202" cy="183" r="13" fill="#4a5670"/><path d="M228 150 L238 140" stroke-width="5"/>' : ''}${wheels ? '' : '<rect x="20" y="178" width="14" height="10" rx="2" fill="#4a5670"/><rect x="206" y="178" width="14" height="10" rx="2" fill="#4a5670"/>'}${SIDE}<g${SQ}><path d="${TOP}" fill="${wt}"/><path d="${TOP}" fill="url(#br)" stroke="none"/><path d="${tilt ? pTrap(10, 46, 230, 62, 6) : 'M27 46 H213 Q220 46 221 52 L222 62 H18 L19 52 Q20 46 27 46 Z'}" fill="url(#be)" stroke="none"/>${fine && tilt ? `<path d="${pTrap(10, 46, 230, 84, 6)}" fill="url(#be)" stroke="none" opacity=".8"/>` : ''}</g><rect x="12" y="132" width="216" height="50" rx="8" fill="${front}"/><rect x="12" y="132" width="216" height="50" rx="8" fill="url(#fs)" stroke="none"/><path d="M84 138 V164 M156 138 V164" stroke="#1e2433" stroke-width="1" opacity=".12"/><rect x="12" y="168" width="216" height="14" rx="6" fill="${strip}"/>${fine ? '<rect x="14" y="133" width="212" height="5" fill="#1e2433" opacity=".18" stroke="none"/>' : ''}${deco}<g${SQ}>${under}${tray ? (g => tilt ? pAt(197, 116, g) : g)(`<g filter="url(#drop)"><rect x="172" y="106" width="50" height="20" rx="4" fill="${tray === '#fff' ? 'url(#tr)' : tray}" stroke-width="2.5"/></g><rect x="176" y="109" width="42" height="14" rx="3" fill="none" stroke="#c9d2de" stroke-width="1.2"/>`) : ''}<g filter="url(#drop)">${tool}</g></g></g><g${SQ}>${top}${tilt ? `<path d="M${pvx(26, 48)} 48 H${pvx(214, 48)}" stroke="#fff" stroke-width="2.5" opacity=".6"/>` : '<rect x="24" y="48" width="190" height="2.5" rx="1.2" fill="#fff" opacity=".6"/>'}</g><path d="M14 130 H226" stroke="#fff" stroke-width="2" opacity=".6"/>${post}</svg>`), { vx:-24, vw:288 }); };   // 그림 칸을 양옆 24씩 넓힘(시점 쪽으로 나간 천막·옆판·그림자가 잘리지 않게)
 // ===== 생산기 그림 기준(2026-10-22 사용자 확정: 내가 준 그림은 참고, 기준은 하나로 27대 전부) =====
 // 시점: 비스듬히 내려다보고 오른쪽 옆면이 보임 — 깊이는 위로 DY · 오른쪽으로 DX(작업대 앞 모서리 y 134, 뒤 모서리 y 78). 빛은 왼쪽 위(앞면 밝게 · 옆면 어둡게 · 물건 밑 그림자)
 // 외곽선 짙은 갈색 INK 하나 · 생산기마다 대표색 col + 어두운 색 dark(진하고 선명하게) · 흰색·나무색은 공통
@@ -358,29 +363,105 @@ const UNI10 = withDX(-16, () => boothDeck({ col:'#24356b', dark:'#141f45', icon:
   PROP.board(146, 0.02, 214, 0.36, '#d9a76a', '#b07e48', 3) +
   [0, 1, 2].map(i => PROP.box(174, 96 - i*5, 36, 5, 14, '#fffaf0', '#d9dee6', i === 2 ? '#fffaf0' : '#f4f6f9') + `<path d="M${174} ${93 - i*5} H${210}" stroke="#1a2a5a" stroke-width="1.4"/>`).join('')));   // 뒤: 개어 둔 유니폼
 // 2층 붕어빵 가게 3대 — 1층처럼 위에서 본 넓은 작업대(빨간 손수레 + 남색 메뉴판 + 바퀴·손잡이). 철판·틀 속이 다 보이게
-const CART = { front:'url(#pk)', strip:'url(#dw)', board:'#2d4a7a', edge:'#a87449', wheels:true, tilt:0.62, side:'#a83a2c',
+const CART = { front:'url(#pk)', strip:'url(#dw)', board:'#2d4a7a', edge:'#a87449', wheels:true, tilt:0.62, side:'#a83a2c', ink:INK, fine:true,
   mat:'<pattern id="pk" width="62" height="12" patternUnits="userSpaceOnUse"><rect width="62" height="12" fill="#e0614a"/><path d="M0 11.4 H62" stroke="#a83a2c" stroke-width="1.3"/><path d="M3 4 q12 -2.5 24 0 M30 8 q14 2.5 28 0" stroke="#c94a38" stroke-width=".9" fill="none"/><path d="M44 0 V11.4" stroke="#a83a2c" stroke-width="1"/><circle cx="41" cy="6" r=".9" fill="#a83a2c"/></pattern><pattern id="dw" width="40" height="14" patternUnits="userSpaceOnUse"><rect width="40" height="14" fill="#8c5a3a"/><path d="M0 4 q10 -2 20 0 t20 0 M0 10 q12 2 22 0 t18 0" stroke="#6e4228" stroke-width="1" fill="none"/></pattern><radialGradient id="ih" cx="30%" cy="20%" r="80%"><stop offset="0" stop-color="#6b7384"/><stop offset=".5" stop-color="#454c5a"/><stop offset="1" stop-color="#2e333d"/></radialGradient>',
   deco:'<rect x="12" y="146" width="216" height="5" fill="#fff" stroke="none"/><g fill="#5d6474" stroke="none"><circle cx="20" cy="139" r="1.8"/><circle cx="220" cy="139" r="1.8"/><circle cx="20" cy="160" r="1.8"/><circle cx="220" cy="160" r="1.8"/></g>' };
+// 2층 겨울 노점(사용자 2026-10-23): 1층 ㅅ자 천막·10층 전광판과 다르게 반원 아치 주황 천막 + 양끝에 말아 올린 투명 비닐 바람막이. 뒤 깊이에 있어 시점(VO)만큼 옮김. 전구는 LAMPS.arch
+const ARCH = { hw:100, by:46, ry:40, band:10 };
+const archRoof = () => { const cx = 120 + VO*PERSP, { hw, by, ry, band } = ARCH, L = cx - hw, R = cx + hw;
+  const arc = (rx, r2, y) => `M${cx - rx} ${y} A${rx} ${r2} 0 0 1 ${cx + rx} ${y}`;
+  return [L, R].map(x => `<rect x="${x - 3}" y="${by - 4}" width="6" height="${134 - 90*0.62 - by + 6}" fill="#8c5a3a" stroke-width="2"/>`).join('') +   // 뒤 기둥(아치 끝 → 상판 뒤 모서리)
+    `<path d="${arc(hw*0.94, ry*0.94, by - 6)} L${cx + hw} ${by} A${hw} ${ry} 0 0 0 ${cx - hw} ${by} Z" fill="#f6b25a" stroke-width="2.4"/>` +   // 지붕 윗면(위에서 보여 밝게)
+    `<path d="${arc(hw, ry, by)} L${cx + hw - band} ${by} A${hw - band} ${ry - band} 0 0 0 ${cx - hw + band} ${by} Z" fill="#e8742a" stroke-width="3"/>` +   // 앞 아치 띠
+    `<path d="${arc(hw - band/2, ry - band/2, by)}" fill="none" stroke="#fff" stroke-width="1.2" stroke-dasharray="3 3" opacity=".7"/>` +   // 박음질
+    [-1, 1].map(d => { const x = cx + d*(hw - 2); return `<g transform="translate(${x} ${by - 2})"><rect x="-7" y="-4" width="14" height="22" rx="7" fill="rgba(220,236,248,.75)" stroke-width="1.8"/><path d="M-3 0 V14" stroke="#fff" stroke-width="1.6" opacity=".9"/><path d="M-7 3 H7 M-7 12 H7" stroke="#c0392b" stroke-width="2.2"/></g>`; }).join('');   // 말아 올린 비닐(띠로 묶음)
+};
+const TP = (x, v) => [pvx(x, v), 134 - (134 - v)*0.62];   // 2층 상판 위 점(납작하게 한 뒤 화면 그림 좌표) — 서 있는 소품 자리
+const PROP2 = {
+  bowl: (x, v, fill) => { const [a, b] = TP(x, v); return `<ellipse cx="${a + 2}" cy="${b + 1}" rx="19" ry="4" fill="#1e2433" opacity=".22" stroke="none"/><path d="M${a - 17} ${b - 12} Q${a - 15} ${b + 1} ${a} ${b + 1} Q${a + 15} ${b + 1} ${a + 17} ${b - 12} Z" fill="#cfd6e0" stroke-width="2"/><ellipse cx="${a}" cy="${b - 12}" rx="17" ry="5" fill="#eef1f5" stroke-width="2"/><ellipse cx="${a}" cy="${b - 12}" rx="13" ry="3.4" fill="${fill}" stroke="none"/><path d="M${a - 12} ${b - 7} Q${a - 10} ${b - 2} ${a - 4} ${b - 1}" stroke="#fff" stroke-width="1.4" fill="none" opacity=".7"/>`; },
+  jar: (x, v, fill, h = 16) => { const [a, b] = TP(x, v); return `<ellipse cx="${a + 1.5}" cy="${b + 1}" rx="10" ry="2.6" fill="#1e2433" opacity=".22" stroke="none"/><rect x="${a - 8}" y="${b - h}" width="16" height="${h}" rx="3" fill="rgba(230,240,248,.85)" stroke-width="1.8"/><rect x="${a - 6.5}" y="${b - h*0.7}" width="13" height="${h*0.7 - 1.5}" rx="2" fill="${fill}" stroke="none"/><ellipse cx="${a}" cy="${b - h}" rx="8" ry="2.4" fill="#eef1f5" stroke-width="1.6"/><path d="M${a + 2} ${b - h - 1} L${a + 8} ${b - h - 11}" stroke="#a87449" stroke-width="2.4"/><path d="M${a - 5} ${b - h + 3} V${b - 3}" stroke="#fff" stroke-width="1.4" opacity=".7"/>`; },
+  kettle: (x, v) => { const [a, b] = TP(x, v); return `<defs><linearGradient id="brs" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b8861a"/><stop offset=".3" stop-color="#ffe27a"/><stop offset=".55" stop-color="#e8b923"/><stop offset="1" stop-color="#9a6e12"/></linearGradient></defs>` +   // 반죽 주전자 = 노란 놋쇠(양은) 막걸리 주전자(사용자): 납작 둥근 몸통 · 위로 걸친 손잡이 · 긴 주둥이 · 찌그러진 자국
+    `<ellipse cx="${a + 2}" cy="${b + 1}" rx="16" ry="3.4" fill="#1e2433" opacity=".22" stroke="none"/>` +
+    `<path d="M${a + 11} ${b - 9} Q${a + 19} ${b - 10} ${a + 25} ${b - 22}" fill="none" stroke-width="4.4"/><path d="M${a + 11} ${b - 9} Q${a + 19} ${b - 10} ${a + 25} ${b - 22}" fill="none" stroke="#e8b923" stroke-width="2.4"/>` +   // 주둥이
+    `<path d="M${a - 14} ${b - 4} Q${a - 16} ${b - 18} ${a} ${b - 19} Q${a + 16} ${b - 18} ${a + 14} ${b - 4} Q${a + 13} ${b} ${a} ${b} Q${a - 13} ${b} ${a - 14} ${b - 4} Z" fill="url(#brs)" stroke-width="2"/>` +   // 몸통
+    `<ellipse cx="${a}" cy="${b - 18}" rx="9" ry="2.6" fill="#f2c94a" stroke-width="1.6"/><circle cx="${a}" cy="${b - 21}" r="2" fill="#e8b923" stroke-width="1.3"/>` +   // 뚜껑 + 꼭지
+    `<path d="M${a - 11} ${b - 15} Q${a - 2} ${b - 34} ${a + 11} ${b - 15}" fill="none" stroke-width="3"/><path d="M${a - 11} ${b - 15} Q${a - 2} ${b - 34} ${a + 11} ${b - 15}" fill="none" stroke="#e8b923" stroke-width="1.4"/>` +   // 위로 걸친 손잡이
+    `<path d="M${a - 8} ${b - 13} q2 3 0 6 M${a + 6} ${b - 8} q-2 2 -1 4" fill="none" stroke="#9a6e12" stroke-width="1" opacity=".7"/><path d="M${a - 10} ${b - 12} V${b - 4}" stroke="#fff6c8" stroke-width="1.6" opacity=".8"/>`; },   // 찌그러진 자국 + 반짝
+  carton: (x, v) => { const [a, b] = TP(x, v), k2 = Math.sign(VO)*4;   // 달걀판: 뒤 모서리가 시점(VO) 쪽으로 기움(오른쪽 기계면 왼쪽으로)
+    return `<ellipse cx="${a + 2}" cy="${b + 1}" rx="26" ry="3.4" fill="#1e2433" opacity=".22" stroke="none"/><path d="M${a - 23} ${b - 9} L${a - 23 + k2} ${b - 21} H${a + 23 + k2} L${a + 23} ${b - 9} Z" fill="#e3cfa0" stroke-width="1.8"/><rect x="${a - 23}" y="${b - 9}" width="46" height="9" rx="1.5" fill="#d9c49a" stroke-width="1.8"/>` +
+    [0, 1].flatMap(r => [0, 1, 2, 3].map(c => `<ellipse cx="${a - 15 + c*10 + k2*(0.3 + r*0.45)}" cy="${b - 13 - r*5.5}" rx="4.6" ry="3.6" fill="#fff8ee" stroke-width="1.3"/>`)).join(''); },
+};
 const rivets = (x0, y0, x1, y1) => `<g fill="#8d98aa" stroke="#38445a" stroke-width=".8">${[[x0, y0], [x1, y0], [x0, y1], [x1, y1]].map(([x, y]) => `<circle cx="${pvx(x, y).toFixed(1)}" cy="${y}" r="2"/>`).join('')}</g>`;
 // 2층 공통 철판(원근 사다리꼴 — 윗판처럼 뒤가 좁음) + 그 밑 두께, 쟁반 두께
 const PLATE = fill => `<path d="${pTrap(20, 56, 162, 120, 8)}" fill="${fill}"/>`;
 const TRAY_UNDER = pAt(197, 116, '<rect x="172" y="114" width="50" height="20" rx="4" fill="#b8c2cf"/>');
 const PLATE_UNDER = `<path d="${pTrap(20, 56, 162, 120, 8, 16)}" fill="#2e333d"/>` + TRAY_UNDER;
+// 2층 앞판 가운데 캐릭터(1층처럼) — 호떡·붕어빵·계란빵 얼굴
+const EMB2 = icon => `<g stroke="${INK}"><circle cx="120" cy="155" r="19" fill="#fffaf0" stroke-width="2.6"/><circle cx="120" cy="155" r="16" fill="none" stroke="#e8742a" stroke-width="2"/>` +
+  `<clipPath id="e2"><circle cx="120" cy="155" r="16"/></clipPath><g clip-path="url(#e2)" transform="translate(5 -1)">${icon}</g></g>`;
+const ICON2 = {
+  hotteok: '<ellipse cx="115" cy="158" rx="13" ry="10" fill="#c98a3a" stroke-width="1.6"/><ellipse cx="111" cy="153" rx="5" ry="2" fill="#e8b06a" stroke="none"/>' + [[106, 162], [124, 161], [119, 165]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.3" fill="#6b3a18" stroke="none"/>`).join('') + MFACE(115, 158, 0.72, 'joy'),
+  bung: '<path d="M99 156 Q101 146 112 146 Q124 146 127 156 L134 150 V162 L127 156 Q124 166 112 166 Q101 166 99 156 Z" fill="#e8a64a" stroke-width="1.6"/><path d="M118 151 a3 3 0 0 1 0 6 M122 152 a3 3 0 0 1 0 6" fill="none" stroke="#a8642a" stroke-width="1"/>' + MFACE(109, 156, 0.6, 'wink'),
+  eggbread: '<rect x="100" y="150" width="30" height="17" rx="6" fill="#e8a64a" stroke-width="1.6"/><ellipse cx="115" cy="154" rx="9" ry="5" fill="#fff" stroke-width="1.2"/><circle cx="115" cy="154" r="3.6" fill="#f2b51e" stroke="none"/>' + MFACE(115, 162, 0.55),
+};
+// 2층 붕어빵·계란빵 = 둥근 회전 틀(사용자 2026-10-23: 실제 기계처럼 원형 + 뚜껑 + 돌림) — 받침(가스 화구 + 두께)은 그림, 회전판·틀·뚜껑·손잡이는 anim(carousel)
+const CAR = { cx:72, cy:89, R:37, base:52 };   // 드럼(왼쪽) + 진열대(오른쪽)를 한 묶음으로 가운데 정렬(사용자) — 드럼 x 24~120 · 진열대 124~226   // 틀 여섯이 둘레에(겹치지 않게), 손잡이 끝까지 받침 안
+// 2층 생산기 몸통을 기계마다 다르게(사용자 2026-10-23: '생산기가 일률적이라 어색') — 호떡 = 손수레(deck) · 붕어빵 = 둥근 드럼(drum, 위에 회전 틀) · 계란빵 = 스테인리스 상자 기계(box, 위에 가운데 경첩 판 두 장).
+// 아치 천막·메뉴판·앞 캐릭터·빨강 줄무늬는 2층 공통. 오른쪽 선반에 쟁반(197,116 — spatula·spot 그대로)과 소품. 윗면은 deck과 같은 좌표(v 44~134를 0.62로 납작 + pvx 원근)
+function machine2(kind, { emb, props = '', apron = '', rack = false }){
+  const k = 0.62, dv = 90*(1 - k), SQ = ` transform="matrix(1 0 0 ${k} 0 ${134*(1 - k)})"`, BK = ` transform="translate(${VO*PERSP} ${dv})"`, sy = v => 134 - (134 - v)*k;
+  const shelfX = kind === 'drum' ? 124 : 172, defs = CART.mat + `<filter id="shd" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.6"/></filter>` +
+    `<linearGradient id="ir" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d6474"/><stop offset="1" stop-color="#3b414e"/></linearGradient><linearGradient id="tr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e6ebf1"/></linearGradient>` +
+    `<linearGradient id="ss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1f4f8"/><stop offset="1" stop-color="#b9c2cf"/></linearGradient><linearGradient id="cy" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset=".3" stop-color="#fff" stop-opacity=".18"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>`;
+  const embAt = (x, y) => `<g transform="translate(${x - 120} ${y - 155})">${EMB2(emb)}</g>`;
+  const shelfTop = `<path d="${pTrap(shelfX, 70, 228, 134, 4)}" fill="url(#ss)"/>`, shelfUnder = `<path d="${pTrap(shelfX, 70, 228, 134, 4, 10)}" fill="#8d98aa"/>`;
+  const shelfFront = `<rect x="${shelfX + 2}" y="134" width="${226 - shelfX}" height="12" rx="2" fill="url(#ss)"/><path d="M220 146 V188" stroke-width="3.5"/><path d="M${shelfX + 8} 146 L${shelfX + 4} 158" stroke-width="2.5"/>` +
+    (apron ? `<rect x="${shelfX + 6}" y="135.5" width="${214 - shelfX}" height="9" rx="2" fill="#fff8e0" stroke-width="1.4"/>` : '');
+  const rackSvg = rack ? pTrap(shelfX + 4, 88, 226, 132, 3) : '', tray = rack ? `<path d="${rackSvg}" fill="#2c313b" stroke-width="2"/>` + Array.from({ length: 10 }, (_, i) => { const v = 90 + i*4.4; return `<path d="M${pvx(shelfX + 6, v).toFixed(1)} ${v} H${pvx(224, v).toFixed(1)}" stroke="#cfd6e0" stroke-width="1.6"/>`; }).join('') : pAt(197, 116, `<rect x="172" y="114" width="50" height="20" rx="4" fill="#b8c2cf"/>`) + pAt(197, 116, `<g filter="url(#drop)"><rect x="172" y="106" width="50" height="20" rx="4" fill="url(#tr)" stroke-width="2.5"/></g><rect x="176" y="109" width="42" height="14" rx="3" fill="none" stroke="#c9d2de" stroke-width="1.2"/>`);
+  let shadow, body;
+  const groundShadow = x0 => { const bl = pvx(x0, 44), br = pvx(228, 44), ox = 12, oy = 6;   // 기계 + 선반 바닥 하나로(시점 따라 뒤가 옮겨짐)
+    return `<path d="M${x0 + ox} ${186 + oy} H${228 + ox} L${(br + ox).toFixed(1)} ${130 + oy} H${(bl + ox).toFixed(1)} Z" fill="#2c2b35" opacity=".18" filter="url(#shd)"/>` +
+      `<ellipse cx="220" cy="190" rx="6" ry="1.8" fill="#1e2433" opacity=".35"/><ellipse cx="${shelfX + 6}" cy="${kind === 'drum' ? 190 : 160}" rx="5" ry="1.6" fill="#1e2433" opacity=".3"/>`; };
+  if (kind === 'drum') {
+    const DR = CAR.base, X = pvx(CAR.cx, CAR.cy), Y = sy(CAR.cy), rx = DR*pvf(CAR.cy), ry = DR*k, H = 34;   // 몸통 낮게(바퀴가 받침)
+    shadow = groundShadow(X - rx) + `<ellipse cx="${X}" cy="${Y + H + ry + 8}" rx="${rx - 6}" ry="${ry*0.5}" fill="#1e2433" opacity=".25" filter="url(#shd)"/>` +
+      [-30, 30].map(d => `<ellipse cx="${X + d}" cy="${Y + H + ry + 10}" rx="9" ry="2.4" fill="#1e2433" opacity=".35"/>`).join('');
+    body = `<g${SQ}>${shelfUnder}${shelfTop}</g>${shelfFront}` +
+      [-30, 30].map(d => `<path d="M${X + d} ${Y + H + ry - 6} V${Y + H + ry + 2}" stroke-width="4"/><circle cx="${X + d}" cy="${Y + H + ry + 4}" r="6" fill="#4a5670"/>`).join('') +   // 받침 바퀴(몸통이 낮아진 만큼 다리)
+      `<path d="M${X - rx} ${Y} A${rx} ${ry} 0 0 0 ${X + rx} ${Y} V${Y + H} A${rx} ${ry} 0 0 1 ${X - rx} ${Y + H} Z" fill="url(#pk)"/>` +   // 드럼 앞면(빨간 판자)
+      `<path d="M${X - rx} ${Y + 12} A${rx} ${ry} 0 0 0 ${X + rx} ${Y + 12} V${Y + 17} A${rx} ${ry} 0 0 1 ${X - rx} ${Y + 17} Z" fill="#fff" stroke="none"/>` +   // 흰 띠
+      `<path d="M${X - rx} ${Y + H - 12} A${rx} ${ry} 0 0 0 ${X + rx} ${Y + H - 12} V${Y + H} A${rx} ${ry} 0 0 1 ${X - rx} ${Y + H} Z" fill="url(#dw)"/>` +   // 아래 나무 띠
+      `<path d="M${X - rx} ${Y} A${rx} ${ry} 0 0 0 ${X + rx} ${Y} V${Y + H} A${rx} ${ry} 0 0 1 ${X - rx} ${Y + H} Z" fill="url(#cy)" stroke="none"/>` +   // 원통 음영
+      `<path d="M${X - rx} ${Y} A${rx} ${ry} 0 0 0 ${X + rx} ${Y} V${Y + H} A${rx} ${ry} 0 0 1 ${X - rx} ${Y + H} Z" fill="none"/>` +
+      `<g${SQ}>${pAt(CAR.cx, CAR.cy, `<circle cx="${CAR.cx}" cy="${CAR.cy}" r="${DR}" fill="url(#ss)"/><circle cx="${CAR.cx}" cy="${CAR.cy}" r="${DR - 5}" fill="#2c313b" stroke="none"/>`)}${tray}</g>` +   // 드럼 윗면(스테인리스 테 + 회전 틀 자리)
+      embAt(X, Y + ry + 18);
+  } else {
+    const x0 = 30, x1 = 172, SB = VO < 0 ? pvx(x0, 44) : pvx(x1, 44), SE = VO < 0 ? x0 : x1, side = (VO < 0 ? SB < SE - 0.5 : VO > 0 && SB > SE + 0.5);
+    const bl = pvx(x0, 44), br = pvx(x1, 44);
+    shadow = groundShadow(x0) + `<rect x="${x0 + 2}" y="183" width="${x1 - x0 - 4}" height="6" rx="3" fill="#1e2433" opacity=".3" filter="url(#shd)"/>`;
+    body = `<g${SQ}>${shelfUnder}${shelfTop}</g>${shelfFront}` +
+      `<rect x="${x0 + 6}" y="180" width="10" height="9" rx="2" fill="#4a5670"/><rect x="${x1 - 16}" y="180" width="10" height="9" rx="2" fill="#4a5670"/>` +   // 다리
+      (side ? `<path d="M${SE} 134 L${SB.toFixed(1)} ${sy(44)} V${sy(44) + 48} L${SE} 182 Z" fill="#9aa6b8"/>` : '') +
+      `<g${SQ}><path d="${pTrap(x0, 44, x1, 134, 5)}" fill="url(#ss)"/><path d="${pTrap(x0 + 10, 50, x1 - 10, 128, 6, 9)}" fill="#22262e"/><path d="${pTrap(x0 + 10, 50, x1 - 10, 128, 6)}" fill="#3b414e"/>${tray}</g>` +   // 윗면 + 무쇠 판 받침(두께)
+      `<rect x="${x0}" y="132" width="${x1 - x0}" height="50" rx="5" fill="url(#ss)"/><rect x="${x0}" y="132" width="${x1 - x0}" height="6" fill="#fff" stroke="none" opacity=".5"/>` +   // 앞 조작판
+      `<rect x="${x0 + 8}" y="143" width="22" height="26" rx="3" fill="#fffdf6" stroke-width="1.8"/><circle cx="${x0 + 19}" cy="156" r="7" fill="#eef1f5" stroke-width="1.4"/><path d="M${x0 + 19} 156 L${x0 + 22} 151" stroke="#c0392b" stroke-width="1.4"/>` +   // 타이머
+      `<rect x="${x0 + 38}" y="148" width="9" height="15" rx="1.5" fill="#d9302a" stroke-width="1.6"/><circle cx="${x1 - 32}" cy="152" r="3.2" fill="#ff8a3a" stroke-width="1.2"/><rect x="${x1 - 24}" y="146" width="10" height="16" rx="1.5" fill="#d9302a" stroke-width="1.6"/>` +   // 스위치·불
+      `<rect x="${x0}" y="170" width="${x1 - x0}" height="12" rx="4" fill="url(#pk)"/>` + embAt((x0 + x1)/2, 156);
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24 0 288 200" width="576" height="400"><defs>${defs}<filter id="drop" x="-20%" y="-20%" width="150%" height="150%"><feOffset in="SourceAlpha" dx="2.5" dy="3.5"/><feGaussianBlur stdDeviation="1.8"/><feComponentTransfer><feFuncA type="linear" slope=".28"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` +
+    shadow + `<g stroke="${INK}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><g${BK}><rect x="52" y="4" width="136" height="36" rx="6" fill="${CART.board}" stroke="${CART.edge}" stroke-width="4"/></g>` + body + archRoof() + props + `</g></svg>`;
+  return Object.assign(svgImg(svg), { vx:-24, vw:288 });
+}
 const FISH_SLOT = '<path d="M27 76 Q29 67 42 67 Q54 67 58 76 L67 69 V83 L58 76 Q54 85 42 85 Q29 85 27 76 Z" fill="#2c313b" stroke="#22262e" stroke-width="1.5"/>';   // (46, 76) 칸
 // 0번 호떡: 넓은 철판 + 뒤 반죽 볼 + 흑설탕 종지
-const HOT2 = withVO(VOFF, () => deck({ ...CART, under: PLATE_UNDER + pAt(190, 72, '<circle cx="190" cy="84" r="17" fill="#8d98aa"/>') + pAt(215, 94, '<circle cx="215" cy="103" r="8" fill="#c9d2de"/>'),
+const HOT2 = withVO(VOFF, () => deck({ ...CART, under: PLATE_UNDER, deco: CART.deco + EMB2(ICON2.hotteok), post: archRoof() + PROP2.bowl(190, 78, '#f3e0b5') + PROP2.jar(214, 98, '#7a4a22'),
   tool: PLATE('#4a5670') + `<path d="${pTrap(26, 62, 156, 114, 5)}" fill="url(#ih)" stroke-width="2"/>` + rivets(23.5, 59.5, 158.5, 116.5) +
-    pAt(190, 72, '<circle cx="190" cy="72" r="17" fill="#cfd6e0"/><circle cx="190" cy="72" r="12" fill="#f3e0b5" stroke-width="2"/>') + pAt(215, 94, '<circle cx="215" cy="94" r="8" fill="#fff" stroke-width="2"/>'),
-  top: pAt(65, 70, '<path d="M34 68 H96 M34 72 H64" stroke="#fff" stroke-width="2" opacity=".18"/>') + pAt(215, 94, '<circle cx="215" cy="94" r="5" fill="#7a4a22"/>') + pAt(190, 72, '<g fill="#fff8e6" stroke="#38445a" stroke-width="1"><circle cx="185" cy="69" r="4"/><circle cx="194" cy="74" r="4"/><circle cx="187" cy="78" r="3.5"/></g>') }));
+    '',
+  top: pAt(65, 70, '<path d="M34 68 H96 M34 72 H64" stroke="#fff" stroke-width="2" opacity=".18"/>') }));
 // 1번 붕어빵: 무쇠 틀(물고기 칸 여섯) + 뒤 반죽 주전자 + 팥 그릇, 앞판에 '3개 1,000원' 종이
-const BUNG2 = deck({ ...CART, under: PLATE_UNDER + pAt(186, 72, '<circle cx="186" cy="84" r="15" fill="#8d98aa"/>') + pAt(214, 94, '<circle cx="214" cy="103" r="9" fill="#c9d2de"/>'), deco: CART.deco + '<rect x="24" y="137" width="74" height="26" rx="3" fill="#fff8e0" stroke-width="2"/>',
-  tool: PLATE('url(#ir)') + [[46, 76], [91, 76], [136, 76], [46, 102], [91, 102], [136, 102]].map(([x, y]) => pAt(x, y, `<g transform="translate(${x - 46} ${y - 76})">${FISH_SLOT}</g>`)).join('') +
-    rivets(23.5, 59.5, 158.5, 116.5) + pAt(186, 72, '<path d="M199 66 L214 56" stroke-width="5"/><circle cx="186" cy="72" r="15" fill="#cfd6e0"/><circle cx="186" cy="72" r="10" fill="#f6e3b0" stroke-width="2"/>') + pAt(214, 94, '<circle cx="214" cy="94" r="9" fill="#fff" stroke-width="2"/>'),
-  top: pAt(214, 94, '<circle cx="214" cy="94" r="6" fill="#6b2a2a"/><g fill="#8a3a3a"><circle cx="212" cy="92" r="1.3"/><circle cx="216" cy="95" r="1.3"/></g>') });
-// 2번 계란빵: 타원 칸 여덟 무쇠 판 + 뒤 달걀판
-const EGG2 = withVO(-VOFF, () => deck({ ...CART, under: PLATE_UNDER + pAt(197, 74, '<rect x="174" y="64" width="46" height="36" rx="4" fill="#a8936a"/>'),
-  tool: PLATE('url(#ir)') + [38, 74, 110, 146].flatMap(x => [76, 102].map(y => pAt(x, y, `<ellipse cx="${x}" cy="${y}" rx="16.5" ry="11.5" fill="#2c313b" stroke="#22262e" stroke-width="1.5"/>`))).join('') + rivets(23.5, 59.5, 158.5, 116.5) +
-    pAt(197, 74, '<rect x="174" y="56" width="46" height="36" rx="4" fill="#d9c49a"/>' + [184, 197, 210].flatMap(x => [66, 82].map(y => `<circle cx="${x}" cy="${y}" r="6" fill="#fff8ee" stroke-width="1.5"/>`)).join('')) }));
+const BUNG2 = machine2('drum', { emb: ICON2.bung, props: PROP2.kettle(150, 76) + PROP2.jar(214, 80, '#6b2a2a', 14), apron: '3개 1,000원', rack: true });
+// 2번 계란빵: 스테인리스 상자 기계(앞 조작판: 타이머·스위치·불) 위 가운데 경첩 무쇠 판 두 장(사진 기준) + 오른쪽 선반(쟁반·달걀판)
+const EGG2 = withVO(-VOFF, () => machine2('box', { emb: ICON2.eggbread, props: PROP2.carton(200, 84) }));
 // 층별 가게 테마(1~9층). 없는 층(10층~)은 원래 스타일: 3D 프린터 + KINDS 기본 물건.
 // staff 그 층 직원 옷(셔츠·바지 색 + 앞치마/조끼/모자, staffBody/staffHead) · shop 간판 이름 · sign/ink/awn 간판 바탕·글자·차양 색 · img 생산기 몸체 · anim 움직이는 부분 · spot 물건이 생기는 자리(SVG 좌표) · reveal 물건이 차오르기 시작하는 진행도 · up 위 글자 올림
 // 3층 치킨집 3대 — 스테인리스 작업대 + 노란 메뉴판(빨간 글자), 앞판 온도 표시창
@@ -532,8 +613,8 @@ const THEMES = [
     guests:['student', 'kid'], order:['떡볶이랑 김밥, 순대 섞어서 {n}개요!', '떡볶이 국물 많이요~ {n}개!', '순대는 간도 주세요! {n}개요', '김밥 {n}줄 포장이요~'], thanks:['잘 먹을게요!', '학원 가기 전에 딱!', '떡볶이엔 순대지!'],
     item:{ name:'분식', shape:'kimbap', top:'#fff7e6', front:'#f6deb0',
       vars:[{ shape:'tteok', top:'#e8452c', front:'#ffffff' }, { shape:'kimbap', top:'#fff7e6', front:'#f6deb0' }, { shape:'sundae', top:'#fff7e6', front:'#ece6da' }] } },
-  { staff:{ body:'#e3d5b8', dark:'#3b3f4a', apron:'#2d4a7a', sleeve:'#2d4a7a', hat:'beanie', hatCol:'#c0392b' }, big:1.2, lamp:'string', pop:true, shop:'따끈 붕어빵', sign:'#2d4a7a', ink:'#ffe08a', awn:'#2d4a7a', img:BUNG2, anim:animBung2, tilt:0.62, spot:[pvx(197, 116), 127], reveal:0.8, up:-6,
-    mach:[{ img:HOT2, anim:animHot2, vo:VOFF }, { vo:0 }, { img:EGG2, anim:animEgg2, vo:-VOFF }],   // vo = 시점(왼쪽·정면·오른쪽)
+  { staff:{ body:'#e3d5b8', dark:'#3b3f4a', apron:'#2d4a7a', sleeve:'#2d4a7a', hat:'beanie', hatCol:'#c0392b' }, big:1.2, lamp:'arch', pop:true, shop:'따끈 붕어빵', sign:'#2d4a7a', ink:'#ffe08a', awn:'#2d4a7a', img:BUNG2, anim:animBung2, tilt:0.62, spot:[pvx(197, 116), 127], reveal:0.8, up:-6,
+    mach:[{ img:HOT2, anim:animHot2, vo:VOFF }, { vo:0, reveal:2 }, { img:EGG2, anim:animEgg2, vo:-VOFF }],   // vo = 시점(왼쪽·정면·오른쪽)
     guests:['office', 'grandma'], order:['붕어빵 {n}봉지요!', '호떡이랑 계란빵도요, {n}개!', '퇴근길엔 따끈한 거~ {n}개!'], thanks:['따끈따끈하네!', '손주 줘야겠다~'],
     item:{ name:'길거리 간식', shape:'bung', top:'#efe6d2', front:'#fffdf6',
       vars:[{ shape:'hotteok', top:'#e8a64a', front:'#ffffff' }, { shape:'bung', top:'#efe6d2', front:'#fffdf6' }, { shape:'eggbread', top:'#e8a64a', front:'#ffffff' }] } },
@@ -1806,12 +1887,14 @@ function item(x, y, z, kind, noBadge){
   const [sx, sy] = toS(x, y, z);
   if (art('item' + (kind % KINDS.length), sx, sy, 18*scale, 18*scale)) return;
   if (K.shape === 'box') return cube(x, y, z, 14, 9, K.top, K.front, edge);
-  if (K.shape === 'bung') {                          // 붕어빵 봉투: 위로 붕어빵이 삐죽, 앞에 빨간 물고기 무늬
-    cube(x, y, z, 14, 9, K.top, K.front, edge || 'rgba(56,68,90,.55)');
-    const h = 9*scale, d = 7*scale, cy = sy - h - d/2;
-    ctx.fillStyle = '#e8a64a'; ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.ellipse(sx - 1*scale, cy - 1*scale, 4.5*scale, 2.4*scale, -0.25, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.strokeStyle = '#e0614a'; ctx.beginPath(); ctx.ellipse(sx - 1*scale, sy - h/2, 3*scale, 1.6*scale, 0, 0, Math.PI*2); ctx.stroke();
+  if (K.shape === 'bung') {                          // 붕어빵 종이봉투(두께 있게): 누런 봉투 앞면·옆 주름면 + 위로 붕어빵 둘이 삐죽 + 빨간 물고기 도장
+    const q = scale, w = 12*q, h = 12*q, d = 3.5*q, x0 = sx - w/2, top = sy - h, ink = edge || INK;
+    ctx.fillStyle = 'rgba(30,36,51,.2)'; ctx.beginPath(); ctx.ellipse(sx + 2*q, sy, w/2 + 2*q, 1.8*q, 0, 0, Math.PI*2); ctx.fill();
+    [[-2.5, -0.35], [2.5, 0.3]].forEach(([dx, a]) => { ctx.save(); ctx.translate(sx + dx*q, top + 1*q); ctx.rotate(a - Math.PI/2); ctx.beginPath(); ctx.ellipse(3*q, 0, 4.6*q, 2.6*q, 0, 0, Math.PI*2); ctx.fillStyle = '#e8a64a'; ctx.fill(); ctx.strokeStyle = ink; ctx.lineWidth = 0.9; ctx.stroke(); ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(5.6*q, -0.8*q, 0.6*q, 0, Math.PI*2); ctx.fill(); ctx.restore(); });   // 삐죽 나온 붕어빵
+    ctx.beginPath(); ctx.moveTo(x0 + w, top); ctx.lineTo(x0 + w + d, top - d*0.7); ctx.lineTo(x0 + w + d, sy - d*0.7); ctx.lineTo(x0 + w, sy); ctx.closePath(); ctx.fillStyle = '#b8935a'; ctx.fill(); ctx.strokeStyle = ink; ctx.lineWidth = edge ? 2 : 1; ctx.stroke();   // 옆 주름면
+    ctx.beginPath(); ctx.moveTo(x0, top); for (let i = 0; i <= 6; i++) ctx.lineTo(x0 + w*i/6, top + (i % 2 ? 1.2 : 0)*q); ctx.lineTo(x0 + w, sy); ctx.lineTo(x0, sy); ctx.closePath(); ctx.fillStyle = '#d9b77a'; ctx.fill(); ctx.stroke();   // 앞면(위 톱니)
+    ctx.strokeStyle = '#d9483a'; ctx.lineWidth = 1*q; ctx.beginPath(); ctx.ellipse(sx - 0.8*q, sy - h*0.42, 3*q, 1.7*q, 0, 0, Math.PI*2); ctx.moveTo(sx + 2.2*q, sy - h*0.42); ctx.lineTo(sx + 4*q, sy - h*0.42 - 1.3*q); ctx.lineTo(sx + 4*q, sy - h*0.42 + 1.3*q); ctx.closePath(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(x0 + 1.2*q, top + 2.5*q, 1*q, h - 4*q);
     return;
   }
   if (K.shape === 'chicken') {                       // 치킨 상자: 흰 상자 + 빨간 띠 + 닭다리 점
@@ -1848,20 +1931,26 @@ function item(x, y, z, kind, noBadge){
   }
   const ink = edge || '#38445a', iw = edge ? 2 : 1;
   const cupPath = (w, h, b = 0.36) => { ctx.beginPath(); ctx.moveTo(sx - w/2, sy - h); ctx.lineTo(sx + w/2, sy - h); ctx.lineTo(sx + w*b, sy); ctx.lineTo(sx - w*b, sy); ctx.closePath(); };
-  if (K.shape === 'hotteok') {                       // 호떡 컵: 컵 위로 반 접힌 호떡 + 꿀 줄, 컵 띠
-    const s = scale, w = 12*s, h = 8*s;
-    ctx.fillStyle = '#c98a3a'; ctx.beginPath(); ctx.arc(sx, sy - h, 5.6*s, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = '#8a4a1a'; ctx.fillRect(sx - 3*s, sy - h - 2.4*s, 6*s, 1*s);
-    cupPath(w, h); ctx.fillStyle = K.front; ctx.fill(); ctx.fillStyle = K.top; ctx.fillRect(sx - w*0.43, sy - h*0.6, w*0.86, 2.2*s);
-    cupPath(w, h); ctx.strokeStyle = ink; ctx.lineWidth = iw; ctx.stroke();
+  if (K.shape === 'hotteok') {                       // 호떡 종이컵(두께 있게): 컵 테두리 타원 + 주황 띠 + 반 접은 두툼한 호떡(옆 두께·꿀 흐름)
+    const q = scale, w = 12*q, h = 9*q, top = sy - h;
+    ctx.fillStyle = 'rgba(30,36,51,.2)'; ctx.beginPath(); ctx.ellipse(sx + 1.5*q, sy, w*0.42 + 2*q, 1.8*q, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx, top + 1*q, 6.2*q, Math.PI, 0); ctx.lineTo(sx + 6.2*q, top + 3*q); ctx.arc(sx, top + 3*q, 6.2*q, 0, Math.PI, true); ctx.closePath(); ctx.fillStyle = '#a8642a'; ctx.fill(); ctx.strokeStyle = ink; ctx.lineWidth = iw; ctx.stroke();   // 호떡 두께
+    ctx.beginPath(); ctx.arc(sx, top + 1*q, 6.2*q, Math.PI, 0); ctx.closePath(); { const g = ctx.createLinearGradient(0, top - 5*q, 0, top + 1*q); g.addColorStop(0, '#e8b06a'); g.addColorStop(1, '#c98a3a'); ctx.fillStyle = g; } ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#6b3a18'; [[-2.5, -2], [1.5, -3.5], [3, -1]].forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(sx + dx*q, top + dy*q, 0.7*q, 0, Math.PI*2); ctx.fill(); });
+    ctx.fillStyle = 'rgba(122,60,20,.85)'; rr(sx + 2*q, top + 1*q, 1.2*q, 3.4*q, 0.6*q); ctx.fill();   // 꿀 흐름
+    cupPath(w, h); ctx.fillStyle = '#fffaf0'; ctx.fill(); ctx.save(); cupPath(w, h); ctx.clip(); ctx.fillStyle = '#e8742a'; ctx.fillRect(sx - w/2, sy - h*0.62, w, 2.4*q); ctx.fillStyle = 'rgba(30,36,51,.12)'; ctx.fillRect(sx + w*0.18, top, w*0.4, h); ctx.restore();
+    cupPath(w, h); ctx.strokeStyle = ink; ctx.lineWidth = iw; ctx.stroke(); ctx.beginPath(); ctx.ellipse(sx, top, w/2, 1.4*q, 0, 0, Math.PI*2); ctx.stroke();
     return;
   }
-  if (K.shape === 'eggbread') {                      // 계란빵: 종이 받침 위 노릇한 타원 빵 + 달걀
-    const s = scale;
-    ctx.fillStyle = '#e8a64a'; ctx.beginPath(); ctx.ellipse(sx, sy - 5*s, 7.5*s, 4.5*s, 0, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = ink; ctx.lineWidth = iw; ctx.stroke();
-    ctx.fillStyle = K.front; ctx.fillRect(sx - 7.5*s, sy - 4*s, 15*s, 4*s); ctx.strokeRect(sx - 7.5*s, sy - 4*s, 15*s, 4*s);
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(sx + 1.5*s, sy - 7.4*s, 3.8*s, 1.8*s, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#f2b51e'; ctx.beginPath(); ctx.arc(sx + 1.5*s, sy - 7.6*s, 1.6*s, 0, Math.PI*2); ctx.fill();
+  if (K.shape === 'eggbread') {                      // 계란빵(두께 있게): 종이 배 받침(앞면·윗 테) 위 봉긋한 빵 + 달걀
+    const q = scale, ink2 = ink;
+    ctx.fillStyle = 'rgba(30,36,51,.2)'; ctx.beginPath(); ctx.ellipse(sx + 1.5*q, sy, 9*q, 1.8*q, 0, 0, Math.PI*2); ctx.fill();
+    rr(sx - 8.5*q, sy - 13*q, 17*q, 8*q, 3*q);
+    { const g = ctx.createLinearGradient(0, sy - 13*q, 0, sy - 5*q); g.addColorStop(0, '#f2c06a'); g.addColorStop(1, '#c97e2e'); ctx.fillStyle = g; } ctx.fill(); ctx.strokeStyle = ink2; ctx.lineWidth = iw; ctx.stroke();   // 빵(모서리만 둥근 직사각형)
+    ctx.fillStyle = '#fff'; rr(sx - 5*q, sy - 14*q, 10*q, 3.6*q, 1.6*q); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#f2b51e'; ctx.beginPath(); ctx.arc(sx + 0.5*q, sy - 12.2*q, 1.6*q, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(sx - 9.5*q, sy - 6.5*q); ctx.lineTo(sx + 9.5*q, sy - 6.5*q); ctx.lineTo(sx + 7.5*q, sy); ctx.lineTo(sx - 7.5*q, sy); ctx.closePath(); ctx.fillStyle = '#fffdf6'; ctx.fill(); ctx.stroke();   // 종이 배 받침
+    ctx.fillStyle = 'rgba(232,116,42,.8)'; ctx.fillRect(sx - 8.5*q, sy - 4.2*q, 17*q, 1.2*q);
     return;
   }
   if (K.shape === 'hoppang') {                       // 호빵: 종이 위 하얀 둥근 빵 + 갈색 도장
@@ -2056,6 +2145,14 @@ const LAMPS = {
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 4*u); ctx.stroke(); bulb(x, y + 8*u, 4*u, i % 2 ? 'rgb(255,190,90)' : 'rgb(255,236,170)', !off && fl, u); }
   }
 };
+// 2층 아치 천막 안쪽을 따라 매단 전구(천막은 그림 좌표 그대로 — machLamps가 v < 44면 dv만큼 내리므로 그만큼 빼서 넘김)
+LAMPS.arch = (S2, u, now, s, off) => {
+  if (!off) deckGlow(S2, u, now, '255,205,120', 0.17);
+  const { hw, by, ry, band } = ARCH, dv = 90*(1 - 0.62);
+  for (let i = 0; i < 9; i++) { const t = Math.PI*(0.1 + i*0.1), x = 120 + Math.cos(t)*(hw - band - 3), y = by - Math.sin(t)*(ry - band - 3) + 3, sw = Math.sin(now/900 + i)*0.8;
+    const [bx, byy] = S2(x + sw, y - dv); ctx.strokeStyle = INK; ctx.lineWidth = 1.2*u; ctx.beginPath(); ctx.moveTo(bx, byy - 5*u); ctx.lineTo(bx, byy - 1*u); ctx.stroke();
+    bulb(bx, byy + 2*u, 3.4*u, i % 2 ? 'rgb(255,190,90)' : 'rgb(255,236,170)', !off && !(s.broken && Math.random() < 0.3), u); }
+};
 // 3·4층: 메뉴판 위에 매달린 형광등(차가운 흰빛, 고장이면 껌뻑)
 LAMPS.tube = (S2, u, now, s, off) => {
   if (!off) deckGlow(S2, u, now, '220,240,255', 0.13);
@@ -2100,7 +2197,7 @@ LAMPS.spot = (S2, u, now, s, off) => {
 function spatula(S2, u, prog, from, a, b, draw){
   const t = lerp01(prog, a, b); if (prog < a || prog > b + 0.02) return false;
   const e = t*t*(3 - 2*t), [x, y] = S2(from[0] + (197 - from[0])*e, from[1] + (114 - from[1])*e - Math.sin(Math.PI*t)*10);
-  ctx.strokeStyle = '#38445a'; ctx.lineWidth = 2.5*u; ctx.beginPath(); ctx.moveTo(x + 6*u, y + 4*u); ctx.lineTo(x + 24*u, y + 16*u); ctx.stroke();
+  ctx.strokeStyle = INK; ctx.lineWidth = 2.5*u; ctx.beginPath(); ctx.moveTo(x + 6*u, y + 4*u); ctx.lineTo(x + 24*u, y + 16*u); ctx.stroke();
   rr(x - 11*u, y - 8*u, 22*u, 15*u, 2*u); ctx.fillStyle = '#dfe5ec'; ctx.fill(); ctx.lineWidth = 1.8*u; ctx.stroke();
   draw(x, y); return true;
 }
@@ -2112,7 +2209,7 @@ function drawThemed(T, s, z, k, p, py){
   const bt = (now - (rt(z).pbump?.[k] || -1e9))/320, sq = bt >= 0 && bt < 1 && !RM ? Math.sin(bt*Math.PI*2)*(1 - bt)*0.07 : 0;   // 완성 '통'
   ctx.save();
   if (sq) { const [bx, by] = S0(120, 190); ctx.translate(bx, by); ctx.scale(1 + sq*0.6, 1 - sq); ctx.translate(-bx, -by); }
-  ctx.drawImage(T.img, l, t, 240*u, 200*u);
+  { const vx = T.img.vx || 0; ctx.drawImage(T.img, S0(vx, 0)[0], t, (T.img.vw || 240)*u, 200*u); }   // 넓힌 그림 칸(deck)은 왼쪽 끝 vx부터
   const tk = T.tilt, dv = tk ? 90*(1 - tk) : 0;                  // 45도(tilt): 그림과 같은 비율로 — 메뉴판 쪽은 내려오고, 윗판은 앞 모서리 기준 납작
   const vo = T.vo || 0; VO = vo;   // 45도 층 시점(그리는 동안만)
   if (T.lamp) machLamps(tk ? (a, v) => S2(a + vo*PERSP*pvd(v), v < 44 ? v + dv : v <= 134 ? 134 - (134 - v)*tk : v) : S2, u, now, s, T.lamp);
@@ -2468,13 +2565,23 @@ const HOT_AT = [[46, 76], [91, 76], [136, 76], [46, 102], [91, 102], [136, 102]]
 function animHot2({ S2, u, now, prog, work, s }){
   menuSign(S2, u, now, s, '꿀호떡', '#ffe08a', 23, 23);
   if (!work) return;
-  const cake = (x, y, f, br, k = 1) => { const r = (8.5 + 8*f)*u*k;
-    ctx.fillStyle = '#f3e0b5'; ctx.beginPath(); ctx.ellipse(x, y, r, r*0.8, 0, 0, Math.PI*2); ctx.fill();
-    if (br > 0) { const g = ctx.createRadialGradient(x - r*0.2, y - r*0.2, r*0.1, x, y, r); g.addColorStop(0, '#e0a24a'); g.addColorStop(1, '#a8642a'); ctx.globalAlpha = br; ctx.fillStyle = g; ctx.fill(); ctx.globalAlpha = 1; }
-    ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.5*u; ctx.stroke();
-    if (f < 0.5) { ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.beginPath(); ctx.arc(x - 3*u, y - 3*u, 2.6*u, 0, Math.PI*2); ctx.fill(); }
-    else if (br > 0.5) { ctx.fillStyle = '#6b3a18'; [[-5, -2], [4, 1], [-1, 5], [6, -4]].forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(x + dx*u, y + dy*u, 1.6*u, 0, Math.PI*2); ctx.fill(); });
-      ctx.fillStyle = 'rgba(255,240,200,.75)'; ctx.beginPath(); ctx.ellipse(x - r*0.35, y - r*0.35, r*0.3, r*0.12, -0.5, 0, Math.PI*2); ctx.fill(); } };
+  const cake = (x, y, f, br, k = 1) => { const r = (8.5 + 8*f)*u*k, ry = r*0.8, UP = u/0.62;   // 호떡(사용자: 쿠키 말고 피자처럼 가장자리가 볼록) — 반죽 공 → 눌리면 두께 있는 납작한 판 + 볼록한 테두리 + 살짝 꺼진 가운데 + 기름 윤기
+    const gold = (cx, cy, rx, rr2, a, c0, c1) => { const g = ctx.createRadialGradient(cx - rx*0.3, cy - rr2*0.4, rx*0.1, cx, cy, rx); g.addColorStop(0, c0); g.addColorStop(1, c1); ctx.globalAlpha = a; ctx.fillStyle = g; ctx.fill(); ctx.globalAlpha = 1; };
+    if (f < 0.5) {   // 반죽 공(볼록)
+      ctx.fillStyle = 'rgba(20,20,30,.22)'; ctx.beginPath(); ctx.ellipse(x + 2*u, y + 1*u, r*1.05, ry, 0, 0, Math.PI*2); ctx.fill();   // 바닥 그림자
+      ctx.beginPath(); ctx.ellipse(x, y - r*0.9, r, r*1.47, 0, 0, Math.PI*2);   // 공: 세로 1.47 × 납작 0.62 ≈ 화면에서 둥글게
+      { const g = ctx.createRadialGradient(x - r*0.35, y - r*1.5, r*0.1, x, y - r*0.9, r*1.2); g.addColorStop(0, '#fff3d6'); g.addColorStop(0.6, '#f0d9a6'); g.addColorStop(1, '#cfae72'); ctx.fillStyle = g; } ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.5*u; ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.ellipse(x - r*0.35, y - r*1.35, r*0.22, r*0.14, -0.4, 0, Math.PI*2); ctx.fill(); return; }
+    const th = 2.4*UP, top = y - th;
+    ctx.beginPath(); ctx.ellipse(x, y, r, ry, 0, 0, Math.PI*2); ctx.fillStyle = br > 0.3 ? '#9a5422' : '#d9c08a'; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.5*u; ctx.stroke();   // 옆 두께
+    ctx.beginPath(); ctx.ellipse(x, top, r, ry, 0, 0, Math.PI*2); ctx.fillStyle = '#f3e0b5'; ctx.fill(); if (br > 0) gold(x, top, r, ry, br, '#f6c77e', '#b8702e'); ctx.strokeStyle = INK; ctx.lineWidth = 1.5*u; ctx.stroke();   // 윗면(테두리까지)
+    const ir = r*0.66, iry = ry*0.66, iy = top + 0.9*UP;   // 가운데: 테두리보다 살짝 낮게 꺼짐
+    ctx.beginPath(); ctx.ellipse(x + 0.3*u, iy, ir, iry, 0, 0, Math.PI*2); ctx.fillStyle = '#ead2a0'; ctx.fill(); if (br > 0) gold(x + 0.3*u, iy, ir, iry, br, '#e0a24a', '#c07a34');
+    ctx.strokeStyle = 'rgba(90,45,15,.45)'; ctx.lineWidth = 1.2*u; ctx.beginPath(); ctx.ellipse(x + 0.3*u, iy, ir, iry, 0, Math.PI*0.95, Math.PI*1.95); ctx.stroke();   // 테두리 안쪽 그늘(볼록한 턱)
+    ctx.strokeStyle = 'rgba(255,240,205,.55)'; ctx.beginPath(); ctx.ellipse(x + 0.3*u, iy, ir, iry, 0, Math.PI*0.05, Math.PI*0.9); ctx.stroke();   // 안쪽 아래 밝은 턱
+    ctx.strokeStyle = `rgba(255,248,225,${0.5 + 0.35*br})`; ctx.lineWidth = 1.8*u; ctx.beginPath(); ctx.ellipse(x, top, r*0.84, ry*0.82, 0, Math.PI*1.05, Math.PI*1.55); ctx.stroke();   // 테두리 기름 윤기
+    if (br > 0.5) { ctx.fillStyle = `rgba(110,55,20,${0.35*(br - 0.5)*2})`; [[-0.82, 0.25], [0.7, -0.5], [0.55, 0.62], [-0.3, -0.85]].forEach(([a, b]) => { ctx.beginPath(); ctx.ellipse(x + a*r, top + b*ry, 2*u, 1.2*u, a, 0, Math.PI*2); ctx.fill(); });   // 테두리 노릇한 반점
+      ctx.fillStyle = 'rgba(255,236,190,.7)'; ctx.beginPath(); ctx.ellipse(x - ir*0.25, iy - iry*0.2, ir*0.3, iry*0.16, -0.3, 0, Math.PI*2); ctx.fill(); } };   // 가운데 꿀 비침 윤기
   HOT_AT.forEach(([hx, hy], i) => {
     if (i === 5 && prog > 0.72) return;                          // 마지막 것은 뒤집개가 들고 감
     const pt = 0.1 + i*0.06, [x, y] = S2(hx, hy); cake(x, y, lerp01(prog, pt - 0.02, pt + 0.02), lerp01(prog, pt, pt + 0.32), PK(hy));
@@ -2482,70 +2589,122 @@ function animHot2({ S2, u, now, prog, work, s }){
   for (let i = 0; i < 6; i++) { const tt = (now/380 + i*0.19) % 1, [qx, qy] = S2(30 + ((i*37) % 122), 66 + ((i*19) % 46));   // 기름 지글지글
     ctx.fillStyle = `rgba(255,240,200,${0.8*(1 - tt)})`; ctx.beginPath(); ctx.arc(qx, qy, (1 + tt*1.8)*u*1.4, 0, Math.PI*2); ctx.fill(); }
   const i = HOT_AT.findIndex((_, j) => Math.abs(prog - (0.1 + j*0.06)) < 0.03);
-  if (i >= 0) {                                                  // 누르개: 위에서 내려와 꾹(그림자가 짙어짐)
-    const d = 1 - Math.abs(prog - (0.1 + i*0.06))/0.03, [x, y] = S2(HOT_AT[i][0], HOT_AT[i][1]), lift = (1 - d)*12*u, pk = PK(HOT_AT[i][1]);
-    ctx.fillStyle = `rgba(20,20,30,${0.25*d})`; ctx.beginPath(); ctx.ellipse(x + 3*u, y + 2*u, 17*u*pk, 13*u, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#cfd6e0'; ctx.beginPath(); ctx.ellipse(x, y - lift, 17*u*pk, 14*u, 0, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.8*u; ctx.stroke();
-    ctx.fillStyle = '#a87449'; ctx.beginPath(); ctx.arc(x, y - lift, 4.5*u, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  if (i >= 0) {                                                  // 호떡 누르개(사용자): 둥근 쇠판 + 세운 나무 손잡이 — 위에서 쿵 내려와 꾹 눌렀다(반죽이 퍼짐) 들림, 그림자가 짙어짐
+    const d = 1 - Math.abs(prog - (0.1 + i*0.06))/0.03, [x, y] = S2(HOT_AT[i][0], HOT_AT[i][1]), e = d*d*(3 - 2*d), lift = (1 - e)*26*u, pk = PK(HOT_AT[i][1]), sq = d > 0.85 ? Math.sin(now/40)*0.8*u : 0;
+    ctx.fillStyle = `rgba(20,20,30,${0.3*e})`; ctx.beginPath(); ctx.ellipse(x + 4*u, y + 3*u, (14 + 6*e)*u*pk, (9 + 4*e)*u, 0, 0, Math.PI*2); ctx.fill();
+    const py = y - lift - 3*u;
+    rr(x - 18*u*pk, py - 3*u, 36*u*pk, 6*u, 3*u); { const g = ctx.createLinearGradient(0, py - 3*u, 0, py + 3*u); g.addColorStop(0, '#f1f4f8'); g.addColorStop(1, '#8d98aa'); ctx.fillStyle = g; } ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.8*u; ctx.stroke();   // 쇠판(옆에서 본 두께)
+    ctx.beginPath(); ctx.ellipse(x, py - 3*u, 18*u*pk, 7*u, 0, 0, Math.PI*2); ctx.fillStyle = '#dfe5ec'; ctx.fill(); ctx.stroke();   // 쇠판 윗면
+    rr(x - 3*u + sq, py - 30*u, 6*u, 27*u, 3*u); { const g = ctx.createLinearGradient(x - 3*u, 0, x + 3*u, 0); g.addColorStop(0, '#c08a5a'); g.addColorStop(1, '#7a4f2e'); ctx.fillStyle = g; } ctx.fill(); ctx.stroke();   // 나무 손잡이
+    ctx.beginPath(); ctx.arc(x + sq, py - 31*u, 5*u, 0, Math.PI*2); ctx.fillStyle = '#a87449'; ctx.fill(); ctx.stroke();
+    if (d > 0.85) { ctx.strokeStyle = 'rgba(56,68,90,.6)'; ctx.lineWidth = 1.4*u; [-1, 1].forEach(s2 => { ctx.beginPath(); ctx.moveTo(x + s2*24*u, py - 6*u); ctx.lineTo(x + s2*30*u, py - 10*u); ctx.moveTo(x + s2*24*u, py); ctx.lineTo(x + s2*31*u, py); ctx.stroke(); }); }   // 꾹! 선
     if (d > 0.8) for (let j = 0; j < 6; j++) { const a = j*1.05 + i, r = (18 + (d - 0.8)*60)*u; ctx.fillStyle = 'rgba(255,236,190,.9)'; ctx.beginPath(); ctx.arc(x + Math.cos(a)*r, y + Math.sin(a)*r*0.8, 1.8*u, 0, Math.PI*2); ctx.fill(); }   // 꾹 → 기름 튐
   }
   spatula(S2, u, prog, HOT_AT[5], 0.72, 0.8, (x, y) => cake(x, y - 1*u, 1, 1));
-  steam(S2, u, now, [60, 112], 84);
+  steam(S2, u, now, [44, 76, 108, 140], 84);   // 겨울 노점 — 김 더 많이
 }
-// 2층 1번 붕어빵(위에서 본 무쇠 틀): 칸마다 반죽이 차고(0~20%) → 팥 한 숟갈(20~34%) → 무쇠 덮개가 탁 덮였다(40~64%, 틈새로 김) → 열면 노릇한 붕어빵(비늘·눈) → 뒤집개로 쟁반
-const FISH_AT = [[46, 76], [91, 76], [136, 76], [46, 102], [91, 102], [136, 102]];
+// 2층 1번 붕어빵 · 2번 계란빵: 둥근 회전판 위 뚜껑 달린 무쇠 틀 여덟(손잡이는 바깥으로) — 판이 천천히 돌고, 뚜껑 열고 반죽(0~20%) → 팥/달걀(20~36%) → 뚜껑 탁 닫고 굽기(38~64%, 틈새 김) → 열면 노릇(66%~) → 맨 앞 틀에서 뒤집개로 쟁반(72~80%)
 function fishPath(x, y, u, k = 1){ const q = u*k; ctx.beginPath(); ctx.moveTo(x - 19*q, y); ctx.quadraticCurveTo(x - 17*q, y - 9*q, x - 4*q, y - 9*q); ctx.quadraticCurveTo(x + 8*q, y - 9*q, x + 12*q, y);
   ctx.lineTo(x + 21*q, y - 7*q); ctx.lineTo(x + 21*q, y + 7*q); ctx.lineTo(x + 12*q, y); ctx.quadraticCurveTo(x + 8*q, y + 9*q, x - 4*q, y + 9*q); ctx.quadraticCurveTo(x - 17*q, y + 9*q, x - 19*q, y); ctx.closePath(); }
-function animBung2({ S2, u, now, prog, work, s }){
-  menuSign(S2, u, now, s, '붕어빵', '#ffe08a', 23, 23);
-  { const [px, py] = S2(61, 150); unsq(() => { ctx.font = `${Math.round(11*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('3개 1,000원', px, py); }); }
-  if (!work) return;
-  const bake = lerp01(prog, 0.45, 0.66), lid = prog > 0.38 && prog < 0.66 ? Math.min(1, (prog - 0.38)/0.03, (0.66 - prog)/0.03) : 0;
-  const fishAt = (x, y, f, bean, k = 1) => {
-    fishPath(x, y, u, 0.98*f*k + 0.05); ctx.fillStyle = '#f6e3b0'; ctx.fill();
-    if (bake > 0) { const g = ctx.createLinearGradient(x, y - 9*u*k, x, y + 9*u*k); g.addColorStop(0, '#f0b45a'); g.addColorStop(1, '#c47a2a'); ctx.globalAlpha = bake; ctx.fillStyle = g; ctx.fill(); ctx.globalAlpha = 1; }
-    if (bake > 0.5) { ctx.strokeStyle = 'rgba(120,64,24,.7)'; ctx.lineWidth = 1.2*u; [-6, 0, 6].forEach(dx => { ctx.beginPath(); ctx.arc(x + dx*u*k, y, 3.6*u*k, -1.2, 1.2); ctx.stroke(); });
-      ctx.fillStyle = '#38445a'; ctx.beginPath(); ctx.arc(x - 13*u*k, y - 2*u*k, 1.6*u*k, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = 'rgba(255,240,200,.7)'; ctx.fillRect(x - 8*u*k, y - 6*u*k, 10*u*k, 1.6*u*k); }
-    else if (bean > 0) { ctx.fillStyle = '#6b2a2a'; ctx.beginPath(); ctx.ellipse(x - 3*u, y, 6*u*bean, 3.5*u*bean, 0, 0, Math.PI*2); ctx.fill(); } };
-  FISH_AT.forEach(([fx, fy], i) => {
-    if (i === 5 && prog > 0.72) return;
-    const f = lerp01(prog, i*0.025, 0.08 + i*0.025); if (f <= 0) return;
-    const [x, y] = S2(fx, fy); fishAt(x, y, f, lerp01(prog, 0.2 + i*0.02, 0.23 + i*0.02), PK(fy));
+const FISH_PTS = (() => { const P = [], q = (a, b, c, t) => a*(1 - t)*(1 - t) + 2*b*(1 - t)*t + c*t*t, seg = (x0, y0, cx, cy, x1, y1) => { for (let i = 1; i <= 6; i++) P.push([q(x0, cx, x1, i/6), q(y0, cy, y1, i/6)]); };   // fishPath 외곽선을 점으로(지역 좌표, 머리 왼쪽)
+  P.push([-19, 0]); seg(-19, 0, -17, -9, -4, -9); seg(-4, -9, 8, -9, 12, 0); P.push([21, -7], [21, 7], [12, 0]); seg(12, 0, 8, 9, -4, 9); seg(-4, 9, -17, 9, -19, 0); return P; })();
+function carousel({ S2, u, now, prog, work, s }, kind){
+  const N = 6, { cx, cy, R } = CAR, rot = work ? now/3000 : 0.3, bake = work ? lerp01(prog, 0.45, 0.66) : 1, UP = u/0.62;   // UP: 화면에서 위로 1(납작하게 한 좌표라 0.62로 나눔)
+  const lidT = work ? (prog < 0.36 ? 0 : prog < 0.42 ? lerp01(prog, 0.36, 0.42) : prog < 0.6 ? 1 : prog < 0.66 ? 1 - lerp01(prog, 0.6, 0.66) : 0) : 1;   // 1 = 닫힘
+  const P = (x, y) => S2(x, y), poly = (pts, fill, lw = 1.6) => { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw*u; ctx.lineJoin = 'round'; ctx.stroke(); };
+  { const [hx, hy] = P(cx, cy);   // 가운데: 가스 불꽃 고리 + 축
+    if (!s.broken) for (let i = 0; i < 14; i++) { const a = i/14*Math.PI*2, [fx, fy] = P(cx + Math.cos(a)*15, cy + Math.sin(a)*15), fl = 0.7 + 0.3*Math.sin(now/70 + i*2.1);
+      ctx.fillStyle = `rgba(80,150,255,${0.75*fl})`; ctx.beginPath(); ctx.arc(fx, fy, 2.8*u*fl, 0, Math.PI*2); ctx.fill(); }
+    ctx.fillStyle = '#5d6474'; ctx.beginPath(); ctx.arc(hx, hy, 8*u, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.6*u; ctx.stroke();
+    for (let i = 0; i < N; i++) { const a = rot + i/N*Math.PI*2, [ax, ay] = P(cx + Math.cos(a)*9, cy + Math.sin(a)*9), [bx, by] = P(cx + Math.cos(a)*(R - 7), cy + Math.sin(a)*(R - 7)); ctx.strokeStyle = '#8d98aa'; ctx.lineWidth = 2.2*u; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); } }   // 회전 살
+  const ang = i => rot + i/N*Math.PI*2, front = [...Array(N).keys()].reduce((b, i) => Math.sin(ang(i)) > Math.sin(ang(b)) ? i : b, 0);
+  const food = (i, k = 1) => { const f = work ? lerp01(prog, i*0.025, 0.08 + i*0.025) : 1, mid = work ? lerp01(prog, 0.2 + i*0.02, 0.24 + i*0.02) : 1;
+    if (f <= 0) return;
+    if (kind === 'bung') { fishPath(0, 0, u, 0.48*f*k + 0.02); ctx.fillStyle = '#f6e3b0'; ctx.fill();
+      if (bake > 0) { const g = ctx.createLinearGradient(0, -5*u, 0, 5*u); g.addColorStop(0, '#f0b45a'); g.addColorStop(1, '#c47a2a'); ctx.globalAlpha = bake; ctx.fillStyle = g; ctx.fill(); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = 'rgba(59,36,24,.75)'; ctx.lineWidth = 1*u; ctx.stroke();
+      if (bake > 0.5) { ctx.strokeStyle = 'rgba(120,64,24,.75)'; [-3, 0, 3].forEach(dx => { ctx.beginPath(); ctx.arc(dx*u*k, 0, 2*u*k, -1.2, 1.2); ctx.stroke(); }); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(-6*u*k, -1*u*k, 0.9*u*k, 0, Math.PI*2); ctx.fill(); }
+      else if (mid > 0) { ctx.fillStyle = '#6b2a2a'; ctx.beginPath(); ctx.ellipse(-1.5*u, 0, 3.4*u*mid, 2*u*mid, 0, 0, Math.PI*2); ctx.fill(); } }
+    else { ctx.fillStyle = '#f6e3b0'; ctx.beginPath(); ctx.ellipse(0, 0, 9*u*f*k, 5.6*u*f*k, 0, 0, Math.PI*2); ctx.fill();
+      if (bake > 0) { ctx.globalAlpha = bake; ctx.fillStyle = '#d99a48'; ctx.fill(); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = 'rgba(59,36,24,.65)'; ctx.lineWidth = 1*u; ctx.stroke();
+      if (mid > 0) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(0.5*u, 0, 5.4*u*mid*k, 3.4*u*mid*k, 0, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#f2b51e'; ctx.beginPath(); ctx.arc(0.5*u, -0.3*u, 2.1*u*mid*k, 0, Math.PI*2); ctx.fill(); } } };
+  [...Array(N).keys()].sort((a, b) => Math.sin(ang(a)) - Math.sin(ang(b))).forEach(i => {   // 뒤 → 앞
+    const a = ang(i), c = Math.cos(a), sn = Math.sin(a), tx = -sn, ty = c, mx = cx + c*R, my = cy + sn*R, HW = 12, HR = 7.5, taken = work && prog > 0.72 && i === front;
+    const Q = (dt, dr) => P(mx + tx*dt + c*dr, my + ty*dt + sn*dr);
+    { const [ax, ay] = Q(0, HR), [bx, by] = Q(0, HR + 9); ctx.strokeStyle = INK; ctx.lineWidth = 3.6*u; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); ctx.strokeStyle = '#a87449'; ctx.lineWidth = 2.2*u; ctx.stroke(); }   // 손잡이(바깥으로)
+    poly([Q(-HW, -HR), Q(HW, -HR), Q(HW, HR), Q(-HW, HR)], '#4a5262');   // 아래 틀
+    const [ox, oy] = P(mx, my); ctx.save(); ctx.translate(ox, oy); ctx.rotate(a + Math.PI/2);
+    if (kind === 'bung') { fishPath(0, 0, u, 0.5); ctx.fillStyle = '#22262e'; ctx.fill(); } else { ctx.fillStyle = '#22262e'; ctx.beginPath(); ctx.ellipse(0, 0, 9.5*u, 6*u, 0, 0, Math.PI*2); ctx.fill(); }
+    if (!taken) food(i); ctx.restore();
+    const th = (1 - lidT)*Math.PI*0.85, h0 = Q(-HW, HR), h1 = Q(HW, HR);   // 뚜껑: 바깥 경첩을 축으로 넘어감(th 0 = 덮임 · 약 150° = 바깥으로 젖혀져 안쪽 면이 보임 — 틀 속을 가리지 않게)
+    const fr = (dt, d = 15) => { const [ix, iy] = Q(dt, HR - d*Math.cos(th)); return [ix, iy - d*Math.sin(th)*UP]; };
+    const closed = lidT > 0.5;
+    poly([h0, h1, fr(HW), fr(-HW)], closed ? '#6b7484' : '#5d6474');
+    if (!closed) { ctx.beginPath(); FISH_PTS.forEach(([fx, fy], j) => { const [x, y] = fr(-fx*0.52, 7.5 + fy*0.42); j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath(); ctx.fillStyle = '#22262e'; ctx.fill();   // 젖힌 뚜껑 안쪽 = 붕어 모양 홈(뚜껑 기울기·원근 따라)
+      ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1*u; ctx.stroke(); }
+    if (closed) { const [lx, ly] = Q(0, HR - 7.5); ctx.save(); ctx.translate(lx, ly - 15*Math.sin(th)*UP/2); ctx.rotate(a + Math.PI/2); ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1*u;
+      if (kind === 'bung') { fishPath(0, 0, u, 0.46); ctx.stroke(); } else { ctx.beginPath(); ctx.ellipse(0, 0, 8.5*u, 5.4*u, 0, 0, Math.PI*2); ctx.stroke(); } ctx.restore();
+      if (work && lidT === 1 && Math.sin(now/300 + i*1.7) > 0.2) { const tt = (now/600 + i*0.3) % 1, [sx, sy] = Q(HW, 0); ctx.fillStyle = `rgba(255,255,255,${0.75*(1 - tt)})`; ctx.beginPath(); ctx.arc(sx, sy - tt*10*UP, (1.6 + tt*2.6)*u, 0, Math.PI*2); ctx.fill(); } }   // 틈새 김
   });
-  if (lid > 0) {                                                 // 무쇠 덮개(손잡이 왼쪽)
-    const C = [S2(18, 54), S2(164, 54), S2(164, 122), S2(18, 122)];   // 틀처럼 뒤가 좁은 사다리꼴
-    ctx.globalAlpha = lid; ctx.beginPath(); C.forEach(([x, y], j) => j ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath();
-    ctx.fillStyle = '#3b414e'; ctx.fill(); ctx.strokeStyle = '#22262e'; ctx.lineWidth = 2*u; ctx.lineJoin = 'round'; ctx.stroke();
-    FISH_AT.forEach(([fx, fy]) => { const [x, y] = S2(fx, fy); fishPath(x, y, u, PK(fy)); ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1.2*u; ctx.stroke(); });
-    const [lx, hy] = S2(18, 88), [hx] = S2(4, 88); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 4*u; ctx.beginPath(); ctx.moveTo(lx, hy); ctx.lineTo(hx, hy); ctx.stroke(); ctx.globalAlpha = 1;
-    steam(S2, u, now, [40, 90, 140], 58);
-    const slam = 1 - lerp01(prog, 0.38, 0.44); if (slam > 0 && slam < 1) for (let j = 0; j < 8; j++) { const [x, y] = S2(j < 4 ? 14 - (1 - slam)*10 : 168 + (1 - slam)*10, 62 + (j % 4)*16); ctx.fillStyle = `rgba(255,255,255,${0.8*slam})`; ctx.beginPath(); ctx.arc(x, y, (3 + (1 - slam)*6)*u, 0, Math.PI*2); ctx.fill(); }   // 탁 → 김이 확
-  }
-  spatula(S2, u, prog, FISH_AT[5], 0.72, 0.8, (x, y) => fishAt(x, y, 1, 0, 0.6));
+  if (work) { const a = ang(front), from = [cx + Math.cos(a)*R, cy + Math.sin(a)*R];
+    spatula(S2, u, prog, from, 0.72, 0.8, (x, y) => { ctx.save(); ctx.translate(x, y); food(front, 1); ctx.restore(); }); }
+  if (work && lidT === 1) steam(S2, u, now, [cx - 22, cx, cx + 22], 70);
 }
-// 2층 2번 계란빵(위에서 본 타원 틀 여덟 칸): 반죽이 차고(0~20%) → 달걀을 하나씩 톡(22~42%, 껍데기가 위에서 갈라짐) → 부풀며 가장자리 노릇 → 뒤집개로 쟁반
-const EGG_AT = [[38, 76], [74, 76], [110, 76], [146, 76], [38, 102], [74, 102], [110, 102], [146, 102]];
+// 붕어빵 진열대: 철망 위에 노릇한 붕어빵이 두 줄(앞 칸 물건 수만큼 늘어남, 최대 8) — 뒤집개가 하나 올려놓을 때마다 하나씩
+const RACK_AT = [[150, 95], [181, 96], [211, 95], [148, 109], [179, 108], [209, 109], [151, 123], [182, 124], [212, 123]];   // 크게(0.9) — 옆 붕어빵과 겹쳐 보이게(사용자)   // 세 줄 × 셋(진열대 넓게 — 사용자)
+function bungRack({ S2, u, prog, work, s }){
+  const n = Math.min(RACK_AT.length, (s.items || 0) + 2 + (work && prog > 0.8 ? 1 : 0));
+  for (let i = 0; i < n; i++) { const [rx, rv] = RACK_AT[i], [x, y] = S2(rx, rv), k = PK(rv);
+    ctx.save(); ctx.translate(x, y); ctx.rotate((i % 2 ? 1 : -1)*0.06);
+    fishPath(0, 0, u, 0.9*k); { const g = ctx.createLinearGradient(0, -4*u, 0, 4*u); g.addColorStop(0, '#f2bd62'); g.addColorStop(1, '#c47a2a'); ctx.fillStyle = g; } ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1*u; ctx.stroke();
+    ctx.strokeStyle = 'rgba(120,64,24,.7)'; [-5, 0, 5].forEach(dx => { ctx.beginPath(); ctx.arc(dx*u*k, 0, 3.4*u*k, -1.2, 1.2); ctx.stroke(); });
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(-11*u*k, -1.6*u*k, 1.3*u*k, 0, Math.PI*2); ctx.fill();
+    if (i % 2) { ctx.fillStyle = '#6b2a2a'; ctx.beginPath(); ctx.ellipse(2*u*k, 5.8*u*k, 4*u*k, 1.8*u*k, 0, 0, Math.PI*2); ctx.fill(); }   // 삐져나온 팥
+    ctx.restore(); }
+}
+function animBung2(o){
+  menuSign(o.S2, o.u, o.now, o.s, '붕어빵', '#ffe08a', 23, 23);
+  bungRack(o);
+  { const [px, py] = o.S2(176, 140); unsq(() => { ctx.font = `${Math.round(9*o.u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('3개 1,000원', px, py); }); }
+  carousel(o, 'bung');
+}
+// 2층 2번 계란빵(사진 기준): 가운데 경첩(x 101)으로 이어진 길쭉한 무쇠 판 두 장, 판마다 타원 틀 다섯 — 펼친 채 반죽(0~20%) → 왼쪽 틀에 달걀(20~34%)
+// → 오른쪽 판이 책처럼 넘어와 덮음(36~42%) → 굽기(42~62%, 김·뒷면 갈빗살) → 다시 펼침(62~68%) → 노릇 → 맨 앞 틀에서 뒤집개로 쟁반(72~80%). 판마다 앞으로 긴 검은 손잡이
+// 처음 기계(가운데 경첩 + 판 두 장, 판마다 긴 틀 한 줄)를 두 대 나란히(사용자: 한 대는 너무 길쭉) — 경첩 x 71·131, 판 폭 26, 오른쪽 기계는 조금 늦게 덮음
+const EGG_UNITS = [{ sp:71, lag:0 }, { sp:131, lag:0.025 }], EGG_V = [60, 74, 88, 102, 116];
 function animEgg2({ S2, u, now, prog, work, s }){
   menuSign(S2, u, now, s, '계란빵', '#ffe08a', 23, 23);
-  if (!work) return;
-  const bake = lerp01(prog, 0.45, 0.72);
-  const bread = (x, y, f, egg, k = 1) => {
-    ctx.fillStyle = '#f6e3b0'; ctx.beginPath(); ctx.ellipse(x, y, 16*u*f*k + 0.1, 11*u*f*k + 0.1, 0, 0, Math.PI*2); ctx.fill();
-    if (bake > 0) { const g = ctx.createRadialGradient(x, y, 4*u*k, x, y, 16*u*k); g.addColorStop(0, '#f2c06a'); g.addColorStop(1, '#c97e2e'); ctx.globalAlpha = bake; ctx.fillStyle = g; ctx.fill(); ctx.globalAlpha = 1; }
-    ctx.strokeStyle = 'rgba(56,68,90,.6)'; ctx.lineWidth = 1*u; ctx.stroke();
-    if (egg > 0) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x + 1*u*k, y, 9.5*u*egg*k, 6.5*u*egg*k, 0, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#f2b51e'; ctx.beginPath(); ctx.arc(x + 1*u*k, y - 0.5*u*k, 3.8*u*egg*k, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#d9971a'; ctx.lineWidth = 0.8*u; ctx.stroke(); } };
-  EGG_AT.forEach(([ex, ey], i) => {
-    if (i === 7 && prog > 0.72) return;
-    const f = lerp01(prog, i*0.02, 0.06 + i*0.02); if (f <= 0) return;
-    const [x, y] = S2(ex, ey); bread(x, y, f, lerp01(prog, 0.22 + i*0.025, 0.24 + i*0.025), PK(ey));
+  const UP = u/0.62, bake = work ? lerp01(prog, 0.45, 0.66) : 1, PW = 28, CD = 15;
+  const poly = (pts, fill, lw = 1.6) => { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = lw*u; ctx.lineJoin = 'round'; ctx.stroke(); };
+  const bread = (x, y, rxk, i, egg, puff = 0) => { const f = work ? lerp01(prog, i*0.02, 0.07 + i*0.02) : 1, e = work ? lerp01(prog, 0.2 + i*0.025, 0.23 + i*0.025) : 1; if (f <= 0) return;
+    const bw = 19*u*f*rxk, bh = 9.6*u*f, H = puff*6*UP, top = y - H;   // puff: 뚜껑을 열면 틀 위로 봉긋 부풀어 오름(사용자)
+    if (puff > 0) { rr(x - bw/2, top - bh/2, bw, bh + H, Math.min(bw, bh)*0.42); ctx.fillStyle = '#b8742a'; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.1*u; ctx.stroke(); }   // 부푼 옆면(노릇한 갈색)
+    rr(x - bw/2 - puff*0.8*u, top - bh/2 - puff*0.8*u, bw + puff*1.6*u, bh + puff*1.6*u, Math.min(bw, bh)*0.45); ctx.fillStyle = '#f6e3b0'; ctx.fill();
+    if (bake > 0) { const g = ctx.createLinearGradient(0, top - bh/2, 0, top + bh/2); g.addColorStop(0, '#f2c070'); g.addColorStop(1, '#d08a38'); ctx.globalAlpha = bake; ctx.fillStyle = g; ctx.fill(); ctx.globalAlpha = 1; }   // 계란빵 = 모서리만 둥근 직사각형
+    ctx.strokeStyle = puff > 0 ? INK : 'rgba(59,36,24,.6)'; ctx.lineWidth = 1*u; ctx.stroke();
+    if (egg && e > 0) { const ex = x, ey = top - 0.6*u - puff*1.2*u;   // 달걀: 흰자 + 크고 또렷한 노른자(테두리·윤기)
+      ctx.fillStyle = '#fffdf6'; ctx.beginPath(); ctx.ellipse(ex, ey, 7*u*e*rxk, 3.6*u*e, 0, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = 'rgba(59,36,24,.35)'; ctx.lineWidth = 0.8*u; ctx.stroke();
+      ctx.fillStyle = '#ffb400'; ctx.beginPath(); ctx.ellipse(ex, ey - 0.4*u, 3.8*u*e*rxk, 2.6*u*e, 0, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#d98200'; ctx.lineWidth = 0.9*u; ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.ellipse(ex - 1.3*u*e*rxk, ey - 1.3*u*e, 1.1*u*e*rxk, 0.7*u*e, -0.4, 0, Math.PI*2); ctx.fill(); } };
+  const handle = (p0, p1) => { ctx.strokeStyle = INK; ctx.lineWidth = 4.6*u; ctx.beginPath(); ctx.moveTo(...p0); ctx.lineTo(...p1); ctx.stroke(); ctx.strokeStyle = '#2c313b'; ctx.lineWidth = 3*u; ctx.stroke(); ctx.fillStyle = '#2c313b'; ctx.beginPath(); ctx.arc(p1[0], p1[1], 4.2*u, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.4*u; ctx.stroke(); };
+  EGG_UNITS.forEach(({ sp, lag }, ui) => {
+    const q = prog - lag, phi = work ? (q < 0.36 ? 0 : q < 0.42 ? lerp01(q, 0.36, 0.42) : q < 0.62 ? 1 : q < 0.68 ? 1 - lerp01(q, 0.62, 0.68) : 0)*Math.PI : Math.PI;   // 오른쪽 판 넘김 각(π = 덮음)
+    const R = (d, v) => { const [x, y] = S2(sp + d*Math.cos(phi), v); return [x, y - d*Math.sin(phi)*UP]; };
+    poly([S2(sp - PW, 52), S2(sp - 2, 52), S2(sp - 2, 124), S2(sp - PW, 124)], '#4a5262');   // 왼쪽 판(고정): 긴 틀 다섯 + 달걀
+    EGG_V.forEach((v, i) => { const [x, y] = S2(sp - CD, v); ctx.fillStyle = '#22262e'; rr(x - 11*u, y - 5.8*u, 22*u, 11.6*u, 4.4*u); ctx.fill();
+      if (!(work && prog > 0.72 && ui === 0 && i === 4)) bread(x, y, 1, i + ui*2, true, work ? lerp01(q, 0.64, 0.72) : 1); });   // 열면 부풀어 오름
+    handle(S2(sp - PW + 4, 124), S2(sp - PW - 6, 150));
+    { const [a, b] = S2(sp, 50), [c, d] = S2(sp, 126); ctx.strokeStyle = INK; ctx.lineWidth = 5*u; ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.stroke(); ctx.strokeStyle = '#8d98aa'; ctx.lineWidth = 2.6*u; ctx.stroke(); }   // 경첩
+    const up = Math.cos(phi) > 0;
+    poly([R(2, 52), R(PW, 52), R(PW, 124), R(2, 124)], up ? '#4a5262' : '#3b414e');   // 오른쪽 판(넘어감)
+    if (up) EGG_V.forEach((v, i) => { const [x, y] = R(CD, v), rk = Math.max(0.05, Math.cos(phi)); ctx.fillStyle = '#22262e'; rr(x - 11*u*rk, y - 5.8*u, 22*u*rk, 11.6*u, Math.min(4.4*u, 11*u*rk)); ctx.fill(); if (!work || q < 0.42) bread(x, y, rk, i + ui*2, false); });   // 반죽은 양쪽에 → 덮으면 두 반쪽이 하나로 합쳐져 열면 왼쪽 판 한 줄에만 완성 빵(사용자)
+    else { ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 1.2*u; for (let d = 8; d < PW; d += 6) { const [a, b] = R(d, 54), [c, e] = R(d, 122); ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, e); ctx.stroke(); }   // 뒷면 갈빗살
+      if (work && phi === Math.PI) for (let i = 0; i < 2; i++) { const tt = (now/700 + i/2 + ui*0.3) % 1, [x, y] = S2(sp - PW - 2, 70 + i*30); ctx.fillStyle = `rgba(255,255,255,${0.7*(1 - tt)})`; ctx.beginPath(); ctx.arc(x - tt*4*u, y - tt*10*UP, (1.6 + tt*2.4)*u, 0, Math.PI*2); ctx.fill(); } }   // 틈새 김
+    handle(R(PW - 4, 124), R(PW + 6, 150));
+    if (work && phi === Math.PI) steam(S2, u, now, [sp - 12, sp + 6], 64);
   });
-  const i = EGG_AT.findIndex((_, j) => prog > 0.2 + j*0.025 && prog < 0.225 + j*0.025);
-  if (i >= 0) { const t = (prog - 0.2 - i*0.025)/0.025, [x, y] = S2(EGG_AT[i][0], EGG_AT[i][1] - 14), g = t*5*u;   // 달걀 껍데기 쩍
-    ctx.fillStyle = '#fff8ee'; ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.2*u;
-    [-1, 1].forEach(d => { ctx.beginPath(); ctx.arc(x + d*g, y, 6*u, d < 0 ? Math.PI*0.5 : -Math.PI*0.5, d < 0 ? Math.PI*1.5 : Math.PI*0.5); ctx.closePath(); ctx.fill(); ctx.stroke(); }); }
-  if (prog > 0.45) steam(S2, u, now, [60, 100, 140], 80);
-  spatula(S2, u, prog, EGG_AT[7], 0.72, 0.8, (x, y) => bread(x, y, 1, 1, 0.75));
+  if (work) spatula(S2, u, prog, [EGG_UNITS[0].sp - CD, EGG_V[4]], 0.72, 0.8, (x, y) => { ctx.save(); ctx.translate(x, y); bread(0, 0, 0.8, 4, true, 1); ctx.restore(); });
 }
 // 3층 공통: 치킨 조각(위에서 봄 — 울퉁불퉁 튀김옷 + 뼈), coat = 양념·간장 색이 입혀진 정도
 function chick(x, y, r, u, rot, col, coat, coatCol){
@@ -3158,17 +3317,23 @@ function drawLeaves(){
   }
 }
 // 생산기 위 글자 · 수리 막대 · 고장 연기 (프린터·분식 조리대 공통)
+const LAMP_LIFT = { arch:10, string:18, fairy:18, vanity:14, chorong:28, spot:32 };   // 조명이 그림 위로 올라온 양(월드 단위)
+function labelPill(str, x, y, size, color){   // 생산기 위 알림 글자: 밝은 알약 바탕 + 테두리(천막·간판·전광판 어떤 배경에서도 읽히게)
+  const [sx, sy] = toS(x, y, 0); ctx.font = `${Math.round(size*scale)}px ${FONT}`; const w = ctx.measureText(str).width + 14*scale, h = size*1.5*scale;
+  rr(sx - w/2, sy - h/2, w, h, h/2); ctx.fillStyle = 'rgba(255,250,240,.94)'; ctx.fill(); ctx.strokeStyle = color; ctx.lineWidth = 1.5*scale; ctx.stroke();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = color; ctx.fillText(str, sx, sy + 0.5*scale);
+}
 function machLabel(s, z, k, p, py, now, full){
-  const top = py - (160 + (machOf(z, k)?.up || 0))*bigOf(z);    // 가게 생산기는 프린터보다 높은 만큼 올림(큰 생산기는 더)
+  const top = prnBase(z, k) - 200*PU*bigOf(z) - (LAMP_LIFT[machOf(z, k)?.lamp] || 9);   // 생산기 그림 맨 위(v 0)보다 위 — 그림 위로 올라오는 조명(전구줄·초롱·레일)은 그만큼 더(2026-10-23: 간판·전광판·천막과 겹쳐 안 보이던 것)
   if (s.broken) {
     for (let i = 0; i < 3; i++) { const tt = (now/900 + i/3) % 1, [cx, cy] = toS(p.x - 10 + i*10, prnBase(z, k), 80 + tt*40);
       ctx.fillStyle = `rgba(90,90,100,${0.5*(1-tt)})`; ctx.beginPath(); ctx.arc(cx, cy, (6 + tt*8)*scale, 0, Math.PI*2); ctx.fill(); }
-    const [bx, by] = toS(p.x - 28, top + 12); ctx.fillStyle = 'rgba(255,250,240,.6)'; ctx.fillRect(bx, by, 56*scale, 6*scale);
+    const [bx, by] = toS(p.x - 28, top + 13); ctx.fillStyle = 'rgba(255,250,240,.9)'; ctx.fillRect(bx, by, 56*scale, 6*scale);
     ctx.fillStyle = C.ok; ctx.fillRect(bx, by, 56*scale*Math.min(1, (s.fix || 0)/CFG.broken.fixTime), 6*scale);
     const on = Math.floor(now/300) % 2, left = CFG.broken.ruin - (s.brokenT || 0);
     const msg = s.fix > 0 ? '수리 중…' : left <= CFG.broken.warn ? `${Math.ceil(left)}초 뒤 부서짐!` : '고장! 앞에 서서 수리';
-    text(msg, p.x, top, 0, 13, on || s.fix > 0 ? C.ink : C.warn);
-  } else if (full) text('가득 참', p.x, top, 0, 13, C.warn);
+    labelPill(msg, p.x, top, 13, on || s.fix > 0 ? C.ink : C.warn);
+  } else if (full) labelPill('가득 참', p.x, top, 13, C.warn);
 }
 // 돈 = 띠지 두른 초록 돈다발 (ART_SRC.bill이 있으면 그 그림)
 function bill(x, y, z){

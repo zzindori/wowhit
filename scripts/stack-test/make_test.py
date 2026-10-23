@@ -33,14 +33,15 @@ ui=r'''<div id="tv"><div class="row" id="tvF"></div><div class="row"><button id=
   const T = s => window.__t && window.__t(s), $ = id => document.getElementById(id);
   const names = ['1F 분식', '2F 붕어빵', '3F 치킨', '4F 편의점', '5F 라면', '6F 찜질방', '7F 뷰티', '8F 한복', '9F 박물관', '10F 야구장', '11F 공장'];
   names.forEach((n, i) => { const b = document.createElement('button'); b.textContent = n; b.onclick = () => { F = i; paint(); }; $('tvF').appendChild(b); });
-  ['왼쪽', '가운데', '오른쪽', '셋 다', '확대'].forEach((n, i) => { const b = document.createElement('button'); b.textContent = n; b.onclick = () => { if (i < 4) M = i; else ZOOM = !ZOOM; paint(); }; $('tvM').appendChild(b); });
-  const paint = () => { [...$('tvM').children].forEach((b, i) => b.classList.toggle('on', i < 4 ? i === M : ZOOM)); [...$('tvF').children].forEach((b, i) => b.classList.toggle('on', i === F)); $('tvAuto').classList.toggle('on', AUTO); $('tvB').classList.toggle('on', BROKEN); $('tvPv').textContent = AUTO ? '자동' : Math.round(P*100) + '%'; };
+  ['왼쪽', '가운데', '오른쪽', '셋 다', '층 전체', '확대'].forEach((n, i) => { const b = document.createElement('button'); b.textContent = n; b.onclick = () => { if (i < 5) M = i; else ZOOM = !ZOOM; paint(); }; $('tvM').appendChild(b); });
+  const paint = () => { [...$('tvM').children].forEach((b, i) => b.classList.toggle('on', i < 5 ? i === M : ZOOM)); [...$('tvF').children].forEach((b, i) => b.classList.toggle('on', i === F)); $('tvAuto').classList.toggle('on', AUTO); $('tvB').classList.toggle('on', BROKEN); $('tvPv').textContent = AUTO ? '자동' : Math.round(P*100) + '%'; };
   $('tvAuto').onclick = () => { AUTO = !AUTO; paint(); };
   $('tvP').oninput = e => { AUTO = false; P = e.target.value/100; paint(); };
   $('tvB').onclick = () => { BROKEN = !BROKEN; paint(); };
   $('tvR').onclick = () => { location.href = location.pathname + '?v=' + Date.now() + '#' + encodeURIComponent(JSON.stringify({ F, M, ZOOM, AUTO, P })); };   // 새 그림 받아오기(캐시 무시)
-  window.VIEW = () => T(`(() => { const z = ${F}, all = ${M} === 3, m = all ? 1 : ${M}, y = prnBase(z, m), top = document.getElementById('tv').offsetHeight, b = PU*bigOf(z);
+  window.VIEW = () => T(`(() => { const z = ${F}, whole = ${M} === 4, all = ${M} === 3 || whole, m = all ? 1 : ${M}, y = prnBase(z, m), top = document.getElementById('tv').offsetHeight, b = PU*bigOf(z);
     const g = Math.max(0.55, Math.min(1.6, Math.min(VW/430, VH/660))), s = ${ZOOM} ? (all ? Math.min(VW/770, (VH - top)/(230*b)) : Math.min(VW/(250*b), (VH - top)/(230*b))) : g;   // 셋 다 = 세 대 나란히(원근 비교)   // 기본 = 실제 게임 화면 배율
+    if (whole) { const sw = Math.min(VW/780, (VH - top)/1000); return { x: 380, y: gy(z, 490) - top/2/sw, s: sw }; }   // 층 전체(바닥 보기)
     return { x: all ? SP[1].x : Math.max(VW/s/2, Math.min(760 - VW/s/2, SP[m].x)), y: y - 95*b - top/2/s, s }; })()`);
   setInterval(() => { if (!window.__t) return;
     T(`CFG.events.first = 1e9; evT = 1e9; thiefCd = 1e9; thief = null; CFG.cust.every = 1e9; workers.length = 0;

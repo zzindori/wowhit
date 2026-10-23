@@ -30,7 +30,7 @@ with sync_playwright() as p:
     pg.wait_for_timeout(3800); crop(pg,'g/ev_vip.png',225,285,280,240,Z)
     # 고장 + 황금
     pg.evaluate("__t('rt(2).vip = null; Object.assign(S.zones[2].sp[0], { broken:true, fix:0, brokenT:30 }); Object.assign(S.zones[2].sp[2], { items:9, golden:2, goldLife:[50, 55] })')")
-    pg.wait_for_timeout(1500); crop(pg,'g/ev_broken.png',170,640-40,300,300,Z); crop(pg,'g/ev_gold.png',590,660,280,280,Z)
+    pg.wait_for_timeout(1500); crop(pg,'g/ev_broken.png',145,630,300,300,Z); crop(pg,'g/ev_gold.png',565,690,280,280,Z)
     # 도둑
     pg.evaluate("__t('S.zones[2].cash = 500000; S.zones[2].bills = 12; const side = THIEF_SIDES[0], path = thiefPath(side, 2); thief = { tp:\"bag\", z:2, x:path[0][0], y:path[0][1], path, wp:1, out:thiefPath(THIEF_SIDES[1], 2).reverse(), owp:0, state:\"come\", loot:0, t:0, fx:-1, fy:0, svx:0, svy:0 }; P.x = 150; P.y = gy(2, 560)')")
     for i in range(80):
@@ -42,5 +42,5 @@ with sync_playwright() as p:
     pg.evaluate("__t('thief = null; S.zones[2].cash = 0; S.zones[2].sp.forEach(s => Object.assign(s, { broken:false, golden:0, goldLife:[], items:5 })); P.x = 380; P.y = gy(2, 470); CFG.cust.every = 1e9; rt(2).custs = []; workers.length = 0')")
     for f in list(range(10))+[-1]:
         pg.evaluate(f"__t('PREVIEW = {f}; S.zones[2].sp.forEach(s => s.items = 5)')"); pg.wait_for_timeout(1300)   # 층마다 물건 수 다시(쌓여서 '가득 참' 안 뜨게)
-        crop(pg,f'g/floor{f+1 if f>=0 else 11}.png',380,720-80,600,290,Z)
+        crop(pg,f'g/floor{f+1 if f>=0 else 11}.png',355,750-82,600,290,Z)
     print('ok')

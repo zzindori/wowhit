@@ -41,7 +41,7 @@ ui=r'''<div id="tv"><div class="row" id="tvF"></div><div class="row"><button id=
   $('tvR').onclick = () => { location.href = location.pathname + '?v=' + Date.now() + '#' + encodeURIComponent(JSON.stringify({ F, M, ZOOM, AUTO, P })); };   // 새 그림 받아오기(캐시 무시)
   window.VIEW = () => T(`(() => { const z = ${F}, all = ${M} === 3, m = all ? 1 : ${M}, y = prnBase(z, m), top = document.getElementById('tv').offsetHeight, b = PU*bigOf(z);
     const g = Math.max(0.55, Math.min(1.6, Math.min(VW/430, VH/660))), s = ${ZOOM} ? (all ? Math.min(VW/770, (VH - top)/(230*b)) : Math.min(VW/(250*b), (VH - top)/(230*b))) : g;   // 셋 다 = 세 대 나란히(원근 비교)   // 기본 = 실제 게임 화면 배율
-    return { x: all ? 380 : Math.max(VW/s/2, Math.min(760 - VW/s/2, SP[m].x)), y: y - 95*b - top/2/s, s }; })()`);
+    return { x: all ? SP[1].x : Math.max(VW/s/2, Math.min(760 - VW/s/2, SP[m].x)), y: y - 95*b - top/2/s, s }; })()`);
   setInterval(() => { if (!window.__t) return;
     T(`CFG.events.first = 1e9; evT = 1e9; thiefCd = 1e9; thief = null; CFG.cust.every = 1e9; workers.length = 0;
       for (let z = 0; z < S.zones.length; z++) { rt(z).custs = []; rt(z).vip = null; rt(z).deliv = null; }

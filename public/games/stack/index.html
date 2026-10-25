@@ -785,7 +785,7 @@ function machine7(kind, { props = '' } = {}){
     const [bx0, bx1, byT, byB, bvF, bdv] = BATH7;
     body = sideFace('#f2b8ca') + top('url(#tp7)', '#f29bb5') + pTray() + `</g>` + props +
       `<rect x="${x0}" y="132" width="${x1 - x0}" height="54" rx="4" fill="url(#tl7)"/>` + shadeF + `<rect x="${x0}" y="132" width="${x1 - x0}" height="6" rx="3" fill="#f29bb5"/><rect x="${x0}" y="178" width="${x1 - x0}" height="8" rx="2" fill="#5a4652"/>` +
-      `<rect x="24" y="142" width="66" height="24" rx="4" fill="#2c2b35"/><circle cx="120" cy="156" r="13" fill="#f7a8c0" stroke-width="2"/><ellipse cx="120" cy="156" rx="7" ry="9" fill="#fff" stroke-width="1.2"/><g fill="#f29bb5" stroke="none"><ellipse cx="117.4" cy="153.6" rx="1.6" ry="1"/><ellipse cx="122.6" cy="153.6" rx="1.6" ry="1"/><ellipse cx="120" cy="160" rx="2.2" ry=".9"/></g>` +   // 이름 표시창 · 마스크 얼굴 앰블럼(가격 글자는 anim)
+      `<rect x="24" y="142" width="66" height="24" rx="4" fill="#2c2b35"/><circle cx="120" cy="156" r="13" fill="#f7a8c0" stroke-width="2"/><ellipse cx="120" cy="156" rx="7" ry="9" fill="#fff" stroke-width="1.2"/><g fill="#f29bb5" stroke="none"><ellipse cx="117.4" cy="153.6" rx="1.6" ry="1"/><ellipse cx="122.6" cy="153.6" rx="1.6" ry="1"/><ellipse cx="120" cy="160" rx="2.2" ry=".9"/></g>` +   // 이름 표시창 · 마스크 얼굴 앰블럼(가격 글자 뺌 — 사용자)
       m6(M7) + cast6(bx0, bx1, byB) + standBox(bx0, bx1, byT, byB, bvF, bdv, '#e9edf2', '#9aa6b8') + `<rect x="${bx0}" y="${byT}" width="${bx1 - bx0}" height="${byB - byT}" rx="3" fill="url(#ms7)"/><rect x="${bx0}" y="${byT}" width="${bx1 - bx0}" height="3" fill="#fff" stroke="none" opacity=".6"/>` +   // 에센스 통(윗면 속 에센스·시트는 anim)
       `<rect x="28" y="109" width="40" height="12" rx="2" fill="#fde4ec" stroke-width="1.4"/><path d="M32 113 H54 M32 117 H50" stroke="#f29bb5" stroke-width="1.4"/><circle cx="61" cy="115" r="2.4" fill="#5ec1d0" stroke-width=".9"/>` +   // 통 앞 라벨
       cast6(82, 126, 126) + standBox(84, 124, 78, 126, 120, 18, '#f7d9e3', '#e3a3b8') + `<rect x="84" y="78" width="40" height="48" rx="4" fill="url(#pk7)"/>` +   // 실링기 몸통(앞에 봉투가 섬 — 봉투·누르개는 anim)
@@ -3422,7 +3422,6 @@ function animHop4({ S2, R2, u, now, prog, work, s }){
 const toTray = (S2, prog, from, draw, lift = 14) => { if (prog < 0.72 || prog > 0.8) return; const t = lerp01(prog, 0.72, 0.8), [x, y] = S2(from[0] + (197 - from[0])*t, from[1] + (114 - from[1])*t - Math.sin(Math.PI*t)*lift); draw(x, y); };
 // ---- 7층 뷰티(다시 2026-10-23: 서 있는 기계 · 화장대) — 속 움직임은 그림 좌표 그대로(R2, 납작하게 안 함) ----
 const boxTopP = (x0, x1, yT, vF, dv) => (s, t) => { const x = x0 + (x1 - x0)*s; return [x + (pvx(x, vF - dv) - pvx(x, vF))*t, yT - dv*0.62*t]; };   // standBox 윗면 안의 점(s 왼→오, t 앞→뒤)
-const priceTag = (R2, u, x, y, t, col = '#c2456b') => { const [px, py] = R2(x, y); ctx.font = `${Math.round(9.5*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = col; ctx.fillText(t, px, py); };
 function sheetMask(x, y, u, k, wet){ ctx.save(); ctx.translate(x, y); ctx.scale(k, k);
   ctx.beginPath(); ctx.ellipse(0, 0, 13*u, 16*u, 0, 0, Math.PI*2); ctx.fillStyle = wet ? '#f4fbff' : '#fff'; ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.2*u; ctx.stroke();
   ctx.fillStyle = '#cfeef6'; [-5, 5].forEach(d => { ctx.beginPath(); ctx.ellipse(d*u, -4*u, 3*u, 1.8*u, 0, 0, Math.PI*2); ctx.fill(); }); ctx.beginPath(); ctx.ellipse(0, 7*u, 4*u, 1.6*u, 0, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
@@ -3443,11 +3442,10 @@ function pouch7(x, yb, u, k, open, seal){   // 서 있는 마스크팩 봉투(yb
   if (seal > 0) { ctx.strokeStyle = `rgba(194,69,107,${seal})`; ctx.lineWidth = 1*u; ctx.beginPath(); for (let i = 0; i <= 10; i++) { const xx = x - w/2 + 1*u + i*(w - 2*u)/10, yy = t + 2.5*u*k + (i % 2 ? 1.4 : 0)*u*k; i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); } ctx.stroke(); }
 }
 // 7층 0번 마스크팩(에센스 통 + 세로 실링기): 시트 셋이 에센스에 잠겨 물결·반짝(0~30%) → 가운데 시트가 쑥 올라와 반으로 접히며(30~44%) 봉투 속으로(44~50%) → 입구 닫고 누르개가 내려와 꾹(53~64%, 열선·김) → 쟁반 → 쟁반 위에 크게
-function animMask7({ R2: R2o, u: uo, now, prog, work, s }){   // 통·실링기는 M7만큼 크게·뒤로(map6) — 이름·가격·쟁반은 원래 좌표(R2o)
+function animMask7({ R2: R2o, u: uo, now, prog, work, s }){   // 통·실링기는 M7만큼 크게·뒤로(map6) — 이름·쟁반은 원래 좌표(R2o)
   const R2 = (x, y) => R2o(...map6(M7, x, y)), u = uo*M7.k;
   name4(R2o, uo, now, s, 57, 154, '마스크팩', '#ff9ec0', 15);
   unsq(() => {
-    priceTag(R2o, uo, 172, 156, '10장 10,000원');
     const P = boxTopP(BATH7[0], BATH7[1], BATH7[2], BATH7[4], BATH7[5]), poly = pts => { ctx.beginPath(); pts.forEach(([s0, t0], i) => { const [x, y] = R2(...P(s0, t0)); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath(); };
     poly([[0.05, 0.1], [0.95, 0.1], [0.95, 0.9], [0.05, 0.9]]);   // 에센스(통 윗면 안쪽)
     { const [, a] = R2(...P(0.5, 0.9)), [, b] = R2(...P(0.5, 0.1)), g = ctx.createLinearGradient(0, a, 0, b); g.addColorStop(0, '#bfe0ec'); g.addColorStop(1, '#e8f6fb'); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = 'rgba(56,68,90,.5)'; ctx.lineWidth = 1*u; ctx.stroke(); }

@@ -3523,7 +3523,7 @@ function animCush7({ R2, u, now, prog, work, s }){
     for (let i = 0; i < 14; i++) { const a = -Math.PI/2 + i*Math.PI*2/14; if (Math.sin(a) > 0.8) continue; const [bx, by] = R2(110 + ox + Math.cos(a)*50, 42 + Math.sin(a)*38);   // 거울 둘레 전구(아래 받침 쪽 빼고)
       bulb(bx, by, 3.2*u, 'rgb(255,246,225)', !off && !(s.broken && Math.random() < 0.3), u); }
   });
-  name4((x, y) => R2(x + VO*PERSP, y), u, now, s, 110, 22, '쿠션 팩트', '#c2456b', 15);   // 거울에 붙인 글자
+  if (s.broken) name4((x, y) => R2(x + VO*PERSP, y), u, now, s, 110, 22, '', '#c2456b', 15);   // 거울엔 이름 글자 안 씀(사용자) — 고장일 때만 '고장!'
   unsq(() => {
     priceTag(R2, u, 120, 152, '25,000원', '#c2456b');
     const [cx, cy] = R2(...TP(...CPT7)), [px, pyb] = R2(...TP(...PUMP7)), [dx, dy] = R2(...TP(...PUFF7));

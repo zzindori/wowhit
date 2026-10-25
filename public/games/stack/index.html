@@ -797,7 +797,7 @@ function machine7(kind, { props = '' } = {}){
       `<path d="M80 34 L96 16 M86 46 L110 18" stroke="#fff" stroke-width="3" opacity=".7"/><ellipse cx="110" cy="42" rx="46.5" ry="34.5" fill="none" stroke="#fff" stroke-width="1" opacity=".5"/></g>` +   // 거울(뒤 모서리 위에 섬)
       top('url(#tp7)', '#e8b923') + pTray() + `<ellipse cx="${pvx(PUFF7[0], PUFF7[1]).toFixed(1)}" cy="${PUFF7[1]}" rx="15" ry="11" fill="#fff" stroke-width="1.6"/><ellipse cx="${pvx(PUFF7[0], PUFF7[1]).toFixed(1)}" cy="${PUFF7[1] - 1}" rx="11" ry="7" fill="#f4eef1" stroke="none"/></g>` + props +   // 퍼프 접시(퍼프는 anim)
       `<rect x="${x0}" y="132" width="${x1 - x0}" height="54" rx="4" fill="#fdf6f8"/>` + shadeF + `<rect x="${x0}" y="132" width="${x1 - x0}" height="5" rx="2.5" fill="url(#rg7)"/><rect x="${x0}" y="180" width="${x1 - x0}" height="6" rx="2" fill="#e8c9d3"/>` +
-      [[22, 86], [92, 148], [154, 218]].map(([a, b]) => `<rect x="${a}" y="141" width="${b - a}" height="35" rx="3" fill="#fff" stroke-width="2"/><rect x="${a + 3}" y="144" width="${b - a - 6}" height="29" rx="2" fill="none" stroke="#f3cdd9" stroke-width="1.4"/><circle cx="${(a + b)/2}" cy="${a === 92 ? 166 : 158.5}" r="3" fill="#e8b923" stroke-width="1.2"/>`).join('') +   // 서랍 셋 + 금 손잡이(가운데 서랍 위는 가격 글자)
+      [[22, 86], [92, 148], [154, 218]].map(([a, b]) => `<rect x="${a}" y="141" width="${b - a}" height="35" rx="3" fill="#fff" stroke-width="2"/><rect x="${a + 3}" y="144" width="${b - a - 6}" height="29" rx="2" fill="none" stroke="#f3cdd9" stroke-width="1.4"/><circle cx="${(a + b)/2}" cy="158.5" r="3" fill="#e8b923" stroke-width="1.2"/>`).join('') +   // 서랍 셋 + 금 손잡이(가격 글자 뺌 — 사용자)
       [24, 216].map(x => `<path d="M${x - 4} 186 Q${x} 188 ${x - 2} 194 H${x + 4} Q${x + 3} 188 ${x + 6} 186 Z" fill="#e8b923" stroke-width="1.6"/>`).join('');   // 금빛 다리
   } else {   // line: 스테인리스 충전 기계 — 뒤 유리 탱크(다리) · 호스 · 노즐/캡 씌우개 기둥 · 앞 컨베이어 + 옆 테이블
     const [cx0, cx1, cyT, cvF, cdv] = BELT7;
@@ -3525,7 +3525,6 @@ function animCush7({ R2, u, now, prog, work, s }){
   });
   if (s.broken) name4((x, y) => R2(x + VO*PERSP, y), u, now, s, 110, 22, '', '#c2456b', 15);   // 거울엔 이름 글자 안 씀(사용자) — 고장일 때만 '고장!'
   unsq(() => {
-    priceTag(R2, u, 120, 152, '25,000원', '#c2456b');
     const [cx, cy] = R2(...TP(...CPT7)), [px, pyb] = R2(...TP(...PUMP7)), [dx, dy] = R2(...TP(...PUFF7));
     const pumping = work && prog > 0.05 && prog < 0.4, d = pumping ? Math.max(0, Math.sin(now/170)) : 0, [sx, sy] = pumpBottle(px, pyb, u*1.3, d);
     const fill = work ? lerp01(prog, 0.06, 0.4) : 1, a = work ? 1.8*(1 - lerp01(prog, 0.6, 0.68)) : 1.8, inPuff = work ? lerp01(prog, 0.56, 0.6) : 1, fade = work ? lerp01(prog, 0, 0.05) : 1;

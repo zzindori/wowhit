@@ -749,7 +749,7 @@ const BING6 = withVO(-VOFF, bing6);
 // 7층 층층 뷰티 다시(사용자 2026-10-23: 메뉴 그대로, '섞어서' — 가운데 쿠션은 거울 화장대, 양옆은 공방 기계) — 기계마다 몸통 다르게 + 왼쪽·정면·오른쪽 원근(vo ±VOFF·0)
 // 0번 마스크팩 = 분홍 타일 작업대 위 에센스 통 + 세로 실링기 · 1번 쿠션 = 서랍 화장대 + 둥근 거울(전구는 anim) · 2번 립틴트 = 스테인리스 충전 기계(유리 탱크·노즐·컨베이어·캡 씌우개) + 옆 테이블
 // 서 있는 것은 앞면 좌표 그대로 + 윗면·시점 쪽 옆면(standBox) — 속 움직임은 anim이 같은 좌표(R2)로. 완성품은 anim이 쟁반 위에 크게(reveal 2)
-const BATH7 = [20, 76, 104, 126, 122, 20], BELT7 = [22, 164, 106, 120, 16], CPT7 = [110, 110], PUMP7 = [62, 96], PUFF7 = [151, 106], SEAL7 = [104, 126];
+const BATH7 = [20, 76, 104, 126, 122, 20], BELT7 = [22, 164, 106, 120, 16], CPT7 = [110, 101], PUMP7 = [62, 96], PUFF7 = [151, 106], SEAL7 = [104, 126];
 const M7 = { k: 1.3, ax: 18, d: 6 };   // 마스크팩 통·실링기 크게·조금 뒤로(6층 m6/map6과 같은 변환)
 const PROP7 = {
   bottle: (x, v, w, h, body, cap, ch = 6) => { const [a, b] = TP(x, v); return `<ellipse cx="${(a + 3).toFixed(1)}" cy="${(b + 1).toFixed(1)}" rx="${w*0.7}" ry="2" fill="#1e2433" opacity=".22" stroke="none"/><rect x="${(a - w/2).toFixed(1)}" y="${(b - h).toFixed(1)}" width="${w}" height="${h}" rx="2" fill="${body}" stroke-width="1.4"/><rect x="${(a - w/2 + 1.6).toFixed(1)}" y="${(b - h + 2).toFixed(1)}" width="1.6" height="${h - 5}" fill="#fff" stroke="none" opacity=".55"/>` +
@@ -3538,7 +3538,8 @@ function animCush7({ R2, u, now, prog, work, s }){
       ctx.fillStyle = 'rgba(30,36,51,.2)'; ctx.beginPath(); ctx.ellipse(x + 2*u, y + 3*u + (e >= 1 ? tap : 0), 12*u, 4.4*u, 0, 0, Math.PI*2); ctx.fill(); puffTop(x, y, u, 1.15);
       if (e >= 1 && prog < 0.56 && tap < 2*u) for (let i = 0; i < 4; i++) { const an = i*Math.PI/2 + now/300; ctx.fillStyle = 'rgba(243,208,174,.8)'; ctx.beginPath(); ctx.arc(cx + Math.cos(an)*19*u, cy + Math.sin(an)*7*u - 2*u, 1*u, 0, Math.PI*2); ctx.fill(); } }   // 톡톡 가루
     if (work && prog > 0.66 && prog < 0.7) { ctx.font = `${Math.round(8*u)}px ${FONT}`; ctx.textAlign = 'center'; ctx.fillStyle = '#c2456b'; ctx.fillText('탁!', cx + 24*u, cy - 18*u); }
-    if (work) { upToTray(R2, prog, TP(...CPT7), (x, y) => compact7(x, y, u, 1.2, 1, 0, 1), TRAY_C()); if (prog >= 0.8) compact7(...R2(...TRAY_C()), u, 1.15, 1, 0, 1); }
+    const [ttx, tty] = TRAY_C(), TC = [ttx, tty - 6];   // 팩트는 두께·원통 아래 곡선이 있어 쟁반 가운데보다 6 위(예전엔 바닥이 쟁반 앞 테두리·상판 끝선에 걸침)
+    if (work) { upToTray(R2, prog, TP(...CPT7), (x, y) => compact7(x, y, u, 1.2, 1, 0, 1), TC); if (prog >= 0.8) compact7(...R2(...TC), u, 1.15, 1, 0, 1); }
   });
 }
 // 7층 2번 립틴트(충전 기계): 유리 탱크 속 틴트 출렁 · 컨베이어가 한 칸 흐르면(0~6%) 노즐이 내려와 병을 빨갛게 채우고(8~48%) · 다음 칸 캡 씌우개가 돌며 장미금 뚜껑(56~68%) · 끝 칸 완성 병을 쟁반으로

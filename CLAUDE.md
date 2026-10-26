@@ -78,7 +78,7 @@ version: 'x.y.z+build'
 ## 작업 히스토리
 
 ### 2026-10-26
-- 맞고(고스톱 2인) 새 게임 `public/games/gostop/index.html` → https://wowhit.org/games/gostop/ (apps.ts엔 아직 안 올림 — 사용자 확인 후)
+- 맞고(고스톱 2인) 새 게임 `public/games/gostop/index.html` → https://wowhit.org/games/gostop/, 홈페이지 카드 `apps.ts` slug `gostop`(기타, 아이콘 3월·8월 광 `public/apps/gostop/`)
   - 카드: 자료실 '전통 수채화 화투 48장 한지 콜라주.png'(Gemini, 사용자 선택)를 `scripts/gostop/cut_cards.py`로 48장 잘라 `cards/MM_k.webp`(200×300),
     1월 띠에 '청단'이라 잘못 그려진 것 `fix_jan.py`로 '홍단'(자른 뒤 돌릴 것). 아직 틀린 그림: 7월 열끗 새(원래 멧돼지)·11월 오동(바위+흰 꽃, 광 봉황 아님) — 다시 뽑을 때 교체
   - 규칙: 7점 고/스톱, 광·열끗(고도리)·띠(홍·청·초단)·피(쌍피·국진 자동 유리하게), 쪽·뻑·자뻑·따닥·쓸·흔들기·폭탄(더미만 뒤집기 2번)·총통,

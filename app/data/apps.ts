@@ -434,6 +434,31 @@ export const apps: App[] = [
     webUrl: 'https://wowhit.org/games/stack/'
   },
   {
+    slug: 'gostop',
+    name: '맞고',
+    category: 'other',
+    description: '수채화 화투로 컴퓨터와 치는 2인 고스톱. 패 이름·족보가 보여서 하면서 화투를 배워요',
+    longDescription: `한지 위 수채화 느낌 화투 48장으로 컴퓨터와 맞고(2인 고스톱)를 칩니다. 돈은 걸지 않고 누적 점수만 쌓이는 연습용 게임입니다.
+
+▶ 하는 법
+차례마다 손패 1장을 내고 더미 1장을 뒤집어 같은 달(그림)끼리 짝을 맞춰 가져옵니다. 먼저 7점을 내면 '고'(계속)나 '스톱'(끝내기)을 고릅니다.
+
+📚 하면서 배워요
+• 카드마다 '1월 광', '8월 고도리' 같은 이름이 붙어 있습니다(도움말에서 끌 수 있음).
+• 바닥에 짝이 있는 손패는 금빛으로 빛납니다.
+• 도움말에 족보(광·열끗·띠·피, 고도리·홍단·청단·초단)와 달마다 그림 4장 표가 있습니다.
+
+🎴 들어 있는 규칙
+쪽·뻑·따닥·쓸·흔들기·폭탄·총통, 고 보너스, 피박·광박·멍박·고박, 나가리까지.
+
+카드 그림은 AI로 만든 수채화 화투를 잘라 쓰고 있으며, 몇 장은 앞으로 다시 그릴 예정입니다.`,
+    platform: 'Web (HTML5)',
+    iconUrl: '/apps/gostop/icon.png',
+    screenshots: ['/apps/gostop/screen1.webp'],
+    pricingModel: 'free',
+    webUrl: 'https://wowhit.org/games/gostop/'
+  },
+  {
     slug: 'anyway',
     name: 'anyWay',
     category: 'flutter',

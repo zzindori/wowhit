@@ -31,6 +31,7 @@ body{margin:0;background-color:#0a4a28;background-image:radial-gradient(ellipse 
 @keyframes hit{0%{box-shadow:0 0 0 0 rgba(232,185,35,.9)}100%{box-shadow:0 0 0 14px rgba(232,185,35,0)}}
 .ib{margin-left:auto;background:rgba(0,0,0,.35);border:1px solid rgba(232,185,35,.35);color:#f3ead2;font:inherit;font-size:15px;
   width:34px;height:34px;border-radius:50%;cursor:pointer;padding:0}
+a.ib{display:grid;place-items:center;text-decoration:none;box-sizing:border-box}
 .ib + .ib{margin-left:0}
 #hist{position:absolute;display:flex;gap:4px;align-items:center;overflow:hidden}
 #hist span{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:700 11px var(--serif);color:#fff;
@@ -118,6 +119,7 @@ body{margin:0;background-color:#0a4a28;background-image:radial-gradient(ellipse 
     <div class="pill" id="pBal"><small>보유</small><b id="vBal">0</b></div>
     <div class="pill" id="pBet"><small>베팅</small><b id="vBet">0</b></div>
     <div class="pill" id="pWin"><small>당첨</small><b id="vWin">0</b></div>
+    <a class="ib" id="bHome" href="/roulette" aria-label="게임 소개 · wowHit 홈페이지" title="게임 소개 · wowHit">⌂</a>
     <button class="ib" id="bHelp" aria-label="도움말">?</button>
     <button class="ib" id="bSet" aria-label="설정">⚙</button>
   </div>

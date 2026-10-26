@@ -1976,20 +1976,12 @@ function drawElevator(f){
   ctx.fillStyle = '#ffb347'; ctx.font = `${Math.round(11*scale)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(`${f+1}F`, sx, sy - h - 16*scale);
 }
-function drawStairs(r, label, up){   // 단 있는 계단(사용자 2026-10-26: 단순하게) — 올라가면 위로 갈수록 밝고 단마다 앞면(그늘) + 오른쪽 난간, 내려가면 위로 갈수록 어두워지며 꺼지고 양옆 벽
-  const [x0, y0] = toS(r.x - r.w/2, r.y - r.h/2), w = r.w*scale, h = r.h*scale, n = 5, sh = h/n, sd = 7*scale;
-  ctx.save(); rr(x0, y0, w, h, 8*scale); ctx.clip(); ctx.fillStyle = C.stair; ctx.fillRect(x0, y0, w, h);
-  for (let i = 0; i < n; i++) { const y = y0 + i*sh, t = i/(n - 1);
-    if (up) { ctx.fillStyle = `rgba(40,28,18,${0.03 + 0.12*t})`; ctx.fillRect(x0, y, w, sh*0.7);   // 디딤판(위가 밝음)
-      ctx.fillStyle = `rgba(40,28,18,${0.28 + 0.1*t})`; ctx.fillRect(x0, y + sh*0.7, w, sh*0.3);   // 단 앞면(그늘)
-      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(x0, y + sh*0.7 - 1.5*scale, w, 1.5*scale); }   // 모서리 빛
-    else { ctx.fillStyle = `rgba(20,14,10,${0.55*(1 - t)**1.3})`; ctx.fillRect(x0, y, w, sh);   // 아래층으로 꺼질수록 어둡게
-      ctx.fillStyle = `rgba(255,255,255,${0.12 + 0.25*t})`; ctx.fillRect(x0, y + sh - 2*scale, w, 1.6*scale); } }   // 단 끝 빛
-  if (up) { ctx.strokeStyle = C.stairLine; ctx.lineWidth = 2.4*scale; ctx.beginPath(); ctx.moveTo(x0 + w - 9*scale, y0); ctx.lineTo(x0 + w - 9*scale, y0 + h); ctx.stroke();   // 난간
-    ctx.lineWidth = 1.6*scale; for (let i = 0; i < n; i++) { const y = y0 + i*sh + sh*0.7; ctx.beginPath(); ctx.moveTo(x0 + w - 9*scale, y - 6*scale); ctx.lineTo(x0 + w - 9*scale, y); ctx.stroke(); ctx.beginPath(); ctx.arc(x0 + w - 9*scale, y, 1.6*scale, 0, Math.PI*2); ctx.fillStyle = C.stairLine; ctx.fill(); } }
-  else { const g = ctx.createLinearGradient(0, y0, 0, y0 + h); g.addColorStop(0, 'rgba(20,14,10,.55)'); g.addColorStop(1, 'rgba(20,14,10,.15)'); ctx.fillStyle = g; ctx.fillRect(x0, y0, sd, h); ctx.fillRect(x0 + w - sd, y0, sd, h); }   // 계단실 양옆 벽
-  ctx.restore();
-  ctx.strokeStyle = C.stairLine; ctx.lineWidth = 3*scale; rr(x0, y0, w, h, 8*scale); ctx.stroke();
+function drawStairs(r, label){
+  const [x0, y0] = toS(r.x - r.w/2, r.y - r.h/2), w = r.w*scale, h = r.h*scale;
+  rr(x0, y0, w, h, 8*scale); ctx.fillStyle = C.stair; ctx.fill();
+  ctx.strokeStyle = C.stairLine; ctx.lineWidth = 2*scale;
+  for (let i = 1; i < 5; i++) { ctx.beginPath(); ctx.moveTo(x0 + 6*scale, y0 + h*i/5); ctx.lineTo(x0 + w - 6*scale, y0 + h*i/5); ctx.stroke(); }
+  ctx.lineWidth = 3*scale; rr(x0, y0, w, h, 8*scale); ctx.stroke();
   const [tx, ty] = toS(r.x, r.y); ctx.font = `${Math.round(16*scale)}px ${FONT}`;
   const tw = ctx.measureText(label).width + 16*scale;
   rr(tx - tw/2, ty - 12*scale, tw, 24*scale, 12*scale); ctx.fillStyle = C.hud; ctx.fill();
@@ -4577,8 +4569,8 @@ function render(){
 
   if (themeOf(f)) shopSign(themeOf(f), fTop);
   // 계단
-  if (f < S.zones.length-1) drawStairs(zr(f, STAIR_UP), `▲ ${f+2}층`, true);
-  if (f > 0) drawStairs(zr(f, STAIR_DN), `▼ ${f}층`, false);
+  if (f < S.zones.length-1) drawStairs(zr(f, STAIR_UP), `▲ ${f+2}층`);
+  if (f > 0) drawStairs(zr(f, STAIR_DN), `▼ ${f}층`);
 
   const list = [];
   S.zones.forEach((Z, z) => {

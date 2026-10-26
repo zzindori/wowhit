@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>맞고 · 수채화 화투</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+<style>
+/* 한 화면 맞고: 400×800 탁자를 화면에 맞춰 키우고(S), 카드 48장은 탁자 위 절대 위치 + transform 이동 */
+:root{
+  --felt:#2f5d4a; --felt2:#264d3d; --ink:#2c2b35; --paper:#fbf6ea; --red:#c2462f; --gold:#e8b923;
+  --display:'Jua',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{margin:0;background:radial-gradient(ellipse at 50% 45%,var(--felt) 0,var(--felt2) 75%);color:var(--ink);overflow:hidden;
+  font-family:var(--display);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+#table{position:absolute;transform-origin:0 0}
+.card{position:absolute;left:0;top:0;transform-origin:0 0;border-radius:7%;
+  box-shadow:0 2px 4px rgba(0,0,0,.35);transition:transform .32s cubic-bezier(.3,.8,.3,1);cursor:default;will-change:transform}
+.card img{width:100%;height:100%;display:block;border-radius:7%;pointer-events:none}
+.card .back{position:absolute;inset:0;border-radius:7%;opacity:0;transition:opacity .18s;
+  background:radial-gradient(circle at 50% 50%,#f3e3c3 0 17%,#a3241c 18% 21%,transparent 22%),
+    repeating-linear-gradient(45deg,#a3241c 0 5%,#b9352b 5% 10%);box-shadow:inset 0 0 0 3px #f3e3c3,inset 0 0 0 5px #8a1d17}
+.card.down .back{opacity:1}
+.card.down .tag{display:none}
+.card .tag{position:absolute;left:50%;bottom:3%;transform:translateX(-50%);white-space:nowrap;
+  font-size:var(--tagf);line-height:1.25;padding:0 .4em;border-radius:99px;background:rgba(44,43,53,.82);color:#fff;pointer-events:none}
+.notag .card .tag,.card.small .tag{display:none}
+.card.mine{cursor:pointer}
+.card.mine.match{box-shadow:0 0 0 2px var(--gold),0 0 12px 2px rgba(232,185,35,.8)}
+.card.pick{cursor:pointer;box-shadow:0 0 0 3px #fff,0 0 16px 4px rgba(255,255,255,.9);animation:pulse .8s ease-in-out infinite alternate}
+.card.deckglow{cursor:pointer;box-shadow:0 0 0 3px var(--gold),0 0 16px 4px rgba(232,185,35,.9)}
+@keyframes pulse{to{filter:brightness(1.12)}}
+.lbl{position:absolute;color:#f3ead2;font-size:11px;white-space:nowrap;pointer-events:none;opacity:.85}
+.pill{position:absolute;background:var(--paper);color:var(--ink);border-radius:99px;padding:3px 10px;font-size:14px;
+  box-shadow:0 2px 0 rgba(0,0,0,.25);white-space:nowrap}
+.pill b{color:var(--red);font-weight:normal}
+.pill.turn{box-shadow:0 0 0 3px var(--gold),0 2px 0 rgba(0,0,0,.25)}
+.btn{position:absolute;background:var(--paper);border:0;border-radius:99px;font:inherit;font-size:14px;padding:4px 10px;
+  box-shadow:0 2px 0 rgba(0,0,0,.25);cursor:pointer;color:var(--ink)}
+#deckN{color:#f3ead2;font-size:12px}
+#banner{position:absolute;left:0;right:0;text-align:center;pointer-events:none;font-size:46px;color:#fff;
+  text-shadow:0 3px 0 var(--red),0 0 14px rgba(0,0,0,.5);opacity:0}
+#banner.show{animation:ban 1s ease-out}
+@keyframes ban{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(1.15)}30%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-18px)}}
+#msg{position:absolute;left:0;right:0;text-align:center;color:#fff;font-size:15px;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+/* 대화창·결과·도움말 */
+.ov{position:fixed;inset:0;background:rgba(20,24,22,.55);display:grid;place-items:center;z-index:1000;padding:16px}
+.box{background:var(--paper);border-radius:16px;padding:18px 18px 14px;width:min(360px,100%);max-height:88vh;overflow:auto;
+  box-shadow:0 8px 30px rgba(0,0,0,.4);text-align:center;box-sizing:border-box}
+.box h2{margin:0 0 6px;font-weight:normal;font-size:26px}
+.box p{margin:4px 0 12px;font-size:15px;color:#555}
+.box .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.box button{font:inherit;font-size:18px;border:0;border-radius:12px;padding:10px 18px;cursor:pointer;background:#e7dfcb;color:var(--ink)}
+.box button.main{background:var(--red);color:#fff}
+.res{width:100%;border-collapse:collapse;margin:6px 0 12px;font-size:15px;text-align:left}
+.res td{padding:3px 4px;border-bottom:1px dashed #ddd2b8}
+.res td:last-child{text-align:right}
+.res tr.tot td{border:0;font-size:19px;color:var(--red);padding-top:8px}
+#help .box{width:min(520px,100%);text-align:left}
+#help h3{margin:14px 0 4px;font-weight:normal;font-size:19px;color:var(--red)}
+#help p,#help li{font-size:14px;color:#444;line-height:1.55;margin:2px 0}
+#help ul{padding-left:18px;margin:4px 0}
+.months{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center;margin-top:6px}
+.months .mn{font-size:14px;text-align:right;color:var(--ink)}
+.months .cs{display:flex;gap:4px}
+.months figure{margin:0;text-align:center;font-size:11px;color:#555;width:23%}
+.months img{width:100%;border-radius:4px;display:block}
+.toggles{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0;font-size:15px}
+.toggles label{display:flex;align-items:center;gap:5px;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="table" aria-label="맞고 게임판">
+  <div class="pill" id="pCpu" style="left:6px;top:8px">컴퓨터</div>
+  <button class="btn" id="bHelp" style="right:6px;top:6px">? 도움말</button>
+  <div class="lbl" id="deckN"></div>
+  <div class="pill" id="pMe">나</div>
+  <div id="msg"></div>
+  <div id="banner"></div>
+</div>
+
+<div class="ov" id="ask" hidden><div class="box"><h2 id="askT"></h2><p id="askP"></p><div class="row" id="askB"></div></div></div>
+<div class="ov" id="result" hidden><div class="box"><h2 id="resT"></h2><table class="res" id="resTbl"></table>
+  <p id="resTot"></p><div class="row"><button class="main" id="bNext">다음 판</button></div></div></div>
+<div class="ov" id="help" hidden><div class="box">
+  <h2 style="text-align:center">맞고 하는 법</h2>
+  <div class="toggles">
+    <label><input type="checkbox" id="tTag" checked> 카드에 이름 보기</label>
+    <label><input type="checkbox" id="tSnd" checked> 소리</label>
+  </div>
+  <h3>기본</h3>
+  <ul>
+    <li>나와 컴퓨터가 10장씩, 바닥에 8장. 차례마다 <b>손패 1장</b>을 내고 <b>더미 1장</b>을 뒤집어요.</li>
+    <li>같은 <b>달(그림)</b>끼리 짝이 맞으면 가져와요. 금빛으로 빛나는 손패는 바닥에 짝이 있는 패예요.</li>
+    <li>먼저 <b>7점</b>을 내면 <b>고</b>(계속) 또는 <b>스톱</b>(끝내고 점수 받기)을 골라요.</li>
+  </ul>
+  <h3>점수(족보)</h3>
+  <ul>
+    <li><b>광</b> 3장 3점(비광 끼면 2점) · 4장 4점 · 5장 15점</li>
+    <li><b>열끗</b> 5장 1점, 한 장마다 +1 · <b>고도리</b>(2·4·8월 새 세 마리) 5점</li>
+    <li><b>띠</b> 5장 1점, 한 장마다 +1 · <b>홍단</b>(1·2·3월) · <b>청단</b>(6·9·10월) · <b>초단</b>(4·5·7월) 각 3점</li>
+    <li><b>피</b> 10장 1점, 한 장마다 +1 · 쌍피는 2장으로 셈 · 9월 열끗(국진)은 열끗이나 쌍피 중 유리한 쪽으로</li>
+  </ul>
+  <h3>특별한 일</h3>
+  <ul>
+    <li><b>쪽</b>: 낸 패 짝이 없었는데 뒤집은 패가 같은 달 → 둘 다 먹고 상대 피 1장</li>
+    <li><b>뻑</b>: 낸 패로 1장 먹으려는데 뒤집은 패도 같은 달 → 3장이 바닥에 남음. 나중에 4번째로 먹으면 피 1장(내가 싼 뻑이면 2장)</li>
+    <li><b>따닥</b>: 바닥 같은 달 2장 + 낸 패 + 뒤집은 패 → 4장 다 먹고 피 1장</li>
+    <li><b>쓸</b>: 바닥을 싹 비우면 피 1장</li>
+    <li><b>흔들기</b>: 같은 달 3장을 들고 있으면 보여 주고 점수 ×2 · <b>폭탄</b>: 그 달 1장이 바닥에 있으면 3장 한꺼번에 내서 4장 먹고 피 1장, ×2, 다음 두 번은 더미만 뒤집어도 돼요(더미를 누름)</li>
+    <li><b>고</b>: 1고 +1점, 2고 +2점, 3고부터 ×2씩 · 고 했는데 상대가 나면 <b>고박</b> ×2</li>
+    <li><b>피박</b>(내가 피로 점수 났는데 상대 피 1~7장) · <b>광박</b>(내가 광으로 났는데 상대 광 0장) · <b>멍박</b>(열끗 7장 이상) 각 ×2</li>
+    <li><b>나가리</b>: 아무도 못 나고 끝나면 다음 판 ×2</li>
+  </ul>
+  <h3>달마다 그림 익히기</h3>
+  <div class="months" id="monthList"></div>
+  <p style="margin-top:12px;font-size:12px;color:#888">돈은 걸지 않는 연습용 게임이에요. 점수는 이 기기에만 저장돼요.</p>
+  <div class="row" style="margin-top:10px"><button class="main" id="bHelpX">닫기</button>
+    <button id="bReset">점수 초기화</button></div>
+</div></div>
+
+<script>
+'use strict';
+/* ── 카드 48장: 월 m(1~12), 순서 k(0~3) → cards/MM_k.webp. 그림 속 순서대로 종류 ──
+   G 광(Gb 비광) · Y 열끗(Yg 고도리, Yk 9월 국진) · T 띠(Th 홍단, Tb 청단, Tr 초단, T 12월 띠) · P 피(P2 쌍피) */
+const SPEC = {1:'G Th P P', 2:'Yg Th P P', 3:'G Th P P', 4:'Yg Tr P P', 5:'Y Tr P P', 6:'Tb P Y P',
+  7:'Y Tr P P', 8:'G Yg P P', 9:'Tb Yk P P', 10:'Y Tb P P', 11:'G P2 P P', 12:'Gb Y T P2'};
+const MONTH = ['', '송학', '매조', '벚꽃', '흑싸리', '난초', '모란', '홍싸리', '공산', '국화', '단풍', '오동', '비'];
+const C = [];
+for (let m = 1; m <= 12; m++) SPEC[m].split(' ').forEach((s, k) => {
+  const t = s[0], sub = s.slice(1);
+  const name = t === 'G' ? (sub === 'b' ? '비광' : '광')
+    : t === 'Y' ? (sub === 'g' ? '고도리' : sub === 'k' ? '국진' : '열끗')
+    : t === 'T' ? ({h: '홍단', b: '청단', r: '초단'}[sub] || '띠')
+    : (sub === '2' ? '쌍피' : '피');
+  C.push({id: C.length, m, k, t, sub, name, img: `cards/${String(m).padStart(2, '0')}_${k}.webp`});
+});
+const isGuk = id => C[id].t === 'Y' && C[id].sub === 'k';
+
+/* ── 저장(점수·설정) ── */
+const KEY = 'gostop-v1';
+let store = {total: 0, wins: 0, losses: 0, plays: 0, tag: true, snd: true};
+try { Object.assign(store, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
+
+/* ── 소리: 패 놓는 '탁' ── */
+let AC = null;
+function snd(kind) {
+  if (!store.snd) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const t = AC.currentTime, len = kind === 'big' ? .16 : .07;
+    const b = AC.createBuffer(1, AC.sampleRate * len, AC.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, kind === 'big' ? 2 : 4);
+    const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+    f.type = 'bandpass'; f.frequency.value = kind === 'big' ? 700 : 1800; g.gain.value = kind === 'big' ? .9 : .6;
+    s.buffer = b; s.connect(f).connect(g).connect(AC.destination); s.start(t);
+  } catch (e) {}
+}
+
+/* ── 탁자(400×800 단위) ── */
+const TW = 400, TH = 800, CW = 60, CH = 90;
+const table = document.getElementById('table');
+let S = 1;
+const EL = C.map(c => {
+  const e = document.createElement('div');
+  e.className = 'card down';
+  e.innerHTML = `<img src="${c.img}" alt="${c.m}월 ${c.name}"><span class="tag">${c.m}월 ${c.name}</span><div class="back"></div>`;
+  e.addEventListener('click', () => onCard(c.id));
+  table.appendChild(e);
+  return e;
+});
+function resize() {
+  S = Math.min(innerWidth / TW, innerHeight / TH);
+  table.style.width = TW + 'px'; table.style.height = TH + 'px';
+  table.style.left = (innerWidth - TW * S) / 2 + 'px'; table.style.top = (innerHeight - TH * S) / 2 + 'px';
+  table.style.transform = `scale(${S})`;
+  EL.forEach(e => { e.style.width = CW + 'px'; e.style.height = CH + 'px'; });
+  table.style.setProperty('--tagf', '10px');
+}
+addEventListener('resize', resize);
+
+/* ── 게임 상태 ── */
+let G = null;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const rm = (a, x) => { const i = a.indexOf(x); if (i >= 0) a.splice(i, 1); };
+const floorOf = m => G.floor.filter(id => C[id].m === m);
+let starter = 0, nagari = 1;
+
+function newRound() {
+  const deck = C.map(c => c.id);
+  for (let i = deck.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [deck[i], deck[j]] = [deck[j], deck[i]]; }
+  G = {deck, hand: [[], []], floor: [], cap: [[], []], slot: {}, go: [0, 0], goScore: [0, 0], shake: [0, 0],
+    shook: [[], []], bombFlip: [0, 0], ppeok: {}, turn: starter, over: false, wait: null};
+  // 맞고: 바닥 8장, 손패 10장씩
+  for (let i = 0; i < 10; i++) { G.hand[0].push(deck.pop()); G.hand[1].push(deck.pop()); }
+  for (let i = 0; i < 8; i++) G.floor.push(deck.pop());
+  // 바닥에 같은 달 4장이면 다시 섞기
+  for (let m = 1; m <= 12; m++) if (floorOf(m).length === 4) return newRound();
+  G.floor.forEach(id => slotFor(C[id].m));
+}
+
+/* 바닥 자리: 12칸(4열 × 3줄), 가운데 더미 옆 칸부터 */
+const SLOT_ORDER = [1, 2, 5, 6, 9, 10, 0, 3, 4, 7, 8, 11];
+const SLOT_X = [10, 92, 248, 330], SLOT_Y = [146, 256, 366];
+function slotFor(m) {
+  if (G.slot[m] != null) return G.slot[m];
+  const used = new Set(Object.values(G.slot));
+  return (G.slot[m] = SLOT_ORDER.find(s => !used.has(s)));
+}
+
+/* 딴 패 묶음: 광·열끗·띠·피 */
+const GROUPS = [['G', 6, 92], ['Y', 100, 196], ['T', 204, 298], ['P', 306, 394]];
+function groupOf(id) { return C[id].t; }
+
+function place(id, x, y, sc, z, down) {
+  const e = EL[id];
+  e.style.transform = `translate(${x}px,${y}px) scale(${sc})`;
+  e.style.zIndex = z;
+  e.classList.toggle('down', !!down);
+  e.classList.toggle('small', sc < .8);
+}
+function layout() {
+  // 바닥 자리 정리: 비면 자리 반납
+  for (const m in G.slot) if (!floorOf(+m).length) delete G.slot[m];
+  G.floor.forEach(id => slotFor(C[id].m));
+  const pickSet = G.wait && G.wait.kind === 'floor' ? new Set(G.wait.opts) : null;
+  const myTurn = G.wait && G.wait.kind === 'hand';
+  // 더미
+  G.deck.forEach((id, i) => place(id, 170 - i * .3, 256 - i * .5, 1, 10 + i, true));
+  document.getElementById('deckN').style.cssText = `left:170px;top:${352}px;width:60px;text-align:center`;
+  document.getElementById('deckN').textContent = G.deck.length ? `남은 패 ${G.deck.length}` : '';
+  // 컴퓨터 손패(뒷면)
+  const h1 = G.hand[1], st1 = 14, x1 = 200 - (st1 * (h1.length - 1) + 30) / 2;
+  h1.forEach((id, i) => place(id, x1 + i * st1, 4, .5, 20 + i, !G.over));
+  // 내 손패: 달 순서로, 5장씩 두 줄
+  const h0 = G.hand[0].slice().sort((a, b) => a - b), HS = 68 / 60;
+  h0.forEach((id, i) => {
+    const row = i < 5 ? 0 : 1, inRow = row ? h0.length - 5 : Math.min(5, h0.length), j = row ? i - 5 : i;
+    const x = 200 - (74 * (inRow - 1) + 68) / 2 + j * 74;
+    place(id, x, row ? 692 : 588, HS, 30 + i, false);
+  });
+  // 바닥
+  for (const m in G.slot) {
+    const s = G.slot[m], x = SLOT_X[s % 4], y = SLOT_Y[s / 4 | 0];
+    floorOf(+m).forEach((id, j) => place(id, x + j * 7, y + j * 9, 1, 100 + j, false));
+  }
+  // 딴 패
+  [[1, 52], [0, 494]].forEach(([p, y]) => {
+    GROUPS.forEach(([t, a, b]) => {
+      const ids = G.cap[p].filter(id => groupOf(id) === t).sort((x, y2) => x - y2);
+      const n = ids.length, w = b - a, st = n > 1 ? Math.min(13, (w - 36) / (n - 1)) : 0;
+      ids.forEach((id, i) => place(id, a + i * st, y, .6, 200 + i, false));
+    });
+  });
+  // 상태 표시
+  EL.forEach((e, id) => {
+    const inHand0 = G.hand[0].includes(id);
+    e.classList.toggle('mine', inHand0);
+    e.classList.toggle('match', !!(myTurn && inHand0 && floorOf(C[id].m).length));
+    e.classList.toggle('pick', !!(pickSet && pickSet.has(id)));
+    e.classList.toggle('deckglow', !!(myTurn && G.bombFlip[0] > 0 && G.deck.length && id === G.deck[G.deck.length - 1]));
+  });
+  pills();
+}
+function capLine(p) {
+  const r = calc(G.cap[p]);
+  let s = `${r.total}점`;
+  if (G.go[p]) s += ` · <b>${G.go[p]}고</b>`;
+  if (G.shake[p]) s += ` · <b>×${2 ** G.shake[p]}</b>`;
+  return s;
+}
+function pills() {
+  const pc = document.getElementById('pCpu'), pm = document.getElementById('pMe');
+  pc.innerHTML = `컴퓨터 ${capLine(1)}`;
+  pm.innerHTML = `나 ${capLine(0)}` + (nagari > 1 ? ` · 나가리 ×${nagari}` : '');
+  pm.style.cssText = 'left:6px;top:560px';
+  pc.classList.toggle('turn', !G.over && G.turn === 1);
+  pm.classList.toggle('turn', !G.over && G.turn === 0);
+  // 묶음 이름 + 개수(피는 쌍피를 2로)
+  document.querySelectorAll('.lbl.g').forEach(e => e.remove());
+  [[1, 110], [0, 480]].forEach(([p, y]) => GROUPS.forEach(([t, a]) => {
+    const ids = G.cap[p].filter(id => groupOf(id) === t);
+    if (!ids.length) return;
+    const n = t === 'P' ? ids.reduce((s, id) => s + (C[id].sub === '2' ? 2 : 1), 0) : ids.length;
+    const e = document.createElement('div');
+    e.className = 'lbl g'; e.style.cssText = `left:${a}px;top:${y}px`;
+    e.textContent = `${{G: '광', Y: '열끗', T: '띠', P: '피'}[t]} ${n}`;
+    table.appendChild(e);
+  }));
+}
+function msg(t) { document.getElementById('msg').textContent = t || ''; }
+function banner(t) {
+  const b = document.getElementById('banner');
+  b.textContent = t; b.style.top = '280px';
+  b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+  snd('big');
+}
+
+/* ── 점수 ── */
+function calc1(ids, gukPi) {
+  let g = 0, bi = false, y = 0, god = 0, t = 0, hong = 0, cheong = 0, cho = 0, p = 0;
+  for (const id of ids) {
+    const c = C[id];
+    if (c.t === 'G') { g++; if (c.sub === 'b') bi = true; }
+    else if (c.t === 'Y') { if (gukPi && c.sub === 'k') p += 2; else { y++; if (c.sub === 'g') god++; } }
+    else if (c.t === 'T') { t++; if (c.sub === 'h') hong++; if (c.sub === 'b') cheong++; if (c.sub === 'r') cho++; }
+    else p += c.sub === '2' ? 2 : 1;
+  }
+  const parts = [];
+  const gw = g === 5 ? 15 : g === 4 ? 4 : g === 3 ? (bi ? 2 : 3) : 0;
+  if (gw) parts.push([`광 ${g}장${g === 3 && bi ? '(비광)' : ''}`, gw]);
+  if (y >= 5) parts.push([`열끗 ${y}장`, y - 4]);
+  if (god === 3) parts.push(['고도리', 5]);
+  if (t >= 5) parts.push([`띠 ${t}장`, t - 4]);
+  if (hong === 3) parts.push(['홍단', 3]);
+  if (cheong === 3) parts.push(['청단', 3]);
+  if (cho === 3) parts.push(['초단', 3]);
+  if (p >= 10) parts.push([`피 ${p}장`, p - 9]);
+  return {total: parts.reduce((s, x) => s + x[1], 0), parts, g, y, t, p, gukPi};
+}
+function calc(ids) {
+  const a = calc1(ids, false);
+  if (!ids.some(isGuk)) return a;
+  const b = calc1(ids, true);
+  return b.total > a.total ? b : a;
+}
+
+/* ── 상대 피 뺏기 ── */
+function steal(p, n) {
+  const o = 1 - p, got = [];
+  for (let i = 0; i < n; i++) {
+    let id = G.cap[o].find(x => C[x].t === 'P' && C[x].sub !== '2');
+    if (id == null) id = G.cap[o].find(x => C[x].t === 'P');
+    if (id == null) break;
+    rm(G.cap[o], id); G.cap[p].push(id); got.push(id);
+  }
+  return got.length;
+}
+function take(p, ids) { ids.forEach(id => { rm(G.floor, id); G.cap[p].push(id); }); }
+
+/* ── 컴퓨터 판단: 패 값 ── */
+function val(id, p) {
+  const c = C[id], mine = G.cap[p], opp = G.cap[1 - p];
+  const cnt = (arr, f) => arr.filter(x => f(C[x])).length;
+  let v = c.t === 'G' ? (c.sub === 'b' ? 11 : 16) : c.t === 'Y' ? (c.sub === 'g' ? 10 : 7) : c.t === 'T' ? 6 : (c.sub === '2' ? 6 : 3);
+  const near = f => { const a = cnt(mine, f), b = cnt(opp, f); return (a === 2 ? 14 : a === 1 ? 3 : 0) + (b === 2 ? 9 : 0); };
+  if (c.t === 'G') v += near(x => x.t === 'G');
+  if (c.t === 'Y' && c.sub === 'g') v += near(x => x.t === 'Y' && x.sub === 'g');
+  if (c.t === 'T' && 'hbr'.includes(c.sub)) v += near(x => x.t === 'T' && x.sub === c.sub);
+  if (c.t === 'P') { const pp = calc1(mine, true).p; if (pp >= 7) v += 3; }
+  return v;
+}
+function aiPlay() {
+  const hand = G.hand[1];
+  let best = null, bs = -1e9;
+  for (const id of hand) {
+    const m = C[id].m, f = floorOf(m), same = hand.filter(x => C[x].m === m);
+    let s;
+    if (same.length === 3 && f.length === 1) s = 80;
+    else if (f.length === 3) s = 60 + f.reduce((a, x) => a + val(x, 1), 0);
+    else if (f.length === 2) s = val(id, 1) + Math.max(...f.map(x => val(x, 1))) + 4;
+    else if (f.length === 1) s = val(id, 1) + val(f[0], 1);
+    else {
+      // 버릴 때: 싼 패, 그 달이 이미 많이 나와서 상대가 못 먹는 패
+      const seen = G.cap[0].concat(G.cap[1]).filter(x => C[x].m === m).length + same.length - 1;
+      s = -val(id, 1) + seen * 3 - 20;
+    }
+    s += Math.random() * 1.5;
+    if (s > bs) { bs = s; best = id; }
+  }
+  if (G.bombFlip[1] > 0 && bs < -10) return 'flip';
+  return best;
+}
+function aiGo(s) {
+  const opp = calc(G.cap[0]).total, left = G.hand[1].length;
+  if (G.go[1] >= 3) return false;
+  return (left >= 3 && opp <= 3) || (left >= 5 && opp <= 5 && G.go[1] === 0);
+}
+
+/* ── 사람 입력 ── */
+function waitFor(kind, opts) {
+  return new Promise(res => { G.wait = {kind, opts, res}; layout(); });
+}
+function onCard(id) {
+  const w = G && G.wait;
+  if (!w) return;
+  if (w.kind === 'hand') {
+    if (G.hand[0].includes(id)) { G.wait = null; w.res(id); }
+    else if (G.bombFlip[0] > 0 && G.deck.length && id === G.deck[G.deck.length - 1]) { G.wait = null; w.res('flip'); }
+  } else if (w.kind === 'floor' && w.opts.includes(id)) { G.wait = null; w.res(id); }
+}
+function ask(title, text, btns) {
+  return new Promise(res => {
+    document.getElementById('askT').textContent = title;
+    document.getElementById('askP').textContent = text;
+    const row = document.getElementById('askB'); row.innerHTML = '';
+    btns.forEach((b, i) => {
+      const e = document.createElement('button');
+      e.textContent = b; if (i === 0) e.className = 'main';
+      e.onclick = () => { document.getElementById('ask').hidden = true; res(i); };
+      row.appendChild(e);
+    });
+    document.getElementById('ask').hidden = false;
+  });
+}
+async function choose(p, opts) {
+  const v = opts.map(x => val(x, p));
+  if (v[0] === v[1] && C[opts[0]].t === C[opts[1]].t && C[opts[0]].sub === C[opts[1]].sub) return opts[0];
+  if (p === 1) return v[0] >= v[1] ? opts[0] : opts[1];
+  msg('가져올 패를 고르세요');
+  const id = await waitFor('floor', opts);
+  msg(''); return id;
+}
+
+/* ── 한 차례: c = 낼 손패(없으면 더미만 뒤집기) ── */
+async function doTurn(p, c) {
+  const ev = [];
+  let stealN = 0, pending = null, mC = null, fLen = -1, bomb = false, needChoose = false;
+  if (c != null) {
+    mC = C[c].m;
+    const same = G.hand[p].filter(x => C[x].m === mC), f = floorOf(mC);
+    if (same.length === 3 && f.length === 1) {
+      bomb = true;
+      same.forEach(x => { rm(G.hand[p], x); G.floor.push(x); });
+      G.shake[p]++; G.bombFlip[p] += 2;
+      layout(); snd(); banner('폭탄!'); await sleep(700);
+      take(p, [...same, f[0]]); stealN++;
+    } else {
+      if (same.length === 3 && f.length === 0 && !G.shook[p].includes(mC)) {
+        const yes = p === 1 ? true
+          : (await ask('흔들까요?', `${mC}월(${MONTH[mC]}) 3장을 보여 주면 이 판 점수가 ×2`, ['흔들기', '그냥 내기'])) === 0;
+        if (yes) { G.shook[p].push(mC); G.shake[p]++; banner('흔들기! ×2'); layout(); await sleep(800); }
+      }
+      rm(G.hand[p], c); G.floor.push(c); fLen = f.length;
+      layout(); snd(); await sleep(380);
+      if (f.length === 1) pending = [c, f[0]];
+      else if (f.length === 2) needChoose = true;
+      else if (f.length === 3) {
+        take(p, [c, ...f]);
+        if (G.ppeok[mC] != null) { stealN += G.ppeok[mC] === p ? 2 : 1; ev.push(G.ppeok[mC] === p ? '자뻑!' : '뻑 먹기!'); }
+        delete G.ppeok[mC];
+      }
+    }
+  }
+  if (G.deck.length) {
+    const d = G.deck.pop();
+    G.floor.push(d); slotFor(C[d].m);
+    layout(); snd(); await sleep(440);
+    const mD = C[d].m;
+    if (c != null && !bomb && mD === mC && fLen < 3) {
+      if (fLen === 0) { take(p, [c, d]); stealN++; ev.push('쪽!'); }
+      else if (fLen === 1) { G.ppeok[mC] = p; ev.push('뻑!'); pending = null; }
+      else { take(p, floorOf(mC)); stealN++; ev.push('따닥!'); }
+    } else {
+      if (needChoose) pending = [c, await choose(p, floorOf(mC).filter(x => x !== c))];
+      if (pending) take(p, pending);
+      const g = floorOf(mD).filter(x => x !== d);
+      if (g.length === 1) take(p, [d, g[0]]);
+      else if (g.length === 2) take(p, [d, await choose(p, g)]);
+      else if (g.length === 3) {
+        take(p, [d, ...g]);
+        if (G.ppeok[mD] != null) { stealN += G.ppeok[mD] === p ? 2 : 1; ev.push(G.ppeok[mD] === p ? '자뻑!' : '뻑 먹기!'); }
+        delete G.ppeok[mD];
+      }
+    }
+  } else if (pending) take(p, pending);
+  else if (needChoose) take(p, [c, await choose(p, floorOf(mC).filter(x => x !== c))]);
+  const left = G.deck.length + G.hand[0].length + G.hand[1].length;
+  if (!G.floor.length && left) { stealN++; ev.push('쓸!'); }
+  if (stealN) steal(p, stealN);
+  layout();
+  if (ev.length) { banner(ev.join(' ')); await sleep(900); }
+  else await sleep(420);
+}
+
+/* ── 고/스톱·끝 ── */
+async function afterTurn(p) {
+  const s = calc(G.cap[p]).total;
+  if (s >= 7 && s > G.goScore[p]) {
+    const last = !G.hand[p].length && !G.bombFlip[p];
+    let go = false;
+    if (!last) {
+      if (p === 0) go = (await ask(`${s}점 났어요!`, '고: 계속해서 점수를 더 내요(상대가 나면 고박 ×2). 스톱: 지금 끝내고 점수 받기',
+        [`${G.go[0] + 1}고!`, '스톱'])) === 0;
+      else go = aiGo(s);
+    }
+    if (go) { G.go[p]++; G.goScore[p] = s; banner(`${G.go[p]}고!`); layout(); await sleep(900); }
+    else { if (p === 1) { banner('스톱!'); await sleep(900); } endRound(p); return true; }
+  }
+  if (!G.hand[0].length && !G.hand[1].length && !G.bombFlip[0] && !G.bombFlip[1]) { endRound(null); return true; }
+  return false;
+}
+function settle(w) {
+  const l = 1 - w, r = calc(G.cap[w]), lr = calc1(G.cap[l], true);
+  const rows = r.parts.map(([n, v]) => [n, `${v}점`]);
+  let base = r.total, mul = 1;
+  const go = G.go[w];
+  if (go === 1) { base += 1; rows.push(['1고', '+1']); }
+  if (go >= 2) { base += 2; rows.push([`${go}고`, '+2']); }
+  if (go >= 3) { mul *= 2 ** (go - 2); rows.push([`${go}고 배수`, `×${2 ** (go - 2)}`]); }
+  if (G.shake[w]) { mul *= 2 ** G.shake[w]; rows.push(['흔들기·폭탄', `×${2 ** G.shake[w]}`]); }
+  if (r.p >= 10 && lr.p > 0 && lr.p < 8) { mul *= 2; rows.push(['피박', '×2']); }
+  if (r.g >= 3 && lr.g === 0) { mul *= 2; rows.push(['광박', '×2']); }
+  if (r.y >= 7) { mul *= 2; rows.push(['멍박', '×2']); }
+  if (G.go[l]) { mul *= 2; rows.push(['고박', '×2']); }
+  if (nagari > 1) { mul *= nagari; rows.push(['나가리', `×${nagari}`]); }
+  return {pts: base * mul, rows};
+}
+function endRound(w) {
+  G.over = true; G.wait = null; layout();
+  const T = document.getElementById('resT'), tb = document.getElementById('resTbl');
+  tb.innerHTML = '';
+  if (w == null) {
+    T.textContent = '나가리';
+    tb.innerHTML = '<tr><td>아무도 못 났어요</td><td>다음 판 ×2</td></tr>';
+    nagari *= 2;
+  } else {
+    const {pts, rows} = settle(w);
+    T.textContent = w === 0 ? `이겼어요! +${pts}점` : `졌어요… -${pts}점`;
+    tb.innerHTML = rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('') +
+      `<tr class="tot"><td>${w === 0 ? '받은 점수' : '잃은 점수'}</td><td>${pts}점</td></tr>`;
+    store.total += w === 0 ? pts : -pts;
+    store[w === 0 ? 'wins' : 'losses']++;
+    store.plays++; save();
+    nagari = 1; starter = w;
+  }
+  document.getElementById('resTot').textContent = `누적 ${store.total}점 · ${store.wins}승 ${store.losses}패`;
+  setTimeout(() => { document.getElementById('result').hidden = false; }, 700);
+}
+
+/* ── 판 진행 ── */
+async function run() {
+  newRound(); layout();
+  // 손패 총통(같은 달 4장): 바로 이김
+  for (const p of [0, 1]) for (let m = 1; m <= 12; m++) if (G.hand[p].filter(x => C[x].m === m).length === 4) {
+    G.over = true; layout(); banner('총통!'); await sleep(1000);
+    const pts = 10 * nagari;
+    document.getElementById('resT').textContent = p === 0 ? `총통! +${pts}점` : `상대 총통… -${pts}점`;
+    document.getElementById('resTbl').innerHTML = `<tr><td>${m}월 네 장(총통)</td><td>${pts}점</td></tr>`;
+    store.total += p === 0 ? pts : -pts; store[p === 0 ? 'wins' : 'losses']++; store.plays++; save();
+    nagari = 1; starter = p;
+    document.getElementById('resTot').textContent = `누적 ${store.total}점 · ${store.wins}승 ${store.losses}패`;
+    document.getElementById('result').hidden = false;
+    return;
+  }
+  msg(starter === 0 ? '내 차례예요. 낼 패를 누르세요' : '');
+  while (!G.over) {
+    const p = G.turn;
+    if (G.hand[p].length || G.bombFlip[p]) {
+      let c;
+      if (!G.hand[p].length) c = 'flip';
+      else if (p === 0) { c = await waitFor('hand'); msg(''); }
+      else { layout(); await sleep(550); c = aiPlay(); }
+      if (c === 'flip') { G.bombFlip[p]--; c = null; }
+      await doTurn(p, c);
+      if (await afterTurn(p)) break;
+    }
+    G.turn = 1 - p;
+    layout();
+  }
+}
+
+/* ── 도움말·설정 ── */
+function applyPrefs() {
+  document.body.classList.toggle('notag', !store.tag);
+  document.getElementById('tTag').checked = store.tag;
+  document.getElementById('tSnd').checked = store.snd;
+}
+document.getElementById('monthList').innerHTML = Array.from({length: 12}, (_, i) => i + 1).map(m =>
+  `<div class="mn">${m}월<br>${MONTH[m]}</div><div class="cs">${C.filter(c => c.m === m).map(c =>
+    `<figure><img src="${c.img}" alt="" loading="lazy">${c.name}</figure>`).join('')}</div>`).join('');
+document.getElementById('bHelp').onclick = () => { document.getElementById('help').hidden = false; };
+document.getElementById('bHelpX').onclick = () => { document.getElementById('help').hidden = true; };
+document.getElementById('tTag').onchange = e => { store.tag = e.target.checked; save(); applyPrefs(); };
+document.getElementById('tSnd').onchange = e => { store.snd = e.target.checked; save(); };
+document.getElementById('bReset').onclick = () => {
+  if (!confirm('누적 점수와 승패를 지울까요?')) return;
+  Object.assign(store, {total: 0, wins: 0, losses: 0, plays: 0}); save();
+};
+document.getElementById('bNext').onclick = () => { document.getElementById('result').hidden = true; run(); };
+
+resize(); applyPrefs(); run();
+</script>
+</body>
+</html>

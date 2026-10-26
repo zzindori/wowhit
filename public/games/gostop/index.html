@@ -528,6 +528,7 @@ function endRound(w) {
   G.over = true; G.wait = null; layout();
   const T = document.getElementById('resT'), tb = document.getElementById('resTbl');
   tb.innerHTML = '';
+  let pts = 0;
   if (w == null && BET) {
     T.textContent = '나가리 · 비겼어요';
     tb.innerHTML = '<tr><td>아무도 못 났어요</td><td>평소 보상</td></tr>';
@@ -539,7 +540,7 @@ function endRound(w) {
     tb.innerHTML = '<tr><td>아무도 못 났어요</td><td>다음 판 ×2</td></tr>';
     nagari *= 2;
   } else {
-    const {pts, rows} = settle(w);
+    const r = settle(w), rows = r.rows; pts = r.pts;
     T.textContent = BET ? (w === 0 ? `건물주를 이겼어요! +${pts}점` : `건물주에게 졌어요… -${pts}점`)
       : w === 0 ? `이겼어요! +${pts}점` : `졌어요… -${pts}점`;
     tb.innerHTML = rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('') +

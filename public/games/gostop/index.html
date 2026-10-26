@@ -148,6 +148,18 @@ let store = {total: 0, wins: 0, losses: 0, plays: 0, tag: true, snd: true};
 try { Object.assign(store, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
 
+/* ── 층층이 건물주 한판(?vs=landlord&bet=…&mul=…): 단판, 결과(gostop-bet)를 남기고 층층이로 돌아감 ── */
+const Q = new URLSearchParams(location.search), BET = Q.get('vs') === 'landlord' ? Q.get('bet') : null;
+const BET_MUL = Number(Q.get('mul')) || 3, OPP = BET ? '건물주' : '컴퓨터';
+const BET_TXT = {win: `층층이에서 건물주 보상 ×${BET_MUL}!`, lose: '건넨 물건은 공짜가 됐어요', draw: '비겼으니 평소 보상을 받아요'};
+let betOver = false;
+try { betOver = !!BET && JSON.parse(localStorage.getItem('gostop-bet') || '{}').id === BET; } catch (e) {}
+function betDone(r, pts) {
+  try { localStorage.setItem('gostop-bet', JSON.stringify({id: BET, r, pts})); } catch (e) {}
+  document.getElementById('resTot').textContent = BET_TXT[r];
+  document.getElementById('bNext').textContent = '층층이로 돌아가기';
+}
+
 /* ── 소리: 패 놓는 '탁' ── */
 let AC = null;
 function snd(kind) {
@@ -277,7 +289,7 @@ function capLine(p) {
 }
 function pills() {
   const pc = document.getElementById('pCpu'), pm = document.getElementById('pMe');
-  pc.innerHTML = `컴퓨터 ${capLine(1)}`;
+  pc.innerHTML = `${OPP} ${capLine(1)}`;
   pm.innerHTML = `나 ${capLine(0)}` + (nagari > 1 ? ` · 나가리 ×${nagari}` : '');
   pm.style.cssText = 'left:6px;top:560px';
   pc.classList.toggle('turn', !G.over && G.turn === 1);
@@ -516,13 +528,20 @@ function endRound(w) {
   G.over = true; G.wait = null; layout();
   const T = document.getElementById('resT'), tb = document.getElementById('resTbl');
   tb.innerHTML = '';
+  if (w == null && BET) {
+    T.textContent = '나가리 · 비겼어요';
+    tb.innerHTML = '<tr><td>아무도 못 났어요</td><td>평소 보상</td></tr>';
+    setTimeout(() => { document.getElementById('result').hidden = false; }, 700);
+    betDone('draw', 0); return;
+  }
   if (w == null) {
     T.textContent = '나가리';
     tb.innerHTML = '<tr><td>아무도 못 났어요</td><td>다음 판 ×2</td></tr>';
     nagari *= 2;
   } else {
     const {pts, rows} = settle(w);
-    T.textContent = w === 0 ? `이겼어요! +${pts}점` : `졌어요… -${pts}점`;
+    T.textContent = BET ? (w === 0 ? `건물주를 이겼어요! +${pts}점` : `건물주에게 졌어요… -${pts}점`)
+      : w === 0 ? `이겼어요! +${pts}점` : `졌어요… -${pts}점`;
     tb.innerHTML = rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('') +
       `<tr class="tot"><td>${w === 0 ? '받은 점수' : '잃은 점수'}</td><td>${pts}점</td></tr>`;
     store.total += w === 0 ? pts : -pts;
@@ -531,6 +550,7 @@ function endRound(w) {
     nagari = 1; starter = w;
   }
   document.getElementById('resTot').textContent = `누적 ${store.total}점 · ${store.wins}승 ${store.losses}패`;
+  if (BET) betDone(w === 0 ? 'win' : 'lose', pts);
   setTimeout(() => { document.getElementById('result').hidden = false; }, 700);
 }
 
@@ -546,6 +566,7 @@ async function run() {
     store.total += p === 0 ? pts : -pts; store[p === 0 ? 'wins' : 'losses']++; store.plays++; save();
     nagari = 1; starter = p;
     document.getElementById('resTot').textContent = `누적 ${store.total}점 · ${store.wins}승 ${store.losses}패`;
+    if (BET) betDone(p === 0 ? 'win' : 'lose', pts);
     document.getElementById('result').hidden = false;
     return;
   }
@@ -583,9 +604,14 @@ document.getElementById('bReset').onclick = () => {
   if (!confirm('누적 점수와 승패를 지울까요?')) return;
   Object.assign(store, {total: 0, wins: 0, losses: 0, plays: 0}); save();
 };
-document.getElementById('bNext').onclick = () => { document.getElementById('result').hidden = true; run(); };
+document.getElementById('bNext').onclick = () => {
+  if (BET) { location.href = '/games/stack/'; return; }
+  document.getElementById('result').hidden = true; run();
+};
 
-resize(); applyPrefs(); run();
+resize(); applyPrefs();
+if (betOver) ask('이미 끝난 판이에요', '건물주와의 한판은 끝났어요. 층층이로 돌아가요', ['돌아가기']).then(() => { location.href = '/games/stack/'; });
+else { run(); if (BET) { banner('건물주와 한판!'); msg(`이기면 보상 ×${BET_MUL}, 지면 물건은 공짜`); } }
 </script>
 </body>
 </html>

@@ -94,6 +94,10 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 .elev .ekey{font-size:12px;opacity:.75;text-align:center}
 .elev button.ruin{background:var(--warn);box-shadow:inset 0 0 0 3px #ffb3a6}
 .elev button.deliv{background:#3fa98a}
+#bet .etitle{font-size:18px}
+#bet p{margin:0;font-size:14px;line-height:1.5;text-align:center;opacity:.9}
+#bet .ebtns{grid-template-columns:1fr 1fr}
+#bet button.yes{background:#b58a12}
 </style>
 </head>
 <body>
@@ -115,6 +119,8 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
 </div>
 <div class="toast" id="toast" hidden></div>
 <div class="elev" id="elev" hidden><div class="etitle">엘리베이터 · 몇 층으로 갈까요?</div><div class="ebtns" id="elevBtns"></div><div class="ekey" id="elevKey" hidden></div></div>
+<div class="elev" id="bet" hidden><div class="etitle">건물주: "사장님, 한판 칠래?"</div><p id="betP"></p>
+  <div class="ebtns"><button class="yes" id="betYes" type="button">Yes · 맞고 한판</button><button id="betNo" type="button">No · 그냥 받기</button></div></div>
 <div class="mission" id="mission" hidden>
   <div class="mrow"><span class="mlabel">미션</span><span id="mText"></span></div>
   <div class="mrow sub" id="mProg"></div>
@@ -152,7 +158,7 @@ const CFG = {
   events: { first: 60, every: 50 },              // 층 이벤트(고장·VIP): 처음 몇 초 뒤부터, 평균 몇 초마다
   broken: { fixTime: 2, ruin: 120, warn: 30, rebuild: 100 }, // 수리: 앞에 몇 초 서 있기 / 고장 난 채로 몇 초 지나면 부서짐(몇 초 전부터 경고) / 다시 제작 비용(× 8^층)
   deliv: { time: 60, perFloor: 15, want: [2, 4], mul: 10, tip: 0.5, dum: 0.25, dumMax: 1.5 }, // 배달 주문: 기본 제한 시간 + 층 차이당 추가 초, 개수, 보상 = 개당 '지금 최고층 물건 값' × 10(사용자: 배달이 제일 힘든데 박함 → 6에서 올림), 절반 넘게 남기고 끝내면 배달팁 50%, 덤 1개당 기분 팁 = 배달 보상 × 25%(최대 150%)
-  vip: { time: 40, want: [3, 6], mul: 5, goldMul: 5, slow: 10, slowSpd: 0.6 }, // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5), 황금을 건네면 그 물건만 또 × 5,
+  vip: { time: 40, want: [3, 6], mul: 5, goldMul: 5, slow: 10, slowSpd: 0.6, bet: 3 }, // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5), 황금을 건네면 그 물건만 또 × 5,
                                                  //      놓치면 10초 동안 일꾼 속도의 60%로 (업그레이드와 상관없이 일꾼보다 느림)
   autoCost: 1500,                                // 층 자동 수금 칸 비용 (× 8^층)
   away: { hours: [1, 2, 4, 8], cost: 300, mul: 4, rate: 0.5, min: 60 }, // 잔업: 단계별 최대 시간, 비용(× 4^단계 × 8^층), 자동으로 벌던 속도의 몇 %, 몇 초 이상 비워야 계산
@@ -1919,6 +1925,7 @@ function updVip(z, cz, dt){
   const R = rt(z), V = R.vip; if (!V) return;
   if (V.state === 'leave') { if (moveTo(V, -50, gy(z, VIP_SPOT.y), CFG.cust.speed*1.4, dt, true)) R.vip = null; return; }
   if (V.sayT > 0) V.sayT -= dt;
+  if (V.state === 'ask') return;
   if (V.state === 'come' && moveTo(V, VIP_SPOT.x, gy(z, VIP_SPOT.y), CFG.cust.speed, dt, true)) { V.state = 'wait'; V.fx = 0.5; V.fy = 1; V.say = '어디, 장사 잘 되나 볼까?'; V.sayT = 2.4; }
   if ((V.t -= dt) <= 0) {
     V.state = 'leave'; V.angry = true; V.say = '임대료 올려야겠군!'; V.sayT = 2.4;
@@ -1934,18 +1941,52 @@ function updVip(z, cz, dt){
     V.sum += gold ? itemValue(it)*CFG.vip.goldMul : valueOf(S.zones.length - 1);   // 어느 층 건물주든 물건 하나 = 지금 최고층 값(아래층 건물주도 챙길 가치 있게)
     fly(stackPos(P, S.stack.length), () => [V.x, V.y, 30], it, 0.2, () => {}); sfx.hand();
     if (gold) { V.gold = (V.gold || 0) + 1; floatText(V.x, V.y, `황금! ×${CFG.vip.goldMul}`, '#b58a12'); sfx.gold(); buzz([30, 30, 60]); }
-    if (V.got >= V.want) {
-      const reward = Math.round(V.sum*CFG.vip.mul);
-      S.money += reward; S.stats.vip = (S.stats.vip || 0) + 1;
-      V.state = 'leave'; V.happy = true; V.say = V.gold ? '임대료 깎아 줘야겠네!' : '장사 잘하네~'; V.sayT = 2.4;
-      floatText(V.x, V.y, `건물주 +₩${fmt(reward)}`, '#b58a12'); coinsFrom(V.x, V.y, 50, 12); shake(5);
-      burst(V.x, V.y, 50, V.gold ? 40 : 20, 'spark', { color:'#ffd23f', speed:140, up:120, g:60, life:0.9 });
-      if (V.gold) showBanner('건물주 대만족!!');
-      if (V.gold) { toast(`건물주 대만족!! 황금 ${V.gold}개 보너스 · +₩${fmt(reward)}`); toastT = 4; [0, 0.25, 0.5].forEach(d => setTimeout(() => sfx.gold(), d*1000)); }
-      else toast(`건물주 만족! 보상 +₩${fmt(reward)}`);
-      sfx.mission(); save();
-    }
+    if (V.got >= V.want) askBet(z, V);
   }
+}
+function payVip(V){
+  const reward = Math.round(V.sum*CFG.vip.mul);
+  S.money += reward; S.stats.vip = (S.stats.vip || 0) + 1;
+  V.state = 'leave'; V.happy = true; V.say = V.gold ? '임대료 깎아 줘야겠네!' : '장사 잘하네~'; V.sayT = 2.4;
+  floatText(V.x, V.y, `건물주 +₩${fmt(reward)}`, '#b58a12'); coinsFrom(V.x, V.y, 50, 12); shake(5);
+  burst(V.x, V.y, 50, V.gold ? 40 : 20, 'spark', { color:'#ffd23f', speed:140, up:120, g:60, life:0.9 });
+  if (V.gold) showBanner('건물주 대만족!!');
+  if (V.gold) { toast(`건물주 대만족!! 황금 ${V.gold}개 보너스 · +₩${fmt(reward)}`); toastT = 4; [0, 0.25, 0.5].forEach(d => setTimeout(() => sfx.gold(), d*1000)); }
+  else toast(`건물주 만족! 보상 +₩${fmt(reward)}`);
+  sfx.mission(); save();
+}
+// ---- 건물주와 맞고 한판: 물건을 다 건네면 물어봄. Yes = 맞고(단판)로 갔다 돌아와서 이기면 보상 × bet, 지면 0(물건 공짜), 비기면 평소. No = 평소 보상 ----
+const betEl = $('bet');
+function askBet(z, V){
+  const reward = Math.round(V.sum*CFG.vip.mul);
+  V.state = 'ask'; V.say = '사장님, 한판 칠래?'; V.sayT = 99;
+  $('betP').innerHTML = `이기면 <b>₩${fmt(reward*CFG.vip.bet)}</b> (보상 ×${CFG.vip.bet})<br>지면 건넨 물건은 공짜 · 중간에 나가면 진 걸로<br>No면 평소 보상 ₩${fmt(reward)}`;
+  betEl.hidden = false; sfx.vip();
+  $('betNo').onclick = () => { betEl.hidden = true; V.sayT = 0; payVip(V); };
+  $('betYes').onclick = () => {
+    const id = String(Date.now());
+    S.bet = { id, reward, gold:V.gold || 0 }; save();
+    location.href = `/games/gostop/?vs=landlord&bet=${id}&mul=${CFG.vip.bet}`;
+  };
+}
+// 맞고에서 돌아왔을 때 정산(결과는 맞고가 localStorage 'gostop-bet'에 남김)
+function settleBet(){
+  const B = S.bet; if (!B) return;
+  let r = null; try { r = JSON.parse(localStorage.getItem('gostop-bet') || 'null'); } catch(e) {}
+  const res = r && r.id === B.id ? r.r : 'lose';
+  delete S.bet; S.stats.vip = (S.stats.vip || 0) + 1;
+  if (res === 'win') {
+    const got = B.reward*CFG.vip.bet; S.money += got;
+    showBanner('🎴 건물주를 이겼다!'); toast(`건물주와 맞고 승리! 보상 ×${CFG.vip.bet} +₩${fmt(got)}`); toastT = 4.5;
+    coinsFrom(P.x, P.y, 50, 14); shake(6); burst(P.x, P.y, 40, 40, 'conf', { speed:240, up:300, life:1.5 });
+    [0, 0.25, 0.5].forEach(d => setTimeout(() => sfx.gold(), d*1000));
+  } else if (res === 'draw') {
+    S.money += B.reward; toast(`건물주와 비겼어요 · 평소 보상 +₩${fmt(B.reward)}`); sfx.mission();
+  } else {
+    toast(r && r.id === B.id ? '건물주에게 졌어요… 건넨 물건은 공짜로 드렸어요' : '맞고를 중간에 나와서 진 걸로 했어요 · 물건은 공짜로', true); toastT = 4; sfx.angry();
+  }
+  try { localStorage.removeItem('gostop-bet'); } catch(e) {}
+  save();
 }
 function drawVip(V, z){
   if (V.state === 'wait') floorRect({ x:VIP_SPOT.x, y:gy(z, VIP_SPOT.y), w:96, h:76 }, 'rgba(232,185,35,.18)', '#b58a12', true, 0);
@@ -4800,6 +4841,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) save(
 P.x = S.px; P.y = S.py; cam.x = P.x; cam.y = P.y; curZone = zoneOf(P.y);
 rebuildPads(); syncWorkers(); renderZoneChips(); resize();
 requestAnimationFrame(t => { last = t; frame(t); });
+setTimeout(settleBet, 600);   // 잔업 알림 다음에
 })();
 </script>
 </body>

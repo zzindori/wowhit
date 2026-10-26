@@ -78,6 +78,10 @@ version: 'x.y.z+build'
 ## 작업 히스토리
 
 ### 2026-10-26
+- 층층이 ↔ 맞고 연결 '건물주와 한판'(사용자 설계 — 모든 게임을 삶처럼 잇는 첫 단계): 건물주에게 물건을 다 건네면 정산 대신 Yes/No 창(`#bet`, `askBet`, 건물주는 `state:'ask'`로 멈춤).
+  No = 평소 보상(`payVip`로 뺌). Yes = `S.bet {id, reward}` 저장 → `/games/gostop/?vs=landlord&bet=id&mul=3`. 맞고는 상대 이름 '건물주'·단판(나가리 = 비김),
+  끝나면 localStorage `gostop-bet {id, r: win|lose|draw}` 남기고 '층층이로 돌아가기'(같은 판 다시 열면 '이미 끝난 판'). 층층이는 시작 0.6초 뒤 `settleBet`:
+  이김 = 보상 × `CFG.vip.bet`(3) · 비김 = 평소 · 짐/결과 없음(중간에 나감) = 0(물건 공짜). 맞고 하는 동안은 자리 비움이라 잔업도 들어옴. 헤드리스로 네 경우·창·이동 확인, 오류 0. apps.ts 건물주 설명
 - 맞고(고스톱 2인) 새 게임 `public/games/gostop/index.html` → https://wowhit.org/games/gostop/, 홈페이지 카드 `apps.ts` slug `gostop`(기타, 아이콘 3월·8월 광 `public/apps/gostop/`)
   - 카드: 자료실 '전통 수채화 화투 48장 한지 콜라주.png'(Gemini, 사용자 선택)를 `scripts/gostop/cut_cards.py`로 48장 잘라 `cards/MM_k.webp`(200×300),
     1월 띠에 '청단'이라 잘못 그려진 것 `fix_jan.py`로 '홍단'(자른 뒤 돌릴 것). 아직 틀린 그림: 7월 열끗 새(원래 멧돼지)·11월 오동(바위+흰 꽃, 광 봉황 아님) — 다시 뽑을 때 교체

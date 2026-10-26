@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>룰렛 · 미국식</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Playfair+Display:wght@700&display=swap">
+<style>
+/* 미국식 룰렛(0·00, 38칸). 세로(420×922)·가로(1280×720) 두 판 중 화면에 맞는 걸 골라 키움(S).
+   휠·테이블·칩은 캔버스, 버튼·숫자 표시는 DOM */
+:root{
+  --gold:#e8b923; --paper:#fbf6ea; --ink:#2c2b35; --red:#c2462f;
+  --display:'Jua',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --serif:'Playfair Display',Georgia,'Times New Roman',serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{margin:0;background-color:#0a4a28;background-image:radial-gradient(ellipse at 50% 40%,#0f6234 0,#0a4a28 55%,#05301a 100%);
+  color:#f3ead2;overflow:hidden;font-family:var(--display);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+#stage{position:absolute;left:0;top:0;transform-origin:0 0}
+#cv{position:absolute;left:0;top:0;touch-action:none}
+#hud{position:absolute;display:flex;align-items:center;gap:6px}
+.pill{background:rgba(0,0,0,.35);border:1px solid rgba(232,185,35,.35);border-radius:99px;padding:4px 10px;font-size:14px;white-space:nowrap;line-height:1.3}
+.pill small{color:#cbbf9c;font-size:11px;margin-right:4px}
+.pill b{font-weight:normal;color:#fff;font-family:var(--serif)}
+#pBal b{color:var(--gold)}
+#pWin.hit{animation:hit 1s ease-out}
+@keyframes hit{0%{box-shadow:0 0 0 0 rgba(232,185,35,.9)}100%{box-shadow:0 0 0 14px rgba(232,185,35,0)}}
+.ib{margin-left:auto;background:rgba(0,0,0,.35);border:1px solid rgba(232,185,35,.35);color:#f3ead2;font:inherit;font-size:15px;
+  width:34px;height:34px;border-radius:50%;cursor:pointer;padding:0}
+.ib + .ib{margin-left:0}
+#hist{position:absolute;display:flex;gap:4px;align-items:center;overflow:hidden}
+#hist span{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:700 11px var(--serif);color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+#hist span:first-child{width:28px;height:28px;font-size:14px;box-shadow:0 0 0 2px var(--gold)}
+#hist .r{background:#b3171c}#hist .b{background:#161616}#hist .g{background:#0e7c3c}
+#hist em{font-style:normal;font-size:12px;color:#cbbf9c;margin-right:2px;flex:none}
+#status{position:absolute;text-align:center;font-size:15px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#status b{font-weight:normal;color:var(--gold)}
+#chips,#acts{position:absolute;display:flex}
+.chip{flex:none;width:var(--cs);height:var(--cs);border-radius:50%;border:0;padding:0;cursor:pointer;position:relative;
+  font:700 calc(var(--cs) * .3) var(--serif);color:var(--t);
+  background:radial-gradient(circle,var(--c) 0 49%,rgba(255,255,255,.75) 50% 53%,var(--c) 54% 66%,transparent 67%),
+    repeating-conic-gradient(from 8deg,var(--e) 0 18deg,var(--c) 18deg 60deg);
+  box-shadow:0 3px 0 rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.35);transition:transform .12s,box-shadow .12s}
+.chip.on{transform:translateY(-7px);box-shadow:0 0 0 3px var(--gold),0 9px 10px rgba(0,0,0,.55)}
+.chip:disabled{filter:grayscale(.8) brightness(.6);cursor:default}
+.act{flex:1;font:inherit;font-size:14px;border:1px solid rgba(232,185,35,.4);border-radius:10px;background:linear-gradient(#3b2a1c,#24180f);
+  color:#f3ead2;cursor:pointer;padding:0 4px;box-shadow:0 2px 0 rgba(0,0,0,.4)}
+.act:disabled{opacity:.4;cursor:default}
+#spin{position:absolute;border-radius:50%;border:0;cursor:pointer;color:#3a2400;font-family:var(--serif);
+  background:radial-gradient(circle at 35% 30%,#fff3b8 0,#f2c94c 30%,#c9921a 70%,#8a5e0c 100%);
+  box-shadow:0 0 0 3px #5a3d08,0 6px 0 #3d2905,0 10px 16px rgba(0,0,0,.5);display:grid;place-items:center;line-height:1}
+#spin span{display:block;font-size:.28em;font-family:var(--display);margin-top:3px}
+#spin:disabled{filter:grayscale(.7) brightness(.7);cursor:default}
+#spin:not(:disabled):active{transform:translateY(3px)}
+#banner{position:absolute;text-align:center;pointer-events:none;font:700 44px var(--serif);color:#ffe27a;
+  text-shadow:0 3px 0 #6b4400,0 0 18px rgba(0,0,0,.6);opacity:0}
+#banner small{display:block;font:20px var(--display);color:#fff;margin-top:4px}
+#banner.show{animation:ban 2.2s ease-out}
+@keyframes ban{0%{opacity:0;transform:scale(.4)}12%{opacity:1;transform:scale(1.12)}22%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+#toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);background:rgba(20,16,10,.9);border:1px solid rgba(232,185,35,.5);
+  padding:8px 14px;border-radius:12px;font-size:15px;z-index:900;pointer-events:none;opacity:0;transition:opacity .25s;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+
+/* 세로 판 420×922 */
+#stage.port #hud{left:10px;top:8px;width:400px;height:38px}
+#stage.port #hist{left:22px;top:280px;width:376px;height:30px}
+#stage.port #status{left:10px;top:786px;width:400px;height:24px}
+#stage.port #chips{left:10px;top:820px;width:316px;gap:2px;--cs:43px}
+#stage.port #acts{left:10px;top:874px;width:316px;height:38px;gap:5px}
+#stage.port #spin{left:334px;top:818px;width:80px;height:80px;font-size:26px}
+#stage.port #banner{left:0;top:150px;width:420px}
+/* 가로 판 1280×720 */
+#stage.land #hud{left:20px;top:12px;width:1240px;height:44px}
+#stage.land .pill{font-size:17px;padding:5px 14px}
+#stage.land #hist{left:455px;top:98px;width:783px;height:32px}
+#stage.land #status{left:455px;top:476px;width:783px;height:26px;font-size:18px}
+#stage.land #chips{left:455px;top:520px;width:430px;gap:9px;--cs:52px}
+#stage.land #acts{left:455px;top:600px;width:430px;height:46px;gap:8px}
+#stage.land .act{font-size:17px}
+#stage.land #spin{left:1100px;top:512px;width:132px;height:132px;font-size:40px}
+#stage.land #banner{left:35px;top:250px;width:400px}
+
+/* 대화창 */
+.ov{position:fixed;inset:0;background:rgba(8,14,10,.6);display:grid;place-items:center;z-index:1000;padding:16px}
+.box{background:var(--paper);color:var(--ink);border-radius:16px;padding:18px 18px 14px;width:min(380px,100%);max-height:88vh;overflow:auto;
+  box-shadow:0 8px 30px rgba(0,0,0,.5);text-align:center;box-sizing:border-box}
+.box h2{margin:0 0 6px;font-weight:normal;font-size:26px}
+.box p{margin:4px 0 12px;font-size:15px;color:#555}
+.box .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.box button{font:inherit;font-size:18px;border:0;border-radius:12px;padding:10px 18px;cursor:pointer;background:#e7dfcb;color:var(--ink)}
+.box button.main{background:var(--red);color:#fff}
+#help .box{width:min(560px,100%);text-align:left}
+#help h3{margin:14px 0 4px;font-weight:normal;font-size:19px;color:var(--red)}
+#help p,#help li{font-size:14px;color:#444;line-height:1.55;margin:2px 0}
+#help ul{padding-left:18px;margin:4px 0}
+.odds{width:100%;border-collapse:collapse;font-size:13.5px;margin:6px 0}
+.odds th{font-weight:normal;color:#777;text-align:left;border-bottom:1px solid #d9cfb4;padding:3px 4px}
+.odds td{border-bottom:1px dashed #e0d6bd;padding:4px;vertical-align:top;color:#333}
+.odds td.n{text-align:right;white-space:nowrap;font-family:var(--serif)}
+.odds tr.bad td{color:var(--red)}
+.toggles{display:flex;flex-direction:column;gap:10px;margin:10px 0 14px;font-size:16px;text-align:left}
+.toggles label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.toggles input{width:18px;height:18px}
+.stats{width:100%;font-size:14px;border-collapse:collapse;margin:4px 0 14px;text-align:left}
+.stats td{padding:3px 4px;border-bottom:1px dashed #e0d6bd}
+.stats td:last-child{text-align:right;font-family:var(--serif)}
+</style>
+</head>
+<body>
+<div id="stage" class="port">
+  <canvas id="cv" aria-label="룰렛 휠과 베팅 테이블"></canvas>
+  <div id="hud">
+    <div class="pill" id="pBal"><small>보유</small><b id="vBal">0</b></div>
+    <div class="pill" id="pBet"><small>베팅</small><b id="vBet">0</b></div>
+    <div class="pill" id="pWin"><small>당첨</small><b id="vWin">0</b></div>
+    <button class="ib" id="bHelp" aria-label="도움말">?</button>
+    <button class="ib" id="bSet" aria-label="설정">⚙</button>
+  </div>
+  <div id="hist"></div>
+  <div id="status"></div>
+  <div id="chips"></div>
+  <div id="acts">
+    <button class="act" id="bUndo">되돌리기</button>
+    <button class="act" id="bClear">지우기</button>
+    <button class="act" id="bDouble">×2</button>
+    <button class="act" id="bRebet">다시 걸기</button>
+  </div>
+  <button id="spin">SPIN<span>스핀</span></button>
+  <div id="banner"></div>
+</div>
+<div id="toast"></div>
+
+<div class="ov" id="help" hidden><div class="box">
+  <h2 style="text-align:center">룰렛 하는 법</h2>
+  <h3>기본</h3>
+  <ul>
+    <li>아래에서 <b>칩</b>을 고르고 테이블을 눌러 걸어요. 누르고 있는 동안 어디에 걸리는지(어떤 숫자가 맞는지) 미리 보여요 — 손을 떼면 놓여요.</li>
+    <li><b>스핀</b>을 누르면 휠과 공이 반대로 돌다가 공이 칸에 들어가요. 그 숫자를 포함한 베팅이 이겨요.</li>
+    <li>이기면 <b>건 칩 + 배당</b>을 돌려받아요(35배면 10칩 걸어 360칩). 진 칩은 딜러가 가져가요.</li>
+    <li>숫자 칸 <b>한가운데</b> = 숫자 하나, <b>선 위</b> = 두 칸, <b>선이 만나는 점</b> = 네 칸, 숫자판 <b>바깥 끝 선</b> = 가로 한 줄(3칸)·두 줄(6칸).</li>
+  </ul>
+  <h3>베팅 종류와 배당</h3>
+  <table class="odds">
+    <tr><th>베팅</th><th>놓는 곳</th><th>칸</th><th>배당</th><th>확률</th></tr>
+    <tr><td>스트레이트</td><td>숫자 한가운데</td><td class="n">1</td><td class="n">35배</td><td class="n">2.6%</td></tr>
+    <tr><td>스플릿</td><td>두 숫자 사이 선</td><td class="n">2</td><td class="n">17배</td><td class="n">5.3%</td></tr>
+    <tr><td>스트리트</td><td>가로 한 줄의 바깥 끝 선</td><td class="n">3</td><td class="n">11배</td><td class="n">7.9%</td></tr>
+    <tr><td>트리오</td><td>0·00과 1·2·3이 만나는 점</td><td class="n">3</td><td class="n">11배</td><td class="n">7.9%</td></tr>
+    <tr><td>코너</td><td>네 숫자가 만나는 점</td><td class="n">4</td><td class="n">8배</td><td class="n">10.5%</td></tr>
+    <tr class="bad"><td>탑라인</td><td>0과 1 사이 바깥 모서리 (0·00·1·2·3)</td><td class="n">5</td><td class="n">6배</td><td class="n">13.2%</td></tr>
+    <tr><td>식스라인</td><td>두 줄 사이 바깥 끝 점</td><td class="n">6</td><td class="n">5배</td><td class="n">15.8%</td></tr>
+    <tr><td>더즌 (1st/2nd/3rd 12)</td><td>12칸 묶음</td><td class="n">12</td><td class="n">2배</td><td class="n">31.6%</td></tr>
+    <tr><td>컬럼 (2 to 1)</td><td>세로 줄 끝</td><td class="n">12</td><td class="n">2배</td><td class="n">31.6%</td></tr>
+    <tr><td>빨강·검정·홀·짝·1~18·19~36</td><td>바깥 칸</td><td class="n">18</td><td class="n">1배</td><td class="n">47.4%</td></tr>
+  </table>
+  <h3>카지노가 이기는 이유</h3>
+  <ul>
+    <li>칸은 <b>38개</b>(1~36 + 0 + 00)인데 배당은 36칸인 것처럼 줘요. 그래서 어디에 걸든 평균 <b>5.26%</b>를 잃어요 — 1,000칩을 걸면 평균 947칩이 돌아와요.</li>
+    <li><b>탑라인</b>만 더 불리해요(평균 <b>7.89%</b> 손해). 빨간 줄로 표시했어요.</li>
+    <li>0이나 00이 나오면 빨강·검정·홀·짝 같은 바깥 베팅은 모두 져요.</li>
+    <li>"빨강이 다섯 번 나왔으니 이번엔 검정" 같은 건 없어요 — 매번 새로 38분의 1이에요. 설정의 통계에서 실제 환수율을 볼 수 있어요.</li>
+  </ul>
+  <h3>공정한가요?</h3>
+  <p>결과는 스핀을 누르는 순간 브라우저의 암호용 난수(<code>crypto.getRandomValues</code>)로 38칸 중 하나를 똑같은 확률로 정하고, 공이 그 칸으로 굴러가도록 움직임을 맞춰요. 공이 도는 중에 새로고침해도 이미 정해진 결과로 정산돼요.</p>
+  <p style="margin-top:12px;font-size:12px;color:#888">진짜 돈은 쓰지 않는 칩 게임이에요. 칩은 이 기기에만 저장되고, 다 쓰면 다시 받을 수 있어요.</p>
+  <div class="row" style="margin-top:10px"><button class="main" id="bHelpX">닫기</button></div>
+</div></div>
+
+<div class="ov" id="set" hidden><div class="box">
+  <h2>설정</h2>
+  <div class="toggles">
+    <label><input type="checkbox" id="tSnd"> 소리</label>
+    <label><input type="checkbox" id="tFast"> 빠르게 돌리기</label>
+    <label><input type="checkbox" id="tName"> 테이블에 한글 이름 보기</label>
+  </div>
+  <table class="stats" id="stats"></table>
+  <div class="row"><button class="main" id="bSetX">닫기</button><button id="bReset">처음부터 (1,000칩)</button></div>
+</div></div>
+
+<div class="ov" id="broke" hidden><div class="box">
+  <h2>칩을 다 썼어요</h2>
+  <p>카지노는 평균적으로 늘 이겨요. 그래도 한 번 더?</p>
+  <div class="row"><button class="main" id="bRefill">1,000칩 다시 받기</button></div>
+</div></div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const TAU = Math.PI * 2;
+const qs = new URLSearchParams(location.search);
+const TS = Math.max(1, +qs.get('ts') || 1);          // 테스트용 시간 배속(?ts=20)
+
+/* ── 휠: 미국식 순서(시계 방향). 00은 37로 씀 ── */
+const ORDER = [0, 28, 9, 26, 30, 11, 7, 20, 32, 17, 5, 22, 34, 15, 3, 24, 36, 13, 1, 37,
+  27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2];
+const SEG = TAU / 38;
+const POCKET = []; ORDER.forEach((n, p) => { POCKET[n] = p; });
+const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+const NAME = n => n === 37 ? '00' : String(n);
+const colorOf = n => (n === 0 || n === 37) ? 'g' : RED.has(n) ? 'r' : 'b';
+const COL = { r: '#b0161b', b: '#151515', g: '#0d7a3a' };
+const COL_DEEP = { r: '#6e0c10', b: '#060606', g: '#064d23' };
+
+/* 공정한 난수: 0~37 균등(거절 표본) */
+function rand38() {
+  const a = new Uint32Array(1), lim = Math.floor(0x100000000 / 38) * 38;
+  do crypto.getRandomValues(a); while (a[0] >= lim);
+  return a[0] % 38;
+}
+const rnd = () => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] / 0x100000000; };
+
+/* ── 베팅 정의. 테이블 좌표: L = 길이 방향(0·00 → 1줄 … 12줄 → 2 to 1), A = 폭 방향(0~3은 숫자 세 열, 음수는 바깥 베팅) ── */
+const Z = 1.1;                                       // 0·00 칸 길이
+const PAY = { straight: 35, split: 17, street: 11, trio: 11, corner: 8, topline: 6, sixline: 5, dozen: 2, column: 2, even: 1 };
+const TNAME = { straight: '스트레이트', split: '스플릿', street: '스트리트', trio: '트리오', corner: '코너', topline: '탑라인',
+  sixline: '식스라인', dozen: '더즌', column: '컬럼', even: '' };
+const DEFS = {};
+const def = (key, type, nums, L, A, label) => { DEFS[key] = { key, type, nums, pay: PAY[type], L, A, label }; };
+const num = (i, j) => 3 * i + j + 1;
+const range = (a, b, s = 1) => { const r = []; for (let x = a; x <= b; x += s) r.push(x); return r; };
+for (let i = 0; i < 12; i++) for (let j = 0; j < 3; j++) def('n' + num(i, j), 'straight', [num(i, j)], Z + i + .5, j + .5);
+def('n0', 'straight', [0], Z / 2, .75); def('n37', 'straight', [37], Z / 2, 2.25);
+for (let i = 0; i < 12; i++) for (let j = 0; j < 2; j++) def(`h${i}_${j}`, 'split', [num(i, j), num(i, j + 1)], Z + i + .5, j + 1);
+for (let i = 0; i < 11; i++) for (let j = 0; j < 3; j++) def(`v${i}_${j}`, 'split', [num(i, j), num(i + 1, j)], Z + i + 1, j + .5);
+for (let i = 0; i < 12; i++) def('st' + i, 'street', [num(i, 0), num(i, 1), num(i, 2)], Z + i + .5, 0);
+for (let i = 0; i < 11; i++) def('sl' + i, 'sixline', range(num(i, 0), num(i + 1, 2)), Z + i + 1, 0);
+for (let i = 0; i < 11; i++) for (let j = 0; j < 2; j++)
+  def(`c${i}_${j}`, 'corner', [num(i, j), num(i, j + 1), num(i + 1, j), num(i + 1, j + 1)], Z + i + 1, j + 1);
+def('z00', 'split', [0, 37], Z / 2, 1.5);
+def('z1', 'split', [0, 1], Z, .5);
+def('z2a', 'split', [0, 2], Z, 1.25);
+def('z2b', 'split', [37, 2], Z, 1.75);
+def('z3', 'split', [37, 3], Z, 2.5);
+def('t012', 'trio', [0, 1, 2], Z, 1);
+def('t0002', 'trio', [0, 37, 2], Z, 1.5);
+def('t0023', 'trio', [37, 2, 3], Z, 2);
+def('top', 'topline', [0, 37, 1, 2, 3], Z, 0);
+for (let j = 0; j < 3; j++) def('col' + j, 'column', range(j + 1, 36, 3), Z + 12.5, j + .5, `${j + 1}열 (2 to 1)`);
+['1st 12', '2nd 12', '3rd 12'].forEach((t, k) => def('doz' + k, 'dozen', range(12 * k + 1, 12 * k + 12), Z + 4 * k + 2, -.5, `${t} (${12 * k + 1}~${12 * k + 12})`));
+const EM = [
+  ['low', '1-18', '1~18', range(1, 18)], ['even', 'EVEN', '짝수', range(2, 36, 2)],
+  ['red', 'RED', '빨강', [...RED]], ['black', 'BLACK', '검정', range(1, 36).filter(n => !RED.has(n))],
+  ['odd', 'ODD', '홀수', range(1, 35, 2)], ['high', '19-36', '19~36', range(19, 36)],
+];
+EM.forEach(([k, , ko, nums], m) => def(k, 'even', nums, Z + 2 * m + 1, -1.5, ko));
+
+/* 판 정산: 이긴 베팅은 건 칩 × (배당 + 1)을 돌려받음 */
+function payout(bets, n) {
+  let paid = 0, stake = 0;
+  for (const k in bets) { const d = DEFS[k]; stake += bets[k]; if (d.nums.includes(n)) paid += bets[k] * (d.pay + 1); }
+  return { paid, stake };
+}
+function betText(k) {
+  const d = DEFS[k];
+  if (d.label) return d.label;
+  const ns = d.nums.map(NAME).join('·');
+  return d.type === 'straight' ? ns : `${TNAME[d.type]} ${ns}`;
+}
+
+/* ── 저장 ── */
+const KEY = 'roulette-v1';
+const store = { bal: 1000, spins: 0, bet: 0, won: 0, best: 0, hist: [], last: null, table: {}, pend: null, snd: 1, fast: 0, names: 1, refills: 0 };
+try { Object.assign(store, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
+const fmt = n => Math.round(n).toLocaleString('ko-KR');
+const fmtChip = n => n < 1000 ? String(n) : n < 1e6 ? +(n / 1000).toFixed(n < 1e4 ? 1 : 0) + 'K' : +(n / 1e6).toFixed(1) + 'M';
+
+/* ── 칩 ── */
+const CHIPS = [
+  { v: 1, c: '#ece7da', e: '#2f5aa8', t: '#1d2a50' },
+  { v: 5, c: '#c4222b', e: '#f6f1e4', t: '#fff' },
+  { v: 25, c: '#21803a', e: '#f6f1e4', t: '#fff' },
+  { v: 100, c: '#1c1c1e', e: '#f6f1e4', t: '#fff' },
+  { v: 500, c: '#6c2a96', e: '#f6f1e4', t: '#fff' },
+  { v: 1000, c: '#e08a00', e: '#fff7e0', t: '#3a2000' },
+  { v: 5000, c: '#a0522d', e: '#f6f1e4', t: '#fff' },
+];
+let chipSel = 1;
+
+/* ── 화면 배치 ── */
+const LAYOUTS = {
+  port: { W: 420, H: 922, land: false, wheel: { cx: 210, cy: 170, R: 170, k: .48 }, t: { X0: 22, Y0: 326, sA: 75, sL: 32 },
+    chipR: 11.5, res: { x: 392, y: 78, r: 21 }, hud: [60, 26] },
+  land: { W: 1280, H: 720, land: true, wheel: { cx: 235, cy: 318, R: 200, k: .55 }, t: { X0: 455, Y0: 150, sA: 62, sL: 55.5 },
+    chipR: 14, res: { x: 235, y: 560, r: 38 }, hud: [90, 34] },
+};
+let LY = LAYOUTS.port, S = 1, DPR = 1;
+const toXY = (L, A) => LY.land ? [LY.t.X0 + L * LY.t.sL, LY.t.Y0 + (3 - A) * LY.t.sA] : [LY.t.X0 + (A + 2) * LY.t.sA, LY.t.Y0 + L * LY.t.sL];
+const toLA = (x, y) => LY.land ? [(x - LY.t.X0) / LY.t.sL, 3 - (y - LY.t.Y0) / LY.t.sA] : [(y - LY.t.Y0) / LY.t.sL, (x - LY.t.X0) / LY.t.sA - 2];
+function rectLA(L0, L1, A0, A1) {
+  const [x0, y0] = toXY(L0, A0), [x1, y1] = toXY(L1, A1);
+  return [Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0)];
+}
+
+/* 누른 자리 → 베팅. 선 근처(가로 10px·세로 7px 안)는 선 위 베팅 */
+function hitKey(L, A) {
+  const eA = Math.min(.2, 10 / LY.t.sA), eL = Math.min(.2, 8 / LY.t.sL);
+  if (L < 0 || L >= Z + 13 || A < -2 || A > 3) return null;
+  if (A < -1) return L >= Z && L < Z + 12 ? EM[Math.floor((L - Z) / 2)][0] : null;
+  if (A < -eA) return L >= Z && L < Z + 12 ? 'doz' + Math.floor((L - Z) / 4) : null;
+  if (L >= Z + 12) return A < 0 ? null : 'col' + Math.min(2, Math.floor(A));
+  if (L < Z - eL) {
+    if (A < 0) return null;
+    if (Math.abs(A - 1.5) < eA) return 'z00';
+    return A < 1.5 ? 'n0' : 'n37';
+  }
+  if (Math.abs(L - Z) < eL) {                       // 0·00과 첫 줄 사이
+    if (A < eA) return 'top';
+    for (const [p, k] of [[1, 't012'], [1.5, 't0002'], [2, 't0023']]) if (Math.abs(A - p) < eA) return k;
+    return A < 1 ? 'z1' : A < 1.5 ? 'z2a' : A < 2 ? 'z2b' : 'z3';
+  }
+  const rl = L - Z, rr = Math.round(rl), cc = Math.round(A);
+  const nearR = Math.abs(rl - rr) < eL && rr >= 1 && rr <= 11;
+  const nearC = Math.abs(A - cc) < eA && cc <= 2;
+  const i = Math.min(11, Math.floor(rl)), j = Math.min(2, Math.max(0, Math.floor(A)));
+  if (nearC && cc === 0) return nearR ? 'sl' + (rr - 1) : 'st' + i;
+  if (nearC && nearR) return `c${rr - 1}_${cc - 1}`;
+  if (nearC) return `h${i}_${cc - 1}`;
+  if (nearR) return `v${rr - 1}_${j}`;
+  return 'n' + num(i, j);
+}
+
+/* 테이블 칸(그리기·강조용) */
+const CELLS = [];
+for (let i = 0; i < 12; i++) for (let j = 0; j < 3; j++) CELLS.push({ key: 'n' + num(i, j), n: num(i, j), L0: Z + i, L1: Z + i + 1, A0: j, A1: j + 1 });
+CELLS.push({ key: 'n0', n: 0, L0: 0, L1: Z, A0: 0, A1: 1.5 }, { key: 'n37', n: 37, L0: 0, L1: Z, A0: 1.5, A1: 3 });
+for (let j = 0; j < 3; j++) CELLS.push({ key: 'col' + j, txt: '2 to 1', ko: `${j + 1}열`, L0: Z + 12, L1: Z + 13, A0: j, A1: j + 1 });
+['1st 12', '2nd 12', '3rd 12'].forEach((t, k) => CELLS.push({ key: 'doz' + k, txt: t, ko: `${12 * k + 1}~${12 * k + 12}`, L0: Z + 4 * k, L1: Z + 4 * k + 4, A0: -1, A1: 0 }));
+EM.forEach(([k, t, ko], m) => CELLS.push({ key: k, txt: t, ko, L0: Z + 2 * m, L1: Z + 2 * m + 2, A0: -2, A1: -1 }));
+
+/* ── 상태 ── */
+let bets = {};                       // key → 칩
+let UNDO = [];
+let state = 'bet';                   // bet | spin | pay
+let SPIN = null, PAYA = null;
+let HOVER = null, PRESS = null, DOLLY = null;
+let lastRes = store.hist.length ? store.hist[0] : null;
+const WR = -1.15;                    // 휠(로터) 각속도 — 공과 반대 방향
+const W = { rot: rnd() * TAU, ball: null };
+let dispBal = store.bal, lastWin = 0;
+const total = b => Object.values(b).reduce((a, x) => a + x, 0);
+
+/* ── 공 움직임: 결과(n)를 먼저 정하고 그 칸에 떨어지게 출발 각도를 거꾸로 맞춤 ──
+   1) 바깥 트랙: 각속도 w0 → w1 지수 감속  2) 다이아몬드 쪽으로 내려오며 톡톡  3) 칸 위에서 통통 튀다 멈춤(로터 기준 delta만큼 더 감) */
+function planSpin(n) {
+  const T1 = 4.2 + rnd() * .9, D2 = 1.05 + rnd() * .25, D3 = 2.0 + rnd() * .6;
+  const w0 = 15 + rnd() * 3, w1 = 4.6 + rnd() * .6, w2 = 3.1 + rnd() * .4;
+  const k = Math.log(w0 / w1) / T1;
+  const G1 = (w0 - w1) / k, G2 = G1 + (w1 + w2) / 2 * D2;
+  const T2 = T1 + D2, T3 = T2 + D3;
+  const delta = .45 + rnd() * 1.5;                 // 칸 위에서 3~14칸쯤 더 굴러감
+  const rot0 = W.rot, phiT = POCKET[n] * SEG;
+  const b0 = phiT - delta + rot0 + WR * T2 - G2;
+  const hops = [.32 + rnd() * .1, .55 + rnd() * .15];  // 내려오다 다이아몬드에 부딪히는 때(2단계 진행도)
+  return { n, t: 0, T1, D2, D3, T2, T3, w0, w1, w2, k, G1, b0, delta, phiT, rot0, nh: 4 + (rnd() * 3 | 0), hops, cl: 0, hopHit: 0 };
+}
+function ballAt(P, t) {
+  const rotT = P.rot0 + WR * t;
+  if (t < P.T1) return { r: .885, th: P.b0 + P.w0 / P.k * (1 - Math.exp(-P.k * t)), h: 0, ph: 1, w: P.w0 * Math.exp(-P.k * t) };
+  if (t < P.T2) {
+    const u = t - P.T1, s = u / P.D2;
+    const th = P.b0 + P.G1 + P.w1 * u + (P.w2 - P.w1) * u * u / (2 * P.D2);
+    let h = 0; for (const c of P.hops) { const d = (s - c) / .14; if (d > 0 && d < 1) h += .035 * Math.sin(Math.PI * d); }
+    return { r: .885 - (.885 - .645) * s * s, th, h, ph: 2, w: P.w1 + (P.w2 - P.w1) * s };
+  }
+  const s = Math.min(1, (t - P.T2) / P.D3);
+  const e = 1 - Math.pow(1 - s, 2.2);
+  const bounce = Math.abs(Math.cos(Math.PI * s * P.nh));
+  return { r: .575 + .07 * Math.pow(1 - s, 3) * bounce, th: rotT + P.phiT - P.delta + P.delta * e,
+    h: .04 * Math.pow(1 - s, 2) * Math.abs(Math.sin(Math.PI * s * P.nh)), ph: 3, w: (1 - s) * 2, s };
+}
+const restBall = n => ({ r: .575, th: W.rot + POCKET[n] * SEG, h: 0 });
+
+/* ── 소리(합성) ── */
+let AC = null, NB = null, ROLL = null;
+function ac() {
+  if (!store.snd) return null;
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (AC.state === 'suspended') AC.resume();
+  if (!NB) { NB = AC.createBuffer(1, AC.sampleRate, AC.sampleRate); const d = NB.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  return AC;
+}
+function burst(a, at, f, q, dur, vol) {
+  const s = a.createBufferSource(); s.buffer = NB;
+  const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
+  const g = a.createGain(); g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(.001, at + dur);
+  s.connect(bp).connect(g).connect(a.destination); s.start(at, Math.random() * .5, dur + .02);
+}
+function tone(a, at, f, dur, vol, type = 'sine') {
+  const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(vol, at + .008); g.gain.exponentialRampToValueAtTime(.001, at + dur);
+  o.connect(g).connect(a.destination); o.start(at); o.stop(at + dur + .02);
+}
+const sfx = {
+  chip() { const a = ac(); if (!a) return; const t = a.currentTime; burst(a, t, 3800, 2, .04, .5); burst(a, t + .028, 3000, 2, .05, .35); },
+  clack(v = 1) { const a = ac(); if (!a) return; const t = a.currentTime; burst(a, t, 2600, 6, .05, .45 * v); tone(a, t, 2100 + Math.random() * 600, .05, .12 * v, 'triangle'); },
+  win(big) {
+    const a = ac(); if (!a) return; const t = a.currentTime;
+    (big ? [523, 659, 784, 1047, 1319] : [659, 784, 1047]).forEach((f, i) => { tone(a, t + i * .09, f, .35, .16); tone(a, t + i * .09, f * 2, .2, .04); });
+  },
+  lose() { const a = ac(); if (!a) return; const t = a.currentTime; tone(a, t, 330, .25, .08, 'triangle'); tone(a, t + .14, 262, .35, .08, 'triangle'); },
+  sweep() { const a = ac(); if (!a) return; burst(a, a.currentTime, 1500, .8, .35, .18); },
+};
+function rollStart() {
+  const a = ac(); if (!a || ROLL) return;
+  const s = a.createBufferSource(); s.buffer = NB; s.loop = true;
+  const bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.4; bp.frequency.value = 900;
+  const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
+  const g = a.createGain(); g.gain.value = 0;
+  s.connect(bp).connect(lp).connect(g).connect(a.destination); s.start();
+  ROLL = { s, bp, g };
+}
+function rollSet(vol, f) { if (!ROLL || !AC) return; const t = AC.currentTime; ROLL.g.gain.setTargetAtTime(vol, t, .05); ROLL.bp.frequency.setTargetAtTime(f, t, .1); }
+function rollStop() { if (!ROLL) return; const r = ROLL; ROLL = null; try { r.g.gain.setTargetAtTime(0, AC.currentTime, .05); r.s.stop(AC.currentTime + .3); } catch (e) {} }
+
+/* ── 그리기 도구 ── */
+const cv = $('cv'), g = cv.getContext('2d');
+let BC = null, boardDirty = true;
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16); let r = n >> 16, gg = n >> 8 & 255, b = n & 255;
+  const t = amt < 0 ? 0 : 255, p = Math.abs(amt);
+  r = Math.round(r + (t - r) * p); gg = Math.round(gg + (t - gg) * p); b = Math.round(b + (t - b) * p);
+  return `rgb(${r},${gg},${b})`;
+}
+function rrect(c, x, y, w, h, r) { c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, r) : c.rect(x, y, w, h); }
+function ring(c, r0, r1) { c.beginPath(); c.arc(0, 0, r1, 0, TAU); c.arc(0, 0, r0, 0, TAU, true); }
+function chrome(c, x0, y0, x1, y1) {
+  const gr = c.createLinearGradient(x0, y0, x1, y1);
+  gr.addColorStop(0, '#5e5e60'); gr.addColorStop(.3, '#f4f4f4'); gr.addColorStop(.55, '#9b9b9e'); gr.addColorStop(.8, '#e3e3e3'); gr.addColorStop(1, '#4a4a4c');
+  return gr;
+}
+
+/* 휠 한 장(cx, cy 가운데, 반지름 R, 기울기 k = 세로 납작 비율, rot = 로터 각도) */
+function drawWheel(c, cx, cy, R, k, rot, ball, P) {
+  const Hs = R * .1;
+  // 테이블에 떨어지는 그림자
+  c.save(); c.translate(cx + R * .05, cy + Hs * 1.3); c.scale(1, k);
+  let gr = c.createRadialGradient(0, 0, R * .6, 0, 0, R * 1.14);
+  gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = gr; c.fillRect(-R * 1.2, -R * 1.2, R * 2.4, R * 2.4); c.restore();
+  // 그릇 옆면(가까운 쪽 두께)
+  gr = c.createLinearGradient(cx - R, 0, cx + R, 0);
+  gr.addColorStop(0, '#1c0b04'); gr.addColorStop(.25, '#5a2810'); gr.addColorStop(.42, '#8a4520'); gr.addColorStop(.6, '#4a200c'); gr.addColorStop(1, '#140702');
+  c.beginPath(); c.moveTo(cx + R, cy); c.lineTo(cx + R, cy + Hs); c.ellipse(cx, cy + Hs, R, R * k, 0, 0, Math.PI);
+  c.lineTo(cx - R, cy); c.ellipse(cx, cy, R, R * k, 0, Math.PI, 0, true); c.closePath(); c.fillStyle = gr; c.fill();
+  c.strokeStyle = 'rgba(232,185,35,.55)'; c.lineWidth = 1.2;
+  c.beginPath(); c.ellipse(cx, cy + Hs * .78, R, R * k, 0, .05, Math.PI - .05); c.stroke();
+
+  c.save(); c.translate(cx, cy); c.scale(1, k);
+  // 바깥 나무 테
+  gr = c.createLinearGradient(-R, -R, R, R);
+  gr.addColorStop(0, '#a65d33'); gr.addColorStop(.45, '#6a3014'); gr.addColorStop(1, '#2e1206');
+  ring(c, R * .93, R); c.fillStyle = gr; c.fill('evenodd');
+  c.strokeStyle = 'rgba(0,0,0,.18)'; c.lineWidth = .8;
+  for (let i = 0; i < 5; i++) { c.beginPath(); c.arc(0, 0, R * (.938 + i * .013), i * 1.3, i * 1.3 + 4.2); c.stroke(); }
+  c.strokeStyle = '#d9ad4a'; c.lineWidth = R * .006; c.beginPath(); c.arc(0, 0, R * .93, 0, TAU); c.stroke();
+  // 공이 도는 트랙(가운데가 오목)
+  gr = c.createRadialGradient(0, 0, R * .84, 0, 0, R * .93);
+  gr.addColorStop(0, '#3a1a0a'); gr.addColorStop(.45, '#8f522c'); gr.addColorStop(.8, '#b87444'); gr.addColorStop(1, '#5a2c12');
+  ring(c, R * .84, R * .93); c.fillStyle = gr; c.fill('evenodd');
+  c.lineCap = 'round';
+  for (let i = 0; i < 4; i++) {
+    c.strokeStyle = `rgba(255,236,200,${.09 - i * .02})`; c.lineWidth = R * (.012 + i * .008);
+    c.beginPath(); c.arc(0, 0, R * .895, -2.75, -1.25); c.stroke();
+  }
+  // 경사 앞치마 + 다이아몬드 8개
+  gr = c.createRadialGradient(0, 0, R * .745, 0, 0, R * .84);
+  gr.addColorStop(0, '#120804'); gr.addColorStop(1, '#3d1d0c');
+  ring(c, R * .745, R * .84); c.fillStyle = gr; c.fill('evenodd');
+  for (let i = 0; i < 8; i++) {
+    c.save(); c.rotate(i * TAU / 8 + TAU / 16); c.translate(R * .792, 0);
+    if (i % 2) c.rotate(Math.PI / 2);
+    const a = R * .028, b = R * .012;
+    c.beginPath(); c.moveTo(-a, 0); c.lineTo(0, -b); c.lineTo(a, 0); c.lineTo(0, b); c.closePath();
+    c.fillStyle = chrome(c, -a, -b, a, b); c.fill(); c.strokeStyle = 'rgba(0,0,0,.4)'; c.lineWidth = .6; c.stroke();
+    c.restore();
+  }
+  // 로터(돌아가는 부분)
+  c.save(); c.rotate(rot);
+  for (let p = 0; p < 38; p++) {
+    const n = ORDER[p], a0 = (p - .5) * SEG, a1 = (p + .5) * SEG, cl = colorOf(n);
+    c.beginPath(); c.arc(0, 0, R * .745, a0, a1); c.arc(0, 0, R * .655, a1, a0, true); c.closePath(); c.fillStyle = COL[cl]; c.fill();
+    c.beginPath(); c.arc(0, 0, R * .655, a0, a1); c.arc(0, 0, R * .5, a1, a0, true); c.closePath(); c.fillStyle = COL_DEEP[cl]; c.fill();
+  }
+  // 칸 오목한 음영
+  gr = c.createRadialGradient(0, 0, R * .5, 0, 0, R * .655);
+  gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(.35, 'rgba(255,255,255,.06)'); gr.addColorStop(.75, 'rgba(0,0,0,.1)'); gr.addColorStop(1, 'rgba(0,0,0,.6)');
+  ring(c, R * .5, R * .655); c.fillStyle = gr; c.fill('evenodd');
+  c.strokeStyle = 'rgba(217,173,74,.85)'; c.lineWidth = R * .004;
+  for (let p = 0; p < 38; p++) {
+    const a = (p + .5) * SEG, ca = Math.cos(a), sa = Math.sin(a);
+    c.beginPath(); c.moveTo(ca * R * .655, sa * R * .655); c.lineTo(ca * R * .745, sa * R * .745); c.stroke();
+  }
+  // 칸막이(크롬)
+  for (let p = 0; p < 38; p++) {
+    const a = (p + .5) * SEG, ca = Math.cos(a), sa = Math.sin(a);
+    c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = R * .012;
+    c.beginPath(); c.moveTo(ca * R * .5 + 1, sa * R * .5 + 1.5); c.lineTo(ca * R * .655 + 1, sa * R * .655 + 1.5); c.stroke();
+    c.strokeStyle = '#e8e8ea'; c.lineWidth = R * .008;
+    c.beginPath(); c.moveTo(ca * R * .5, sa * R * .5); c.lineTo(ca * R * .655, sa * R * .655); c.stroke();
+  }
+  c.lineWidth = R * .007; c.strokeStyle = '#d6d6d8';
+  c.beginPath(); c.arc(0, 0, R * .655, 0, TAU); c.stroke();
+  c.beginPath(); c.arc(0, 0, R * .745, 0, TAU); c.stroke();
+  // 숫자(바깥쪽이 위)
+  c.fillStyle = '#fff'; c.font = `700 ${R * .056}px ${getComputedStyle(document.documentElement).getPropertyValue('--serif')}`;
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  for (let p = 0; p < 38; p++) {
+    c.save(); c.rotate(p * SEG); c.translate(R * .701, 0); c.rotate(Math.PI / 2); c.fillText(NAME(ORDER[p]), 0, 1); c.restore();
+  }
+  // 가운데 원뿔(나무 + 크롬 테)
+  gr = c.createRadialGradient(-R * .1, -R * .12, R * .04, 0, 0, R * .5);
+  gr.addColorStop(0, '#d39a62'); gr.addColorStop(.5, '#8e4c22'); gr.addColorStop(1, '#4a2008');
+  c.beginPath(); c.arc(0, 0, R * .5, 0, TAU); c.fillStyle = gr; c.fill();
+  c.strokeStyle = 'rgba(40,14,2,.35)'; c.lineWidth = R * .01;
+  for (let i = 0; i < 8; i++) { const a = i * TAU / 8; c.beginPath(); c.moveTo(Math.cos(a) * R * .14, Math.sin(a) * R * .14); c.lineTo(Math.cos(a) * R * .47, Math.sin(a) * R * .47); c.stroke(); }
+  c.strokeStyle = '#d9ad4a'; c.lineWidth = R * .008;
+  c.beginPath(); c.arc(0, 0, R * .48, 0, TAU); c.stroke();
+  c.beginPath(); c.arc(0, 0, R * .3, 0, TAU); c.stroke();
+  c.restore();                                       // 로터 회전 끝
+  // 고정된 빛(왼쪽 위)
+  c.save(); c.beginPath(); c.arc(0, 0, R * .745, 0, TAU); c.clip();
+  gr = c.createRadialGradient(-R * .4, -R * .5, 0, -R * .4, -R * .5, R * 1.1);
+  gr.addColorStop(0, 'rgba(255,245,225,.2)'); gr.addColorStop(1, 'rgba(255,245,225,0)');
+  c.fillStyle = gr; c.fillRect(-R, -R, 2 * R, 2 * R); c.restore();
+  c.restore();                                       // 납작 끝
+
+  // 가운데 손잡이(터릿) — 높이가 있어서 납작하게 안 함
+  const arm = R * .27, hA = R * .1, hT = R * .19, base = R * .085;
+  c.save(); c.translate(cx, cy); c.scale(1, k);
+  c.beginPath(); c.arc(0, 0, base, 0, TAU); c.fillStyle = chrome(c, -base, 0, base, 0); c.fill(); c.restore();
+  const arms = [0, 1, 2, 3].map(i => { const a = rot + i * Math.PI / 2 + Math.PI / 4; return { x: cx + Math.cos(a) * arm, y: cy + Math.sin(a) * arm * k - hA, s: Math.sin(a) }; });
+  const drawArm = a => {
+    c.lineCap = 'round'; c.strokeStyle = '#3d3d40'; c.lineWidth = R * .034;
+    c.beginPath(); c.moveTo(cx, cy - hA * 1.1); c.lineTo(a.x, a.y); c.stroke();
+    c.strokeStyle = '#d8d8da'; c.lineWidth = R * .02;
+    c.beginPath(); c.moveTo(cx, cy - hA * 1.1 - 1); c.lineTo(a.x, a.y - 1); c.stroke();
+    const kr = R * .03, kg = c.createRadialGradient(a.x - kr * .4, a.y - kr * .4, 0, a.x, a.y, kr);
+    kg.addColorStop(0, '#fff'); kg.addColorStop(.5, '#c9c9cc'); kg.addColorStop(1, '#4b4b4e');
+    c.beginPath(); c.arc(a.x, a.y, kr, 0, TAU); c.fillStyle = kg; c.fill();
+  };
+  arms.filter(a => a.s < 0).forEach(drawArm);
+  const sw = R * .028;
+  c.fillStyle = chrome(c, cx - sw, 0, cx + sw, 0); c.fillRect(cx - sw, cy - hT, sw * 2, hT);
+  c.beginPath(); c.ellipse(cx, cy, sw, sw * k, 0, 0, Math.PI); c.fill();
+  const tr = R * .045, tg = c.createRadialGradient(cx - tr * .4, cy - hT - tr * .4, 0, cx, cy - hT, tr);
+  tg.addColorStop(0, '#fff'); tg.addColorStop(.45, '#cfcfd2'); tg.addColorStop(1, '#444447');
+  c.beginPath(); c.arc(cx, cy - hT, tr, 0, TAU); c.fillStyle = tg; c.fill();
+  arms.filter(a => a.s >= 0).forEach(drawArm);
+
+  // 공
+  if (ball) {
+    const rb = R * .03, pos = b => [cx + Math.cos(b.th) * b.r * R, cy + Math.sin(b.th) * b.r * R * k];
+    const [bx, by0] = pos(ball), by = by0 - ball.h * R;
+    if (P && ball.ph === 1 && ball.w > 6) {                // 빠를 때 잔상
+      for (let j = 4; j >= 1; j--) {
+        const tb = ballAt(P, Math.max(0, P.t - j * .011)), [tx, ty] = pos(tb);
+        c.beginPath(); c.arc(tx, ty, rb * (1 - j * .1), 0, TAU); c.fillStyle = `rgba(255,255,255,${.13 / j * Math.min(1, ball.w / 12)})`; c.fill();
+      }
+    }
+    c.beginPath(); c.ellipse(bx + rb * .5, by0 + rb * .45, rb * 1.1, rb * .6, 0, 0, TAU);
+    c.fillStyle = `rgba(0,0,0,${.45 - Math.min(.3, ball.h * 6)})`; c.fill();
+    const bg = c.createRadialGradient(bx - rb * .4, by - rb * .45, rb * .1, bx, by, rb * 1.05);
+    bg.addColorStop(0, '#ffffff'); bg.addColorStop(.45, '#ececea'); bg.addColorStop(1, '#8f8f8c');
+    c.beginPath(); c.arc(bx, by, rb, 0, TAU); c.fillStyle = bg; c.globalAlpha = ball.a ?? 1; c.fill(); c.globalAlpha = 1;
+  }
+}
+
+/* 카지노 칩(살짝 기울여 본 모양) */
+function drawChip(c, x, y, r, ch, label) {
+  const ry = r * .8, th = r * .24;
+  c.beginPath(); c.moveTo(x + r, y); c.lineTo(x + r, y + th); c.ellipse(x, y + th, r, ry, 0, 0, Math.PI);
+  c.lineTo(x - r, y); c.ellipse(x, y, r, ry, 0, Math.PI, 0, true); c.closePath(); c.fillStyle = shade(ch.c, -.35); c.fill();
+  c.fillStyle = ch.e;
+  for (const f of [-.75, -.2, .35, .85]) { const sx = x + f * r; c.fillRect(sx - r * .09, y + Math.sqrt(Math.max(0, 1 - f * f)) * ry * .1, r * .18, th); }
+  c.beginPath(); c.ellipse(x, y, r, ry, 0, 0, TAU); c.fillStyle = ch.c; c.fill();
+  c.save(); c.translate(x, y); c.scale(1, ry / r);
+  c.strokeStyle = ch.e; c.lineWidth = r * .24;
+  for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + .2; c.beginPath(); c.arc(0, 0, r * .86, a, a + .36); c.stroke(); }
+  c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = r * .06; c.beginPath(); c.arc(0, 0, r * .6, 0, TAU); c.stroke();
+  if (label) {
+    c.fillStyle = ch.t; c.textAlign = 'center'; c.textBaseline = 'middle';
+    const fs = r * (label.length > 3 ? .5 : .66); c.font = `700 ${fs}px Georgia, serif`;
+    c.fillText(label, 0, r * .05);
+  }
+  c.restore();
+}
+function chipsOf(amt) {
+  const out = [];
+  for (let i = CHIPS.length - 1; i >= 0 && out.length < 40; i--) while (amt >= CHIPS[i].v && out.length < 40) { out.push(CHIPS[i]); amt -= CHIPS[i].v; }
+  return out;
+}
+function drawStack(c, x, y, amt, alpha = 1, sc = 1) {
+  const r = LY.chipR * sc, list = chipsOf(amt), n = Math.min(8, list.length), vis = list.slice(list.length - n);
+  c.save(); c.globalAlpha = alpha;
+  c.beginPath(); c.ellipse(x + 2, y + r * .55, r * 1.1, r * .7, 0, 0, TAU); c.fillStyle = 'rgba(0,0,0,.35)'; c.fill();
+  vis.forEach((ch, i) => drawChip(c, x, y - i * r * .26, r, ch, i === n - 1 ? fmtChip(amt) : null));
+  c.restore();
+}
+
+/* 테이블(펠트 위 선·칸) — 바뀔 때만 따로 그려 둠 */
+function drawBoard(c) {
+  const serif = getComputedStyle(document.documentElement).getPropertyValue('--serif');
+  const T = LY.t, line = 'rgba(244,236,214,.9)';
+  // 테이블 전체 바깥 금색 테
+  const [bx, by, bw, bh] = rectLA(0, Z + 13, -2, 3);
+  c.save(); c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 10;
+  rrect(c, bx - 6, by - 6, bw + 12, bh + 12, 8); c.strokeStyle = 'rgba(232,185,35,.35)'; c.lineWidth = 2; c.stroke(); c.restore();
+  for (const cell of CELLS) {
+    const [x, y, w, h] = rectLA(cell.L0, cell.L1, cell.A0, cell.A1);
+    if (cell.n != null) {
+      const cl = colorOf(cell.n), gr = c.createLinearGradient(x, y, x, y + h);
+      gr.addColorStop(0, shade(COL[cl], .14)); gr.addColorStop(1, COL[cl]);
+      rrect(c, x + 2.5, y + 2.5, w - 5, h - 5, 4); c.fillStyle = gr; c.fill();
+      c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = `700 ${Math.min(26, Math.min(w, h) * .6)}px ${serif}`;
+      c.fillText(NAME(cell.n), x + w / 2, y + h / 2 + 1);
+    } else {
+      c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#f4ecd6';
+      const ko = store.names && h >= 44 && cell.ko, dia = cell.key === 'red' || cell.key === 'black';
+      const cy = y + h / 2 - (ko ? (dia ? 9 : 6) : 0);
+      if (dia) {
+        const dw = Math.min(w * .32, 26), dh = Math.min(h * (ko ? .22 : .3), 15);
+        c.beginPath(); c.moveTo(x + w / 2 - dw, cy); c.lineTo(x + w / 2, cy - dh); c.lineTo(x + w / 2 + dw, cy); c.lineTo(x + w / 2, cy + dh); c.closePath();
+        c.fillStyle = cell.key === 'red' ? '#c0181e' : '#111'; c.fill(); c.strokeStyle = line; c.lineWidth = 1; c.stroke();
+      } else {
+        c.font = `700 ${Math.min(17, w * .2)}px ${serif}`; c.fillText(cell.txt, x + w / 2, cy);
+      }
+      if (ko) { c.font = `12px ${getComputedStyle(document.documentElement).getPropertyValue('--display')}`; c.fillStyle = 'rgba(244,236,214,.7)'; c.fillText(cell.ko, x + w / 2, y + h / 2 + (dia ? 17 : 12)); }
+    }
+    c.strokeStyle = line; c.lineWidth = 1.5; c.strokeRect(x, y, w, h);
+  }
+}
+
+/* ── 한 프레임 ── */
+let lastT = performance.now();
+function frame(now) {
+  const dt = Math.min(.05, (now - lastT) / 1000) * TS; lastT = now;
+  const m = store.fast ? 1.8 : 1;
+  if (SPIN) {
+    SPIN.t += dt * m; W.rot = SPIN.rot0 + WR * SPIN.t;
+    const b = ballAt(SPIN, SPIN.t);
+    W.ball = b; if (SPIN.t < .25) W.ball.a = SPIN.t / .25;
+    spinSound(b);
+    if (SPIN.t >= SPIN.T3 + .35) endSpin();
+  } else {
+    W.rot += WR * dt * m;
+    if (lastRes != null) W.ball = restBall(lastRes); else W.ball = null;
+  }
+  if (PAYA) { PAYA.t += dt; if (PAYA.t >= PAYA.T) finishPay(); }
+  const tgt = store.bal - (PAYA && PAYA.t < 1.9 ? PAYA.paid : 0);
+  dispBal += (tgt - dispBal) * Math.min(1, dt * 7); if (Math.abs(tgt - dispBal) < .5) dispBal = tgt;
+  draw(now);
+  hud();
+  requestAnimationFrame(frame);
+}
+function spinSound(b) {
+  if (!ROLL) return;
+  if (b.ph === 1) rollSet(.05 + .13 * Math.min(1, b.w / 16), 500 + b.w * 70);
+  else if (b.ph === 2) {
+    rollSet(.09, 650);
+    const s = (SPIN.t - SPIN.T1) / SPIN.D2;
+    while (SPIN.hopHit < SPIN.hops.length && s >= SPIN.hops[SPIN.hopHit] + .07) { sfx.clack(1); SPIN.hopHit++; }
+  } else {
+    const s = b.s; rollSet(.05 * (1 - s), 900);
+    const c = Math.floor(s * SPIN.nh + .5);
+    if (c > SPIN.cl && s < .97) { SPIN.cl = c; sfx.clack(Math.max(.25, 1 - s)); }
+  }
+}
+
+function draw(now) {
+  const sc = S * DPR;
+  if (boardDirty || !BC) {
+    BC = BC || document.createElement('canvas'); BC.width = cv.width; BC.height = cv.height;
+    const bc = BC.getContext('2d'); bc.setTransform(sc, 0, 0, sc, 0, 0); bc.clearRect(0, 0, LY.W, LY.H); drawBoard(bc); boardDirty = false;
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); g.drawImage(BC, 0, 0);
+  g.setTransform(sc, 0, 0, sc, 0, 0);
+  // 강조: 미리보기(누르는 중) 또는 당첨
+  const hk = (PRESS && PRESS.key) || HOVER;
+  if (hk && state !== 'spin') lightBet(hk, 'rgba(255,255,255,.28)', 'rgba(255,255,255,.95)');
+  if (PAYA && PAYA.t < PAYA.T) {
+    const pulse = .5 + .5 * Math.sin(now / 120);
+    for (const cell of CELLS) if (winsCell(cell, PAYA.n)) lightCell(cell, `rgba(255,226,122,${.18 + .2 * pulse})`, 'rgba(255,226,122,.95)');
+  }
+  // 돌리 표시(당첨 숫자 위 크리스탈 말)
+  if (DOLLY != null) {
+    const d = DEFS['n' + DOLLY], [x, y] = toXY(d.L, d.A);
+    const drop = PAYA ? Math.max(0, 1 - PAYA.t / .35) : 0, yy = y - 4 - drop * 40;
+    g.beginPath(); g.ellipse(x + 1, y + 6, 9, 4, 0, 0, TAU); g.fillStyle = 'rgba(0,0,0,.35)'; g.fill();
+    const gr = g.createLinearGradient(x - 8, 0, x + 8, 0);
+    gr.addColorStop(0, 'rgba(220,235,255,.55)'); gr.addColorStop(.5, 'rgba(255,255,255,.95)'); gr.addColorStop(1, 'rgba(170,190,220,.6)');
+    g.fillStyle = gr; g.fillRect(x - 7, yy - 12, 14, 16);
+    g.beginPath(); g.ellipse(x, yy + 4, 7, 3, 0, 0, Math.PI); g.fill();
+    g.beginPath(); g.ellipse(x, yy - 12, 7, 3, 0, 0, TAU); g.fillStyle = '#e8b923'; g.fill();
+    g.beginPath(); g.arc(x, yy - 16, 3.2, 0, TAU); g.fill();
+  }
+  // 칩
+  if (PAYA) drawPayChips(); else for (const k in bets) { const d = DEFS[k], [x, y] = toXY(d.L, d.A); drawStack(g, x, y, bets[k]); }
+  // 휠
+  const Wl = LY.wheel;
+  drawWheel(g, Wl.cx, Wl.cy, Wl.R, Wl.k, W.rot, W.ball, SPIN);
+  // 결과 숫자 원
+  if (lastRes != null && state !== 'spin') {
+    const R0 = LY.res, cl = colorOf(lastRes);
+    g.beginPath(); g.arc(R0.x, R0.y + 3, R0.r, 0, TAU); g.fillStyle = 'rgba(0,0,0,.4)'; g.fill();
+    g.beginPath(); g.arc(R0.x, R0.y, R0.r, 0, TAU); g.fillStyle = COL[cl]; g.fill();
+    g.lineWidth = 3; g.strokeStyle = '#e8b923'; g.stroke();
+    g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = `700 ${R0.r * .95}px ${getComputedStyle(document.documentElement).getPropertyValue('--serif')}`;
+    g.fillText(NAME(lastRes), R0.x, R0.y + 1);
+  }
+}
+function cellRect(cell) { return rectLA(cell.L0, cell.L1, cell.A0, cell.A1); }
+function lightCell(cell, fill, stroke) {
+  const [x, y, w, h] = cellRect(cell);
+  rrect(g, x + 1, y + 1, w - 2, h - 2, 3); g.fillStyle = fill; g.fill(); g.lineWidth = 2; g.strokeStyle = stroke; g.stroke();
+}
+function lightBet(k, fill, stroke) {
+  const d = DEFS[k];
+  for (const cell of CELLS) if (cell.key === k || (cell.n != null && d.nums.includes(cell.n))) lightCell(cell, fill, stroke);
+  const [x, y] = toXY(d.L, d.A);
+  g.beginPath(); g.arc(x, y, LY.chipR * .8, 0, TAU); g.lineWidth = 2; g.strokeStyle = '#ffe27a'; g.setLineDash([3, 3]); g.stroke(); g.setLineDash([]);
+}
+function winsCell(cell, n) { return cell.n != null ? cell.n === n : DEFS[cell.key].nums.includes(n); }
+
+/* 정산 연출: 진 칩은 휠 쪽으로 쓸려 가고, 이긴 칩 옆에 배당이 붙었다가 보유로 날아감 */
+function drawPayChips() {
+  const t = PAYA.t, Wl = LY.wheel, [hx, hy] = LY.hud;
+  for (const it of PAYA.items) {
+    const d = DEFS[it.key], [x, y] = toXY(d.L, d.A);
+    if (!it.win) {
+      const p = Math.min(1, Math.max(0, (t - .55) / .7)), e = p * p;
+      if (p < 1) drawStack(g, x + (Wl.cx - x) * e, y + (Wl.cy - y) * e, it.amt, 1 - p);
+      continue;
+    }
+    const p = Math.min(1, Math.max(0, (t - 1.9) / .6)), e = p * p * (3 - 2 * p);
+    if (p >= 1) continue;
+    const px = x + (hx - x) * e, py = y + (hy - y) * e;
+    drawStack(g, px, py, it.amt, 1 - p * .6);
+    if (t > 1.0) {
+      const q = Math.min(1, (t - 1.0) / .25), pop = q < 1 ? .6 + .6 * q - .2 * Math.sin(q * Math.PI) : 1;
+      drawStack(g, px + LY.chipR * 1.5, py, it.amt * DEFS[it.key].pay, 1 - p * .6, pop);
+    }
+  }
+}
+
+/* ── 진행 ── */
+function setStatus(html) { const el = $('status'); if (el.innerHTML !== html) el.innerHTML = html; }
+function describe(n) {
+  if (n === 0 || n === 37) return `<b>${NAME(n)}</b> 초록 — 바깥 베팅은 모두 짐`;
+  const parts = [RED.has(n) ? '빨강' : '검정', n % 2 ? '홀' : '짝', n <= 18 ? '1~18' : '19~36', ['1st', '2nd', '3rd'][Math.floor((n - 1) / 12)] + ' 12', `${(n - 1) % 3 + 1}열`];
+  return `<b>${n}</b> ${parts.join(' · ')}`;
+}
+let statusMsg = null;
+function hud() {
+  $('vBal').textContent = fmt(dispBal);
+  $('vBet').textContent = fmt(total(bets));
+  $('vWin').textContent = fmt(lastWin);
+  const hk = (PRESS && PRESS.key) || HOVER;
+  if (hk && state !== 'spin') {
+    const d = DEFS[hk];
+    setStatus(`${betText(hk)} — 맞으면 <b>${d.pay}배</b> · 확률 ${d.nums.length}/38${bets[hk] ? ` · 건 칩 ${fmt(bets[hk])}` : ''}`);
+  } else if (state === 'spin') setStatus(SPIN && SPIN.t > SPIN.T1 * .6 ? '베팅 마감 — No more bets' : '공이 돌고 있어요…');
+  else if (statusMsg) setStatus(statusMsg);
+  else setStatus(total(bets) ? '스핀을 누르면 공이 굴러가요' : '칩을 고르고 테이블을 눌러 거세요');
+  const busy = state === 'spin', tb = total(bets);
+  $('spin').disabled = busy || !tb;
+  $('bUndo').disabled = busy || !UNDO.length;
+  $('bClear').disabled = busy || !tb;
+  $('bDouble').disabled = busy || !tb || tb > store.bal;
+  $('bRebet').disabled = busy || !store.last || total(store.last) > store.bal;
+  document.querySelectorAll('.chip').forEach(b => { b.disabled = +b.dataset.v > store.bal && !busy; });
+}
+function renderHist() {
+  $('hist').innerHTML = (store.hist.length ? '' : '<em>최근 결과가 여기에 나와요</em>') +
+    store.hist.slice(0, 24).map(n => `<span class="${colorOf(n)}">${NAME(n)}</span>`).join('');
+}
+let toastT = 0;
+function toast(t, ms = 2200) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), ms); }
+function banner(big, small) {
+  const el = $('banner'); el.innerHTML = big + (small ? `<small>${small}</small>` : '');
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+
+function snapshot() { UNDO.push({ ...bets }); if (UNDO.length > 200) UNDO.shift(); }
+function commit() { store.table = { ...bets }; save(); }
+function place(k) {
+  if (state === 'spin') return;
+  if (state === 'pay') finishPay();
+  const v = chipSel;
+  if (v > store.bal) { toast(store.bal > 0 ? '칩이 모자라요 — 더 작은 칩을 골라 보세요' : '칩이 없어요'); return; }
+  snapshot(); bets[k] = (bets[k] || 0) + v; store.bal -= v; dispBal -= v;
+  DOLLY = null; statusMsg = null; commit(); sfx.chip();
+}
+function undo() {
+  if (state === 'spin' || !UNDO.length) return;
+  const prev = UNDO.pop(), diff = total(bets) - total(prev);
+  bets = prev; store.bal += diff; dispBal += diff; commit(); sfx.chip();
+}
+function clearBets() {
+  if (state === 'spin' || !total(bets)) return;
+  snapshot(); const tb = total(bets); bets = {}; store.bal += tb; dispBal += tb; commit(); sfx.sweep();
+}
+function addBets(src) {
+  const need = total(src);
+  if (need > store.bal) { toast('칩이 모자라요'); return; }
+  snapshot(); for (const k in src) if (DEFS[k]) bets[k] = (bets[k] || 0) + src[k];
+  store.bal -= need; dispBal -= need; DOLLY = null; statusMsg = null; commit(); sfx.chip();
+}
+function startSpin() {
+  if (state === 'pay') finishPay();
+  if (state !== 'bet' || !total(bets)) return;
+  ac();
+  const n = rand38();
+  store.last = { ...bets }; store.pend = { n, bets: { ...bets } }; store.table = {}; save();
+  SPIN = planSpin(n); state = 'spin'; DOLLY = null; statusMsg = null; HOVER = null; PRESS = null; UNDO = [];
+  rollStart();
+}
+function settle(n, bs) {
+  const { paid, stake } = payout(bs, n);
+  store.bal += paid; store.spins++; store.bet += stake; store.won += paid;
+  store.best = Math.max(store.best, paid - stake);
+  store.hist.unshift(n); store.hist.length = Math.min(store.hist.length, 200);
+  store.pend = null; store.table = {}; save();
+  return { paid, stake };
+}
+function endSpin() {
+  const P = SPIN; SPIN = null; rollStop();
+  const rel = ((W.ball.th - W.rot) % TAU + TAU) % TAU; RT.lastVis = ORDER[Math.round(rel / SEG) % 38];
+  const bs = store.pend ? store.pend.bets : bets;
+  const { paid, stake } = settle(P.n, bs);
+  lastRes = P.n; DOLLY = P.n; lastWin = paid;
+  PAYA = { t: 0, T: paid ? 2.6 : 1.5, n: P.n, paid, stake,
+    items: Object.keys(bs).map(k => ({ key: k, amt: bs[k], win: DEFS[k].nums.includes(P.n) })) };
+  bets = {}; state = 'pay';
+  renderHist();
+  statusMsg = describe(P.n) + (paid ? ` — <b>+${fmt(paid)}</b>` : '');
+  if (paid) {
+    const net = paid - stake;
+    banner('+' + fmt(paid), net > 0 ? `순이익 +${fmt(net)}` : net < 0 ? `건 칩보다 ${fmt(-net)} 적게` : '본전');
+    sfx.win(paid >= stake * 5); $('pWin').classList.remove('hit'); void $('pWin').offsetWidth; $('pWin').classList.add('hit');
+  } else { sfx.lose(); setTimeout(() => sfx.sweep(), 500 / TS); }
+}
+function finishPay() {
+  if (!PAYA) return;
+  PAYA = null; state = 'bet';
+  if (store.bal <= 0 && !total(bets)) $('broke').hidden = false;
+}
+
+/* ── 입력 ── */
+function keyAt(e) {
+  const r = cv.getBoundingClientRect();
+  const x = (e.clientX - r.left) / S, y = (e.clientY - r.top) / S;
+  const [L, A] = toLA(x, y);
+  return hitKey(L, A);
+}
+cv.addEventListener('pointerdown', e => {
+  ac(); if (state === 'spin') return;
+  const k = keyAt(e); if (!k) return;
+  PRESS = { id: e.pointerId, key: k, mouse: e.pointerType === 'mouse' }; HOVER = k;
+  try { cv.setPointerCapture(e.pointerId); } catch (er) {}
+});
+cv.addEventListener('pointermove', e => {
+  const k = keyAt(e);
+  if (PRESS) PRESS.key = k;
+  if (PRESS || e.pointerType === 'mouse') HOVER = k;
+  cv.style.cursor = k && state !== 'spin' ? 'pointer' : 'default';
+});
+cv.addEventListener('pointerup', e => {
+  if (!PRESS) return;
+  const k = PRESS.key, mouse = PRESS.mouse; PRESS = null;
+  if (k) place(k);
+  if (!mouse) HOVER = null;
+});
+cv.addEventListener('pointercancel', () => { PRESS = null; HOVER = null; });
+cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !PRESS) HOVER = null; });
+cv.addEventListener('contextmenu', e => e.preventDefault());
+
+CHIPS.forEach((ch, i) => {
+  const b = document.createElement('button'); b.className = 'chip' + (ch.v === chipSel ? ' on' : ''); b.dataset.v = ch.v;
+  b.style.setProperty('--c', ch.c); b.style.setProperty('--e', ch.e); b.style.setProperty('--t', ch.t);
+  b.textContent = fmtChip(ch.v); b.setAttribute('aria-label', `${ch.v}칩`); b.title = `${fmt(ch.v)}칩 (${i + 1})`;
+  b.onclick = () => { chipSel = ch.v; document.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b)); sfx.chip(); };
+  $('chips').appendChild(b);
+});
+$('spin').onclick = startSpin;
+$('bUndo').onclick = undo;
+$('bClear').onclick = clearBets;
+$('bDouble').onclick = () => addBets({ ...bets });
+$('bRebet').onclick = () => store.last && addBets(store.last);
+addEventListener('keydown', e => {
+  if (!$('help').hidden || !$('set').hidden || !$('broke').hidden) { if (e.key === 'Escape') { $('help').hidden = $('set').hidden = true; } return; }
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); startSpin(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+  else if (e.key >= '1' && e.key <= String(CHIPS.length)) document.querySelectorAll('.chip')[+e.key - 1].click();
+});
+
+/* 도움말·설정 */
+$('bHelp').onclick = () => { $('help').hidden = false; };
+$('bHelpX').onclick = () => { $('help').hidden = true; };
+function renderStats() {
+  const rtp = store.bet ? (store.won / store.bet * 100).toFixed(1) + '%' : '-';
+  const cnt = { r: 0, b: 0, g: 0 }; store.hist.forEach(n => cnt[colorOf(n)]++);
+  const h = store.hist.length, pc = x => h ? ` (${(x / h * 100).toFixed(0)}%)` : '';
+  $('stats').innerHTML = `<tr><td>돌린 판</td><td>${fmt(store.spins)}</td></tr>
+    <tr><td>건 칩 / 돌려받은 칩</td><td>${fmt(store.bet)} / ${fmt(store.won)}</td></tr>
+    <tr><td>내 환수율 (이론 94.7%)</td><td>${rtp}</td></tr>
+    <tr><td>한 판 최고 순이익</td><td>${fmt(store.best)}</td></tr>
+    <tr><td>최근 ${h}판 빨강·검정·초록</td><td>${cnt.r}${pc(cnt.r)} · ${cnt.b}${pc(cnt.b)} · ${cnt.g}${pc(cnt.g)}</td></tr>
+    ${store.refills ? `<tr><td>칩 다시 받은 횟수</td><td>${store.refills}</td></tr>` : ''}`;
+}
+$('bSet').onclick = () => { $('tSnd').checked = !!store.snd; $('tFast').checked = !!store.fast; $('tName').checked = !!store.names; renderStats(); $('set').hidden = false; };
+$('bSetX').onclick = () => { $('set').hidden = true; };
+$('tSnd').onchange = e => { store.snd = e.target.checked ? 1 : 0; if (!store.snd) rollStop(); save(); };
+$('tFast').onchange = e => { store.fast = e.target.checked ? 1 : 0; save(); };
+$('tName').onchange = e => { store.names = e.target.checked ? 1 : 0; boardDirty = true; save(); };
+$('bReset').onclick = () => {
+  if (state === 'spin') return;
+  if (!confirm('칩·기록을 모두 지우고 1,000칩으로 다시 시작할까요?')) return;
+  const keep = { snd: store.snd, fast: store.fast, names: store.names };
+  Object.assign(store, { bal: 1000, spins: 0, bet: 0, won: 0, best: 0, hist: [], last: null, table: {}, pend: null, refills: 0 }, keep);
+  bets = {}; UNDO = []; lastRes = null; DOLLY = null; lastWin = 0; dispBal = 1000; PAYA = null; state = 'bet';
+  save(); renderHist(); $('set').hidden = true;
+};
+$('bRefill').onclick = () => { store.bal += 1000; store.refills++; dispBal = store.bal; save(); $('broke').hidden = true; toast('1,000칩을 받았어요'); };
+
+/* ── 화면 맞추기 ── */
+function resize() {
+  const vw = innerWidth, vh = innerHeight;
+  LY = vw > vh * 1.15 ? LAYOUTS.land : LAYOUTS.port;
+  S = Math.min(vw / LY.W, vh / LY.H); DPR = Math.min(3, window.devicePixelRatio || 1);
+  const st = $('stage'); st.className = LY.land ? 'land' : 'port';
+  st.style.width = LY.W + 'px'; st.style.height = LY.H + 'px';
+  st.style.transform = `translate(${(vw - LY.W * S) / 2}px,${(vh - LY.H * S) / 2}px) scale(${S})`;
+  cv.style.width = LY.W + 'px'; cv.style.height = LY.H + 'px';
+  cv.width = Math.round(LY.W * S * DPR); cv.height = Math.round(LY.H * S * DPR);
+  boardDirty = true;
+}
+addEventListener('resize', resize);
+/* 펠트 결(바탕 무늬) */
+(() => {
+  const c = document.createElement('canvas'); c.width = c.height = 160; const x = c.getContext('2d');
+  for (let i = 0; i < 3200; i++) { x.fillStyle = Math.random() < .55 ? 'rgba(0,0,0,.09)' : 'rgba(255,255,255,.045)'; x.fillRect(Math.random() * 160, Math.random() * 160, 1, 1); }
+  document.body.style.backgroundImage = `url(${c.toDataURL()}), radial-gradient(ellipse at 50% 40%,#0f6234 0,#0a4a28 55%,#05301a 100%)`;
+})();
+document.fonts && document.fonts.ready.then(() => { boardDirty = true; });
+
+/* ── 시작: 새로고침 전에 돌던 판이 있으면 정해진 결과로 정산, 테이블에 남은 칩은 다시 놓음 ── */
+if (store.pend && store.pend.n != null) {
+  const n = store.pend.n, { paid } = settle(n, store.pend.bets);
+  lastRes = n; DOLLY = n; lastWin = paid;
+  setTimeout(() => toast(`새로고침 전 판 결과: ${NAME(n)} — 돌려받은 칩 ${fmt(paid)}`, 3500), 300);
+} else if (store.table && total(store.table)) bets = { ...store.table };
+dispBal = store.bal;
+resize(); renderHist();
+requestAnimationFrame(t => { lastT = t; requestAnimationFrame(frame); });
+if (!store.spins && !store.hist.length) setTimeout(() => toast('칩을 고르고 테이블을 눌러 거세요 · ? 에 하는 법', 3200), 600);
+
+/* 헤드리스 확인용 */
+window.RT = { DEFS, CELLS, hitKey, toXY, toLA, payout, rand38, planSpin, ballAt, POCKET, ORDER, SEG, store, W,
+  get LY() { return LY; }, get state() { return state; }, get SPIN() { return SPIN; }, get bets() { return bets; }, drawWheel };
+</script>
+</body>
+</html>

@@ -158,7 +158,7 @@ const CFG = {
   events: { first: 60, every: 50 },              // 층 이벤트(고장·VIP): 처음 몇 초 뒤부터, 평균 몇 초마다
   broken: { fixTime: 2, ruin: 120, warn: 30, rebuild: 100 }, // 수리: 앞에 몇 초 서 있기 / 고장 난 채로 몇 초 지나면 부서짐(몇 초 전부터 경고) / 다시 제작 비용(× 8^층)
   deliv: { time: 60, perFloor: 15, want: [2, 4], mul: 10, tip: 0.5, dum: 0.25, dumMax: 1.5 }, // 배달 주문: 기본 제한 시간 + 층 차이당 추가 초, 개수, 보상 = 개당 '지금 최고층 물건 값' × 10(사용자: 배달이 제일 힘든데 박함 → 6에서 올림), 절반 넘게 남기고 끝내면 배달팁 50%, 덤 1개당 기분 팁 = 배달 보상 × 25%(최대 150%)
-  vip: { time: 40, want: [3, 6], mul: 5, goldMul: 5, slow: 10, slowSpd: 0.6, bet: 3 }, // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5), 황금을 건네면 그 물건만 또 × 5,
+  vip: { time: 40, want: [3, 6], mul: 5, goldMul: 5, slow: 10, slowSpd: 0.6, bet: 3, betStep: 0.5, betMax: 10 }, // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5), 황금을 건네면 그 물건만 또 × 5,
                                                  //      놓치면 10초 동안 일꾼 속도의 60%로 (업그레이드와 상관없이 일꾼보다 느림)
   autoCost: 1500,                                // 층 자동 수금 칸 비용 (× 8^층)
   away: { hours: [1, 2, 4, 8], cost: 300, mul: 4, rate: 0.5, min: 60 }, // 잔업: 단계별 최대 시간, 비용(× 4^단계 × 8^층), 자동으로 벌던 속도의 몇 %, 몇 초 이상 비워야 계산
@@ -1960,14 +1960,19 @@ const betEl = $('bet');
 function askBet(z, V){
   const reward = Math.round(V.sum*CFG.vip.mul);
   V.state = 'ask'; V.say = '사장님, 한판 칠래?'; V.sayT = 99;
-  $('betP').innerHTML = `이기면 <b>₩${fmt(reward*CFG.vip.bet)}</b> (보상 ×${CFG.vip.bet})<br>지면 건넨 물건은 공짜 · 중간에 나가면 진 걸로<br>No면 평소 보상 ₩${fmt(reward)}`;
+  $('betP').innerHTML = `이기면 <b>₩${fmt(reward*CFG.vip.bet)}</b> ~ <b>₩${fmt(reward*CFG.vip.betMax)}</b><br>(7점 ×${CFG.vip.bet} · 넘는 1점마다 +${CFG.vip.betStep} · 최대 ×${CFG.vip.betMax})<br>지면 건넨 물건은 공짜 · 중간에 나가면 진 걸로<br>No면 평소 보상 ₩${fmt(reward)}`;
   betEl.hidden = false; sfx.vip();
   $('betNo').onclick = () => { betEl.hidden = true; V.sayT = 0; payVip(V); };
   $('betYes').onclick = () => {
     const id = String(Date.now());
     S.bet = { id, reward, gold:V.gold || 0 }; save();
-    location.href = `/games/gostop/?vs=landlord&bet=${id}&mul=${CFG.vip.bet}`;
+    location.href = `/games/gostop/?vs=landlord&bet=${id}&mul=${CFG.vip.bet}&step=${CFG.vip.betStep}&max=${CFG.vip.betMax}`;
   };
+}
+// 이긴 점수 → 보상 배수: 7점이면 bet, 7점 넘는 1점마다 betStep, 최대 betMax(맞고 결과 창도 같은 식)
+function betMul(pts){
+  const V = CFG.vip, p = Number(pts) || 7;
+  return Math.min(V.betMax, V.bet + Math.max(0, p - 7)*V.betStep);
 }
 // 맞고에서 돌아왔을 때 정산(결과는 맞고가 localStorage 'gostop-bet'에 남김)
 function settleBet(){
@@ -1976,8 +1981,8 @@ function settleBet(){
   const res = r && r.id === B.id ? r.r : 'lose';
   delete S.bet; S.stats.vip = (S.stats.vip || 0) + 1;
   if (res === 'win') {
-    const got = B.reward*CFG.vip.bet; S.money += got;
-    showBanner('🎴 건물주를 이겼다!'); toast(`건물주와 맞고 승리! 보상 ×${CFG.vip.bet} +₩${fmt(got)}`); toastT = 4.5;
+    const mul = betMul(r.pts), got = Math.round(B.reward*mul); S.money += got;
+    showBanner('🎴 건물주를 이겼다!'); toast(`건물주와 맞고 승리! ${r.pts || 7}점 · 보상 ×${mul} +₩${fmt(got)}`); toastT = 4.5;
     coinsFrom(P.x, P.y, 50, 14); shake(6); burst(P.x, P.y, 40, 40, 'conf', { speed:240, up:300, life:1.5 });
     [0, 0.25, 0.5].forEach(d => setTimeout(() => sfx.gold(), d*1000));
   } else if (res === 'draw') {

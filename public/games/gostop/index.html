@@ -154,13 +154,15 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } c
 
 /* ── 층층이 건물주 한판(?vs=landlord&bet=…&mul=…): 단판, 결과(gostop-bet)를 남기고 층층이로 돌아감 ── */
 const Q = new URLSearchParams(location.search), BET = Q.get('vs') === 'landlord' ? Q.get('bet') : null;
-const BET_MUL = Number(Q.get('mul')) || 3, OPP = BET ? '건물주' : '컴퓨터';
-const BET_TXT = {win: `층층이에서 건물주 보상 ×${BET_MUL}!`, lose: '건넨 물건은 공짜가 됐어요', draw: '비겼으니 평소 보상을 받아요'};
+const BET_MUL = Number(Q.get('mul')) || 3, BET_STEP = Number(Q.get('step')) || 0.5, BET_MAX = Number(Q.get('max')) || 10, OPP = BET ? '건물주' : '컴퓨터';
+// 이긴 점수 → 층층이 보상 배수(층층이 betMul과 같은 식): 7점 ×BET_MUL, 넘는 1점마다 +BET_STEP, 최대 ×BET_MAX
+const betMul = pts => Math.min(BET_MAX, BET_MUL + Math.max(0, pts - 7) * BET_STEP);
+const BET_TXT = {win: pts => `${pts}점 → 층층이에서 건물주 보상 ×${betMul(pts)}!`, lose: () => '건넨 물건은 공짜가 됐어요', draw: () => '비겼으니 평소 보상을 받아요'};
 let betOver = false;
 try { betOver = !!BET && JSON.parse(localStorage.getItem('gostop-bet') || '{}').id === BET; } catch (e) {}
 function betDone(r, pts) {
   try { localStorage.setItem('gostop-bet', JSON.stringify({id: BET, r, pts})); } catch (e) {}
-  document.getElementById('resTot').textContent = BET_TXT[r];
+  document.getElementById('resTot').textContent = BET_TXT[r](pts);
   document.getElementById('bNext').textContent = '층층이로 돌아가기';
 }
 
@@ -704,7 +706,7 @@ document.getElementById('bNext').onclick = () => {
 
 resize(); applyPrefs();
 if (betOver) ask('이미 끝난 판이에요', '건물주와의 한판은 끝났어요. 층층이로 돌아가요', ['돌아가기']).then(() => { location.href = '/games/stack/'; });
-else { run(); if (BET) { banner('건물주와 한판!'); msg(`이기면 보상 ×${BET_MUL}, 지면 물건은 공짜`); } }
+else { run(); if (BET) { banner('건물주와 한판!'); msg(`이기면 보상 ×${BET_MUL}부터 (점수 높을수록 최대 ×${BET_MAX}), 지면 물건은 공짜`); } }
 </script>
 </body>
 </html>

@@ -78,6 +78,8 @@ version: 'x.y.z+build'
 ## 작업 히스토리
 
 ### 2026-10-26
+- 맞고 폰에서 판이 아래로 치우침(사용자 제보) → 룰렛 `viewBox()` 방식 옮김(innerHeight 대신 보이는 높이 − 안전 영역, `#vp`, visualViewport resize, 탁자는 translate+scale).
+  안내 글자 `#msg`에 top이 없어 컴퓨터 패 위에 겹치던 것 → top 462(바닥 패와 내 딴 패 사이). sim 5판 오류 0. 층층이는 아직 innerHeight 그대로
 - '드라마 vs 실록' 시제품 `public/sillok/index.html` → https://wowhit.org/sillok/ (독립 HTML). 홈 카드 `apps.ts` slug `drama-sillok`(기타, 아이콘 '實錄' 도장·캡처 `public/apps/drama-sillok/`) —
   slug를 'sillok'으로 하면 정적 /sillok/과 겹쳐서 다르게 함. 페이지 ⌂ → /drama-sillok.
   사극 6편(대장금·뿌리 깊은 나무·옷소매 붉은 끝동·왕의 남자·광해·사도) 카드 29장: 드라마 장면 ↔ 기록 요약 + 사실/각색/허구 도장 + 출처(왕·음력 날짜)·실록 검색어, 결말 카드는 흐리게(누르면 보임).

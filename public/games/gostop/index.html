@@ -18,7 +18,9 @@ html,body{height:100%}
 [hidden]{display:none!important}
 body{margin:0;background:radial-gradient(ellipse at 50% 45%,var(--felt) 0,var(--felt2) 75%);color:var(--ink);overflow:hidden;
   font-family:var(--display);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
-#table{position:absolute;transform-origin:0 0}
+#table{position:absolute;left:0;top:0;transform-origin:0 0}
+#vp{position:fixed;left:0;top:0;width:0;height:100vh;height:100dvh;visibility:hidden;pointer-events:none;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .card{position:absolute;left:0;top:0;transform-origin:0 0;border-radius:7%;
   box-shadow:0 2px 4px rgba(0,0,0,.35);transition:transform .32s cubic-bezier(.3,.8,.3,1);cursor:default;will-change:transform}
 .card img{width:100%;height:100%;display:block;border-radius:7%;pointer-events:none}
@@ -47,7 +49,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 45%,var(--felt) 0,var(--
   text-shadow:0 3px 0 var(--red),0 0 14px rgba(0,0,0,.5);opacity:0}
 #banner.show{animation:ban 1s ease-out}
 @keyframes ban{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(1.15)}30%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-18px)}}
-#msg{position:absolute;left:0;right:0;text-align:center;color:#fff;font-size:15px;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+#msg{position:absolute;left:0;right:0;top:462px;text-align:center;color:#fff;font-size:15px;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 /* 대화창·결과·도움말 */
 .ov{position:fixed;inset:0;background:rgba(20,24,22,.55);display:grid;place-items:center;z-index:1000;padding:16px}
 .box{background:var(--paper);border-radius:16px;padding:18px 18px 14px;width:min(360px,100%);max-height:88vh;overflow:auto;
@@ -75,6 +77,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 45%,var(--felt) 0,var(--
 </style>
 </head>
 <body>
+<div id="vp" aria-hidden="true"></div>
 <div id="table" aria-label="맞고 게임판">
   <div class="pill" id="pCpu" style="left:6px;top:8px">컴퓨터</div>
   <button class="btn" id="bHelp" style="right:6px;top:6px">? 도움말</button>
@@ -187,15 +190,29 @@ const EL = C.map(c => {
   table.appendChild(e);
   return e;
 });
+/* 보이는 영역: innerHeight·visualViewport·100dvh·clientHeight 중 가장 작은 것에서 안전 영역을 뺌
+   (안드로이드 Chrome은 viewport-fit=cover면 하단 내비게이션 바 밑까지, 삼성 인터넷은 아래 도구 막대 밑까지 innerHeight에 넣음 — 룰렛과 같은 방식) */
+function viewBox() {
+  const el = document.getElementById('vp'), cs = getComputedStyle(el), px = v => parseFloat(v) || 0;
+  const sT = px(cs.paddingTop), sB = px(cs.paddingBottom), sL = px(cs.paddingLeft), sR = px(cs.paddingRight);
+  const dvh = el.getBoundingClientRect().height - sT - sB;
+  const vv = window.visualViewport, zoomed = vv && Math.abs(vv.scale - 1) > .01;
+  const hs = [innerHeight, document.documentElement.clientHeight, dvh];
+  if (vv && !zoomed) hs.push(vv.height);
+  const h = Math.min(...hs.filter(x => x > 100)), w = Math.min(innerWidth, document.documentElement.clientWidth || innerWidth);
+  return { x: sL, y: sT, w: w - sL - sR, h: h - sT - sB - 6 };
+}
 function resize() {
-  S = Math.min(innerWidth / TW, innerHeight / TH);
+  const V = viewBox();
+  S = Math.min(V.w / TW, V.h / TH);
   table.style.width = TW + 'px'; table.style.height = TH + 'px';
-  table.style.left = (innerWidth - TW * S) / 2 + 'px'; table.style.top = (innerHeight - TH * S) / 2 + 'px';
-  table.style.transform = `scale(${S})`;
+  table.style.transform = `translate(${V.x + (V.w - TW * S) / 2}px,${V.y + (V.h - TH * S) / 2}px) scale(${S})`;
   EL.forEach(e => { e.style.width = CW + 'px'; e.style.height = CH + 'px'; });
   table.style.setProperty('--tagf', '10px');
 }
 addEventListener('resize', resize);
+window.visualViewport && visualViewport.addEventListener('resize', resize);
+addEventListener('orientationchange', () => setTimeout(resize, 300));
 
 /* ── 게임 상태 ── */
 let G = null;

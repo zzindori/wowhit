@@ -63,9 +63,12 @@ a.ib{display:grid;place-items:center;text-decoration:none;box-sizing:border-box}
 #banner small{display:block;font:20px var(--display);color:#fff;margin-top:4px}
 #banner.show{animation:ban 2.2s ease-out}
 @keyframes ban{0%{opacity:0;transform:scale(.4)}12%{opacity:1;transform:scale(1.12)}22%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
-#toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);background:rgba(20,16,10,.9);border:1px solid rgba(232,185,35,.5);
+#toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translateX(-50%);background:rgba(20,16,10,.9);border:1px solid rgba(232,185,35,.5);
   padding:8px 14px;border-radius:12px;font-size:15px;z-index:900;pointer-events:none;opacity:0;transition:opacity .25s;max-width:90vw;text-align:center}
 #toast.show{opacity:1}
+/* 실제로 보이는 높이(100dvh)와 안전 영역(노치·하단 내비게이션 바)을 재는 보이지 않는 막대 */
+#vp{position:fixed;left:0;top:0;width:0;height:100vh;height:100dvh;visibility:hidden;pointer-events:none;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 
 /* 세로 판 420×922 */
 #stage.port #hud{left:10px;top:8px;width:400px;height:38px}
@@ -136,6 +139,7 @@ a.ib{display:grid;place-items:center;text-decoration:none;box-sizing:border-box}
   <div id="banner"></div>
 </div>
 <div id="toast"></div>
+<div id="vp" aria-hidden="true"></div>
 
 <div class="ov" id="help" hidden><div class="box">
   <h2 style="text-align:center">룰렛 하는 법</h2>
@@ -933,18 +937,32 @@ $('bReset').onclick = () => {
 $('bRefill').onclick = () => { store.bal += 1000; store.refills++; dispBal = store.bal; save(); $('broke').hidden = true; toast('1,000칩을 받았어요'); };
 
 /* ── 화면 맞추기 ── */
+/* 보이는 영역: innerHeight·visualViewport·100dvh·clientHeight 중 가장 작은 것에서 안전 영역을 뺌
+   (안드로이드 Chrome은 viewport-fit=cover면 하단 내비게이션 바 밑까지, 삼성 인터넷은 아래 도구 막대 밑까지 innerHeight에 넣음) */
+function viewBox() {
+  const el = $('vp'), cs = getComputedStyle(el), px = v => parseFloat(v) || 0;
+  const sT = px(cs.paddingTop), sB = px(cs.paddingBottom), sL = px(cs.paddingLeft), sR = px(cs.paddingRight);
+  const dvh = el.getBoundingClientRect().height - sT - sB;
+  const vv = window.visualViewport, zoomed = vv && Math.abs(vv.scale - 1) > .01;
+  const hs = [innerHeight, document.documentElement.clientHeight, dvh];
+  if (vv && !zoomed) hs.push(vv.height);
+  const h = Math.min(...hs.filter(x => x > 100)), w = Math.min(innerWidth, document.documentElement.clientWidth || innerWidth);
+  return { x: sL, y: sT, w: w - sL - sR, h: h - sT - sB - 6 };
+}
 function resize() {
-  const vw = innerWidth, vh = innerHeight;
+  const V = viewBox(), vw = V.w, vh = V.h;
   LY = vw > vh * 1.15 ? LAYOUTS.land : LAYOUTS.port;
   S = Math.min(vw / LY.W, vh / LY.H); DPR = Math.min(3, window.devicePixelRatio || 1);
   const st = $('stage'); st.className = LY.land ? 'land' : 'port';
   st.style.width = LY.W + 'px'; st.style.height = LY.H + 'px';
-  st.style.transform = `translate(${(vw - LY.W * S) / 2}px,${(vh - LY.H * S) / 2}px) scale(${S})`;
+  st.style.transform = `translate(${V.x + (vw - LY.W * S) / 2}px,${V.y + (vh - LY.H * S) / 2}px) scale(${S})`;
   cv.style.width = LY.W + 'px'; cv.style.height = LY.H + 'px';
   cv.width = Math.round(LY.W * S * DPR); cv.height = Math.round(LY.H * S * DPR);
   boardDirty = true;
 }
 addEventListener('resize', resize);
+window.visualViewport && visualViewport.addEventListener('resize', resize);
+addEventListener('orientationchange', () => setTimeout(resize, 300));
 /* 펠트 결(바탕 무늬) */
 (() => {
   const c = document.createElement('canvas'); c.width = c.height = 160; const x = c.getContext('2d');

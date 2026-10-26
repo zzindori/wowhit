@@ -78,6 +78,9 @@ version: 'x.y.z+build'
 ## 작업 히스토리
 
 ### 2026-10-26
+- '드라마 vs 실록' 새 버전 「실록과 드라마」 → https://wowhit.org/sillok-drama/ (소스 `~/dev/workspace/sillok`, JSON → 정적 HTML 빌드, 그 폴더 CLAUDE.md 참고).
+  실록이 뼈대(중종 연표 사건 17 → 사건 페이지), 드라마 입구(대장금 14 · 여인천하 6 · 7일의 왕비 5 장면), 검색. `public/sillok-drama/`는 빌드 결과라 직접 고치지 말고
+  sillok 폴더에서 `./deploy-wowhit.sh`. 홈 카드(slug drama-sillok) 링크·설명·캡처 4장을 새 사이트로, 예전 시제품 /sillok/은 그대로 둠(사용자)
 - 맞고 폰에서 판이 아래로 치우침(사용자 제보) → 룰렛 `viewBox()` 방식 옮김(innerHeight 대신 보이는 높이 − 안전 영역, `#vp`, visualViewport resize, 탁자는 translate+scale).
   안내 글자 `#msg`에 top이 없어 컴퓨터 패 위에 겹치던 것 → top 462(바닥 패와 내 딴 패 사이). sim 5판 오류 0. 층층이는 아직 innerHeight 그대로
 - '드라마 vs 실록' 시제품 `public/sillok/index.html` → https://wowhit.org/sillok/ (독립 HTML). 홈 카드 `apps.ts` slug `drama-sillok`(기타, 아이콘 '實錄' 도장·캡처 `public/apps/drama-sillok/`) —

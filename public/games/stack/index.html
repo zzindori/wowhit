@@ -925,9 +925,11 @@ const MSM9 = { board:'#24324a', edge:'#d9b45a', front:'url(#fn9)', strip:'#141b2
     '<radialGradient id="vv" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#5a4a70"/><stop offset="1" stop-color="#241c30"/></radialGradient><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc7a"/><stop offset=".5" stop-color="#d9a92a"/><stop offset="1" stop-color="#b8861a"/></linearGradient>',
   mat:'<pattern id="nv9" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#26314c"/><circle cx="2" cy="2" r=".6" fill="#2f3b5a"/><circle cx="6" cy="6" r=".6" fill="#1f2840"/></pattern>' +
     '<linearGradient id="fn9" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34446a"/><stop offset="1" stop-color="#1c2538"/></linearGradient>',
-  deco:'<rect x="20" y="140" width="200" height="24" rx="3" fill="none" stroke="#d9b45a" stroke-width="1.8"/><g fill="url(#gd)" stroke-width="1.2">' + [[20, 140, 1, 1], [220, 140, -1, 1], [20, 164, 1, -1], [220, 164, -1, -1]].map(([x, y, a, b]) => `<path d="M${x} ${y} h${12*a} l${-4*a} ${4*b} h${-4*a} v${4*b} l${-4*a} ${4*b} Z"/>`).join('') + '</g>' +
-    '<circle cx="121.5" cy="153.5" r="15" fill="#0e1422" opacity=".5" stroke="none"/><circle cx="120" cy="152" r="15" fill="#141b2c" stroke="#d9b45a" stroke-width="2"/>' +   // 가운데 박물관 엠블럼(기와 지붕 + 기둥)
-    '<g fill="url(#gd)" stroke="#6a4a10" stroke-width=".8"><path d="M108 147 Q114 146 120 141 Q126 146 132 147 L130 149 H110 Z"/><rect x="111" y="149.5" width="18" height="1.8"/><rect x="112.5" y="152" width="2.4" height="7"/><rect x="118.8" y="152" width="2.4" height="7"/><rect x="125.1" y="152" width="2.4" height="7"/><rect x="110" y="159.5" width="20" height="2.2"/></g>' };
+  deco:'<rect x="20" y="140" width="200" height="24" rx="3" fill="none" stroke="#d9b45a" stroke-width="1.8"/><g fill="url(#gd)" stroke-width="1.2">' + [[20, 140, 1, 1], [220, 140, -1, 1], [20, 164, 1, -1], [220, 164, -1, -1]].map(([x, y, a, b]) => `<path d="M${x} ${y} h${12*a} l${-4*a} ${4*b} h${-4*a} v${4*b} l${-4*a} ${4*b} Z"/>`).join('') + '</g>' };
+const EMB9 = (icon) => '<circle cx="121.5" cy="153.5" r="15" fill="#0e1422" opacity=".5" stroke="none"/><circle cx="120" cy="152" r="15" fill="#141b2c" stroke="#d9b45a" stroke-width="2"/><g fill="url(#gd)" stroke="#6a4a10" stroke-width=".8">' + icon + '</g>';   // 앞판 가운데 엠블럼(기계마다 그 물건 실루엣)
+const EMB9_BUDA = EMB9('<path d="M111 163 H129 L127.6 161.4 H112.4 Z"/><path d="M114 161.4 L115.6 156.4 L114.6 153.6 H125.4 L124.4 156.4 L126 161.4 Z"/><path d="M116.6 153.6 L117 147 Q120 145.6 123 147 L123.4 153.6 Z"/><path d="M111.6 153.4 Q118 151.6 125.6 152.8 L125.6 154.6 Q118 153.6 111.6 155.4 Z"/><path d="M117.2 147.4 L113.6 152.8 L115 153.6 L118.6 148.8 Z"/><path d="M114.6 152.6 L118.4 145.4 L119.4 146 L116 153 Z"/><ellipse cx="119.6" cy="143" rx="2.6" ry="3"/><path d="M117 141.4 L117.4 138.6 L118.6 140.2 L119.6 137.8 L120.6 140.2 L121.8 138.6 L122.2 141.4 Z"/>'),
+  EMB9_JAR = EMB9('<path d="M116.6 140.6 H123.4 V142.6 Q131.4 145 131.4 151.6 Q131.4 158.6 125.4 160.4 H114.6 Q108.6 158.6 108.6 151.6 Q108.6 145 116.6 142.6 Z" fill="#f4f1ea" stroke="#d9b45a" stroke-width="1"/><rect x="115.6" y="160.2" width="8.8" height="2" fill="#e2dccd" stroke="#d9b45a"/><path d="M112 147.6 Q111.4 152 113 155.6" fill="none" stroke="#fff" stroke-width="1.2"/>'),
+  EMB9_CROWN = EMB9('<rect x="109.6" y="155" width="20.8" height="4.6" rx="1"/>' + [111.6, 120, 128.4].map(x => `<path d="M${x - 1} 155 V141.6 H${x + 1} V155 Z M${x - 3.4} 151.4 V148.6 H${x + 3.4} V151.4 H${x + 2.2} V149.8 H${x - 2.2} V151.4 Z M${x - 3.4} 146 V143.2 H${x + 3.4} V146 H${x + 2.2} V144.4 H${x - 2.2} V146 Z"/>`).join('') + '<g fill="#4fae7d" stroke="#1f6a46" stroke-width=".5"><circle cx="113" cy="161.4" r="1.2"/><circle cx="118" cy="161.6" r="1.2"/><circle cx="123" cy="161.6" r="1.2"/><circle cx="127.6" cy="161.4" r="1.2"/></g>');
 // 9층 서 있는 기계·소품 — 상판 위 화면 좌표(TP), 속 움직임은 anim이 같은 TP 좌표로
 const PROP9 = {
   cyl: (x, v, rx, ry, h, side, top) => { const f = n => n.toFixed(1), [a, b] = TP(x, v);   // 서 있는 원통(그림자 + 옆 + 윗면)
@@ -943,7 +945,7 @@ const PROP9 = {
   plinth: (x, v, rx, ry, h) => { const f = n => n.toFixed(1), [a, b] = TP(x, v);   // 낮은 돌 받침(거푸집 · 물레 아래)
     return PROP9.cyl(x, v, rx, ry, h, '#5d6474', '#7d8798') + `<ellipse cx="${f(a)}" cy="${f(b - h)}" rx="${rx}" ry="${ry}" fill="none" stroke="#d9b45a" stroke-width="1.2"/>`; },
   wheel: (x, v) => { const f = n => n.toFixed(1), [a, b] = TP(x, v);   // 물레: 나무 받침 + 돌림판(흙 · 손자국은 anim)
-    return PROP9.cyl(x, v, 40, 13, 12, 'url(#wd9)', '#7a5232') + `<ellipse cx="${f(a)}" cy="${f(b - 12)}" rx="35" ry="11.2" fill="#8c8073" stroke-width="1.6"/><ellipse cx="${f(a)}" cy="${f(b - 12)}" rx="30" ry="9.6" fill="none" stroke="#6d6358" stroke-width="1"/><path d="M${f(a - 33)} ${f(b - 14)} A35 11.2 0 0 1 ${f(a - 10)} ${f(b - 22.6)}" fill="none" stroke="#fff" stroke-width="1.4" opacity=".3"/>`; },
+    return PROP9.cyl(x, v, 32, 10.4, 10, 'url(#wd9)', '#7a5232') + `<ellipse cx="${f(a)}" cy="${f(b - 10)}" rx="28" ry="9" fill="#8c8073" stroke-width="1.6"/><ellipse cx="${f(a)}" cy="${f(b - 10)}" rx="24" ry="7.7" fill="none" stroke="#6d6358" stroke-width="1"/><path d="M${f(a - 26)} ${f(b - 12)} A28 9 0 0 1 ${f(a - 8)} ${f(b - 18.8)}" fill="none" stroke="#fff" stroke-width="1.4" opacity=".3"/>`; },
   kiln: (x, v) => { const f = n => n.toFixed(1), [a, b] = TP(x, v), W = 25, H = 36;   // 벽돌 돔 가마(아치 불 창 · 뒤 굴뚝 — 불빛은 anim)
     return `<ellipse cx="${f(a + 8)}" cy="${f(b + 2)}" rx="${W + 5}" ry="7" fill="#05080f" opacity=".45" stroke="none" filter="url(#shd)"/><rect x="${f(a + 8)}" y="${f(b - H - 12)}" width="8" height="20" fill="#7a3a20" stroke-width="1.4"/><rect x="${f(a + 6.5)}" y="${f(b - H - 14)}" width="11" height="3.4" fill="#4a1e0e" stroke-width="1.2"/>` +
       `<path d="M${f(a - W)} ${f(b)} V${f(b - H*0.45)} Q${f(a - W)} ${f(b - H)} ${f(a)} ${f(b - H)} Q${f(a + W)} ${f(b - H)} ${f(a + W)} ${f(b - H*0.45)} V${f(b)} A${W} 6 0 0 1 ${f(a - W)} ${f(b)} Z" fill="url(#bk9)"/>` +
@@ -959,11 +961,11 @@ const PROP9 = {
     return PROP9.cyl(x, v, 11, 4, 7, '#f4f1ea', '#e2dccd') + [[-4, -8], [1, -9], [5, -7.6], [-1, -6.6]].map(([dx, dy]) => `<path d="M${f(a + dx)} ${f(b + dy)} a2 2 0 1 1 2.6 1.6 q-1.6 1 -2.6 -1.6 Z" fill="#4fae7d" stroke-width=".7"/>`).join(''); },
 };
 // 0번 반가사유상: 가운데 돌 받침 위 둥근 흙 거푸집(anim) + 뒤 왼쪽 화로 + 뒤 오른쪽 굿즈 상자
-const buda9 = () => deck({ ...MSM9, post: UPR(PROP9.pool(...C9, 56, 18) + PROP9.brazier(34, 76) + PROP9.gifts(176, 220, 56, 80) + PROP9.plinth(C9[0], C9[1], 30, 10, 6)) });
+const buda9 = () => deck({ ...MSM9, deco: MSM9.deco + EMB9_BUDA, post: UPR(PROP9.pool(...C9, 56, 18) + PROP9.brazier(34, 76) + PROP9.gifts(176, 220, 56, 80) + PROP9.plinth(C9[0], C9[1], 30, 10, 6)) });
 // 1번 달항아리: 가운데 물레 + 뒤 왼쪽 돔 가마 + 오른쪽 물 그릇
-const jar9 = () => deck({ ...MSM9, post: UPR(PROP9.pool(...C9, 56, 18) + PROP9.kiln(34, 80) + PROP9.bowl(160, 82) + PROP9.wheel(...C9)) });
+const jar9 = () => deck({ ...MSM9, deco: MSM9.deco + EMB9_JAR, post: UPR(PROP9.pool(...C9, 56, 18) + PROP9.kiln(34, 80) + PROP9.bowl(160, 82) + PROP9.wheel(...C9)) });
 // 2번 신라 금관: 가운데 벨벳 받침 + 뒤 오른쪽 금판 더미 · 곡옥 그릇
-const crown9 = () => deck({ ...MSM9, post: UPR(PROP9.pool(...C9, 56, 18) + PROP9.sheets(172, 198, 56, 78) + PROP9.gogokBowl(212, 70) + PROP9.pedestal(...C9)) });
+const crown9 = () => deck({ ...MSM9, deco: MSM9.deco + EMB9_CROWN, post: UPR(PROP9.pool(...C9, 56, 18) + PROP9.sheets(172, 198, 56, 78) + PROP9.gogokBowl(212, 70) + PROP9.pedestal(...C9)) });
 const BUDA9 = withVO(VOFF, buda9), JAR9 = jar9(), CROWN9 = withVO(-VOFF, crown9);   // 왼쪽·정면·오른쪽
 // item은 그 층 번호 그대로일 때만(같은 종류가 반복되는 위층은 원래 모양)
 const THEMES = [
@@ -3843,38 +3845,72 @@ function mold9(x, yb, u, open, heat, rx = 17, h = 34){   // 둥근 흙 거푸집
     if (open > 0) { ctx.fillStyle = '#2a1e14'; ctx.fillRect(sd < 0 ? cx - 1.5*u : cx - 0.5*u, yb - h - ry, 2*u, h + ry*2); }   // 갈라진 면
     ctx.restore(); });
   if (open <= 0) { ctx.fillStyle = heat > 0 ? '#ffb347' : '#2a1e14'; ctx.beginPath(); ctx.ellipse(x, yb - h, rx*0.3, ry*0.32, 0, 0, Math.PI*2); ctx.fill(); } }   // 붓는 구멍
-// 9층 0번 반가사유상: 화로 도가니 쇳물이 이글이글, 국자로 거푸집 구멍에 붓고(8~38%) → 거푸집이 주황빛으로 달아올랐다 식고(38~60%) → 두 쪽이 벌어지며(60~70%) 금빛 반가사유상 → 쟁반
+function bodhi9(x, yb, u, k, shine = 0, now = 0){   // 금동 반가사유상(앞에서 봄, (x, yb) = 받침 바닥): 둥근 북 의자에 걸터앉아 오른 다리를 왼 무릎에 얹고, 오른 팔꿈치를 무릎에 · 손가락은 뺨에 · 고개 숙임 + 둥근 봉우리 셋 삼산관
+  const P = (a, b) => [x + a*k*u, yb + b*k*u], g = ctx.createLinearGradient(...P(-16, -58), ...P(16, 0)); g.addColorStop(0, '#fff3b0'); g.addColorStop(0.35, '#e6b43a'); g.addColorStop(0.75, '#b8861a'); g.addColorStop(1, '#7a5410');
+  const path = (pts, close = true) => { ctx.beginPath(); pts.forEach((p, i) => { const [a, b] = P(...p); i ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }); if (close) ctx.closePath(); };
+  const fill = (c = g) => { ctx.fillStyle = c; ctx.fill(); ctx.strokeStyle = '#4a3206'; ctx.lineWidth = 1.2*u; ctx.stroke(); };
+  const limb = (pts, w) => { path(pts, false); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#4a3206'; ctx.lineWidth = (w + 2)*k*u; ctx.stroke(); ctx.strokeStyle = g; ctx.lineWidth = w*k*u; ctx.stroke(); ctx.lineCap = 'butt'; };
+  const ell = (a, b, rx, ry, c = g, rot = 0) => { const [p, q] = P(a, b); ctx.beginPath(); ctx.ellipse(p, q, rx*k*u, ry*k*u, rot, 0, Math.PI*2); fill(c); };
+  ctx.fillStyle = 'rgba(5,8,15,.4)'; { const [a, b] = P(3, 0.5); ctx.beginPath(); ctx.ellipse(a, b, 18*k*u, 3.6*k*u, 0, 0, Math.PI*2); ctx.fill(); }
+  path([[-15, 0], [15, 0], [13.5, -2.6], [-13.5, -2.6]]); fill();                                  // 받침
+  path([[-10, -2.6], [10, -2.6], [9, -9], [10, -16], [-10, -16], [-9, -9]]); fill('#b8861a');     // 둥근 북 의자(아래가 드러남)
+  ctx.strokeStyle = '#7a5410'; ctx.lineWidth = 0.8*u; [[-9.4, -6], [-9.4, -12.4]].forEach(([p, q]) => { const [a, b] = P(p, q), [c] = P(-p, q); ctx.beginPath(); ctx.moveTo(a, b); ctx.quadraticCurveTo((a + c)/2, b + 1.6*k*u, c, b); ctx.stroke(); });   // 의자 띠
+  ell(0, -16, 10, 2.4, '#e6b43a');                                                                 // 의자 윗면
+  path([[-9, -16.5], [9, -16.5], [10, -12], [7, -10.4], [4, -12], [1, -10.2], [-2, -12], [-5, -10.4], [-8, -12], [-10, -12]]); fill();   // 의자에 늘어진 치마 자락(물결 끝)
+  limb([[6, -18], [7, -10], [8, -4]], 3.6); ell(9.6, -3.2, 3.2, 1.4);                               // 늘어뜨린 왼다리 + 발(받침 위)
+  limb([[-14, -22], [-4, -23.4], [7, -21.6]], 4); ell(-14.4, -22, 3, 2.6); ell(10.4, -22.6, 3.2, 1.6, g, -0.5);   // 왼 무릎에 얹은 오른다리 — 옆으로 튀어나온 무릎 · 발
+  path([[-6.4, -24], [6, -24], [5, -30], [-5, -30]]); fill();                                       // 허리
+  path([[-5, -30], [5, -30], [4.4, -35], [6, -40], [-7, -40], [-5, -35]]); fill();                  // 가는 상체(살짝 앞으로)
+  { const [a, b] = P(-4.4, -40.6), [c, d] = P(0, -37.6), [e, f] = P(5, -40.6); ctx.strokeStyle = '#7a5410'; ctx.lineWidth = 0.8*u; ctx.beginPath(); ctx.moveTo(a, b); ctx.quadraticCurveTo(c, d, e, f); ctx.stroke(); }   // 목걸이
+  limb([[5.6, -39], [8, -32], [7.4, -24]], 2.6);                                                    // 왼팔 → 발목 위 손
+  limb([[-6.4, -39], [-12, -31], [-13, -24.6]], 2.8); limb([[-13, -24.6], [-9, -35], [-4.6, -43]], 2.4);   // 오른팔: 무릎 위 팔꿈치 → 뺨
+  limb([[-0.6, -40], [-1.2, -42.4]], 2.4);                                                          // 목
+  { const [a, b] = P(-1.6, -46.4); ctx.save(); ctx.translate(a, b); ctx.rotate(-0.3); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, 3.8*k*u, 4.8*k*u, 0, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#4a3206'; ctx.lineWidth = 1.1*u; ctx.stroke();   // 고개 숙인 얼굴
+    ctx.strokeStyle = '#7a5410'; ctx.lineWidth = 0.7*u; ctx.beginPath(); ctx.moveTo(-2.4*k*u, 0); ctx.quadraticCurveTo(-1.5*k*u, 0.7*k*u, -0.6*k*u, 0); ctx.moveTo(0.7*k*u, 0); ctx.quadraticCurveTo(1.6*k*u, 0.7*k*u, 2.5*k*u, 0); ctx.moveTo(-0.9*k*u, 2.5*k*u); ctx.quadraticCurveTo(0.2*k*u, 3.1*k*u, 1.2*k*u, 2.5*k*u); ctx.stroke();   // 감은 눈 · 미소
+    ctx.beginPath(); ctx.moveTo(-3.8*k*u, -2.6*k*u); ctx.quadraticCurveTo(-3.8*k*u, -6.4*k*u, -1.9*k*u, -6.2*k*u); ctx.quadraticCurveTo(0, -8.4*k*u, 1.9*k*u, -6.2*k*u); ctx.quadraticCurveTo(3.8*k*u, -6.4*k*u, 3.8*k*u, -2.6*k*u); ctx.closePath(); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#4a3206'; ctx.lineWidth = 1*u; ctx.stroke();   // 삼산관(둥근 봉우리 셋)
+    ctx.beginPath(); ctx.moveTo(-3.7*k*u, -2.8*k*u); ctx.lineTo(3.7*k*u, -2.8*k*u); ctx.stroke(); ctx.restore(); }
+  ell(-4.2, -43.6, 1.5, 1.5);                                                                       // 뺨에 댄 손가락
+  if (shine > 0) { const t = (now/900) % 1, [a, b] = P(-16 + 32*t, -56), [c, d] = P(-16 + 32*t + 6, -2); ctx.save(); ctx.globalAlpha = 0.45*shine; ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = '#fff6d0'; ctx.lineWidth = 2.6*k*u; ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.stroke(); ctx.restore(); } }   // 닦을 때 지나가는 광
+// 9층 0번 반가사유상(완성 모양이 오래 보이게 — 사용자): 화로 쇳물을 국자로 키 큰 거푸집에 붓고(6~22%) → 달아올랐다 식고(22~32%) → 거푸집이 양옆으로 벌어지며 사라지면(32~42%) 큰 금빛 반가사유상 → 천으로 닦으며 광(42~72%) → 쟁반, 80%부터 다음 거푸집
 function animBuda9({ S2, R2, u, now, prog, work, s }){
   menuSign(S2, u, now, s, '반가사유상', '#f2d27a', 23 - BOARD9, 20);
-  unsq(() => { const T = T9(R2), [cx, cy] = T(34, 76, 13, u);
+  unsq(() => { const T = T9(R2), [cx, cy] = T(34, 76, 13, u), p = work ? prog : 0.6;
     if (work || !s.broken) { const g = ctx.createRadialGradient(cx, cy, 1*u, cx, cy, 11*u); g.addColorStop(0, '#fff2a0'); g.addColorStop(0.5, '#ffb347'); g.addColorStop(1, `rgba(220,90,20,${0.85 + 0.15*Math.sin(now/200)})`);   // 도가니 쇳물
       ctx.fillStyle = '#5d6474'; ctx.beginPath(); ctx.ellipse(cx, cy, 11*u, 3.8*u, 0, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.4*u; ctx.stroke(); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, cy, 8.6*u, 2.8*u, 0, 0, Math.PI*2); ctx.fill();
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; const h = ctx.createRadialGradient(cx, cy, 2*u, cx, cy - 6*u, 28*u); h.addColorStop(0, 'rgba(255,150,60,.4)'); h.addColorStop(1, 'rgba(255,150,60,0)'); ctx.fillStyle = h; ctx.beginPath(); ctx.arc(cx, cy - 6*u, 28*u, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
-    const heat = work ? lerp01(prog, 0.3, 0.42) - lerp01(prog, 0.45, 0.6) : 0, open = work ? lerp01(prog, 0.6, 0.7) - lerp01(prog, 0.84, 0.9) : 0, [mx, my] = T(...C9, 6, u);
-    const fig = (x, y, k) => banggaFig((a, b) => [x + (a - 122)*u*k, y + (b - 112)*u*k], u*k, 122, 112);
-    mold9(mx, my, u, open, heat);
-    if (open > 0 && prog < 0.72) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(mx, my - 18*u, 2*u, mx, my - 18*u, 26*u); g.addColorStop(0, `rgba(255,220,120,${0.45*open})`); g.addColorStop(1, 'rgba(255,220,120,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(mx, my - 18*u, 26*u, 0, Math.PI*2); ctx.fill(); ctx.restore(); fig(mx, my, 0.68); }
-    if (work && prog > 0.08 && prog < 0.38) { const hx = mx, hy = my - 34*u, lx = hx - 20*u, ly = hy - 10*u;   // 국자 → 쇳물 줄기
+    const [mx, my] = T(...C9, 6, u), heat = lerp01(p, 0.18, 0.24) - lerp01(p, 0.26, 0.32), open = lerp01(p, 0.32, 0.4), fadeM = 1 - lerp01(p, 0.36, 0.42), next = work && p >= 0.8, nextA = lerp01(p, 0.8, 0.86);
+    const statue = !work ? 1 : p >= 0.34 && p < 0.72 ? lerp01(p, 0.34, 0.4) : 0;
+    if (statue > 0) { ctx.save(); ctx.globalAlpha = statue; ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(mx, my - 26*u, 3*u, mx, my - 26*u, 36*u); g.addColorStop(0, 'rgba(255,220,120,.35)'); g.addColorStop(1, 'rgba(255,220,120,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(mx, my - 26*u, 36*u, 0, Math.PI*2); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.globalAlpha = statue; bodhi9(mx, my, u, 0.92, work ? lerp01(p, 0.42, 0.46) - lerp01(p, 0.68, 0.72) : 0.4, now); ctx.restore(); }
+    if (work && p < 0.42) { ctx.save(); ctx.globalAlpha = fadeM; mold9(mx, my, u, open, heat, 22, 54); ctx.restore(); }
+    else if (next) { ctx.save(); ctx.globalAlpha = nextA; mold9(mx, my, u, 0, 0, 22, 54); ctx.restore(); }
+    if (work && p > 0.06 && p < 0.22) { const hx = mx, hy = my - 54*u, lx = hx - 22*u, ly = hy - 6*u;   // 국자 → 쇳물 줄기
       ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 2.6*u; ctx.beginPath(); ctx.moveTo(lx + 6*u, ly + 2*u); ctx.quadraticCurveTo(hx - 3*u, ly, hx, hy); ctx.stroke();
-      ctx.strokeStyle = '#8d98aa'; ctx.lineWidth = 2.5*u; ctx.beginPath(); ctx.moveTo(lx - 6*u, ly - 1*u); ctx.lineTo(lx - 30*u, ly - 6*u); ctx.stroke();
+      ctx.strokeStyle = '#8d98aa'; ctx.lineWidth = 2.5*u; ctx.beginPath(); ctx.moveTo(lx - 6*u, ly - 1*u); ctx.lineTo(lx - 30*u, ly - 4*u); ctx.stroke();
       ctx.fillStyle = '#5d6474'; ctx.beginPath(); ctx.ellipse(lx, ly, 7*u, 4.4*u, 0.2, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#38445a'; ctx.lineWidth = 1.6*u; ctx.stroke(); ctx.fillStyle = '#ffd36b'; ctx.beginPath(); ctx.ellipse(lx, ly - 1*u, 4.4*u, 2.4*u, 0.2, 0, Math.PI*2); ctx.fill(); }
-    if (work) onTray9(R2, prog, TP(...C9), (x, y, k) => { ctx.fillStyle = '#141b2c'; rr(x - 11*u*k, y - 3*u*k, 22*u*k, 4*u*k, 1.2*u); ctx.fill(); ctx.strokeStyle = '#d9b45a'; ctx.lineWidth = 1*u; ctx.stroke(); fig(x, y - 3*u*k, 0.52*k); });   // 남색 받침 위에
+    if (work && p > 0.44 && p < 0.7) { const a = now/260, rx = mx + 14*u + Math.cos(a)*5*u, ry = my - 10*u + Math.sin(a)*4*u;   // 닦는 천(얼굴·손 안 가리게 의자 옆)
+      ctx.fillStyle = '#f4f1ea'; ctx.beginPath(); ctx.moveTo(rx - 5*u, ry - 3*u); ctx.quadraticCurveTo(rx + 2*u, ry - 6*u, rx + 6*u, ry - 1*u); ctx.quadraticCurveTo(rx + 3*u, ry + 5*u, rx - 4*u, ry + 3*u); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#9aa6b8'; ctx.lineWidth = 1*u; ctx.stroke(); }
+    if (work) onTray9(R2, prog, TP(...C9), (x, y, k) => { ctx.fillStyle = '#141b2c'; rr(x - 12*u*k, y - 3*u*k, 24*u*k, 4*u*k, 1.2*u); ctx.fill(); ctx.strokeStyle = '#d9b45a'; ctx.lineWidth = 1*u; ctx.stroke(); bodhi9(x, y - 3*u*k, u, 0.5*k); });   // 남색 받침 위에
   });
-  if (work && prog > 0.62 && prog < 0.72) twinkle(S2, u, now, 118, 70, 1);
+  if (work && prog > 0.46 && prog < 0.7) { twinkle(S2, u, now, 112, 66, 1); twinkle(S2, u, now + 500, 92, 84, 0.8); }
 }
-// 9층 1번 달항아리: 물레가 돌고 흙덩이가 둥글게 커지며(0~45%, 손자국) → 하얀 유약(45~58%) → 가마로(58~62%) 불 창이 이글(62~70%) → 쟁반
+// 9층 1번 달항아리(사용자: 하얘지는 건 구운 뒤 · 완성 모양이 오래 보이게): 흙덩이가 둥글게 커지고(0~14%) → 유약을 입혀 탁한 회백색(14~20%) → 가마로(20~24%) 불 창이 이글이글 굽기(24~34%)
+// → 꺼내면 하얀 달항아리가 돌림판 가운데로(34~38%) 천천히 돌며 빛(38~72%) → 쟁반, 80%부터 다음 흙덩이
 function animJar9({ S2, R2, u, now, prog, work, s }){
   menuSign(S2, u, now, s, '달항아리', '#f2d27a', 23 - BOARD9, 22);
-  unsq(() => { const T = T9(R2), [wx, wy] = T(...C9, 12, u), spin = work && prog < 0.58 ? now/120 : 0;
-    ctx.strokeStyle = 'rgba(30,24,20,.35)'; ctx.lineWidth = 1.2*u; for (let i = 0; i < 12; i++) { const a = spin + i*Math.PI/6; ctx.beginPath(); ctx.moveTo(wx + Math.cos(a)*24*u, wy + Math.sin(a)*7.7*u); ctx.lineTo(wx + Math.cos(a)*32*u, wy + Math.sin(a)*10.2*u); ctx.stroke(); }   // 돌림판 결
-    const grow = work ? lerp01(prog, 0, 0.45) : 1, glaze = work ? lerp01(prog, 0.45, 0.58) : 1, next = work && prog >= 0.8;
-    if (!(work && prog > 0.58) || next) moonJar(wx, wy, u, (next ? 7 : 7 + 11*grow)*u, next ? 0 : glaze, work && prog < 0.45 ? spin : null);
-    const [kx, ky] = T(34, 80, 8, u), fire = work ? lerp01(prog, 0.6, 0.63) - lerp01(prog, 0.68, 0.72) : 0;
-    if (fire > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(kx, ky, 1, kx, ky, 20*u); g.addColorStop(0, `rgba(255,226,122,${fire})`); g.addColorStop(0.5, `rgba(255,140,40,${0.7*fire})`); g.addColorStop(1, 'rgba(240,80,20,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(kx, ky, 20*u, 0, Math.PI*2); ctx.fill(); ctx.restore();
+  unsq(() => { const T = T9(R2), [wx, wy] = T(...C9, 10, u), p = work ? prog : 0.6, spin = work && p < 0.72 ? now/(p < 0.2 ? 120 : 360) : 0;
+    ctx.strokeStyle = 'rgba(30,24,20,.35)'; ctx.lineWidth = 1.2*u; for (let i = 0; i < 12; i++) { const a = spin + i*Math.PI/6; ctx.beginPath(); ctx.moveTo(wx + Math.cos(a)*20*u, wy + Math.sin(a)*6.5*u); ctx.lineTo(wx + Math.cos(a)*27*u, wy + Math.sin(a)*8.8*u); ctx.stroke(); }   // 돌림판 결
+    const [kx, ky] = T(34, 80, 8, u), fire = work ? lerp01(p, 0.22, 0.25) - lerp01(p, 0.33, 0.37) : 0, grow = lerp01(p, 0, 0.14), dull = lerp01(p, 0.14, 0.2)*0.42, next = work && p >= 0.8, R = 25*u;
+    if (fire > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const fl = 0.85 + 0.15*Math.sin(now/120), g = ctx.createRadialGradient(kx, ky, 1, kx, ky, 24*u); g.addColorStop(0, `rgba(255,226,122,${fire*fl})`); g.addColorStop(0.5, `rgba(255,140,40,${0.75*fire*fl})`); g.addColorStop(1, 'rgba(240,80,20,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(kx, ky, 24*u, 0, Math.PI*2); ctx.fill(); ctx.restore();
       for (let i = 0; i < 3; i++) { const t = (now/300 + i/3) % 1; ctx.fillStyle = `rgba(255,${180 - 60*t | 0},60,${fire*(1 - t)})`; ctx.beginPath(); ctx.ellipse(kx + (i - 1)*4.5*u, ky + 4*u - t*9*u, 2.6*u*(1 - t*0.5), 4.4*u*(1 - t*0.5), 0, 0, Math.PI*2); ctx.fill(); } }   // 불꽃
-    if (work && prog > 0.58 && prog < 0.62) { const t = lerp01(prog, 0.58, 0.62); moonJar(wx + (kx - wx)*t, wy + (ky + 8*u - wy)*t - Math.sin(Math.PI*t)*16*u, u, 18*u*(1 - 0.45*t), 1); }
-    if (work) onTray9(R2, prog, TP(34, 80), (x, y, k) => moonJar(x, y, u, 11*u*k, 1));
+    if (next || (work && p < 0.2)) moonJar(wx, wy, u, next ? 8*u : (8 + 17*grow)*u, next ? 0 : dull, p < 0.14 ? spin : null);   // 흙 → 유약(탁함)
+    else if (work && p < 0.24) { const t = lerp01(p, 0.2, 0.24); moonJar(wx + (kx - wx)*t, wy + (ky + 8*u - wy)*t - Math.sin(Math.PI*t)*16*u, u, R*(1 - 0.5*t), 0.42); }   // 가마로
+    else if (work && p >= 0.34 && p < 0.38) { const t = lerp01(p, 0.34, 0.38); moonJar(kx + (wx - kx)*t, ky + 8*u + (wy - ky - 8*u)*t - Math.sin(Math.PI*t)*16*u, u, R*(0.5 + 0.5*t), 1); }   // 구워져 하얗게 나옴
+    else if (!work || (p >= 0.38 && p < 0.72)) { moonJar(wx, wy, u, R, 1);   // 흰 달항아리가 천천히 돌며 빛
+      const t = (spin*0.4) % 1, cy = wy - R*0.98; ctx.save(); ctx.beginPath(); ctx.ellipse(wx, cy, R, R*0.9, 0, 0, Math.PI*2); ctx.clip(); ctx.globalAlpha = 0.35; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(wx - R + 2*R*t, cy - R*0.1, R*0.14, R*0.75, 0, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
+    if (work) onTray9(R2, prog, TP(...C9), (x, y, k) => moonJar(x, y, u, 14*u*k, 1));
   });
+  if (work && prog > 0.38 && prog < 0.7) twinkle(S2, u, now, 118, 70, 0.8);
 }
 // 9층 2번 신라 금관(벨벳 받침 위에 서 있음): 금 띠가 둘러지고(0~20%) → 出자 금판이 솟고 망치가 톡톡(20~45%) → 곡옥이 하나씩(45~66%) 반짝 → 쟁반
 function animCrown9({ S2, R2, u, now, prog, work, s }){

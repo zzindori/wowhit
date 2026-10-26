@@ -78,7 +78,8 @@ version: 'x.y.z+build'
 ## 작업 히스토리
 
 ### 2026-10-26
-- '드라마 vs 실록' 시제품 `public/sillok/index.html` → https://wowhit.org/sillok/ (독립 HTML, 홈 카드 apps.ts는 아직 안 넣음 — 사용자 확인 후).
+- '드라마 vs 실록' 시제품 `public/sillok/index.html` → https://wowhit.org/sillok/ (독립 HTML). 홈 카드 `apps.ts` slug `drama-sillok`(기타, 아이콘 '實錄' 도장·캡처 `public/apps/drama-sillok/`) —
+  slug를 'sillok'으로 하면 정적 /sillok/과 겹쳐서 다르게 함. 페이지 ⌂ → /drama-sillok.
   사극 6편(대장금·뿌리 깊은 나무·옷소매 붉은 끝동·왕의 남자·광해·사도) 카드 29장: 드라마 장면 ↔ 기록 요약 + 사실/각색/허구 도장 + 출처(왕·음력 날짜)·실록 검색어, 결말 카드는 흐리게(누르면 보임).
   퀴즈 '진짜일까, 드라마일까?'(전체 섞어 한 장씩, 최고 기록 localStorage `sillok-best`), 다크 모드. 데이터는 `WORKS` 하나.
   실록 사이트는 자동 접근 차단 → 기사·위키로 교차 확인, 확인 안 된 세부(조보 문구·'뒤주' 원문 표현 등)는 뺌. 드라마 사진은 저작권 때문에 안 씀

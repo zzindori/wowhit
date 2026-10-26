@@ -491,6 +491,31 @@ export const apps: App[] = [
     webUrl: 'https://wowhit.org/games/roulette/'
   },
   {
+    slug: 'drama-sillok',
+    name: '드라마 vs 실록',
+    category: 'other',
+    description: '사극 속 그 장면, 실록엔 뭐라고 적혀 있을까? 사실·각색·허구로 보는 사극 팩트체크',
+    longDescription: `사극과 영화 속 장면을 조선왕조실록 기록과 나란히 놓고 비교합니다. 장면마다 사실·각색·허구 도장을 찍었어요.
+
+📜 작품별 비교
+『대장금』 · 『뿌리 깊은 나무』 · 『옷소매 붉은 끝동』 · 『왕의 남자』 · 『광해, 왕이 된 남자』 · 『사도』
+카드마다 🎬 드라마 장면과 📜 실제 기록 요약, 출처(왕·연도·음력 날짜)와 실록 사이트 검색어가 있어 원문을 직접 찾아볼 수 있습니다. 결말에 해당하는 카드는 흐리게 가려 두고, 누르면 보여요.
+
+❓ 퀴즈 「진짜일까, 드라마일까?」
+장면 하나를 보고 사실·각색·허구 중에 고릅니다. 고르면 실제 기록과 출처가 나와서, 놀면서 역사를 배울 수 있어요.
+
+• 사실: 실록(또는 같은 시대 기록)에 그대로 나오는 일
+• 각색: 실제 있었던 일·인물에 이야기를 덧붙이거나 바꾼 것
+• 허구: 기록에 없는, 작가가 지어낸 인물·사건
+
+요약은 직접 쓴 글이고, 드라마·영화 사진은 저작권 때문에 싣지 않았습니다.`,
+    platform: 'Web (HTML5)',
+    iconUrl: '/apps/drama-sillok/icon.png',
+    screenshots: ['/apps/drama-sillok/screen1.webp', '/apps/drama-sillok/screen2.webp'],
+    pricingModel: 'free',
+    webUrl: 'https://wowhit.org/sillok/'
+  },
+  {
     slug: 'anyway',
     name: 'anyWay',
     category: 'flutter',

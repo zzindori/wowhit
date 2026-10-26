@@ -78,6 +78,7 @@ version: 'x.y.z+build'
 ## 작업 히스토리
 
 ### 2026-10-26
+- 실록과 드라마(/sillok-drama/) 첫 화면 개편: [왕별 연표 | 드라마별] 탭 — 조선 왕 25명을 연도순 한 줄(왕 띠 고정·왕 목록 창), 드라마는 배경 연도순. 소스 sillok 폴더(CLAUDE.md)
 - '드라마 vs 실록' 새 버전 「실록과 드라마」 → https://wowhit.org/sillok-drama/ (소스 `~/dev/workspace/sillok`, JSON → 정적 HTML 빌드, 그 폴더 CLAUDE.md 참고).
   실록이 뼈대(중종 연표 사건 17 → 사건 페이지), 드라마 입구(대장금 14 · 여인천하 6 · 7일의 왕비 5 장면), 검색. `public/sillok-drama/`는 빌드 결과라 직접 고치지 말고
   sillok 폴더에서 `./deploy-wowhit.sh`. 홈 카드(slug drama-sillok) 링크·설명·캡처 4장을 새 사이트로, 예전 시제품 /sillok/은 그대로 둠(사용자)

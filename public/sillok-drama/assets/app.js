@@ -22,23 +22,71 @@
     });
   }
   // 왕 연표: 고른 드라마에 나오는 사건만, 빈 해 제목은 숨김
-  chips('#filter', 'f', f => {
-    const items = [...document.querySelectorAll('#tl li')];
-    items.forEach(li => { if (li.classList.contains('ev')) li.classList.toggle('hide', f !== 'all' && !li.dataset.d.split(' ').includes(f)); });
-    items.forEach((li, i) => {
-      if (!li.classList.contains('year')) return;
-      let any = false;
-      for (let j = i + 1; j < items.length && !items[j].classList.contains('year'); j++) if (!items[j].classList.contains('hide')) any = true;
-      li.classList.toggle('hide', !any);
+  // 왕별 연표: 고른 드라마에 나오는 사건만 — 빈 해 제목·사건 없는 왕 띠는 숨김
+  function filterKings(f) {
+    let shown = 0;
+    document.querySelectorAll('#kings .king').forEach(sec => {
+      const items = [...sec.querySelectorAll('.tl li')];
+      items.forEach(li => { if (li.classList.contains('ev')) li.classList.toggle('hide', f !== 'all' && !li.dataset.d.split(' ').includes(f)); });
+      items.forEach((li, i) => {
+        if (!li.classList.contains('year')) return;
+        let any = false;
+        for (let j = i + 1; j < items.length && !items[j].classList.contains('year'); j++) if (!items[j].classList.contains('hide')) any = true;
+        li.classList.toggle('hide', !any);
+      });
+      const n = items.filter(li => li.classList.contains('ev') && !li.classList.contains('hide')).length;
+      shown += n;
+      sec.classList.toggle('hide', f !== 'all' && n === 0);
     });
-  });
+    const msg = $('#fmsg');
+    if (msg) {
+      const b = document.querySelector(`#filter [data-f="${f}"]`);
+      msg.hidden = f === 'all';
+      msg.textContent = f === 'all' ? '' : `${b.textContent.replace('🎬 ', '')}에 나오는 실록 사건 ${shown}개`;
+    }
+  }
+  chips('#filter', 'f', filterKings);
+
+  // 탭(왕별 / 드라마별) — 주소 ?tab=drama 로 남김
+  const tabs = [...document.querySelectorAll('.tab')];
+  function showTab(name, push) {
+    if (!tabs.length) return;
+    tabs.forEach(t => {
+      const on = t.dataset.tab === name;
+      t.setAttribute('aria-selected', on);
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (push) { try { history.replaceState(null, '', name === 'drama' ? '?tab=drama' : location.pathname); } catch {} }
+  }
+  tabs.forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab, true)));
+  if (tabs.length) {
+    // #왕 으로 들어오면 왕별 탭, ?tab=drama 면 드라마별
+    showTab(new URLSearchParams(location.search).get('tab') === 'drama' && !location.hash ? 'drama' : 'kings', false);
+  }
+
+  // 왕 목록 창: 고르면 그 왕 띠로(거르기 중이라 숨어 있으면 전체로 되돌림)
+  const sheet = $('#jump');
+  if (sheet) {
+    document.addEventListener('click', ev => {
+      if (ev.target.closest('[data-jump]')) { sheet.showModal(); return; }
+      if (ev.target.closest('[data-close]') || ev.target === sheet) { sheet.close(); return; }
+      const a = ev.target.closest('.jk, .jk-link'); if (!a) return;
+      ev.preventDefault();
+      sheet.close();
+      showTab('kings', true);
+      const sec = document.getElementById(a.dataset.k);
+      if (sec.classList.contains('hide')) { document.querySelector('#filter [data-f="all"]').click(); }
+      try { history.replaceState(null, '', '#' + a.dataset.k); } catch {}
+      sec.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    });
+  }
   chips('#vfilter', 'v', v => document.querySelectorAll('#scenes .scene').forEach(s => s.classList.toggle('hide', v !== 'all' && s.dataset.v !== v)));
 
   // 검색: 띄어쓴 낱말이 모두 들어간 것만(띄어쓰기 달라도 찾음 — '기묘 사화' = '기묘사화'), 제목에 있으면 위로
   const qEl = $('#q'), res = $('#sres');
   if (qEl && res) {
     const V = { fact: ['사실', 'v-fact'], adapt: ['각색', 'v-adapt'], fic: ['허구', 'v-fic'] };
-    const G = [['dr', '🎬 드라마'], ['ev', '📜 실록 사건'], ['sc', '🎞 드라마 장면']];
+    const G = [['k', '👑 왕'], ['dr', '🎬 드라마'], ['ev', '📜 실록 사건'], ['sc', '🎞 드라마 장면']];
     const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const ns = s => s.toLowerCase().replace(/\s+/g, '');

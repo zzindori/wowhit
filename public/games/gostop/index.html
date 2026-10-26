@@ -95,6 +95,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 45%,var(--felt) 0,var(--
   <div class="toggles">
     <label><input type="checkbox" id="tTag" checked> 카드에 이름 보기</label>
     <label><input type="checkbox" id="tSnd" checked> 소리</label>
+    <label><input type="checkbox" id="tVib" checked> 진동 <small id="vibNote"></small></label>
   </div>
   <h3>기본</h3>
   <ul>
@@ -147,7 +148,7 @@ const isGuk = id => C[id].t === 'Y' && C[id].sub === 'k';
 
 /* ── 저장(점수·설정) ── */
 const KEY = 'gostop-v1';
-let store = {total: 0, wins: 0, losses: 0, plays: 0, tag: true, snd: true};
+let store = {total: 0, wins: 0, losses: 0, plays: 0, tag: true, snd: true, vib: true};
 try { Object.assign(store, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
 
@@ -163,19 +164,83 @@ function betDone(r, pts) {
   document.getElementById('bNext').textContent = '층층이로 돌아가기';
 }
 
-/* ── 소리: 패 놓는 '탁' ── */
+/* ── 소리·진동: 소리는 파일 없이 WebAudio로 합성, 진동은 navigator.vibrate(아이폰 브라우저는 미지원) ── */
 let AC = null;
-function snd(kind) {
-  if (!store.snd) return;
+function ac() {
+  if (!store.snd) return null;
   try {
     AC = AC || new (window.AudioContext || window.webkitAudioContext)();
-    const t = AC.currentTime, len = kind === 'big' ? .16 : .07;
-    const b = AC.createBuffer(1, AC.sampleRate * len, AC.sampleRate), d = b.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, kind === 'big' ? 2 : 4);
-    const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
-    f.type = 'bandpass'; f.frequency.value = kind === 'big' ? 700 : 1800; g.gain.value = kind === 'big' ? .9 : .6;
-    s.buffer = b; s.connect(f).connect(g).connect(AC.destination); s.start(t);
-  } catch (e) {}
+    if (AC.state === 'suspended') AC.resume();
+    return AC;
+  } catch (e) { return null; }
+}
+// 첫 터치에서 소리 잠금 풀기(모바일 브라우저는 사용자 손길 전엔 소리를 막음)
+addEventListener('pointerdown', () => { ac(); }, {once: true, capture: true});
+function tone(f, at, dur, {type = 'sine', vol = .25, to = null} = {}) {
+  const a = ac(); if (!a) return;
+  const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .006);
+  g.gain.exponentialRampToValueAtTime(.0008, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+}
+function noise(at, dur, {freq = 1800, type = 'bandpass', q = 1, vol = .5, pow = 4, to = null} = {}) {
+  const a = ac(); if (!a) return;
+  const t = a.currentTime + at, b = a.createBuffer(1, Math.max(1, a.sampleRate * dur | 0), a.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, pow);
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  f.type = type; f.Q.value = q; f.frequency.setValueAtTime(freq, t);
+  if (to) f.frequency.exponentialRampToValueAtTime(to, t + dur);
+  g.gain.value = vol; s.buffer = b; s.connect(f).connect(g).connect(a.destination); s.start(t);
+}
+const arp = (fs, step, type = 'triangle', vol = .2, len = .22) => fs.forEach((f, i) => tone(f, i * step, len, {type, vol}));
+const chord = (fs, at, len, vol = .12) => fs.forEach(f => tone(f, at, len, {type: 'triangle', vol}));
+const SFX = {
+  tak()   { noise(0, .06, {freq: 2000, vol: .55}); noise(0, .09, {freq: 220, type: 'lowpass', vol: .7, pow: 3}); },  // 패 '착'
+  flip()  { noise(0, .05, {freq: 2800, vol: .3}); noise(.03, .05, {freq: 1600, vol: .25}); },                           // 더미 뒤집기
+  take()  { noise(0, .14, {freq: 700, to: 3200, vol: .22, pow: 1.5}); },                                               // 가져오기 '스윽'
+  tap()   { tone(1180, 0, .05, {type: 'triangle', vol: .14}); },                                                       // 바닥 패 고르기
+  steal() { tone(1047, 0, .14, {type: 'triangle', vol: .18}); tone(1568, .06, .16, {type: 'triangle', vol: .12}); },   // 피 뺏기
+  jjok()  { tone(880, 0, .08, {type: 'square', vol: .1}); tone(1320, .07, .12, {type: 'square', vol: .1}); },
+  ppeok() { noise(0, .28, {freq: 320, type: 'lowpass', vol: .9, pow: 2}); tone(120, 0, .28, {vol: .35, to: 55}); },
+  ppeokEat() { SFX.ppeok(); arp([659, 880, 1175], .07, 'triangle', .16); },
+  ttadak(){ [0, .1].forEach(d => { noise(d, .06, {freq: 1700, vol: .6}); noise(d, .08, {freq: 200, type: 'lowpass', vol: .5, pow: 3}); }); },
+  sseul() { noise(0, .4, {freq: 500, to: 4500, vol: .28, pow: 1}); arp([1047, 1319, 1568], .07, 'triangle', .14); },
+  bomb()  { noise(0, .7, {freq: 1200, to: 70, type: 'lowpass', vol: 1, pow: 1.4}); tone(95, 0, .55, {vol: .5, to: 38}); },
+  shake() { for (let i = 0; i < 7; i++) noise(i * .045, .035, {freq: 3200 - i * 150, vol: .28}); },
+  go(n)   { const k = 1 + .06 * Math.min(5, n - 1); arp([523, 659, 784].map(f => f * k), .08, 'triangle', .2); },
+  stop()  { chord([392, 494, 587], 0, .5, .13); noise(0, .06, {freq: 300, type: 'lowpass', vol: .6, pow: 3}); },
+  chong() { arp([523, 659, 784, 1047, 1319], .07, 'triangle', .2); },
+  win()   { arp([523, 659, 784, 1047], .11, 'triangle', .22); chord([523, 659, 784, 1047], .48, .7, .1); },
+  lose()  { arp([392, 330, 262, 196], .17, 'sine', .22, .3); },
+  nagari(){ tone(330, 0, .22, {type: 'triangle', vol: .16}); tone(311, .26, .35, {type: 'triangle', vol: .16}); },
+  start() { arp([440, 554, 659], .07, 'triangle', .14); },
+};
+const VIB = {tak: 12, flip: 6, take: 8, tap: 10, steal: [15, 40, 15], jjok: [20, 40, 20], ppeok: 70, ppeokEat: [40, 40, 60],
+  ttadak: [25, 35, 25], sseul: [15, 30, 15, 30, 15], bomb: [90, 50, 140], shake: [12, 25, 12, 25, 12, 25], go: [30, 50, 30],
+  stop: 90, chong: [40, 40, 40, 40, 120], win: [40, 60, 40, 60, 140], lose: 220, nagari: [40, 80, 40], start: 0};
+const SMALL = new Set(['tak', 'flip', 'take']);  // 자잘한 진동은 내 차례에만(컴퓨터 패까지 떨리면 너무 잦음)
+function fx(name, arg) {
+  if (store.snd) { try { SFX[name](arg); } catch (e) {} }
+  if (store.vib === false || !navigator.vibrate || !VIB[name]) return;
+  if (SMALL.has(name) && !(G && G.turn === 0)) return;
+  try { navigator.vibrate(VIB[name]); } catch (e) {}
+}
+// 큰 글씨(배너)에 맞는 소리 — 여러 개가 겹치면 가장 센 것 하나
+function fxBanner(t) {
+  const m = t.match(/(\d)고!/);
+  if (/폭탄/.test(t)) fx('bomb');
+  else if (/총통/.test(t)) fx('chong');
+  else if (/쓸/.test(t)) fx('sseul');
+  else if (/따닥/.test(t)) fx('ttadak');
+  else if (/뻑 먹기|자뻑/.test(t)) fx('ppeokEat');
+  else if (/뻑/.test(t)) fx('ppeok');
+  else if (/쪽/.test(t)) fx('jjok');
+  else if (/흔들기/.test(t)) fx('shake');
+  else if (m) fx('go', +m[1]);
+  else if (/스톱/.test(t)) fx('stop');
+  else fx('start');
 }
 
 /* ── 탁자(400×800 단위) ── */
@@ -334,7 +399,7 @@ function banner(t) {
   const b = document.getElementById('banner');
   b.textContent = t; b.style.top = '280px';
   b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
-  snd('big');
+  fxBanner(t);
 }
 
 /* ── 점수 ── */
@@ -375,9 +440,10 @@ function steal(p, n) {
     if (id == null) break;
     rm(G.cap[o], id); G.cap[p].push(id); got.push(id);
   }
+  if (got.length) setTimeout(() => fx('steal'), 250);
   return got.length;
 }
-function take(p, ids) { ids.forEach(id => { rm(G.floor, id); G.cap[p].push(id); }); }
+function take(p, ids) { ids.forEach(id => { rm(G.floor, id); G.cap[p].push(id); }); fx('take'); }
 
 /* ── 컴퓨터 판단: 패 값 ── */
 function val(id, p) {
@@ -428,7 +494,7 @@ function onCard(id) {
   if (w.kind === 'hand') {
     if (G.hand[0].includes(id)) { G.wait = null; w.res(id); }
     else if (G.bombFlip[0] > 0 && G.deck.length && id === G.deck[G.deck.length - 1]) { G.wait = null; w.res('flip'); }
-  } else if (w.kind === 'floor' && w.opts.includes(id)) { G.wait = null; w.res(id); }
+  } else if (w.kind === 'floor' && w.opts.includes(id)) { fx('tap'); G.wait = null; w.res(id); }
 }
 function ask(title, text, btns) {
   return new Promise(res => {
@@ -464,7 +530,7 @@ async function doTurn(p, c) {
       bomb = true;
       same.forEach(x => { rm(G.hand[p], x); G.floor.push(x); });
       G.shake[p]++; G.bombFlip[p] += 2;
-      layout(); snd(); banner('폭탄!'); await sleep(700);
+      layout(); fx('tak'); banner('폭탄!'); await sleep(700);
       take(p, [...same, f[0]]); stealN++;
     } else {
       if (same.length === 3 && f.length === 0 && !G.shook[p].includes(mC)) {
@@ -473,7 +539,7 @@ async function doTurn(p, c) {
         if (yes) { G.shook[p].push(mC); G.shake[p]++; banner('흔들기! ×2'); layout(); await sleep(800); }
       }
       rm(G.hand[p], c); G.floor.push(c); fLen = f.length;
-      layout(); snd(); await sleep(380);
+      layout(); fx('tak'); await sleep(380);
       if (f.length === 1) pending = [c, f[0]];
       else if (f.length === 2) needChoose = true;
       else if (f.length === 3) {
@@ -486,7 +552,7 @@ async function doTurn(p, c) {
   if (G.deck.length) {
     const d = G.deck.pop();
     G.floor.push(d); slotFor(C[d].m);
-    layout(); snd(); await sleep(440);
+    layout(); fx('flip'); await sleep(440);
     const mD = C[d].m;
     if (c != null && !bomb && mD === mC && fLen < 3) {
       if (fLen === 0) { take(p, [c, d]); stealN++; ev.push('쪽!'); }
@@ -555,7 +621,7 @@ function endRound(w) {
   if (w == null && BET) {
     T.textContent = '나가리 · 비겼어요';
     tb.innerHTML = '<tr><td>아무도 못 났어요</td><td>평소 보상</td></tr>';
-    setTimeout(() => { document.getElementById('result').hidden = false; }, 700);
+    setTimeout(() => { document.getElementById('result').hidden = false; fx('nagari'); }, 700);
     betDone('draw', 0); return;
   }
   if (w == null) {
@@ -575,7 +641,7 @@ function endRound(w) {
   }
   document.getElementById('resTot').textContent = `누적 ${store.total}점 · ${store.wins}승 ${store.losses}패`;
   if (BET) betDone(w === 0 ? 'win' : 'lose', pts);
-  setTimeout(() => { document.getElementById('result').hidden = false; }, 700);
+  setTimeout(() => { document.getElementById('result').hidden = false; fx(w == null ? 'nagari' : w === 0 ? 'win' : 'lose'); }, 700);
 }
 
 /* ── 판 진행 ── */
@@ -591,7 +657,7 @@ async function run() {
     nagari = 1; starter = p;
     document.getElementById('resTot').textContent = `누적 ${store.total}점 · ${store.wins}승 ${store.losses}패`;
     if (BET) betDone(p === 0 ? 'win' : 'lose', pts);
-    document.getElementById('result').hidden = false;
+    document.getElementById('result').hidden = false; fx(p === 0 ? 'win' : 'lose');
     return;
   }
   msg(starter === 0 ? '내 차례예요. 낼 패를 누르세요' : '');
@@ -616,6 +682,8 @@ function applyPrefs() {
   document.body.classList.toggle('notag', !store.tag);
   document.getElementById('tTag').checked = store.tag;
   document.getElementById('tSnd').checked = store.snd;
+  document.getElementById('tVib').checked = store.vib !== false;
+  document.getElementById('vibNote').textContent = navigator.vibrate ? '' : '(이 브라우저는 진동을 지원하지 않아요 — 아이폰 등)';
 }
 document.getElementById('monthList').innerHTML = Array.from({length: 12}, (_, i) => i + 1).map(m =>
   `<div class="mn">${m}월<br>${MONTH[m]}</div><div class="cs">${C.filter(c => c.m === m).map(c =>
@@ -623,7 +691,8 @@ document.getElementById('monthList').innerHTML = Array.from({length: 12}, (_, i)
 document.getElementById('bHelp').onclick = () => { document.getElementById('help').hidden = false; };
 document.getElementById('bHelpX').onclick = () => { document.getElementById('help').hidden = true; };
 document.getElementById('tTag').onchange = e => { store.tag = e.target.checked; save(); applyPrefs(); };
-document.getElementById('tSnd').onchange = e => { store.snd = e.target.checked; save(); };
+document.getElementById('tSnd').onchange = e => { store.snd = e.target.checked; save(); if (store.snd) fx('tap'); };
+document.getElementById('tVib').onchange = e => { store.vib = e.target.checked; save(); if (store.vib) fx('jjok'); };
 document.getElementById('bReset').onclick = () => {
   if (!confirm('누적 점수와 승패를 지울까요?')) return;
   Object.assign(store, {total: 0, wins: 0, losses: 0, plays: 0}); save();

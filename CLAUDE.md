@@ -78,6 +78,8 @@ version: 'x.y.z+build'
 ## 작업 히스토리
 
 ### 2026-10-26
+- 맞고 '바닥에 같은 달 2장일 때 진행 안 됨'(사용자 제보): 낸 패가 고를 두 장 위에 겹쳐 쌓여(7px씩만 보임) 폰에서 못 누름 → 고를 때는 고를 패를 판 가운데(y 212)에 1.25배로 나란히 띄움(`layout` picks),
+  안내 글자 `#msg` z-index 950. 진짜 클릭 테스트(빈 곳 elementFromPoint): 고치기 전 5/5 가려짐 → 후 0, sim 20판 오류 0
 - 실록과 드라마(/sillok-drama/) 첫 화면 개편: [왕별 연표 | 드라마별] 탭 — 조선 왕 25명을 연도순 한 줄(왕 띠 고정·왕 목록 창), 드라마는 배경 연도순. 소스 sillok 폴더(CLAUDE.md)
 - '드라마 vs 실록' 새 버전 「실록과 드라마」 → https://wowhit.org/sillok-drama/ (소스 `~/dev/workspace/sillok`, JSON → 정적 HTML 빌드, 그 폴더 CLAUDE.md 참고).
   실록이 뼈대(중종 연표 사건 17 → 사건 페이지), 드라마 입구(대장금 14 · 여인천하 6 · 7일의 왕비 5 장면), 검색. `public/sillok-drama/`는 빌드 결과라 직접 고치지 말고

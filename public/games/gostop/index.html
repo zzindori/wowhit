@@ -49,7 +49,7 @@ body{margin:0;background:radial-gradient(ellipse at 50% 45%,var(--felt) 0,var(--
   text-shadow:0 3px 0 var(--red),0 0 14px rgba(0,0,0,.5);opacity:0}
 #banner.show{animation:ban 1s ease-out}
 @keyframes ban{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(1.15)}30%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-18px)}}
-#msg{position:absolute;left:0;right:0;top:462px;text-align:center;color:#fff;font-size:15px;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+#msg{position:absolute;left:0;right:0;top:462px;z-index:950;text-align:center;color:#fff;font-size:15px;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 /* 대화창·결과·도움말 */
 .ov{position:fixed;inset:0;background:rgba(20,24,22,.55);display:grid;place-items:center;z-index:1000;padding:16px}
 .box{background:var(--paper);border-radius:16px;padding:18px 18px 14px;width:min(360px,100%);max-height:88vh;overflow:auto;
@@ -275,9 +275,15 @@ function layout() {
     place(id, x, row ? 692 : 588, HS, 30 + i, false);
   });
   // 바닥
+  // 바닥에서 고를 때: 같은 달 패가 겹쳐 쌓여 가운데가 가려지므로, 고를 패를 판 가운데로 크게 띄워 나란히
+  const picks = pickSet ? G.wait.opts : [], PS = 1.25, PW = CW * PS, PG = 14;
   for (const m in G.slot) {
     const s = G.slot[m], x = SLOT_X[s % 4], y = SLOT_Y[s / 4 | 0];
-    floorOf(+m).forEach((id, j) => place(id, x + j * 7, y + j * 9, 1, 100 + j, false));
+    floorOf(+m).forEach((id, j) => {
+      const k = picks.indexOf(id);
+      if (k >= 0) place(id, 200 - (PW * picks.length + PG * (picks.length - 1)) / 2 + k * (PW + PG), 212, PS, 900 + k, false);
+      else place(id, x + j * 7, y + j * 9, 1, 100 + j, false);
+    });
   }
   // 딴 패
   [[1, 52], [0, 494]].forEach(([p, y]) => {

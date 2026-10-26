@@ -677,7 +677,7 @@ const RAM5 = ram5(), RAM5L = withVO(VOFF, ram5), RAM5R = withVO(-VOFF, ram5);
 // 6층 층층 찜질방(사용자: 노래방은 기계와 물건(캔)이 따로 놀아서 교체 — 맥반석 계란·식혜·팥빙수, 양머리는 표현이 어려워 팥빙수로) — 나무 메뉴판(크림 글자) + 황토 벽돌 앞판. 세 대 모두 윗판 위에 서 있는 기계(post)
 const JJM = { board:'#6b4226', edge:'#e0a85a', front:'url(#brk)', strip:'#8c5a3a', tilt:0.62,
   mat:'<linearGradient id="ms6" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b9c2cf"/><stop offset=".35" stop-color="#f1f4f8"/><stop offset="1" stop-color="#8d98aa"/></linearGradient><pattern id="brk" width="24" height="12" patternUnits="userSpaceOnUse"><rect width="24" height="12" fill="#d9a06a"/><path d="M0 0.5 H24 M0 6.5 H24 M6 0.5 V6.5 M18 6.5 V12" stroke="#b87a48" stroke-width="1.2"/></pattern><linearGradient id="cl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dba06a"/><stop offset="1" stop-color="#a8683a"/></linearGradient><linearGradient id="gl6" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#eaf6fa" stop-opacity=".55"/><stop offset=".4" stop-color="#ffffff" stop-opacity=".25"/><stop offset="1" stop-color="#cfe6ee" stop-opacity=".55"/></linearGradient><linearGradient id="og" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5a3420"/><stop offset=".4" stop-color="#8a5634"/><stop offset="1" stop-color="#4a2a18"/></linearGradient>',
-  deco:'<path d="M12 137 H228" stroke="#8c5a3a" stroke-width="3"/><rect x="22" y="142" width="80" height="20" rx="4" fill="#fff4e0" stroke-width="2"/><g fill="none" stroke="#fff" stroke-width="2.2" opacity=".85"><path d="M190 160 q-4 -6 0 -12 t0 -12"/><path d="M200 160 q-4 -6 0 -12 t0 -12"/><path d="M210 160 q-4 -6 0 -12 t0 -12"/></g>' };
+  deco:'<path d="M12 137 H228" stroke="#8c5a3a" stroke-width="3"/><g fill="none" stroke="#fff" stroke-width="2.2" opacity=".85"><path d="M190 160 q-4 -6 0 -12 t0 -12"/><path d="M200 160 q-4 -6 0 -12 t0 -12"/><path d="M210 160 q-4 -6 0 -12 t0 -12"/></g>' };
 // 6층 원근·현실감(사용자: 왼쪽·오른쪽 방향, 그림자, 접시 방향 + 정교하게): 세 대 왼쪽·정면·오른쪽(withVO), 바닥 그림자 시점대로(fine), 원근 쟁반(ptray),
 // 서 있는 것은 앞면 그대로 + 윗면·시점 쪽 옆면(standBox), 납작한 회색 띠 대신 오른쪽 아래로 드리우는 흐린 그림자(cast6)
 const JJM6 = { ...JJM, fine:true, ptray:true, side:'#a8683a', boardUp:30, wt:'url(#pb6)', brush:false,   // 윗판 = 편백 평상(사용자 2026-10-26 명암·디테일: 밝은 스테인리스 한 장이라 비어 보임 → 판자 결·틈 그늘)
@@ -3263,7 +3263,6 @@ function animEgg6({ S2, R2: R2o, u: uo, now, prog, work, s }){   // 기계는 M6
   const R2 = (x, y) => R2o(...map6(M6.egg, x, y)), u = uo*M6.egg.k;
   menuSign(S2, uo, now, s, '♨ 맥반석 계란', '#ffe9c2', 23 - BOARD6, 19);
   unsq(() => {
-    { const [px, py] = R2o(62, 152); ctx.font = `${Math.round(9.5*uo)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('2개 2,000원', px, py); }
     { const [px, py] = R2(62, 76.5); ctx.font = `${Math.round(6*u)}px ${FONT}`; ctx.fillStyle = '#ffe9c2'; ctx.fillText('불가마', px, py); }
     const fire = work && prog < 0.7 ? 1 : s.broken ? 0 : 0.35, [ax, ay] = R2(62, 120);   // 아궁이 불빛
     ctx.save(); ctx.beginPath(); const [l, t] = R2(42, 101), [r, b] = R2(82, 126); ctx.moveTo(l, b); ctx.lineTo(l, t + 11*u); ctx.quadraticCurveTo(l, t, (l + r)/2, t); ctx.quadraticCurveTo(r, t, r, t + 11*u); ctx.lineTo(r, b); ctx.closePath(); ctx.clip();
@@ -3305,7 +3304,6 @@ function animSik6({ S2, R2: R2o, u: uo, now, prog, work, s }){   // 기계는 M6
   const R2 = (x, y) => R2o(...map6(M6.sik, x, y)), u = uo*M6.sik.k;
   menuSign(S2, uo, now, s, '♨ 살얼음 식혜', '#ffe9c2', 23 - BOARD6, 19);
   unsq(() => {
-    { const [px, py] = R2o(62, 152); ctx.font = `${Math.round(9.5*uo)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('한 잔 2,000원', px, py); }
     const pour = work ? lerp01(prog, 0.38, 0.68) : 0, lvl = 0.66 - 0.1*pour,   // 통은 2/3쯤(사용자: 가득 말고)
       [cx, top] = R2(62, 76), [, bot] = R2(62, 104), rx = 28*u, ry = 5*u, ly = bot - (bot - top)*lvl;
     ctx.save(); ctx.beginPath(); ctx.moveTo(cx - rx, top); ctx.lineTo(cx - rx, bot); ctx.ellipse(cx, bot, rx, ry, 0, Math.PI, 0, true); ctx.lineTo(cx + rx, top); ctx.closePath(); ctx.clip();
@@ -3352,7 +3350,6 @@ function animBing6({ S2, R2: R2o, u: uo, now, prog, work, s }){   // 기계는 M
   const R2 = (x, y) => R2o(...map6(M6.bing, x, y)), u = uo*M6.bing.k;
   menuSign(S2, uo, now, s, '❄ 눈꽃 팥빙수', '#ffe9c2', 23 - BOARD6, 19);
   unsq(() => {
-    { const [px, py] = R2o(62, 152); ctx.font = `${Math.round(9.5*uo)}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#c0392b'; ctx.fillText('한 그릇 5,000원', px, py); }
     // 순서(사용자: 쟁반에 올린 뒤 고명): 얼음 갈기(0~40%) → 쟁반으로(40~48%) → 쟁반 위에서 팥(48~56)·인절미(56~62)·콩가루(62~68)·연유(68~74%)
     const shave = work ? lerp01(prog, 0, 0.4) : 1, top = !work ? 4 : prog < 0.48 ? 0 : prog < 0.56 ? 1 : prog < 0.62 ? 2 : prog < 0.68 ? 3 : 4, [bx, by] = R2(46, 121), bu = u*1.4;
     const [tx, ty] = R2o(...TRAY_C()), tu = uo*1.3;

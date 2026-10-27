@@ -36,7 +36,7 @@
   // 주소 #왕 으로 들어오면 그 왕 열기(사건 페이지 위 경로 '○대 왕' 링크 등)
   const hashKing = () => {
     const sec = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
-    if (sec && sec.classList.contains('king')) { openKing(sec, true); sec.scrollIntoView({ block: 'start' }); }
+    if (sec && sec.classList.contains('king')) { showTab('kings', false); openKing(sec, true); sec.scrollIntoView({ block: 'start' }); }
   };
   addEventListener('hashchange', hashKing);
 
@@ -79,12 +79,12 @@
     dtl.className = 'dtl by-' + s;
     const sum = $('#dsum'); sum.textContent = sum.dataset[s];
     document.querySelectorAll('#dsort .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.s === s));
-    if (push) { try { history.replaceState(null, '', '?tab=drama' + (s === 'era' ? '&sort=era' : '')); } catch {} }
+    if (push) { try { history.replaceState(null, '', s === 'era' ? '?sort=era' : location.pathname); } catch {} }
   }
   chips('#dsort', 's', s => sortDramas(s, true));
   if (dSort === 'era') sortDramas('era', false);
 
-  // 탭(왕별 / 드라마별) — 주소 ?tab=drama 로 남김
+  // 탭(드라마별 기본 / 왕별) — 왕별은 주소 ?tab=kings 로 남김
   const tabs = [...document.querySelectorAll('.tab')];
   function showTab(name, push) {
     if (!tabs.length) return;
@@ -93,12 +93,12 @@
       t.setAttribute('aria-selected', on);
       document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
     });
-    if (push) { try { history.replaceState(null, '', name === 'drama' ? '?tab=drama' + (dSort === 'era' ? '&sort=era' : '') : location.pathname); } catch {} }
+    if (push) { try { history.replaceState(null, '', name === 'kings' ? '?tab=kings' : dSort === 'era' ? '?sort=era' : location.pathname); } catch {} }
   }
   tabs.forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab, true)));
   if (tabs.length) {
-    // #왕 으로 들어오면 왕별 탭, ?tab=drama 면 드라마별
-    showTab(new URLSearchParams(location.search).get('tab') === 'drama' && !location.hash ? 'drama' : 'kings', false);
+    // #왕 이나 ?tab=kings 로 들어오면 왕별 탭, 아니면 드라마별(예전 ?tab=drama 링크도 드라마별)
+    showTab(location.hash.length > 1 || new URLSearchParams(location.search).get('tab') === 'kings' ? 'kings' : 'drama', false);
     hashKing();
   }
 

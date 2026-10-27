@@ -21,7 +21,25 @@
       apply(b.dataset[attr]);
     });
   }
-  // 왕 연표: 고른 드라마에 나오는 사건만, 빈 해 제목은 숨김
+  // 왕 띠를 누르면 그 왕 연표 열고 닫기(처음엔 다 닫힘) — 닫을 때 띠가 화면 위로 지나가 있으면 띠 자리로 올려 줌
+  function openKing(sec, on) {
+    const b = sec && sec.querySelector('.ktog'); if (!b) return;
+    b.setAttribute('aria-expanded', on);
+    document.getElementById(b.getAttribute('aria-controls')).hidden = !on;
+  }
+  document.addEventListener('click', ev => {
+    const b = ev.target.closest('.ktog'); if (!b) return;
+    const sec = b.closest('.king'), on = b.getAttribute('aria-expanded') !== 'true';
+    openKing(sec, on);
+    if (!on && sec.getBoundingClientRect().top < 0) sec.scrollIntoView({ block: 'start' });
+  });
+  // 주소 #왕 으로 들어오면 그 왕 열기(사건 페이지 위 경로 '○대 왕' 링크 등)
+  const hashKing = () => {
+    const sec = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (sec && sec.classList.contains('king')) { openKing(sec, true); sec.scrollIntoView({ block: 'start' }); }
+  };
+  addEventListener('hashchange', hashKing);
+
   // 왕별 연표: 고른 드라마에 나오는 사건만 — 빈 해 제목·사건 없는 왕 띠는 숨김
   function filterKings(f) {
     let shown = 0;
@@ -37,6 +55,7 @@
       const n = items.filter(li => li.classList.contains('ev') && !li.classList.contains('hide')).length;
       shown += n;
       sec.classList.toggle('hide', f !== 'all' && n === 0);
+      openKing(sec, f !== 'all' && n > 0);   // 드라마로 거르면 걸린 왕은 펼쳐 보여 줌, '전체'로 돌아오면 다시 닫음
     });
     const msg = $('#fmsg');
     if (msg) {
@@ -62,6 +81,7 @@
   if (tabs.length) {
     // #왕 으로 들어오면 왕별 탭, ?tab=drama 면 드라마별
     showTab(new URLSearchParams(location.search).get('tab') === 'drama' && !location.hash ? 'drama' : 'kings', false);
+    hashKing();
   }
 
   // 왕 목록 창: 고르면 그 왕 띠로(거르기 중이라 숨어 있으면 전체로 되돌림)
@@ -76,6 +96,7 @@
       showTab('kings', true);
       const sec = document.getElementById(a.dataset.k);
       if (sec.classList.contains('hide')) { document.querySelector('#filter [data-f="all"]').click(); }
+      openKing(sec, true);
       try { history.replaceState(null, '', '#' + a.dataset.k); } catch {}
       sec.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
     });

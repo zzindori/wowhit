@@ -164,10 +164,17 @@ mark{background:color-mix(in srgb, var(--red) 22%, transparent);color:inherit;bo
 .king{scroll-margin-top:var(--barH)}
 .kband{position:sticky;top:var(--barH);z-index:5;display:flex;align-items:center;gap:8px;min-height:48px;
   background:var(--bg);border-bottom:2px solid var(--red);padding:4px 0}
+.ktog{flex:1;min-width:0;display:flex;align-items:center;gap:8px;min-height:44px;padding:0;border:0;background:none;
+  color:var(--ink);font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ktog:focus-visible{outline:2px solid var(--link);outline-offset:2px;border-radius:6px}
+.kar{flex:none;width:9px;height:9px;margin:0 6px 0 2px;border-right:2px solid var(--sub);border-bottom:2px solid var(--sub);
+  transform:translateY(-3px) rotate(45deg);transition:transform .2s}
+.ktog[aria-expanded="true"] .kar{transform:translateY(2px) rotate(-135deg)}
+@media (prefers-reduced-motion: reduce){.kar{transition:none}}
 .kband .kno{font-size:12.5px;color:var(--sub);flex:none}
 .kband b{font-family:var(--serif);font-size:19px;flex:none}
 .kband .kr{font-size:14px;color:var(--red);font-family:var(--serif);flex:none}
-.kband .kc{margin-left:auto;font-size:12.5px;color:var(--sub);white-space:nowrap}
+.kband .kc{margin-left:auto;flex:none;font-size:12.5px;color:var(--sub);white-space:nowrap}
 .kj{flex:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:16px;cursor:pointer}
 .kbody{padding:10px 0 22px}
 .kabout{margin:0 0 6px;font-size:15px}

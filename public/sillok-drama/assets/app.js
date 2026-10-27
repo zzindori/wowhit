@@ -98,12 +98,13 @@
       t.setAttribute('aria-selected', on);
       document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
     });
-    if (push) { try { history.replaceState(null, '', name === 'kings' ? '?tab=kings' : dSort === 'era' ? '?sort=era' : location.pathname); } catch {} }
+    if (push) { try { history.replaceState(null, '', name === 'kings' ? '?tab=kings' : name === 'people' ? '?tab=people' : dSort === 'era' ? '?sort=era' : location.pathname); } catch {} }
   }
   tabs.forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab, true)));
   if (tabs.length) {
     // #왕 이나 ?tab=kings 로 들어오면 왕별 탭, 아니면 드라마별(예전 ?tab=drama 링크도 드라마별)
-    showTab(location.hash.length > 1 || new URLSearchParams(location.search).get('tab') === 'kings' ? 'kings' : 'drama', false);
+    const tq = new URLSearchParams(location.search).get('tab');
+    showTab(location.hash.length > 1 || tq === 'kings' ? 'kings' : tq === 'people' ? 'people' : 'drama', false);
     hashKing();
   }
 
@@ -115,6 +116,21 @@
     if (sheet) return;   // 첫 화면은 아래에서 따로 처리
     const dlg = ev.target.closest('dialog');
     if (dlg && (ev.target.closest('[data-close]') || ev.target === dlg)) dlg.close();
+  });
+  // 틀린 내용 알려주기 → wowhit 댓글 서버(같은 주소 /api/comments/sillok-report)에 쌓음
+  const rform = $('#rform');
+  if (rform) rform.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const text = $('#rtext').value.trim(); if (!text) return;
+    const body = new URLSearchParams({ author: ($('#rname').value.trim() || '익명').slice(0, 20),
+      content: `${decodeURI(location.pathname)}\n${text}`.slice(0, 300) });   // 댓글 서버 내용 한도 300자
+    const btn = rform.querySelector('button[type=submit]'); btn.disabled = true;
+    try {
+      const r = await fetch('/api/comments/sillok-report', { method: 'POST', body, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+      if (!r.ok) throw new Error(r.status);
+      rform.reset(); $('#report').close(); toast('고마워요! 확인하고 고쳐 둘게요');
+    } catch { toast('보내지 못했어요. 잠시 뒤 다시 해 주세요'); }
+    finally { btn.disabled = false; }
   });
   const sheet = $('#jump');
   if (sheet) {
@@ -141,7 +157,7 @@
   const qEl = $('#q'), res = $('#sres');
   if (qEl && res) {
     const V = { fact: ['사실', 'v-fact'], adapt: ['각색', 'v-adapt'], fic: ['허구', 'v-fic'] };
-    const G = [['k', '👑 왕'], ['dr', '🎬 드라마'], ['ev', '📜 실록 사건'], ['sc', '🎞 드라마 장면']];
+    const G = [['p', '👤 인물'], ['k', '👑 왕'], ['dr', '🎬 드라마'], ['ev', '📜 실록 사건'], ['sc', '🎞 드라마 장면']];
     const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const ns = s => s.toLowerCase().replace(/\s+/g, '');

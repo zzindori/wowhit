@@ -7,6 +7,11 @@
 <meta name="description" content="나라 관청에 매인 노비(공노비) 6만 6천여 명의 노비 문서를 불태우고 양인으로 삼았어요.">
 <meta property="og:title" content="공노비 6만여 명을 양인으로 · 실록과 드라마">
 <meta property="og:description" content="나라 관청에 매인 노비(공노비) 6만 6천여 명의 노비 문서를 불태우고 양인으로 삼았어요.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://wowhit.org/sillok-drama/og/ev-1801-nobi.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#f4ecdc">
 <link rel="icon" href="/sillok-drama/assets/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,15 +45,26 @@
     </div>
   </div>
   <p class="none">이 사건과 이어 둔 드라마 장면은 아직 없어요.<br>같은 시대 드라마: <a href="/sillok-drama/drama/the-book-of-fish/">자산어보</a></p>
+  
   <button class="share" type="button" data-share>🔗 이 기록 공유하기</button>
+  <button class="pill morebtn" type="button" data-open="report">✏️ 틀린 내용 알려주기</button>
   <nav class="pager" aria-label="이전·다음 사건"><a class="pn prev" href="/sillok-drama/sunjo/1800-sunjo/"><small>← 이전 1800</small>열한 살 순조와 정순왕후의 수렴청정</a><a class="pn next" href="/sillok-drama/sunjo/1801-sinyu/"><small>다음 1801 →</small>신유박해</a></nav>
 </article>
 </main>
 <footer class="foot wrap">
   <p>실록 날짜는 음력이에요. 기록 요약은 직접 쓴 글이고, 원문은 <a href="https://sillok.history.go.kr" target="_blank" rel="noopener">국사편찬위원회 조선왕조실록</a>에서 검색어로 찾아볼 수 있어요.
   드라마 줄거리는 공개된 소개·기사·백과사전과 대조해 짧게 요약했고, 드라마 사진은 싣지 않았어요.</p>
-  <p><a href="https://wowhit.org">wowHit</a></p>
+  <p><button class="linkbtn" type="button" data-open="report">✏️ 틀린 내용 알려주기</button> · <a href="https://wowhit.org">wowHit</a></p>
 </footer>
+<dialog class="sheet" id="report" aria-labelledby="reportT">
+  <div class="sheet-h"><h2 id="reportT">틀린 내용 알려주기</h2><button class="icon" type="button" data-close aria-label="닫기">✕</button></div>
+  <form class="rform" id="rform">
+    <p class="muted">이 페이지에서 틀린 점이나, 드라마에서 직접 본 장면이 다르면 알려 주세요. 고쳐 둘게요.</p>
+    <textarea id="rtext" rows="5" maxlength="230" required placeholder="예: 「태종 이방원」 20회에선 방간이 아니라 …"></textarea>
+    <input id="rname" type="text" maxlength="20" placeholder="이름(안 써도 돼요)" autocomplete="nickname">
+    <button class="share" type="submit">보내기</button>
+  </form>
+</dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="/sillok-drama/assets/app.js" defer></script>
 </body>

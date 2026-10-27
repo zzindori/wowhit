@@ -7,6 +7,11 @@
 <meta name="description" content="신하들이 세자의 잘못을 들어 폐하기를 청하자, 태종은 세자 이제를 폐해 광주로 보냈어요. 처음엔 양녕의 다섯 살 아들을 대신 세우려 했지만 신하 다수가 &#x27;어진 사람을 고르자(택현)&#x27;고 했습니다. 태">
 <meta property="og:title" content="양녕을 폐하고 충녕을 세자로 · 실록과 드라마">
 <meta property="og:description" content="신하들이 세자의 잘못을 들어 폐하기를 청하자, 태종은 세자 이제를 폐해 광주로 보냈어요. 처음엔 양녕의 다섯 살 아들을 대신 세우려 했지만 신하 다수가 &#x27;어진 사람을 고르자(택현)&#x27;고 했습니다. 태">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://wowhit.org/sillok-drama/og/ev-1418-chungnyeong.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#f4ecdc">
 <link rel="icon" href="/sillok-drama/assets/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,15 +69,26 @@
   <div class="row"><div class="lbl">📜 기록</div><div class="txt">조선의 대군들은 세자를 위협하지 않도록 왕이 될 공부를 따로 받지 않는 경우가 많았어요. 그런데 맏아들보다 어진 아들을 고르는 &#x27;택현&#x27;으로 왕이 된 예도 있어요. 1418년 셋째 충녕대군(세종)이 그랬어요.</div></div>
   
 </article></section></div>
+  <p class="ppl">👤 <a href="/sillok-drama/person/yi-bangwon/">이방원</a> <a href="/sillok-drama/person/sejong/">세종</a></p>
   <button class="share" type="button" data-share>🔗 이 기록 공유하기</button>
+  <button class="pill morebtn" type="button" data-open="report">✏️ 틀린 내용 알려주기</button>
   <nav class="pager" aria-label="이전·다음 사건"><a class="pn prev" href="/sillok-drama/taejong/1416-minmuhyul/"><small>← 이전 1416</small>민무휼·민무회도 목숨을 잃다</a><a class="pn next" href="/sillok-drama/taejong/1418-sejong/"><small>다음 1418 →</small>충녕(세종)에게 왕위를 넘기다</a></nav>
 </article>
 </main>
 <footer class="foot wrap">
   <p>실록 날짜는 음력이에요. 기록 요약은 직접 쓴 글이고, 원문은 <a href="https://sillok.history.go.kr" target="_blank" rel="noopener">국사편찬위원회 조선왕조실록</a>에서 검색어로 찾아볼 수 있어요.
   드라마 줄거리는 공개된 소개·기사·백과사전과 대조해 짧게 요약했고, 드라마 사진은 싣지 않았어요.</p>
-  <p><a href="https://wowhit.org">wowHit</a></p>
+  <p><button class="linkbtn" type="button" data-open="report">✏️ 틀린 내용 알려주기</button> · <a href="https://wowhit.org">wowHit</a></p>
 </footer>
+<dialog class="sheet" id="report" aria-labelledby="reportT">
+  <div class="sheet-h"><h2 id="reportT">틀린 내용 알려주기</h2><button class="icon" type="button" data-close aria-label="닫기">✕</button></div>
+  <form class="rform" id="rform">
+    <p class="muted">이 페이지에서 틀린 점이나, 드라마에서 직접 본 장면이 다르면 알려 주세요. 고쳐 둘게요.</p>
+    <textarea id="rtext" rows="5" maxlength="230" required placeholder="예: 「태종 이방원」 20회에선 방간이 아니라 …"></textarea>
+    <input id="rname" type="text" maxlength="20" placeholder="이름(안 써도 돼요)" autocomplete="nickname">
+    <button class="share" type="submit">보내기</button>
+  </form>
+</dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="/sillok-drama/assets/app.js" defer></script>
 </body>

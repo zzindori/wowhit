@@ -7,6 +7,11 @@
 <meta name="description" content="정조는 윤2월 9일 어머니 혜경궁 홍씨를 모시고 현륭원과 화성으로 떠나, 13일 화성 행궁 봉수당에서 회갑 잔치(진찬)를 올렸어요. 잔치에 온 노인들에게 비단과 지팡이를 내리고, 고을 백성의 부역을">
 <meta property="og:title" content="어머니의 회갑 잔치, 화성에서 · 실록과 드라마">
 <meta property="og:description" content="정조는 윤2월 9일 어머니 혜경궁 홍씨를 모시고 현륭원과 화성으로 떠나, 13일 화성 행궁 봉수당에서 회갑 잔치(진찬)를 올렸어요. 잔치에 온 노인들에게 비단과 지팡이를 내리고, 고을 백성의 부역을">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://wowhit.org/sillok-drama/og/ev-1795-wonhaeng.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#f4ecdc">
 <link rel="icon" href="/sillok-drama/assets/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,15 +51,26 @@
   <div class="row"><div class="lbl">📜 기록</div><div class="txt">1795년 화성 행궁에서 회갑 잔치를 연 건 사실이에요(『원행을묘정리의궤』). 정조가 직접 춤을 췄다는 기록은 확인되지 않아, 영화의 연출로 보여요.</div></div>
   
 </article></section></div>
+  <p class="ppl">👤 <a href="/sillok-drama/person/hyegyeong/">혜경궁 홍씨</a> <a href="/sillok-drama/person/jeongjo/">정조</a></p>
   <button class="share" type="button" data-share>🔗 이 기록 공유하기</button>
+  <button class="pill morebtn" type="button" data-open="report">✏️ 틀린 내용 알려주기</button>
   <nav class="pager" aria-label="이전·다음 사건"><a class="pn prev" href="/sillok-drama/jeongjo/1790-sunjo/"><small>← 이전 1790</small>수빈 박씨가 원자(순조)를 낳다</a><a class="pn next" href="/sillok-drama/jeongjo/1796-hwaseong/"><small>다음 1796 →</small>수원 화성을 완성하다</a></nav>
 </article>
 </main>
 <footer class="foot wrap">
   <p>실록 날짜는 음력이에요. 기록 요약은 직접 쓴 글이고, 원문은 <a href="https://sillok.history.go.kr" target="_blank" rel="noopener">국사편찬위원회 조선왕조실록</a>에서 검색어로 찾아볼 수 있어요.
   드라마 줄거리는 공개된 소개·기사·백과사전과 대조해 짧게 요약했고, 드라마 사진은 싣지 않았어요.</p>
-  <p><a href="https://wowhit.org">wowHit</a></p>
+  <p><button class="linkbtn" type="button" data-open="report">✏️ 틀린 내용 알려주기</button> · <a href="https://wowhit.org">wowHit</a></p>
 </footer>
+<dialog class="sheet" id="report" aria-labelledby="reportT">
+  <div class="sheet-h"><h2 id="reportT">틀린 내용 알려주기</h2><button class="icon" type="button" data-close aria-label="닫기">✕</button></div>
+  <form class="rform" id="rform">
+    <p class="muted">이 페이지에서 틀린 점이나, 드라마에서 직접 본 장면이 다르면 알려 주세요. 고쳐 둘게요.</p>
+    <textarea id="rtext" rows="5" maxlength="230" required placeholder="예: 「태종 이방원」 20회에선 방간이 아니라 …"></textarea>
+    <input id="rname" type="text" maxlength="20" placeholder="이름(안 써도 돼요)" autocomplete="nickname">
+    <button class="share" type="submit">보내기</button>
+  </form>
+</dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="/sillok-drama/assets/app.js" defer></script>
 </body>

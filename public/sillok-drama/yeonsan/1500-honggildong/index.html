@@ -7,6 +7,11 @@
 <meta name="description" content="영의정 한치형 등이 &#x27;강도 홍길동을 잡았다니 기쁨을 이기지 못하겠다, 백성의 해를 없앤 것으로 이보다 큰 일이 없다&#x27;며 무리를 모두 잡자고 청했어요. 며칠 뒤엔 벼슬아치 엄귀손이 홍길동에게서 음식을">
 <meta property="og:title" content="강도 홍길동이 잡히다 · 실록과 드라마">
 <meta property="og:description" content="영의정 한치형 등이 &#x27;강도 홍길동을 잡았다니 기쁨을 이기지 못하겠다, 백성의 해를 없앤 것으로 이보다 큰 일이 없다&#x27;며 무리를 모두 잡자고 청했어요. 며칠 뒤엔 벼슬아치 엄귀손이 홍길동에게서 음식을">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://wowhit.org/sillok-drama/og/ev-1500-honggildong.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#f4ecdc">
 <link rel="icon" href="/sillok-drama/assets/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,15 +51,26 @@
   <div class="row"><div class="lbl">📜 기록</div><div class="txt">연산군일기 1500년 10월 22일에 &#x27;강도 홍길동을 잡았다&#x27;는 기록이 있어요. 실제 홍길동은 무리를 이끈 큰 도적이었지만, 드라마 속 출생과 의적 이야기는 창작이에요.</div></div>
   
 </article></section></div>
+  <p class="ppl">👤 <a href="/sillok-drama/person/hong-gildong/">홍길동</a> <a href="/sillok-drama/person/sukbin-choe/">숙빈 최씨</a></p>
   <button class="share" type="button" data-share>🔗 이 기록 공유하기</button>
+  <button class="pill morebtn" type="button" data-open="report">✏️ 틀린 내용 알려주기</button>
   <nav class="pager" aria-label="이전·다음 사건"><a class="pn prev" href="/sillok-drama/yeonsan/1498-muo/"><small>← 이전 1498</small>무오사화 — 사초에 실린 「조의제문」</a><a class="pn next" href="/sillok-drama/yeonsan/1502-noksu/"><small>다음 1502 →</small>장녹수, 숙원이 되다</a></nav>
 </article>
 </main>
 <footer class="foot wrap">
   <p>실록 날짜는 음력이에요. 기록 요약은 직접 쓴 글이고, 원문은 <a href="https://sillok.history.go.kr" target="_blank" rel="noopener">국사편찬위원회 조선왕조실록</a>에서 검색어로 찾아볼 수 있어요.
   드라마 줄거리는 공개된 소개·기사·백과사전과 대조해 짧게 요약했고, 드라마 사진은 싣지 않았어요.</p>
-  <p><a href="https://wowhit.org">wowHit</a></p>
+  <p><button class="linkbtn" type="button" data-open="report">✏️ 틀린 내용 알려주기</button> · <a href="https://wowhit.org">wowHit</a></p>
 </footer>
+<dialog class="sheet" id="report" aria-labelledby="reportT">
+  <div class="sheet-h"><h2 id="reportT">틀린 내용 알려주기</h2><button class="icon" type="button" data-close aria-label="닫기">✕</button></div>
+  <form class="rform" id="rform">
+    <p class="muted">이 페이지에서 틀린 점이나, 드라마에서 직접 본 장면이 다르면 알려 주세요. 고쳐 둘게요.</p>
+    <textarea id="rtext" rows="5" maxlength="230" required placeholder="예: 「태종 이방원」 20회에선 방간이 아니라 …"></textarea>
+    <input id="rname" type="text" maxlength="20" placeholder="이름(안 써도 돼요)" autocomplete="nickname">
+    <button class="share" type="submit">보내기</button>
+  </form>
+</dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="/sillok-drama/assets/app.js" defer></script>
 </body>

@@ -7,6 +7,11 @@
 <meta name="description" content="즉위 초 도승지로 정조의 오른팔이던 홍국영이 스스로 물러나기를 청해 봉조하가 되었어요. 정조는 &#x27;근래 맡긴 일이 너무 무겁고 책임이 너무 커서, 상등의 사람이 아니면 다 잘할 수 없었다&#x27;고 설명했습">
 <meta property="og:title" content="홍국영이 물러나다 · 실록과 드라마">
 <meta property="og:description" content="즉위 초 도승지로 정조의 오른팔이던 홍국영이 스스로 물러나기를 청해 봉조하가 되었어요. 정조는 &#x27;근래 맡긴 일이 너무 무겁고 책임이 너무 커서, 상등의 사람이 아니면 다 잘할 수 없었다&#x27;고 설명했습">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://wowhit.org/sillok-drama/og/ev-1779-hong.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#f4ecdc">
 <link rel="icon" href="/sillok-drama/assets/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,15 +57,26 @@
   <div class="row"><div class="lbl">📜 기록</div><div class="txt">홍덕로는 홍국영(자 덕로)이에요. 1779년 9월 물러났고 이듬해 시골로 내쳐졌다가, 1781년 4월 강릉에서 세상을 떠났어요. 실록에는 스스로 목숨을 끊었다는 말 없이 &#x27;죽었다&#x27;고만 나와요.</div></div>
   
 </article></section></div>
+  <p class="ppl">👤 <a href="/sillok-drama/person/jeongjo/">정조</a> <a href="/sillok-drama/person/hong-gukyeong/">홍국영</a></p>
   <button class="share" type="button" data-share>🔗 이 기록 공유하기</button>
+  <button class="pill morebtn" type="button" data-open="report">✏️ 틀린 내용 알려주기</button>
   <nav class="pager" aria-label="이전·다음 사건"><a class="pn prev" href="/sillok-drama/jeongjo/1777-assassin/"><small>← 이전 1777</small>궁궐 지붕 위의 자객</a><a class="pn next" href="/sillok-drama/jeongjo/1782-munhyo/"><small>다음 1782 →</small>궁인 성씨, 아들(문효세자)을 낳다</a></nav>
 </article>
 </main>
 <footer class="foot wrap">
   <p>실록 날짜는 음력이에요. 기록 요약은 직접 쓴 글이고, 원문은 <a href="https://sillok.history.go.kr" target="_blank" rel="noopener">국사편찬위원회 조선왕조실록</a>에서 검색어로 찾아볼 수 있어요.
   드라마 줄거리는 공개된 소개·기사·백과사전과 대조해 짧게 요약했고, 드라마 사진은 싣지 않았어요.</p>
-  <p><a href="https://wowhit.org">wowHit</a></p>
+  <p><button class="linkbtn" type="button" data-open="report">✏️ 틀린 내용 알려주기</button> · <a href="https://wowhit.org">wowHit</a></p>
 </footer>
+<dialog class="sheet" id="report" aria-labelledby="reportT">
+  <div class="sheet-h"><h2 id="reportT">틀린 내용 알려주기</h2><button class="icon" type="button" data-close aria-label="닫기">✕</button></div>
+  <form class="rform" id="rform">
+    <p class="muted">이 페이지에서 틀린 점이나, 드라마에서 직접 본 장면이 다르면 알려 주세요. 고쳐 둘게요.</p>
+    <textarea id="rtext" rows="5" maxlength="230" required placeholder="예: 「태종 이방원」 20회에선 방간이 아니라 …"></textarea>
+    <input id="rname" type="text" maxlength="20" placeholder="이름(안 써도 돼요)" autocomplete="nickname">
+    <button class="share" type="submit">보내기</button>
+  </form>
+</dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="/sillok-drama/assets/app.js" defer></script>
 </body>

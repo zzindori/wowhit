@@ -58,13 +58,18 @@
       openKing(sec, f !== 'all' && n > 0);   // 드라마로 거르면 걸린 왕은 펼쳐 보여 줌, '전체'로 돌아오면 다시 닫음
     });
     const msg = $('#fmsg');
+    const b = document.querySelector(`#filter [data-f="${f}"]`);
     if (msg) {
-      const b = document.querySelector(`#filter [data-f="${f}"]`);
       msg.hidden = f === 'all';
-      msg.textContent = f === 'all' ? '' : `${b.textContent.replace('🎬 ', '')}에 나오는 실록 사건 ${shown}개`;
+      msg.textContent = f === 'all' ? '' : `「${b.textContent}」에 나오는 실록 사건 ${shown}개`;
     }
+    const nm = $('#fname'), cl = $('#fclear');
+    if (nm) nm.textContent = f === 'all' ? '드라마로 거르기' : b.textContent;
+    if (cl) cl.hidden = f === 'all';
   }
-  chips('#filter', 'f', filterKings);
+  chips('#filter', 'f', f => { filterKings(f); const pk = $('#pick'); if (pk && pk.open) pk.close(); });
+  const fclear = $('#fclear');
+  if (fclear) fclear.addEventListener('click', () => document.querySelector('#filter [data-f="all"]').click());
 
   // 드라마별 정렬: 최신 방송순(기본) / 배경 연도순 — 주소 &sort=era 로 남김
   let dSort = new URLSearchParams(location.search).get('sort') === 'era' ? 'era' : 'air';
@@ -105,10 +110,13 @@
   // 왕 목록 창: 고르면 그 왕 띠로(거르기 중이라 숨어 있으면 전체로 되돌림)
   const sheet = $('#jump');
   if (sheet) {
+    const pick = $('#pick');
     document.addEventListener('click', ev => {
       if (ev.target.closest('[data-jump]')) { sheet.showModal(); return; }
-      if (ev.target.closest('[data-close]') || ev.target === sheet) { sheet.close(); return; }
-      const a = ev.target.closest('.jk, .jk-link'); if (!a) return;
+      if (pick && ev.target.closest('[data-pick]')) { pick.showModal(); return; }
+      const dlg = ev.target.closest('dialog');
+      if (ev.target.closest('[data-close]') || (dlg && ev.target === dlg)) { dlg.close(); return; }
+      const a = ev.target.closest('.jk'); if (!a) return;
       ev.preventDefault();
       sheet.close();
       showTab('kings', true);

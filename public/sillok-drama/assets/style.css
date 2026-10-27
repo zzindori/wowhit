@@ -21,7 +21,8 @@
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.7;
   overflow-wrap:anywhere;word-break:keep-all;-webkit-tap-highlight-color:transparent}
-a{color:var(--link)}
+a{color:var(--link);text-decoration:none}
+.wrap p a,.foot a{text-decoration:underline;text-decoration-color:color-mix(in srgb, currentColor 35%, transparent);text-underline-offset:3px}
 h1,h2,h3{font-family:var(--serif);line-height:1.35;letter-spacing:-.3px}
 .wrap{max-width:760px;margin:0 auto;padding-left:var(--gut);padding-right:var(--gutR)}
 
@@ -38,10 +39,10 @@ h1,h2,h3{font-family:var(--serif);line-height:1.35;letter-spacing:-.3px}
 .crumbs a{color:var(--sub);padding:4px 0}
 
 /* 첫 화면 */
-.hero{padding:28px 0 8px}
-.hero h1{font-size:clamp(25px,7vw,36px);margin:0 0 10px}
+.hero{padding:16px 0 2px}
+.hero h1{font-size:clamp(21px,5.6vw,30px);margin:0 0 4px}
 .hero h1 em{font-style:normal;color:var(--red)}
-.hero p{margin:0;color:var(--sub)}
+.hero p{margin:0;color:var(--sub);font-size:14.5px}
 .sec{font-size:19px;margin:28px 0 10px}
 .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}
 .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
@@ -52,8 +53,9 @@ a.card:active{transform:scale(.99)}
 .hook{font-size:14.5px;color:var(--ink)}
 .kcard .hook{color:var(--ink)}
 .soon{opacity:.6}
-.tally{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
-.tally i{font-style:normal;font-size:13px;color:var(--sub);margin:0 4px 0 -2px}
+.tally{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:center;margin-top:6px}
+.vt{font-size:12.5px;display:inline-flex;align-items:center;gap:5px}
+.vt::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
 
 .badge{display:inline-flex;align-items:center;font-size:12.5px;font-weight:700;padding:1px 9px;border-radius:99px;border:1.5px solid currentColor;line-height:1.6}
 .v-fact{color:var(--fact)} .v-adapt{color:var(--adapt)} .v-fic{color:var(--fic)}
@@ -81,8 +83,7 @@ a.card:active{transform:scale(.99)}
 .tl .ev a{display:block;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 14px;color:var(--ink);text-decoration:none}
 .tl .ev .md{display:block;font-size:13px;color:var(--sub)}
 .tl .ev b{font-family:var(--serif);font-size:16.5px;font-weight:700}
-.dtags{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:6px}
-.dtag{font-size:12.5px;color:var(--red);border:1px solid color-mix(in srgb, var(--red) 40%, transparent);border-radius:99px;padding:0 8px}
+.dtags{display:block;margin-top:3px;font-size:12.5px;color:var(--sub)}
 .tl .hide{display:none}
 
 /* 사건 페이지 */
@@ -148,13 +149,14 @@ mark{background:color-mix(in srgb, var(--red) 22%, transparent);color:inherit;bo
 /* ── 첫 화면 탭 */
 :root{--barH:calc(61px + env(safe-area-inset-top))}
 .muted{color:var(--sub)}
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:22px 0 4px;padding:4px;background:var(--paper);border:1px solid var(--line);border-radius:14px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:14px 0 4px;padding:4px;background:var(--paper);border:1px solid var(--line);border-radius:14px}
 .tab{min-height:46px;border:0;border-radius:10px;background:transparent;color:var(--sub);font:inherit;font-size:16px;cursor:pointer}
 .tab[aria-selected="true"]{background:var(--ink);color:var(--bg)}
 .tlsum{font-size:14px;color:var(--sub);margin:12px 0 4px}
 .tlsum b{color:var(--ink)}
-.tbar{display:flex;flex-direction:column;gap:2px}
-.tbar .chips{margin:8px 0 4px}
+.tbar{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 2px}
+.pill{border-radius:99px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plist{padding:0 var(--gutR) calc(16px + env(safe-area-inset-bottom)) var(--gut);overflow:auto;margin:4px 0 0}
 .jumpbtn{align-self:flex-start;min-height:40px;padding:6px 14px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--link);font:inherit;font-size:14.5px;cursor:pointer}
 .fmsg{font-size:14px;color:var(--sub);margin:8px 0 0}
 
@@ -163,7 +165,9 @@ mark{background:color-mix(in srgb, var(--red) 22%, transparent);color:inherit;bo
 /* 사건이 수백 개로 늘면 .king에 content-visibility:auto를 검토(지금은 왕 목록 이동 위치가 어긋날 수 있어 안 씀) */
 .king{scroll-margin-top:var(--barH)}
 .kband{position:sticky;top:var(--barH);z-index:5;display:flex;align-items:center;gap:8px;min-height:48px;
-  background:var(--bg);border-bottom:2px solid var(--red);padding:4px 0}
+  background:var(--bg);border-bottom:1px solid var(--line);padding:4px 0}
+.kband:has(.ktog[aria-expanded="true"]){border-bottom:2px solid var(--red)}
+.ktog[aria-expanded="false"] ~ .kj{display:none}
 .ktog{flex:1;min-width:0;display:flex;align-items:center;gap:8px;min-height:44px;padding:0;border:0;background:none;
   color:var(--ink);font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .ktog:focus-visible{outline:2px solid var(--link);outline-offset:2px;border-radius:6px}
@@ -182,19 +186,24 @@ mark{background:color-mix(in srgb, var(--red) 22%, transparent);color:inherit;bo
 .king.empty .kbody{padding:6px 0 14px}
 .king.empty .kabout{font-size:14px;color:var(--sub);margin:0}
 .king.empty .kdr{margin:4px 0 0}
-.ready{margin:2px 0 0;font-size:14.5px}
-.ready a{display:inline-block;padding:6px 0;font-weight:700}
 .king.empty .kband b{color:var(--sub)}
 .king.hide{display:none}
 
-/* ── 드라마별: 배경 연도순 */
-.dtl{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:14px}
-.dl{display:grid;grid-template-columns:58px minmax(0,1fr);gap:10px;align-items:start}
-.dl-era{font-family:var(--serif);font-weight:700;color:var(--red);font-size:19px;line-height:1.15;padding-top:14px;text-align:right}
-.dl-era small,.dl-air small{display:block;font-size:13px;color:var(--sub);font-weight:400}
-.dl-air{font-family:var(--serif);font-weight:700;color:var(--ink);font-size:19px;line-height:1.15;padding-top:14px;text-align:right}
-.dtl.by-air .dl-era,.dtl.by-era .dl-air{display:none}
-#dsort{margin:14px 0 4px}
+/* ── 드라마별: 한 줄 목록 */
+.dtl{list-style:none;margin:6px 0 0;padding:0;border-top:1px solid var(--line)}
+.dl{border-bottom:1px solid var(--line)}
+.drow{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;align-items:start;padding:12px 2px;color:var(--ink);text-decoration:none}
+.drow:active{background:var(--paper)}
+.dl-air,.dl-era{font-family:var(--serif);font-weight:700;font-size:16px;line-height:1.5;padding-top:1px;color:var(--sub)}
+.dl-era{color:var(--red)}
+.dtl.by-air .dl-era,.dtl.by-era .dl-air,.dtl.by-air .m-air,.dtl.by-era .m-era{display:none}
+.dmain{display:flex;flex-direction:column;min-width:0}
+.dmain b{font-family:var(--serif);font-size:17.5px;line-height:1.4}
+.dmeta{font-size:13px;color:var(--sub)}
+.dhook{font-size:14px;color:var(--sub);margin-top:2px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.drow .tally{margin-top:4px}
+#dsort{margin:10px 0 2px}
+#dsort .chip,.tbar .pill{min-height:36px;padding:4px 12px;font-size:14px}
 .era-line{font-size:14px;color:var(--ink)}
 .era-bar{display:block;position:relative;height:8px;border-radius:99px;background:color-mix(in srgb, var(--line) 70%, transparent);margin:8px 0 2px;overflow:hidden}
 .era-bar span{position:absolute;top:0;bottom:0;background:var(--red);border-radius:99px;min-width:5px}
@@ -219,3 +228,14 @@ mark{background:color-mix(in srgb, var(--red) 22%, transparent);color:inherit;bo
 .jk i{position:absolute;top:4px;right:6px;font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--red);border-radius:99px;padding:0 6px;line-height:1.6}
 .jk.empty{opacity:.55}
 @media (min-width:700px){ .sheet{margin:auto;border-radius:18px} }
+
+/* ── 사건 페이지: 드라마별로 묶은 장면 */
+.dgrps{display:grid;gap:18px}
+.dgrp{display:grid;gap:8px}
+.dgrp-h{font-size:16px;margin:0}
+.dgrp-h small{font-family:var(--sans);font-weight:400;color:var(--sub);font-size:13px}
+.scene.sm{padding:12px 14px}
+.st{font-size:16px;margin:0 0 8px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.st .badge{font-size:11.5px;padding:0 7px;flex:none}
+.sm .row{font-size:15px}
+.kdr{font-size:13.5px}

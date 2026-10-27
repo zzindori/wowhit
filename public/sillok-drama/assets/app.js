@@ -66,6 +66,24 @@
   }
   chips('#filter', 'f', filterKings);
 
+  // 드라마별 정렬: 최신 방송순(기본) / 배경 연도순 — 주소 &sort=era 로 남김
+  let dSort = new URLSearchParams(location.search).get('sort') === 'era' ? 'era' : 'air';
+  const dtl = $('#dtl');
+  function sortDramas(s, push) {
+    if (!dtl) return;
+    dSort = s;
+    const n = (li, k) => +li.dataset[k];
+    const cmp = s === 'era' ? (a, b) => n(a, 'e') - n(b, 'e') || n(a, 'e2') - n(b, 'e2') || n(b, 'y') - n(a, 'y')
+                            : (a, b) => n(b, 'y') - n(a, 'y') || n(a, 'e') - n(b, 'e') || n(a, 'e2') - n(b, 'e2');
+    [...dtl.children].sort(cmp).forEach(li => dtl.appendChild(li));
+    dtl.className = 'dtl by-' + s;
+    const sum = $('#dsum'); sum.textContent = sum.dataset[s];
+    document.querySelectorAll('#dsort .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.s === s));
+    if (push) { try { history.replaceState(null, '', '?tab=drama' + (s === 'era' ? '&sort=era' : '')); } catch {} }
+  }
+  chips('#dsort', 's', s => sortDramas(s, true));
+  if (dSort === 'era') sortDramas('era', false);
+
   // 탭(왕별 / 드라마별) — 주소 ?tab=drama 로 남김
   const tabs = [...document.querySelectorAll('.tab')];
   function showTab(name, push) {
@@ -75,7 +93,7 @@
       t.setAttribute('aria-selected', on);
       document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
     });
-    if (push) { try { history.replaceState(null, '', name === 'drama' ? '?tab=drama' : location.pathname); } catch {} }
+    if (push) { try { history.replaceState(null, '', name === 'drama' ? '?tab=drama' + (dSort === 'era' ? '&sort=era' : '') : location.pathname); } catch {} }
   }
   tabs.forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab, true)));
   if (tabs.length) {

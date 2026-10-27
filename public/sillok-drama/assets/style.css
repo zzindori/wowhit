@@ -191,7 +191,10 @@ mark{background:color-mix(in srgb, var(--red) 22%, transparent);color:inherit;bo
 .dtl{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:14px}
 .dl{display:grid;grid-template-columns:58px minmax(0,1fr);gap:10px;align-items:start}
 .dl-era{font-family:var(--serif);font-weight:700;color:var(--red);font-size:19px;line-height:1.15;padding-top:14px;text-align:right}
-.dl-era small{display:block;font-size:13px;color:var(--sub);font-weight:400}
+.dl-era small,.dl-air small{display:block;font-size:13px;color:var(--sub);font-weight:400}
+.dl-air{font-family:var(--serif);font-weight:700;color:var(--ink);font-size:19px;line-height:1.15;padding-top:14px;text-align:right}
+.dtl.by-air .dl-era,.dtl.by-era .dl-air{display:none}
+#dsort{margin:14px 0 4px}
 .era-line{font-size:14px;color:var(--ink)}
 .era-bar{display:block;position:relative;height:8px;border-radius:99px;background:color-mix(in srgb, var(--line) 70%, transparent);margin:8px 0 2px;overflow:hidden}
 .era-bar span{position:absolute;top:0;bottom:0;background:var(--red);border-radius:99px;min-width:5px}

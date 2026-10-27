@@ -108,6 +108,14 @@
   }
 
   // 왕 목록 창: 고르면 그 왕 띠로(거르기 중이라 숨어 있으면 전체로 되돌림)
+  // 아래에서 올라오는 판: [data-open="id"]로 열고, ✕·바깥 누르면 닫힘(드라마 페이지 링크 등)
+  document.addEventListener('click', ev => {
+    const op = ev.target.closest('[data-open]');
+    if (op) { const dl = document.getElementById(op.dataset.open); if (dl) dl.showModal(); return; }
+    if (sheet) return;   // 첫 화면은 아래에서 따로 처리
+    const dlg = ev.target.closest('dialog');
+    if (dlg && (ev.target.closest('[data-close]') || ev.target === dlg)) dlg.close();
+  });
   const sheet = $('#jump');
   if (sheet) {
     const pick = $('#pick');

@@ -49,6 +49,10 @@ body{margin:0;background:radial-gradient(ellipse at 50% 45%,var(--felt) 0,var(--
   text-shadow:0 3px 0 var(--red),0 0 14px rgba(0,0,0,.5);opacity:0}
 #banner.show{animation:ban 1s ease-out}
 @keyframes ban{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(1.15)}30%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-18px)}}
+#pTot{font-size:12px;padding:2px 9px;opacity:.92}
+#totFx{position:absolute;right:14px;top:62px;font-size:20px;pointer-events:none;opacity:0;z-index:960;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+#totFx.show{animation:totUp 1.6s ease-out}
+@keyframes totUp{0%{opacity:0;transform:translateY(10px) scale(.6)}15%{opacity:1;transform:translateY(0) scale(1.2)}30%{transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
 #msg{position:absolute;left:0;right:0;top:462px;z-index:950;text-align:center;color:#fff;font-size:15px;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 /* 대화창·결과·도움말 */
 .ov{position:fixed;inset:0;background:rgba(20,24,22,.55);display:grid;place-items:center;z-index:1000;padding:16px}
@@ -81,6 +85,8 @@ body{margin:0;background:radial-gradient(ellipse at 50% 45%,var(--felt) 0,var(--
 <div id="table" aria-label="맞고 게임판">
   <div class="pill" id="pCpu" style="left:6px;top:8px">컴퓨터</div>
   <button class="btn" id="bHelp" style="right:6px;top:6px">? 도움말</button>
+  <div class="pill" id="pTot" style="right:6px;top:40px"></div>
+  <div id="totFx"></div>
   <div class="lbl" id="deckN"></div>
   <div class="pill" id="pMe">나</div>
   <div id="msg"></div>
@@ -150,6 +156,24 @@ const isGuk = id => C[id].t === 'Y' && C[id].sub === 'k';
 const KEY = 'gostop-v1';
 let store = {total: 0, wins: 0, losses: 0, plays: 0, tag: true, snd: true, vib: true};
 try { Object.assign(store, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+// 건물주 판은 따로 셈(store.ll), 일반 판은 store.total/wins/losses
+store.ll = Object.assign({wins: 0, losses: 0, draws: 0}, store.ll);
+const signed = n => (n > 0 ? '+' : '') + n;
+function totText() {
+  return BET ? `건물주 전적 ${store.ll.wins}승 ${store.ll.losses}패` + (store.ll.draws ? ` ${store.ll.draws}무` : '')
+    : `누적 ${signed(store.total)}점 · ${store.wins}승 ${store.losses}패`;
+}
+// 점수 반영 + 칩 갱신 + '+12'/'-8' 튀어 오름. w: 0 나 이김 · 1 짐 · null 비김(건물주 판만)
+function addResult(w, pts) {
+  if (BET) store.ll[w === 0 ? 'wins' : w === 1 ? 'losses' : 'draws']++;
+  else { store.total += w === 0 ? pts : -pts; store[w === 0 ? 'wins' : 'losses']++; }
+  store.plays++; save(); showTot();
+  if (BET || !pts) return;
+  const f = document.getElementById('totFx');
+  f.textContent = signed(w === 0 ? pts : -pts) + '점'; f.style.color = w === 0 ? '#ffd84a' : '#ff8a80';
+  f.classList.remove('show'); void f.offsetWidth; f.classList.add('show');
+}
+function showTot() { const e = document.getElementById('pTot'); if (e) e.textContent = totText(); }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
 
 /* ── 층층이 건물주 한판(?vs=landlord&bet=…&mul=…): 단판, 결과(gostop-bet)를 남기고 층층이로 돌아감 ── */
@@ -346,10 +370,12 @@ function layout() {
   const picks = pickSet ? G.wait.opts : [], PS = 1.25, PW = CW * PS, PG = 14;
   for (const m in G.slot) {
     const s = G.slot[m], x = SLOT_X[s % 4], y = SLOT_Y[s / 4 | 0];
-    floorOf(+m).forEach((id, j) => {
-      const k = picks.indexOf(id);
+    // 같은 달 여러 장: 앞 패를 위로 올려 쌓아 뒤 패 아래쪽(이름·그림)이 보이게, 자리 가운데 기준
+    const fl = floorOf(+m), n = fl.length, dy = n >= 3 ? 16 : 20, dx = n >= 3 ? 10 : 14;
+    fl.forEach((id, j) => {
+      const k = picks.indexOf(id), c = j - (n - 1) / 2;
       if (k >= 0) place(id, 200 - (PW * picks.length + PG * (picks.length - 1)) / 2 + k * (PW + PG), 212, PS, 900 + k, false);
-      else place(id, x + j * 7, y + j * 9, 1, 100 + j, false);
+      else place(id, x + c * dx, y - c * dy - (s >= 8 && n >= 3 ? 10 : 0), 1, 100 + j, false); // 맨 아래 줄 세 장은 안내 글자(#msg)를 피해 조금 위로
     });
   }
   // 딴 패
@@ -624,7 +650,7 @@ function endRound(w) {
     T.textContent = '나가리 · 비겼어요';
     tb.innerHTML = '<tr><td>아무도 못 났어요</td><td>평소 보상</td></tr>';
     setTimeout(() => { document.getElementById('result').hidden = false; fx('nagari'); }, 700);
-    betDone('draw', 0); return;
+    addResult(null, 0); betDone('draw', 0); return;
   }
   if (w == null) {
     T.textContent = '나가리';
@@ -636,12 +662,10 @@ function endRound(w) {
       : w === 0 ? `이겼어요! +${pts}점` : `졌어요… -${pts}점`;
     tb.innerHTML = rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('') +
       `<tr class="tot"><td>${w === 0 ? '받은 점수' : '잃은 점수'}</td><td>${pts}점</td></tr>`;
-    store.total += w === 0 ? pts : -pts;
-    store[w === 0 ? 'wins' : 'losses']++;
-    store.plays++; save();
+    addResult(w, pts);
     nagari = 1; starter = w;
   }
-  document.getElementById('resTot').textContent = `누적 ${store.total}점 · ${store.wins}승 ${store.losses}패`;
+  document.getElementById('resTot').textContent = totText();
   if (BET) betDone(w === 0 ? 'win' : 'lose', pts);
   setTimeout(() => { document.getElementById('result').hidden = false; fx(w == null ? 'nagari' : w === 0 ? 'win' : 'lose'); }, 700);
 }
@@ -655,9 +679,9 @@ async function run() {
     const pts = 10 * nagari;
     document.getElementById('resT').textContent = p === 0 ? `총통! +${pts}점` : `상대 총통… -${pts}점`;
     document.getElementById('resTbl').innerHTML = `<tr><td>${m}월 네 장(총통)</td><td>${pts}점</td></tr>`;
-    store.total += p === 0 ? pts : -pts; store[p === 0 ? 'wins' : 'losses']++; store.plays++; save();
+    addResult(p, pts);
     nagari = 1; starter = p;
-    document.getElementById('resTot').textContent = `누적 ${store.total}점 · ${store.wins}승 ${store.losses}패`;
+    document.getElementById('resTot').textContent = totText();
     if (BET) betDone(p === 0 ? 'win' : 'lose', pts);
     document.getElementById('result').hidden = false; fx(p === 0 ? 'win' : 'lose');
     return;
@@ -697,14 +721,14 @@ document.getElementById('tSnd').onchange = e => { store.snd = e.target.checked; 
 document.getElementById('tVib').onchange = e => { store.vib = e.target.checked; save(); if (store.vib) fx('jjok'); };
 document.getElementById('bReset').onclick = () => {
   if (!confirm('누적 점수와 승패를 지울까요?')) return;
-  Object.assign(store, {total: 0, wins: 0, losses: 0, plays: 0}); save();
+  Object.assign(store, {total: 0, wins: 0, losses: 0, plays: 0, ll: {wins: 0, losses: 0, draws: 0}}); save(); showTot();
 };
 document.getElementById('bNext').onclick = () => {
   if (BET) { location.href = '/games/stack/'; return; }
   document.getElementById('result').hidden = true; run();
 };
 
-resize(); applyPrefs();
+resize(); applyPrefs(); showTot();
 if (betOver) ask('이미 끝난 판이에요', '건물주와의 한판은 끝났어요. 층층이로 돌아가요', ['돌아가기']).then(() => { location.href = '/games/stack/'; });
 else { run(); if (BET) { banner('건물주와 한판!'); msg(`이기면 보상 ×${BET_MUL}부터 (점수 높을수록 최대 ×${BET_MAX}), 지면 물건은 공짜`); } }
 </script>

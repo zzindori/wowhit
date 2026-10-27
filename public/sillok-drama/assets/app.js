@@ -1,4 +1,4 @@
-// 실록과 드라마 — 테마 전환, 연표·장면 거르기, 결말 가림 풀기, 검색어 복사, 공유
+// 실록과 드라마 — 테마 전환, 연표·장면 거르기, 검색어 복사, 공유
 (() => {
   const $ = s => document.querySelector(s);
   const store = (k, v) => { try { v === undefined ? 0 : localStorage.setItem('sillok-' + k, v); return localStorage.getItem('sillok-' + k); } catch { return null; } };
@@ -178,8 +178,6 @@
   }
 
   document.addEventListener('click', async ev => {
-    const sp = ev.target.closest('.spoil');
-    if (sp) { sp.closest('.scene').querySelectorAll('.spoil').forEach(x => x.classList.remove('spoil')); return; }
     const cp = ev.target.closest('[data-copy]');
     if (cp) {
       try { await navigator.clipboard.writeText(cp.dataset.copy); toast(`「${cp.dataset.copy}」 복사했어요 — 실록 사이트 검색창에 붙여 넣으세요`); }

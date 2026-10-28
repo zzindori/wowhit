@@ -66,6 +66,8 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--pad);outline-offset
   width:min(360px,calc(100% - 32px));background:#e9f8f2;border:2px solid #3fa98a;border-radius:14px;padding:6px 12px;pointer-events:none;
   display:flex;flex-direction:column;gap:3px;font-size:14px;color:#2f6f5b;font-variant-numeric:tabular-nums}
 .orders .low{color:var(--warn)}
+.orders .tier{display:block;font-size:12px;color:#2f8f6f}
+.orders .tier.bul{color:#9a6a00;font-weight:bold}
 .orders b{color:#1f6e57;font-weight:normal;background:#c8eee0;border-radius:6px;padding:0 5px}
 .mission{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:50%;transform:translateX(-50%);box-sizing:border-box;
   width:min(360px,calc(100% - 32px));background:var(--hud);border-radius:16px;box-shadow:0 4px 0 rgba(44,43,53,.18);padding:10px 14px;
@@ -157,7 +159,7 @@ const CFG = {
   warpCost: 1500,                                // 엘리베이터(층 버튼으로 이동) 비용
   events: { first: 60, every: 50 },              // 층 이벤트(고장·VIP): 처음 몇 초 뒤부터, 평균 몇 초마다
   broken: { fixTime: 2, ruin: 120, warn: 30, rebuild: 100 }, // 수리: 앞에 몇 초 서 있기 / 고장 난 채로 몇 초 지나면 부서짐(몇 초 전부터 경고) / 다시 제작 비용(× 8^층)
-  deliv: { time: 60, perFloor: 15, want: [2, 4], mul: 10, tip: 0.5, dum: 0.25, dumMax: 1.5 }, // 배달 주문: 기본 제한 시간 + 층 차이당 추가 초, 개수, 보상 = 개당 '지금 최고층 물건 값' × 10(사용자: 배달이 제일 힘든데 박함 → 6에서 올림), 절반 넘게 남기고 끝내면 배달팁 50%, 덤 1개당 기분 팁 = 배달 보상 × 25%(최대 150%)
+  deliv: { time: 60, perFloor: 15, want: [2, 4], mul: 10, tip: 0.5, dum: 0.25, dumMax: 1.5, bullet: 20, bulletPer: 8, bulletTip: 1 }, // 배달 주문: 기본 제한 시간 + 층 차이당 추가 초, 개수, 보상 = 개당 '지금 최고층 물건 값' × 10(사용자: 배달이 제일 힘든데 박함 → 6에서 올림), 총알배송 = 주문 뒤 (20 + 층 차이당 8)초 안에 끝내면 팁 100% · 빠른 배달 = 제한 시간 절반 안이면 50%(사용자: 빠를수록 더), 덤 1개당 기분 팁 = 배달 보상 × 25%(최대 150%)
   vip: { time: 40, want: [3, 6], mul: 5, goldMul: 5, slow: 10, slowSpd: 0.6, bet: 3, betStep: 0.5, betMax: 10 }, // VIP: 제한 시간(초), 원하는 개수, 보상 배수(물건 값 × 5), 황금을 건네면 그 물건만 또 × 5,
                                                  //      놓치면 10초 동안 일꾼 속도의 60%로 (업그레이드와 상관없이 일꾼보다 느림)
   autoCost: 1500,                                // 층 자동 수금 칸 비용 (× 8^층)
@@ -1842,10 +1844,29 @@ function startDeliv(){
   const t = pick(zs), src = pick(S.zones.map((_, z) => z).filter(z => z !== t));
   const [lo, hi] = CFG.deliv.want, want = lo + Math.floor(Math.random()*(hi - lo + 1)), time = CFG.deliv.time + CFG.deliv.perFloor*Math.abs(t - src);
   const gear = THEMES[t] ? pick(THEMES[t].guests) : null;
-  rt(t).deliv = { x:-30, y:gy(t, DELIV_SPOT.y), src, want, got:0, sum:0, t:time, time, state:'come', fx:1, fy:0, svx:0, svy:0, serveT:0,
+  rt(t).deliv = { x:-30, y:gy(t, DELIV_SPOT.y), src, want, got:0, sum:0, t:time, time, bullet:CFG.deliv.bullet + CFG.deliv.bulletPer*Math.abs(t - src), state:'come', fx:1, fy:0, svx:0, svy:0, serveT:0,
     gear, col:gear ? GUESTS[gear] : pick(CUST_COLS) };
   toast(`🛵 배달 주문! ${src+1}층 ${itemName(src)} ${want}개 → ${shopLabel(t)} (${time}초)`); toastT = 4.5; sfx.vip();
 }
+// 배달 등급: 2 총알배송(주문 뒤 bullet초 안) · 1 빠른 배달(제한 시간 절반 안) · 0 배달 완료. 남은 초 = 그 등급이 끝날 때까지
+function delivTier(D){
+  const el = D.time - D.t, b = D.bullet ?? -1;
+  if (el <= b) return { k:2, left:b - el };
+  if (D.t > D.time/2) return { k:1, left:D.t - D.time/2 };
+  return { k:0, left:0 };
+}
+// 배달 카드 둘째 줄: 다음 등급이 끝날 때까지 남은 초(⚡ → 🛵 → 없음)
+function delivNext(D){
+  const tr = delivTier(D);
+  if (tr.k === 2) return `<span class="tier bul">⚡ 총알배송까지 ${Math.ceil(tr.left)}초 · 팁 +${Math.round(CFG.deliv.bulletTip*100)}%</span>`;
+  if (tr.k === 1) return `<span class="tier">🛵 빠른 배달까지 ${Math.ceil(tr.left)}초 · 팁 +${Math.round(CFG.deliv.tip*100)}%</span>`;
+  return '';
+}
+const DELIV_TIER = [
+  { tip:0, name:'🛵 배달 완료!', say:'잘 먹을게요!', tag:'' },
+  { tip:() => CFG.deliv.tip, name:'🛵 빠른 배달!', say:'벌써 왔어요? 최고!', tag:'빠른 배달팁' },
+  { tip:() => CFG.deliv.bulletTip, name:'⚡ 총알배송!', say:'헉, 총알이네요?! 최고최고!', tag:'총알배송 팁' },
+];
 function updDeliv(z, cz, dt){
   const R = rt(z), D = R.deliv; if (!D) return;
   if (D.sayT > 0) D.sayT -= dt;
@@ -1863,14 +1884,16 @@ function updDeliv(z, cz, dt){
   fly(stackPos(P, idx), () => [D.x, D.y, 30], it, 0.2, () => {}); sfx.hand();
   if (gold) { floatText(D.x, D.y, '황금!', '#b58a12'); sfx.gold(); }
   if (D.got >= D.want) {
-    const fast = D.t > D.time/2, reward = Math.round(D.sum*(fast ? 1 + CFG.deliv.tip : 1));
+    const tr = delivTier(D), T = DELIV_TIER[tr.k], tip = T.tip ? T.tip() : 0, fast = tr.k > 0, reward = Math.round(D.sum*(1 + tip));
     S.money += reward; S.stats.deliv = (S.stats.deliv || 0) + 1;     // 지갑 한도와 상관없이 들어옴(VIP처럼)
-    D.state = 'leave'; D.happy = true; D.say = fast ? '벌써 왔어요? 최고!' : '잘 먹을게요!'; D.sayT = 2.4;
+    D.state = 'leave'; D.happy = true; D.say = T.say; D.sayT = 2.4;
     if (topOf(S.stack, D.src) >= 0) { D.state = 'extra'; D.extra = 0; D.goldSum = 0; D.base = reward; D.serveT = -0.6; D.say = pick(DUM_ASK); D.sayT = 2.6; }   // 남은 같은 물건은 덤으로
-    floatText(D.x, D.y, `배달${fast ? '팁' : ''} +₩${fmt(reward)}`, '#2f8f6f'); coinsFrom(D.x, D.y, 50, 10); shake(4);
-    burst(D.x, D.y, 50, 20, 'spark', { color:'#7fe0c0', speed:130, up:110, g:60, life:0.8 });
-    showBanner(fast ? '🛵 총알 배달!' : '🛵 배달 완료!');
-    toast(`배달 완료! +₩${fmt(reward)}${fast ? ' (배달팁 포함)' : ''}`); sfx.mission(); save();
+    const bul = tr.k === 2;
+    floatText(D.x, D.y, `배달${fast ? '팁' : ''} +₩${fmt(reward)}`, bul ? '#b58a12' : '#2f8f6f'); coinsFrom(D.x, D.y, 50, bul ? 22 : 10); shake(bul ? 7 : 4);
+    burst(D.x, D.y, 50, bul ? 40 : 20, 'spark', { color: bul ? '#ffd84a' : '#7fe0c0', speed: bul ? 170 : 130, up:110, g:60, life: bul ? 1 : 0.8 });
+    if (bul) { burst(D.x, D.y, 50, 24, 'conf', { speed:150, up:140, g:120, life:1.1 }); sfx.gold(); }
+    showBanner(T.name);
+    toast(`배달 완료! +₩${fmt(reward)}${fast ? ` (${T.tag} +${Math.round(tip*100)}%)` : ''}`); sfx.mission(); save();
   }
 }
 // 덤(사용자: 떨이는 마음에 걸림 → 덤을 주면 손님이 기분 좋아 팁): 배달을 끝낸 뒤 등에 같은 층 물건이 남아 있으면 옆에 있는 동안 하나씩 덤으로 건넴(값은 안 받음).
@@ -4811,7 +4834,7 @@ function hud(){
   if (moreEl) { const n = al.length - shown.size, t = n > 0 ? `+${n}` : ''; if (moreEl.textContent !== t) { moreEl.textContent = t; moreEl.hidden = !n; } }
   // 배달 주문 카드: 미션 카드 위에 진행 중인 배달을 계속 보여 줌
   const ords = S.zones.map((_, z) => rt(z).deliv).map((D, z) => D && D.state !== 'leave' && D.state !== 'extra'
-    ? `<div${D.t < 15 ? ' class="low"' : ''}>🛵 <b>${z+1}층으로 배달</b> · ${D.src+1}층 ${itemName(D.src)} ${D.got}/${D.want}개 · ₩${fmt(delivEach()*D.want)} · ${Math.ceil(D.t)}초</div>` : '').join('');   // 갈 층을 맨 앞에 굵게
+    ? `<div${D.t < 15 ? ' class="low"' : ''}>🛵 <b>${z+1}층으로 배달</b> · ${D.src+1}층 ${itemName(D.src)} ${D.got}/${D.want}개 · ₩${fmt(delivEach()*D.want)} · ${Math.ceil(D.t)}초${delivNext(D)}</div>` : '').join('');   // 갈 층을 맨 앞에 굵게
   if (ords !== shownOrders) { shownOrders = ords; ordersEl.innerHTML = ords; ordersEl.hidden = !ords; layoutT = 0; }
   if ((layoutT -= lastDt) <= 0) {                   // 아래쪽 쌓기: 미션 카드 → 배달 카드 → 알림/안내
     layoutT = 0.5; const mEl = $('mission'), mh = mEl.hidden ? 0 : mEl.offsetHeight + 8, oh = ordersEl.hidden ? 0 : ordersEl.offsetHeight + 8;

@@ -1,4 +1,4 @@
-# 홈페이지 카드용 그림(헤드리스): 아이콘(512px png, SVG 코드로 그림) + 화면 캡처 3장(390×844 webp: 학습·서킷 만들기·대결)
+# 홈페이지 카드용 그림(헤드리스): 아이콘(512px png, SVG 코드로 그림) + 화면 캡처 4장(390×844 webp: 학습·서킷 만들기·대결·시험)
 # public을 http://127.0.0.1:8766 으로 띄워 둔 상태에서: python3 scripts/ai-gp/make_assets.py
 import math
 from pathlib import Path
@@ -54,18 +54,23 @@ with sync_playwright() as p:
     print('train', sp.evaluate('({laps: GP.ST.laps, best: GP.ST.best})'))
     sp.screenshot(path=str(OUT / 'screen1.png'))
     sp.click('#bEdit'); sp.wait_for_timeout(300)
-    for t, (wx, wy) in [('sand', (480, 580)), ('water', (100, 240)), ('cone', (640, 572)), ('cone', (420, 86)), ('hill', (650, 180))]:
+    for t, (wx, wy) in [('sand', (100, 240)), ('cone', (640, 572)), ('hill', (650, 180)), ('ramp', (400, 580)), ('bridge', (250, 92))]:
         sp.click(f'[data-tool="{t}"]')
         x, y = sp.evaluate(f"""(() => {{ const [sx, sy] = GP.toStage({wx}, {wy}), r = document.getElementById('cv').getBoundingClientRect(), L = r.width / 420; return [r.left + sx * L, r.top + sy * L]; }})()""")
         sp.mouse.click(x, y); sp.wait_for_timeout(120)
-    sp.click('[data-tool="cone"]'); sp.wait_for_timeout(200)
+    sp.click('[data-th="snow"]'); sp.wait_for_timeout(300)
     sp.screenshot(path=str(OUT / 'screen2.png'))
     sp.click('#eCancel'); sp.wait_for_timeout(500)
+    sp.click('#bExam'); sp.wait_for_function('GP.EX && GP.EX.res', timeout=20000)
+    sp.click('[data-x="4"]'); sp.wait_for_timeout(5200)
+    print('exam', sp.inner_text('#xSum')[:60])
+    sp.screenshot(path=str(OUT / 'screen4.png'))
+    sp.click('#xExit'); sp.wait_for_timeout(800)
     sp.click('#bRace'); sp.wait_for_timeout(4800)
     sp.keyboard.down('ArrowUp'); sp.wait_for_timeout(2600)
     sp.screenshot(path=str(OUT / 'screen3.png'))
     sp.keyboard.up('ArrowUp')
     b.close()
-for n in (1, 2, 3):
+for n in (1, 2, 3, 4):
     f = OUT / f'screen{n}.png'; Image.open(f).save(OUT / f'screen{n}.webp', quality=84); f.unlink()
 print('done', sorted(x.name for x in OUT.iterdir()))

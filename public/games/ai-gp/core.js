@@ -8,9 +8,16 @@ const DT = 1 / 30;                       // 물리 한 칸 = 1/30초
 // 차: 가속·브레이크·최고 속도·구름 저항·공기 저항·최소 회전 반지름·타이어 접지(옆으로 버티는 힘)·미끄러질 때 속도 손실·언덕 힘
 const CAR = { ACC: 260, BRK: 520, VTOP: 380, ROLL: 8, DRAG: 0.0003, RMIN: 30, GRIP: 650, SCRUB: 0.6, SCRUB_MAX: 700, G: 350 };
 const RAYS = [-1.2, -0.7, -0.3, 0, 0.3, 0.7, 1.2], RAY_LEN = 250;   // 벽까지 거리 센서 7개(라디안, 앞 기준)
-const OBS = RAYS.length + 17, ACT = 2;   // 보는 것 24개 → 핸들·페달 2개
+const OBS = RAYS.length + 23, ACT = 2;   // 보는 것 30개 → 핸들·페달 2개 (2단계까지 24개 — 예전 뇌는 load에서 늘려 줌)
+const OBS_V2 = 24, NEW_MEAN = [0, 0, 1, 1, .5, 1], NEW_VAR = [.04, .04, .04, .04, .1, .04];   // 3단계에 더한 6개의 처음 평균·분산
 // 바닥: 모래 = 느려지고 조금 미끄러움 · 웅덩이 = 많이 미끄러움. 콘은 닿으면 사고
 const SURF = [null, { drag: 1.2, grip: .75 }, { drag: .25, grip: .4 }], CONE_R = 6, CAR_R = 5;
+// 배경: 눈은 서킷 전체가 미끄러움
+const THEMES = { grass: { name: '잔디', grip: 1 }, snow: { name: '눈', grip: .62 }, desert: { name: '사막', grip: .9 } };
+// 점프대: 오르막 28 → 구덩이 72 → 착지 40(곧은 길이어야 함). 뜨는 힘 = 속도 × k, 중력 g. 느리면 구덩이에 빠짐(약 205 = 110km/h 넘어야)
+const JUMP = { ramp: 28, gap: 72, land: 40, k: .5, g: 600 };
+// 좁은 다리: 길이 150(양 끝 24는 점점 좁아짐), 반폭 16. 떨어지면 풍덩(사고)
+const BRIDGE = { len: 150, taper: 24, hw: 16 };
 const PPO = { cars: 24, T: 128, epochs: 4, mb: 512, gamma: 0.99, lam: 0.95, clip: 0.2, lr: 3e-4, ent: 0.0005,
   maxGrad: 0.5, hidden: 64, kl: 0.03 };
 // 점수 규칙: 앞으로 간 거리 + / 벽에 박음 − / 핸들 홱 꺾음 −(조금)
@@ -22,6 +29,16 @@ const CIRCUITS = {
       [590, 105], [420, 82], [250, 92], [140, 140], [100, 240], [170, 320], [300, 325], [400, 370], [380, 445], [250, 465], [130, 470], [72, 520], [110, 572]],
     hills: [[905, 420, 70, 85], [420, 80, 55, 100], [255, 395, -45, 80]] },     // [x, y, 높이(−면 골짜기), 퍼짐]
 };
+// 처음 보는 서킷 시험(학습엔 안 씀): 거꾸로 · 콩 · 눈 + 다리 · 사막 + 점프대
+const oval = (cx, cy, rx, ry, f, n = 28) => Array.from({ length: n }, (_, k) => { const a = 2 * Math.PI * k / n, r = f(a); return [Math.round(cx + rx * r * Math.cos(a)), Math.round(cy + ry * r * Math.sin(a))]; });
+const EXAM = [
+  { name: '거꾸로 층층', width: 56, pts: CIRCUITS.main.pts.slice().reverse(), hills: CIRCUITS.main.hills },
+  { name: '콩 서킷', width: 56, pts: oval(500, 320, 380, 230, a => 1 + .17 * Math.sin(3 * a + .6)), hills: [[500, 320, 50, 120]], patches: [[860, 260, 40, 'sand']] },
+  { name: '눈꽃 서킷', width: 56, theme: 'snow', pts: oval(500, 320, 400, 225, a => 1 - .12 * Math.cos(2 * a) + .08 * Math.sin(5 * a)), bridges: [[500, 92]], hills: [[220, 470, 45, 90]] },
+  { name: '사막 점프', width: 56, theme: 'desert',
+    pts: [[230, 530], [400, 530], [560, 530], [720, 530], [840, 500], [915, 420], [920, 300], [870, 190], [770, 120], [620, 110], [480, 150], [380, 230], [270, 260], [150, 250], [90, 330], [100, 450], [150, 510]],
+    ramps: [[480, 530]], patches: [[620, 110, 38, 'sand']] },
+];
 
 const wrap = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -57,12 +74,35 @@ function buildTrack(c) {
   for (let i = 0; i < N; i++) {
     T.k[i] = wrap(T.ang[(i + 1) % N] - T.ang[(i - 1 + N) % N]) / (2 * step);
     T.h[i] = height(T, T.cx[i], T.cy[i]);
-    const hw = T.W / 2;
+  }
+  T.theme = THEMES[c.theme] ? c.theme : 'grass'; T.grip = THEMES[T.theme].grip;
+  // 점프대·다리는 [x, y]로 받아 가장 가까운 서킷 자리에 붙임(서킷에서 멀면 버림)
+  const snap = (x, y) => { let bi = 0, bd = Infinity; for (let i = 0; i < N; i++) { const d = (x - T.cx[i]) ** 2 + (y - T.cy[i]) ** 2; if (d < bd) { bd = d; bi = i; } } return bd < T.W * T.W ? bi : -1; };
+  T.hw = new Float64Array(N).fill(T.W / 2);
+  T.jumps = []; T.bridges = [];
+  for (const [x, y] of c.ramps || []) {
+    const i = snap(x, y); if (i < 0) continue;
+    const s0 = T.s[i], s1 = (s0 + JUMP.ramp) % tot, s2 = (s0 + JUMP.ramp + JUMP.gap) % tot;
+    T.jumps.push({ x, y, i, s0, s1, s2, i1: Math.round(s1 / step) % N, i2: Math.round(s2 / step) % N });
+  }
+  const hb = Math.min(BRIDGE.hw, T.W / 2 - 4), half = BRIDGE.len / 2;
+  for (const [x, y] of c.bridges || []) {
+    const i = snap(x, y); if (i < 0) continue;
+    T.bridges.push({ x, y, i });
+    for (let k = -Math.ceil(half / step); k <= Math.ceil(half / step); k++) {
+      const j = (i + k + N) % N, d = Math.abs(k * step), f = d < half - BRIDGE.taper ? 1 : clamp((half - d) / BRIDGE.taper, 0, 1);
+      T.hw[j] = Math.min(T.hw[j], T.W / 2 - (T.W / 2 - hb) * f);
+    }
+  }
+  for (let i = 0; i < N; i++) {
+    const hw = T.hw[i];
     T.lx[i] = T.cx[i] + T.nx[i] * hw; T.ly[i] = T.cy[i] + T.ny[i] * hw;
     T.rx[i] = T.cx[i] - T.nx[i] * hw; T.ry[i] = T.cy[i] - T.ny[i] * hw;
   }
   return T;
 }
+// s가 a에서 앞으로 b까지 사이에 있나(서킷 한 바퀴를 넘어가도)
+const inSpan = (T, s, a, b) => ((s - a + T.L) % T.L) < ((b - a + T.L) % T.L);
 function height(T, x, y) {
   let h = 0;
   for (const [hx, hy, A, s] of T.hills) { const dx = x - hx, dy = y - hy; h += A * Math.exp(-(dx * dx + dy * dy) / (2 * s * s)); }
@@ -97,6 +137,17 @@ function checkTrack(T) {
     if (dx * dx + dy * dy < lim) return { ok: false, i, why: 'near' };
   }
   if (T.L < 1200) return { ok: false, i: 0, why: 'short' };
+  // 점프대: 오르막부터 착지까지 곧아야 함 · 점프대·다리·출발선끼리 안 겹치게
+  const spans = [[0, 50, 0]], jl = JUMP.ramp + JUMP.gap + JUMP.land;
+  for (const J of T.jumps) {
+    for (let k = -5; k <= Math.ceil(jl / T.step); k++) if (Math.abs(T.k[(J.i + k + T.N) % T.N]) > 1 / 130) return { ok: false, i: J.i, why: 'jumpCurve' };
+    spans.push([J.s0 + jl / 2, jl / 2 + 20, J.i]);
+  }
+  for (const B of T.bridges) spans.push([T.s[B.i], BRIDGE.len / 2, B.i]);
+  for (let a = 0; a < spans.length; a++) for (let b = a + 1; b < spans.length; b++) {
+    const d = Math.abs(spans[a][0] - spans[b][0]) % T.L;
+    if (Math.min(d, T.L - d) < spans[a][1] + spans[b][1]) return { ok: false, i: spans[b][2], why: 'overlap' };
+  }
   return { ok: true };
 }
 
@@ -104,8 +155,8 @@ function checkTrack(T) {
 // keep: 경주 중엔 사고 나도 랩 기록을 이어감
 function place(T, car, idx, keep, lat = 0) {
   car.idx = idx; car.x = T.cx[idx] + T.nx[idx] * lat; car.y = T.cy[idx] + T.ny[idx] * lat; car.th = T.ang[idx]; car.v = 0; car.s = T.s[idx]; car.lat = lat;
-  car.stuck = 0; car.back = 0; car.ps = 0; car.pt = 0; car.slide = 0; car.run = 0;
-  if (!keep) { car.lapValid = false; car.trail = []; }
+  car.stuck = 0; car.back = 0; car.ps = 0; car.pt = 0; car.slide = 0; car.run = 0; car.z = 0; car.vz = 0;
+  if (!keep) { car.lapValid = false; car.relap = false; car.trail = []; }
 }
 function locate(T, car) {
   let best = car.idx, bd = Infinity;
@@ -157,32 +208,49 @@ function observe(T, car, o, off) {
   const here = surfAt(T, car.x, car.y);   // 바닥: 지금·앞 60·앞 140 (모래, 웅덩이)
   o[k++] = here === 1; o[k++] = here === 2;
   for (const d of [60, 140]) { const f = surfAt(T, car.x + Math.cos(car.th) * d, car.y + Math.sin(car.th) * d); o[k++] = f === 1; o[k++] = f === 2; }
+  // 3단계: 떠 있나 · 앞 점프대(가까울수록 1) · 길 반폭 지금·앞 160 · 길 끝까지 남은 폭 · 배경 접지
+  o[k++] = car.z > 0 ? 1 : 0;
+  let rd = 0; for (const J of T.jumps) { const d = (J.s1 - car.s + T.L) % T.L; if (d < 400) rd = Math.max(rd, 1 - d / 400); }
+  o[k++] = rd;
+  const hw = T.hw[car.idx];
+  o[k++] = hw / 28; o[k++] = T.hw[(car.idx + 40) % T.N] / 28; o[k++] = (hw - Math.abs(car.lat)) / 28;
+  o[k++] = T.grip;
 }
 // 한 칸 움직이고 점수·끝남·사건 돌려줌. time = 학습 전체 칸 수
 function stepCar(T, car, a0, a1, time, ev, ci) {
-  const st = clamp(a0, -1, 1), th = clamp(a1, -1, 1);
-  const c = Math.cos(car.th), s = Math.sin(car.th), [gx, gy] = grad(T, car.x, car.y);
-  const sf = SURF[surfAt(T, car.x, car.y)], grip = CAR.GRIP * (sf ? sf.grip : 1);
-  let acc = th >= 0 ? CAR.ACC * th * (1 - car.v / CAR.VTOP) : CAR.BRK * th;
-  acc -= CAR.G * (gx * c + gy * s) + CAR.ROLL + CAR.DRAG * car.v * car.v + (sf ? sf.drag * car.v : 0);
-  car.v = Math.max(0, car.v + acc * DT);
-  let yaw = car.v * st / CAR.RMIN;
-  const lat = Math.abs(car.v * yaw);
+  const st = clamp(a0, -1, 1), th = clamp(a1, -1, 1), air = car.z > 0;
   car.slide = 0;
-  if (lat > grip) {   // 접지 넘음 → 덜 돌고 속도 깎임(밀려 나감)
-    yaw = Math.sign(yaw) * grip / car.v;
-    car.v = Math.max(0, car.v - Math.min((lat - grip) * CAR.SCRUB, CAR.SCRUB_MAX) * DT); car.slide = 1;
+  if (air) {   // 점프 중: 핸들·페달 안 먹고 공기 저항만, 내려오면 착지
+    car.v = Math.max(0, car.v - CAR.DRAG * car.v * car.v * DT);
+    car.vz -= JUMP.g * DT; car.z += car.vz * DT;
+    if (car.z <= 0) { car.z = 0; car.vz = 0; ev.push({ k: 'land', c: ci, x: car.x, y: car.y }); }
+  } else {
+    const c = Math.cos(car.th), s = Math.sin(car.th), [gx, gy] = grad(T, car.x, car.y);
+    const sf = SURF[surfAt(T, car.x, car.y)], grip = CAR.GRIP * T.grip * (sf ? sf.grip : 1);
+    let acc = th >= 0 ? CAR.ACC * th * (1 - car.v / CAR.VTOP) : CAR.BRK * th;
+    acc -= CAR.G * (gx * c + gy * s) + CAR.ROLL + CAR.DRAG * car.v * car.v + (sf ? sf.drag * car.v : 0);
+    car.v = Math.max(0, car.v + acc * DT);
+    let yaw = car.v * st / CAR.RMIN;
+    const lat = Math.abs(car.v * yaw);
+    if (lat > grip) {   // 접지 넘음 → 덜 돌고 속도 깎임(밀려 나감)
+      yaw = Math.sign(yaw) * grip / car.v;
+      car.v = Math.max(0, car.v - Math.min((lat - grip) * CAR.SCRUB, CAR.SCRUB_MAX) * DT); car.slide = 1;
+    }
+    car.th = wrap(car.th + yaw * DT);
   }
-  car.th = wrap(car.th + yaw * DT);
   car.x += Math.cos(car.th) * car.v * DT; car.y += Math.sin(car.th) * car.v * DT;
   const ps = car.s, ns = locate(T, car);
   let ds = ns - ps;
   if (ds < -T.L / 2) ds += T.L; else if (ds > T.L / 2) ds -= T.L;
   car.s = ns; car.run += ds;
+  if (!air && ds > 0) for (const J of T.jumps) if (((J.s1 - ps + T.L) % T.L) <= ds && Math.abs(car.lat) < T.hw[car.idx]) {   // 점프대 끝 지남 → 붕
+    car.vz = car.v * JUMP.k; car.z = .01; ev.push({ k: 'jump', c: ci, x: car.x, y: car.y, v: car.v });
+  }
   let r = ds * RW.prog - RW.steer * (st - car.ps) * (st - car.ps);
   car.ps = st; car.pt = th;
   // 출발선·구간
-  if (ds > 0 && ps > T.L - 60 && ns < 60) {
+  if (ds > 0 && ps > T.L - 60 && ns < 60 && car.relap) car.relap = false;   // 사고로 출발선 뒤로 돌아갔다 다시 넘음 → 랩 아님
+  else if (ds > 0 && ps > T.L - 60 && ns < 60) {
     if (car.lapValid) {
       car.secs[2] = (time - car.secStart) * DT;
       ev.push({ k: 'lap', c: ci, t: (time - car.lapStart) * DT, sec: car.secs.slice(), line: car.trail });
@@ -195,9 +263,14 @@ function stepCar(T, car, a0, a1, time, ev, ci) {
   }
   if (car.lapValid && (time & 1)) car.trail.push(Math.round(car.x * 10) / 10, Math.round(car.y * 10) / 10);
   // 벽·멈춤·거꾸로
-  let done = 0;
-  if (Math.abs(car.lat) > T.W / 2 - 4) { done = 1; r -= RW.crash; }
-  if (!done) for (const [cx, cy] of T.cones) { const dx = car.x - cx, dy = car.y - cy; if (dx * dx + dy * dy < (CONE_R + CAR_R) ** 2) { done = 1; r -= RW.crash; break; } }
+  // 벽(다리면 풍덩 5)·콘·구덩이(빠짐 4) — 떠 있는 동안은 안 봄
+  let done = 0, fell = null;
+  if (car.z <= 0) {
+    const hw = T.hw[car.idx];
+    if (Math.abs(car.lat) > hw - 4) { done = hw < T.W / 2 - 1 ? 5 : 1; r -= RW.crash; }
+    if (!done) for (const [cx, cy] of T.cones) { const dx = car.x - cx, dy = car.y - cy; if (dx * dx + dy * dy < (CONE_R + CAR_R) ** 2) { done = 1; r -= RW.crash; break; } }
+    if (!done) for (const J of T.jumps) if (inSpan(T, ns, J.s1, J.s2)) { done = 4; fell = J; r -= RW.crash; break; }
+  }
   car.stuck = car.v < 8 ? car.stuck + DT : 0;
   if (!done && car.stuck > 3) { done = 2; r -= RW.crash * .5; }
   car.back = Math.abs(wrap(car.th - T.ang[car.idx])) > 2 ? car.back + DT : 0;
@@ -207,7 +280,9 @@ function stepCar(T, car, a0, a1, time, ev, ci) {
     // 다시 출발: 조금 뒤 + 옆으로 살짝 흩어서. 같은 곳에서 3번 연속 박으면(콘 바로 뒤 등) 서킷 아무 데서나(학습 차만)
     car.fails = car.run < T.L * .05 ? (car.fails || 0) + 1 : 0;
     let idx = (car.idx - 20 + T.N) % T.N;
-    if (!car.race && car.fails >= 3) { idx = Math.floor(Math.random() * T.N); car.fails = 0; }
+    if (fell) idx = (fell.i2 + 4) % T.N;   // 구덩이에 빠지면 건너편에서(멈춘 채라 시간 손해)
+    else if (!car.race && car.fails >= 3) { idx = Math.floor(Math.random() * T.N); car.fails = 0; }
+    if (car.race && ns < 100 && T.s[idx] > T.L - 100) car.relap = true;
     place(T, car, idx, car.race, car.race ? 0 : (Math.random() - .5) * T.W * .4);
   }
   return [r, done ? 1 : 0];
@@ -416,9 +491,10 @@ class Trainer {
     this.T = T; this.t = 0; this.ret.fill(0);
     this.cars.forEach((c, i) => place(T, c, Math.floor(i * T.N / this.nC)));
   }
-  drive(car) {   // 경주용: 흔들림 없이 뇌가 제일 좋다고 보는 대로
-    observe(this.T, car, this.cur, 0); this.norm(this.cur, this.curN, 1);
-    const m = this.pi.forward(this.curN, 1); return [m[0], m[1]];
+  drive(car, T = this.T) {   // 경주·시험용: 흔들림 없이 뇌가 제일 좋다고 보는 대로
+    observe(T, car, this.cur, 0); this.norm(this.cur, this.curN, 1);
+    // 흔들림 없이 몰면 멈춘 자리에서 페달을 안 밟는 뇌가 있음(학습 땐 흔들림이 출발시켜 줌) → 거의 멈췄을 땐 출발 도움
+    const m = this.pi.forward(this.curN, 1); return [m[0], car.v < 15 ? Math.max(m[1], .6) : m[1]];
   }
   dump() {
     const r = a => Array.from(a, x => Math.round(x * 1e5) / 1e5);
@@ -426,10 +502,37 @@ class Trainer {
       rv: this.retRms.var[0], rc: this.retRms.count, samples: this.samples, updates: this.updates, time: this.time };
   }
   load(s) {
+    if (s && s.v === 1 && s.om && s.om.length === OBS_V2) s = widen(s);
     if (!s || s.v !== 1 || s.pi.length !== this.pi.n || s.vf.length !== this.vf.n) return;
     this.pi.P.set(s.pi); this.vf.P.set(s.vf); this.logstd.set(s.ls); this.obsRms.mean.set(s.om); this.obsRms.var.set(s.ov); this.obsRms.count = s.oc;
     this.retRms.var[0] = s.rv; this.retRms.count = s.rc; this.samples = s.samples; this.updates = s.updates; this.time = s.time;
   }
+}
+
+// 2단계 뇌(보는 것 24) → 30: 새로 본 6개로 가는 첫 층 무게를 0으로 끼워 넣음 → 운전은 그대로, 학습하며 새 것도 쓰기 시작
+function widen(s) {
+  const H = PPO.hidden, add = OBS - OBS_V2, ins = a => a.slice(0, OBS_V2 * H).concat(new Array(add * H).fill(0), a.slice(OBS_V2 * H));
+  return { ...s, pi: ins(s.pi), vf: ins(s.vf), om: s.om.concat(NEW_MEAN), ov: s.ov.concat(NEW_VAR) };
+}
+
+// 처음 보는 서킷 시험: 학습은 안 하고 지금 뇌로 2바퀴(최대 60초). 다시 보기용 칸(x, y, 방향, 속도, 미끄러짐, 높이)도 돌려줌
+function exam(tr, c, laps = 2, maxSec = 60) {
+  const T = buildTrack(c), car = { race: true, secs: [0, 0, 0] }, fr = [], ev = [];
+  place(T, car, (T.N - 10) % T.N, false, 0);
+  let tot = 0, nl = 0, best = Infinity, crashes = 0;
+  for (let t = 0; t < maxSec / DT && nl < laps; t++) {
+    const s0 = car.s, e = [], a = tr.drive(car, T);
+    stepCar(T, car, a[0], a[1], t, e, 0);
+    let ds = car.s - s0; if (ds < -T.L / 2) ds += T.L; else if (ds > T.L / 2) ds -= T.L;
+    tot += clamp(ds, -150, 15);   // 사고로 뒤로 돌아가면 빼고, 구덩이 건너편으로 옮겨진 건 안 셈
+    for (const x of e) {
+      if (x.k === 'lap') { nl++; best = Math.min(best, x.t); }
+      else if (x.k === 'crash') crashes++;
+      ev.push({ k: x.k, f: fr.length / 6, x: x.x, y: x.y, why: x.why });
+    }
+    fr.push(car.x, car.y, car.th, car.v, car.slide, car.z);
+  }
+  return { name: c.name, theme: T.theme, laps: nl, best, crashes, pct: nl >= laps ? 1 : clamp(tot / (laps * T.L), 0, 1), fr: Float32Array.from(fr), ev };
 }
 
 function trackData(T) {
@@ -441,8 +544,8 @@ function trackData(T) {
 /* ── Web Worker 연결 ── */
 if (typeof importScripts === 'function') {
   let T, tr, speed = 0, paused = false, ahead = 0, timer = 0, race = null;
-  const FV = 5;   // 차 한 대 = x, y, 방향, 속도, 미끄러짐
-  const pack = (cars, frames) => { const f = new Float32Array(cars.length * FV); cars.forEach((c, i) => f.set([c.x, c.y, c.th, c.v, c.slide], i * FV)); frames.push(f); };
+  const FV = 6;   // 차 한 대 = x, y, 방향, 속도, 미끄러짐, 높이(점프)
+  const pack = (cars, frames) => { const f = new Float32Array(cars.length * FV); cars.forEach((c, i) => f.set([c.x, c.y, c.th, c.v, c.slide, c.z], i * FV)); frames.push(f); };
   const post = (frames, ev, nc, extra) => {
     const buf = new Float32Array(frames.length * nc * FV);
     frames.forEach((f, i) => buf.set(f, i * nc * FV));
@@ -500,9 +603,10 @@ if (typeof importScripts === 'function') {
     }
     else if (m.cmd === 'input') { if (race) race.input = m.v; }
     else if (m.cmd === 'go') { if (race) race.go = true; }
+    else if (m.cmd === 'exam') { const res = m.list.map(c => exam(tr, c)); postMessage({ type: 'exam', res }, res.map(r => r.fr.buffer)); }
   };
 }
-const API = { DT, CAR, PPO, RW, OBS, CIRCUITS, CONE_R, buildTrack, checkTrack, surfAt, Trainer, height, grad, ray, place, stepCar, trackData, RAYS, RAY_LEN };
+const API = { DT, CAR, PPO, RW, OBS, CIRCUITS, EXAM, THEMES, JUMP, BRIDGE, CONE_R, exam, buildTrack, checkTrack, surfAt, Trainer, height, grad, ray, place, stepCar, trackData, RAYS, RAY_LEN };
 if (typeof module !== 'undefined') module.exports = API;
 else if (typeof window !== 'undefined') window.GPCORE = API;
 })();

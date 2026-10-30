@@ -35,7 +35,7 @@ body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;font-family:
 .grp{display:flex;gap:3px}
 .push{margin-left:auto}
 #panel{position:absolute;display:grid;gap:8px;align-content:start}
-#panel:not([data-mode=train]) [data-m=train],#panel:not([data-mode=edit]) [data-m=edit],#panel:not([data-mode=race]) [data-m=race]{display:none!important}
+#panel:not([data-mode=train]) [data-m=train],#panel:not([data-mode=edit]) [data-m=edit],#panel:not([data-mode=race]) [data-m=race],#panel:not([data-mode=exam]) [data-m=exam]{display:none!important}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;box-sizing:border-box}
 #bestCard .lb{font-size:12px;color:var(--dim)}
 #bBest{font-size:30px;color:var(--pur);letter-spacing:.5px;line-height:1.1}
@@ -62,11 +62,22 @@ body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;font-family:
 .tools .b{height:40px;font-size:14px;padding:0 4px}
 .wrow{display:flex;gap:5px;align-items:center;font-size:13px;color:var(--dim)}
 .wrow .b{height:30px;font-size:13px}
+.wrow .b.th{min-width:30px;padding:0 5px;font-size:15px}
 #eMsg{font-size:13.5px;line-height:1.4;min-height:38px}
 #eMsg b{font-weight:normal;color:var(--yel)}
 #eMsg .bad{color:#ff8a8a}
 .acts2{display:flex;gap:6px}
 .acts2 .b{flex:1;height:40px;font-size:16px}
+/* 시험 */
+#exam{display:grid;gap:6px;align-content:start}
+.xr{display:grid;grid-template-columns:1fr 54px 70px 34px;gap:4px;align-items:center;height:22px;padding:0 6px;border-radius:7px;font-size:13.5px;cursor:pointer}
+.xr span:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+.xr.hd{color:var(--dim);font-size:11.5px;height:15px;cursor:default}
+.xr.on{background:#2c3342;outline:1px solid var(--pur)}
+.xr .ok{color:var(--grn)}.xr .no{color:#ff8a8a}
+#xSum{font-size:13px;line-height:1.45}
+#xSum b{font-weight:normal;color:var(--yel)}
+#xSum .dim{color:var(--dim);font-size:12px}
 /* 경주 */
 #race{display:grid;gap:8px}
 #rInfo{font-size:15px;line-height:1.5}
@@ -111,7 +122,7 @@ body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;font-family:
 #stage.port #top{left:8px;top:6px;width:404px;height:38px}
 #stage.port #ctl{left:8px;top:48px;width:404px;height:34px}
 #stage.port #panel{left:8px;top:728px;width:404px;height:266px;grid-template-columns:1fr 1fr;grid-template-rows:auto auto 1fr}
-#stage.port #panel[data-mode=edit],#stage.port #panel[data-mode=race]{grid-template-columns:1fr;grid-template-rows:1fr}
+#stage.port #panel[data-mode=edit],#stage.port #panel[data-mode=race],#stage.port #panel[data-mode=exam]{grid-template-columns:1fr;grid-template-rows:1fr}
 #stage.port #bestCard{grid-column:1/3;display:flex;align-items:baseline;gap:10px;padding:6px 10px}
 #stage.port #bBest{font-size:24px}
 #stage.port #status{grid-column:1/3;font-size:13px;padding:6px 10px}
@@ -121,6 +132,8 @@ body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;font-family:
 #stage.port .title small{display:none}
 #stage.port #edit .tools .b{height:36px}
 #stage.port #edit{gap:6px;padding:6px 8px}
+#stage.port #exam{gap:4px;padding:6px 8px}
+#stage.port #exam .acts2 .b{height:36px}
 #stage.port .pads .b{height:70px}
 </style>
 </head>
@@ -141,6 +154,7 @@ body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;font-family:
     <div class="grp"><button class="b sp" data-sp="1">×1</button><button class="b sp" data-sp="3">×3</button><button class="b sp on" data-sp="0">⚡최대</button></div>
     <button class="b on" id="bLine">레이싱 라인</button>
     <button class="b on" id="bRay">센서</button>
+    <button class="b hot" id="bExam" title="처음 보는 서킷 시험">🎓시험</button>
   </div>
   <div id="panel" data-mode="train">
     <div class="card" data-m="train" id="bestCard"><div class="lb">최고 랩</div><div id="bBest">—</div><div id="bSub">아직 기록 없음</div></div>
@@ -153,9 +167,11 @@ body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;font-family:
         <button class="b" data-tool="draw">✏️ 길</button><button class="b" data-tool="hill">⛰ 언덕</button>
         <button class="b" data-tool="valley">🕳 골짜기</button><button class="b" data-tool="sand">🟫 모래</button>
         <button class="b" data-tool="water">💧 웅덩이</button><button class="b" data-tool="cone">🔶 콘</button>
+        <button class="b" data-tool="ramp">🛫 점프대</button><button class="b" data-tool="bridge">🌉 다리</button>
         <button class="b" data-tool="erase">🧽 지우기</button><button class="b" id="eDefault">기본 서킷</button>
       </div>
-      <div class="wrow">길 폭 <button class="b" data-w="44">좁게</button><button class="b" data-w="56">보통</button><button class="b" data-w="70">넓게</button></div>
+      <div class="wrow">폭 <button class="b" data-w="44">좁게</button><button class="b" data-w="56">보통</button><button class="b" data-w="70">넓게</button>
+        <span class="push">배경</span><button class="b th" data-th="grass" title="잔디">🌿</button><button class="b th" data-th="snow" title="눈 — 미끄러움">❄️</button><button class="b th" data-th="desert" title="사막">🏜</button></div>
       <div id="eMsg"></div>
       <div class="acts2"><button class="b" id="eCancel">취소</button><button class="b go" id="eDone">완성 ▶</button></div>
     </div>
@@ -164,6 +180,11 @@ body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;font-family:
       <div class="pads"><button class="b" data-k="L">◀</button><button class="b" data-k="R">▶</button><span></span><button class="b" data-k="B">브레이크</button><button class="b" data-k="G">가속</button></div>
       <div id="rHint">키보드: ← → 핸들 · ↑ 가속 · ↓ 브레이크 (WASD도 돼요)</div>
       <div class="acts2"><button class="b" id="rExit">학습으로 돌아가기</button></div>
+    </div>
+    <div class="card" data-m="exam" id="exam">
+      <div id="xRows"></div>
+      <div id="xSum"></div>
+      <div class="acts2"><button class="b" id="xAgain">다시 시험</button><button class="b go" id="xExit">학습으로</button></div>
     </div>
   </div>
   <div id="lights" hidden><i></i><i></i><i></i><i></i><i></i></div>
@@ -198,19 +219,22 @@ body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;font-family:
   <p><b>점수 규칙</b></p>
   <ul><li>서킷을 앞으로 간 거리만큼 +</li><li>벽·콘에 박거나, 멈춰 있거나, 거꾸로 가면 −</li><li>핸들을 홱홱 꺾으면 조금 −</li></ul>
   <p>빨리 갈수록 같은 시간에 점수가 많아서, 시키지 않아도 <b>랩타임 줄이기</b>를 배워요.</p>
-  <p><b>차가 보는 것</b> — 벽·콘까지 거리 센서 7개(초록 선), 속도, 서킷 방향과 어긋난 정도, 앞 커브 셋, 오르막·내리막, 바닥(지금·앞쪽 모래·웅덩이)</p>
+  <p><b>차가 보는 것</b> — 벽·콘까지 거리 센서 7개(초록 선), 속도, 서킷 방향과 어긋난 정도, 앞 커브 셋, 오르막·내리막, 바닥(지금·앞쪽 모래·웅덩이), 앞 점프대, 길 폭(다리), 떠 있는지, 미끄러운 배경인지</p>
   <p><b>레이싱 라인</b> — <span class="k" style="background:var(--pur)"></span>지금 최고 랩이 달린 길 · <span class="k" style="background:#aaa"></span>처음 완주한 길(점선)</p>
   <p><b>구간 색</b> — <span class="k" style="background:var(--pur)"></span>전체 최고 · <span class="k" style="background:var(--grn)"></span>그 차 최고 · <span class="k" style="background:var(--yel)"></span>더 느림</p>
   <h3>✏️ 서킷 만들기</h3>
   <p>✏️ 길로 한 바퀴 쭉 그리면(끝은 저절로 이어져요) 부드럽게 다듬어 줘요. 그린 방향이 달리는 방향, 그리기 시작한 곳이 출발선이에요. 커브가 너무 급하거나 길끼리 붙으면 빨간 동그라미로 알려 줘요.</p>
   <ul><li>⛰ 언덕: 오르막 느려짐·내리막 빨라짐 · 🕳 골짜기: 그 반대</li><li>🟫 모래: 느려지고 조금 미끄러움 · 💧 웅덩이: 많이 미끄러움</li><li>🔶 콘: 닿으면 사고 · 🧽 지우기: 누른 곳 가까운 것 지움</li></ul>
+  <ul><li>🛫 점프대: 곧은 길에만 놓여요. 빨리(약 110km/h 넘게) 달려야 구덩이를 넘고, 느리면 빠져요</li><li>🌉 다리: 길이 확 좁아져요. 벗어나면 풍덩</li><li>배경 🌿 잔디 · ❄️ 눈(서킷 전체가 미끄러움) · 🏜 사막(조금 미끄러움)</li></ul>
+  <h3>🎓 처음 보는 서킷 시험</h3>
+  <p>학습에 한 번도 안 쓴 서킷 4개(거꾸로 · 콩 · 눈과 다리 · 사막 점프대)를 지금 뇌로 2바퀴씩 달려 봐요. 배운 서킷만 잘 달리면 <b>길을 외운 것</b>, 처음 보는 길도 잘 달리면 <b>진짜 운전을 배운 것</b>이에요. 시험 동안은 학습을 멈추고, 달린 모습을 다시 보여 줘요(줄을 누르면 그 서킷).</p>
   <h3>🏁 나 vs AI</h3>
   <p>3바퀴 경주예요. AI는 지금까지 배운 뇌로, 흔들림 없이 자기가 제일 잘하는 대로 달려요. 학습 초반엔 이기기 쉽고, 오래 배운 AI는 이기기 어려워요. 내 최고 랩은 흰 <b>고스트</b>로 같이 달려요.</p>
   <p class="dim">⚡최대는 화면을 띄엄띄엄 그리고 학습에 힘을 다 써요. 차끼리는 부딪히지 않아요. 서킷·배운 뇌는 이 기기에 저장돼요. 서킷을 누르면 가까운 차를 따라 봐요.</p>
   <div class="acts"><button class="b" id="bHelpClose">닫기</button></div>
 </div></div>
 
-<script src="core.js?v=2"></script>
+<script src="core.js?v=3"></script>
 <script>
 'use strict';
 const G = window.GPCORE;
@@ -220,7 +244,7 @@ const LAYOUTS = {
   land: { W: 1280, H: 720, land: true, map: { x: 8, y: 56, w: 900, h: 656 } },
   port: { W: 420, H: 1000, land: false, map: { x: 8, y: 88, w: 404, h: 632 } },
 };
-const WW = 1000, WH = 640, KMH = .54, FV = 5, KEY = 'aigp-v2', LAPS = 3, DT = G.DT;
+const WW = 1000, WH = 640, KMH = .54, FV = 6, KEY = 'aigp-v2', LAPS = 3, DT = G.DT;
 let LY = LAYOUTS.land, S = 1, DPR = 1, MK = 1, MO = { x: 0, y: 0 }, bg = null;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const copy = o => JSON.parse(JSON.stringify(o));
@@ -232,7 +256,7 @@ const queue = [];             // {f: Float32Array, ev: [], s: 학습량, r: 경�
 let cur = null, nxt = null;   // 지금 칸 · 다음 칸(사이를 부드럽게)
 const freshST = () => ({ best: Infinity, first: 0, bestLine: null, firstLine: null, laps: 0, crashes: 0, far: 0,
   bestSec: [Infinity, Infinity, Infinity], hist: [], samples: 0, updates: 0, lastBestAt: 0, last: null,
-  ghost: null, myBest: Infinity, wins: 0, losses: 0 });
+  ghost: null, myBest: Infinity, wins: 0, losses: 0, exams: [] });
 const ST = freshST();
 let car = [];                 // 차마다 {best, last, sec, col, cb}
 let watch = 0, watchIdx = -1, showLine = true, showRay = true, parts = [], toastT = 0, toastNext = null, dirtyUI = true;
@@ -258,7 +282,7 @@ function restoreST(st) {
 /* ── 일꾼 ── */
 function startWorker(saved) {
   if (worker) worker.terminate();
-  worker = new Worker('core.js?v=2');
+  worker = new Worker('core.js?v=3');
   worker.onmessage = onMsg;
   worker.postMessage({ cmd: 'init', circuit, saved: saved && saved.brain });
   worker.postMessage({ cmd: 'speed', v: speed });
@@ -276,6 +300,7 @@ function onMsg(e) {
     if (m.stat) { ST.updates = m.stat.updates; ST.samples = m.stat.samples; ST.last = m.stat; dirtyUI = true; }
     if (mode === 'train' && !speed && queue.length > 400) queue.splice(0, queue.length - 200);
   } else if (m.type === 'save') writeSave(m.data);
+  else if (m.type === 'exam') examDone(m.res);
   else if (m.type === 'reset') { queue.length = 0; cur = nxt = null; }
 }
 const send = (cmd, v, extra) => worker && worker.postMessage({ cmd, v, ...extra });
@@ -308,8 +333,8 @@ function applyEv(ev, samples) {
     dirtyUI = true;
   } else if (ev.k === 'crash') {
     ST.crashes++; if (ev.run > ST.far) ST.far = ev.run;
-    if (speed || parts.length < 200) puff(ev.x, ev.y, ev.why === 1);
-  }
+    if (speed || parts.length < 200) puff(ev.x, ev.y, ev.why);
+  } else if (ev.k === 'land' && parts.length < 200) puff(ev.x, ev.y, 0);
 }
 
 /* ── 알림 ── */
@@ -367,15 +392,21 @@ function nearTrack(x, y) {
   for (let i = 0; i < TR.N; i += 3) { const dx = x - TR.cx[i], dy = y - TR.cy[i]; d = Math.min(d, dx * dx + dy * dy); }
   return Math.sqrt(d);
 }
+// 배경 색: 땅·줄무늬·길·물(밝은·짙은)
+const PAL = {
+  grass: { base: '#4b8a39', stripe: 'rgba(255,255,255,.045)', road: '#3c4048', water: ['#7cc6f2', '#2f6f9e'], bank: '#6d8f4a' },
+  snow: { base: '#dde7f0', stripe: 'rgba(255,255,255,.45)', road: '#4b535f', water: ['#d9f1ff', '#86b9da'], bank: '#f6f9fc' },
+  desert: { base: '#d6b071', stripe: 'rgba(255,255,255,.07)', road: '#4d4640', water: ['#78d6ea', '#1f7d9b'], bank: '#bfa165' },
+};
 function makeBg() {
   bg = document.createElement('canvas'); bg.width = cv.width; bg.height = cv.height;
-  const c = bg.getContext('2d');
+  const c = bg.getContext('2d'), pal = PAL[TR.theme] || PAL.grass;
   c.fillStyle = '#15171c'; c.fillRect(0, 0, bg.width, bg.height);
   mapX(c);
   c.save();
   c.beginPath(); c.roundRect(0, 0, WW, WH, 14); c.clip();
-  c.fillStyle = '#4b8a39'; c.fillRect(0, 0, WW, WH);
-  c.fillStyle = 'rgba(255,255,255,.045)';
+  c.fillStyle = pal.base; c.fillRect(0, 0, WW, WH);
+  c.fillStyle = pal.stripe;
   for (let x = 0; x < WW; x += 80) c.fillRect(x, 0, 40, WH);
   // 언덕 빛·그늘(왼쪽 위에서 빛) + 높이 색
   const gw = 250, gh = 160, cell = 4, sh = document.createElement('canvas'); sh.width = gw; sh.height = gh;
@@ -391,17 +422,34 @@ function makeBg() {
   sc.putImageData(img, 0, 0);
   c.imageSmoothingEnabled = true; c.drawImage(sh, 0, 0, WW, WH);
   contours(c);
+  // 다리 밑 강(서킷을 가로질러)
+  for (const B of TR.bridges) {   // 다리 밑 호수: 길을 가로로 긴 타원 + 물가
+    const i = B.i, rx = TR.W / 2 + 70, ry = (G.BRIDGE.len - 2 * G.BRIDGE.taper) / 2 + 6, a = Math.atan2(TR.ny[i], TR.nx[i]);
+    for (const [d, col, al] of [[9, pal.bank, 1], [0, pal.water[1], 1], [-ry * .45, pal.water[0], .55]]) {
+      c.globalAlpha = al; c.fillStyle = col; c.beginPath(); c.ellipse(TR.cx[i], TR.cy[i], rx + d, ry + d, a, 0, 7); c.fill();
+    }
+    c.globalAlpha = 1; c.strokeStyle = 'rgba(255,255,255,.4)'; c.lineWidth = 1.2;
+    for (const k of [-.5, .55]) { c.beginPath(); c.ellipse(TR.cx[i] + TR.nx[i] * rx * k, TR.cy[i] + TR.ny[i] * rx * k, 12, 3, a, 0, 7); c.stroke(); }
+  }
+  const nearRiver = (x, y) => TR.bridges.some(B => Math.hypot(x - TR.cx[B.i], y - TR.cy[B.i]) < 150);
   // 나무·관중석(출발선 바깥쪽)
   const s0 = 0, out = TR.W / 2 + 26, stx = TR.cx[s0] - TR.nx[s0] * out, sty = TR.cy[s0] - TR.ny[s0] * out;
-  const okStand = nearTrack(stx, sty) > TR.W / 2 + 14 && stx > 60 && stx < 940 && sty > 30 && sty < 610;
+  // 관중석(길이 220)이 길·화면 밖에 안 걸릴 때만 — 양 끝까지 확인
+  const okStand = [-110, -55, 0, 55, 110].every(u => { const x = stx + TR.tx[s0] * u, y = sty + TR.ty[s0] * u; return nearTrack(x, y) > TR.W / 2 + 14 && x > 15 && x < 985 && y > 15 && y < 625; });
   const R = rng(7);
   for (let n = 0, tries = 0; n < 90 && tries < 2000; tries++) {
     const x = 20 + R() * (WW - 40), y = 20 + R() * (WH - 40);
-    if (nearTrack(x, y) < TR.W / 2 + 22 || (okStand && Math.hypot(x - stx, y - sty) < 120)) continue;
-    const r = 7 + R() * 7; n++;
+    if (nearTrack(x, y) < TR.W / 2 + 22 || (okStand && Math.hypot(x - stx, y - sty) < 120) || nearRiver(x, y)) continue;
+    const r = 7 + R() * 7, k = R(); n++;
     c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.arc(x + 3, y + 4, r, 0, 7); c.fill();
-    c.fillStyle = R() < .5 ? '#2f6b2a' : '#3a7a2e'; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
-    c.fillStyle = 'rgba(255,255,255,.12)'; c.beginPath(); c.arc(x - r * .3, y - r * .3, r * .5, 0, 7); c.fill();
+    if (TR.theme === 'desert') {   // 바위·마른 덤불
+      if (k < .55) { c.fillStyle = '#8f7556'; c.beginPath(); c.ellipse(x, y, r, r * .75, k * 6, 0, 7); c.fill(); c.fillStyle = 'rgba(255,240,210,.25)'; c.beginPath(); c.ellipse(x - r * .3, y - r * .25, r * .45, r * .3, 0, 0, 7); c.fill(); }
+      else { c.fillStyle = '#7d8a45'; c.beginPath(); c.arc(x, y, r * .6, 0, 7); c.fill(); c.strokeStyle = '#5d6a30'; c.lineWidth = 1; for (let a = 0; a < 6; a++) { c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * r * .9, y + Math.sin(a) * r * .9); c.stroke(); } }
+      continue;
+    }
+    c.fillStyle = TR.theme === 'snow' ? (k < .5 ? '#2c5a44' : '#356a4f') : k < .5 ? '#2f6b2a' : '#3a7a2e'; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+    if (TR.theme === 'snow') { c.fillStyle = 'rgba(255,255,255,.92)'; c.beginPath(); c.arc(x - r * .2, y - r * .25, r * .62, 0, 7); c.fill(); }
+    else { c.fillStyle = 'rgba(255,255,255,.12)'; c.beginPath(); c.arc(x - r * .3, y - r * .3, r * .5, 0, 7); c.fill(); }
   }
   if (okStand) {
     c.save(); c.translate(stx, sty); c.rotate(TR.ang[s0]);
@@ -414,8 +462,12 @@ function makeBg() {
   const N = TR.N, edge = (side, rev) => { const X = side ? TR.lx : TR.rx, Y = side ? TR.ly : TR.ry; for (let k = 0; k <= N; k++) { const i = rev ? (N - k) % N : k % N; c.lineTo(X[i], Y[i]); } };
   c.beginPath(); edge(1, false); edge(0, true); c.closePath();
   c.fillStyle = 'rgba(0,0,0,.35)'; c.save(); c.translate(2, 3); c.fill('evenodd'); c.restore();
-  c.fillStyle = '#3c4048'; c.fill('evenodd');
+  c.fillStyle = pal.road; c.fill('evenodd');
   c.save(); c.clip('evenodd'); c.globalAlpha = .55; c.drawImage(sh, 0, 0, WW, WH);
+  if (TR.theme !== 'grass') {   // 길 위 눈가루·모래 먼지
+    const R4 = rng(11); c.globalAlpha = 1; c.fillStyle = TR.theme === 'snow' ? 'rgba(255,255,255,.45)' : 'rgba(230,200,140,.35)';
+    for (let k = 0; k < 900; k++) { const i = Math.floor(R4() * N), u = (R4() * 2 - 1) * TR.hw[i]; c.fillRect(TR.cx[i] + TR.nx[i] * u, TR.cy[i] + TR.ny[i] * u, 1.6, 1.6); }
+  }
   // 모래·웅덩이(서킷 위만)
   c.globalAlpha = 1;
   for (const [x, y, r, t] of TR.patches) {
@@ -445,7 +497,32 @@ function makeBg() {
   // 출발선(체크무늬)·구간 선
   const ln = (i, f) => { const hw = TR.W / 2; c.save(); c.translate(TR.cx[i], TR.cy[i]); c.rotate(TR.ang[i]); f(hw); c.restore(); };
   ln(0, hw => { for (let a = 0; a < 2; a++) for (let b = 0; b < 8; b++) { c.fillStyle = (a + b) % 2 ? '#111' : '#fff'; c.fillRect(-4 + a * 4, -hw + b * hw / 4, 4, hw / 4); } });
-  for (const b of [1, 2]) ln(Math.round(N * b / 3) % N, hw => { c.fillStyle = 'rgba(255,210,63,.75)'; c.fillRect(-1, -hw, 2, hw * 2); });
+  for (const b of [1, 2]) ln(Math.round(N * b / 3) % N, hw => { c.fillStyle = 'rgba(255,210,63,.75)'; c.fillRect(-1, -TR.hw[Math.round(N * b / 3) % N], 2, TR.hw[Math.round(N * b / 3) % N] * 2); });
+  // 길 가로 조각(a → a+1), 양옆으로 더 넓게(ex)
+  const quad = (a, b, col, ex = 0) => {
+    const ha = TR.hw[a] + ex, hb = TR.hw[b] + ex;
+    c.fillStyle = col; c.beginPath();
+    c.moveTo(TR.cx[a] + TR.nx[a] * ha, TR.cy[a] + TR.ny[a] * ha); c.lineTo(TR.cx[b] + TR.nx[b] * hb, TR.cy[b] + TR.ny[b] * hb);
+    c.lineTo(TR.cx[b] - TR.nx[b] * hb, TR.cy[b] - TR.ny[b] * hb); c.lineTo(TR.cx[a] - TR.nx[a] * ha, TR.cy[a] - TR.ny[a] * ha); c.closePath(); c.fill();
+  };
+  // 다리: 나무 판자 + 난간(좁아진 곳만)
+  for (const B of TR.bridges) {
+    const n = Math.ceil(G.BRIDGE.len / 2 / TR.step), narrow = j => TR.hw[j] < TR.W / 2 - .5;
+    for (let k = -n; k < n; k++) { const a = (B.i + k + N) % N, b = (a + 1) % N; if (narrow(a) || narrow(b)) quad(a, b, k & 1 ? '#8c6a3f' : '#7b5a33'); }
+    for (const sd of [1, -1]) {
+      c.beginPath(); let on = false;
+      for (let k = -n; k <= n; k++) { const j = (B.i + k + N) % N; if (!narrow(j)) continue; const x = TR.cx[j] + TR.nx[j] * TR.hw[j] * sd, y = TR.cy[j] + TR.ny[j] * TR.hw[j] * sd; on ? c.lineTo(x, y) : c.moveTo(x, y); on = true; }
+      c.strokeStyle = '#3d2a17'; c.lineWidth = 3.4; c.stroke(); c.strokeStyle = '#e2d3b0'; c.lineWidth = 1.1; c.stroke();
+    }
+  }
+  // 점프대: 노랑·검정 오르막 → 깊은 구덩이 → 착지 화살표
+  for (const J of TR.jumps) {
+    const rN = Math.round(G.JUMP.ramp / TR.step), gN = Math.round(G.JUMP.gap / TR.step);
+    for (let k = 0; k < rN; k++) { const a = (J.i + k) % N; quad(a, (a + 1) % N, (k >> 1) & 1 ? '#26262a' : '#ffd23f', 2); }
+    for (let k = 0; k < gN; k++) { const a = (J.i1 + k) % N; quad(a, (a + 1) % N, k < 2 ? '#4a3320' : k < 4 ? '#24180f' : '#0b0a0c', 8); }
+    quad((J.i2 - 1 + N) % N, J.i2, '#5c4128', 8);
+    for (let k = 0; k < 3; k++) ln((J.i2 + 4 + k * 4) % N, hw => { c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(-4, -hw * .45); c.lineTo(3, 0); c.lineTo(-4, hw * .45); c.stroke(); });
+  }
   // 콘
   for (const [x, y] of TR.cones) {
     c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.arc(x + 2, y + 2.5, G.CONE_R, 0, 7); c.fill();
@@ -459,6 +536,17 @@ function makeBg() {
   c.font = '12px Jua, sans-serif'; c.textAlign = 'center';
   const tag = (sx, sy, t, col) => { c.fillStyle = 'rgba(0,0,0,.55)'; const w = c.measureText(t).width + 10; c.beginPath(); c.roundRect(sx - w / 2, sy - 9, w, 17, 8); c.fill(); c.fillStyle = col; c.fillText(t, sx, sy + 4); };
   for (const [hx, hy, A] of TR.hills) { const [sx, sy] = toStage(hx, hy); tag(sx, sy, A > 0 ? `⛰ 언덕 +${A}` : `골짜기 ${A}`, A > 0 ? '#ffe9a8' : '#a8dcff'); }
+  // 길 옆 글자: 양쪽 중 화면 안이고 길과 안 겹치는 쪽
+  const side = (i, t, col) => {
+    const o = TR.W / 2 + 30, P = [1, -1].map(g => [TR.cx[i] + TR.nx[i] * o * g, TR.cy[i] + TR.ny[i] * o * g]);
+    const ok = ([x, y]) => x > 40 && x < WW - 40 && y > 16 && y < WH - 16 && nearTrack(x, y) > TR.W / 2 + 8;
+    const [sx, sy] = toStage(...(P.find(ok) || P[0])); tag(sx, sy, t, col);
+  };
+  for (const J of TR.jumps) side(J.i1, '🛫 점프', '#ffd23f');
+  for (const B of TR.bridges) side(B.i, '🌉 좁은 다리', '#e2d3b0');
+  const by = MO.y + (LY.land ? WH : WW) * MK - 16;   // 배경 글자는 왼쪽 아래(위는 시험 제목 자리)
+  if (TR.theme === 'snow') tag(MO.x + 56, by, '❄️ 눈 · 미끄러움', '#dff3ff');
+  else if (TR.theme === 'desert') tag(MO.x + 40, by, '🏜 사막', '#ffe2a8');
   for (const [b, lb] of [[0, 'S1 출발'], [1, 'S2'], [2, 'S3']]) {
     const i = Math.round(TR.N * b / 3) % TR.N, o = TR.W / 2 + 12, [sx, sy] = toStage(TR.cx[i] - TR.nx[i] * o, TR.cy[i] - TR.ny[i] * o);
     tag(sx, sy, lb, '#ffd23f');
@@ -494,18 +582,21 @@ function nearIdx(x, y, hint) {
   for (let k = from; k < to; k++) { const j = (k + TR.N) % TR.N, dx = x - TR.cx[j], dy = y - TR.cy[j], d = dx * dx + dy * dy; if (d < bd) { bd = d; best = j; } }
   return best;
 }
-function puff(x, y, hard) {
-  const n = hard ? 9 : 5;
+// 연기: why 0 착지 흙먼지 · 1 벽(불꽃) · 2·3 멈춤·거꾸로 · 4 구덩이에 빠짐 · 5 다리에서 풍덩
+const PUFF = { 0: '200,180,140', 4: '60,50,40', 5: '120,200,255' };
+function puff(x, y, why) {
+  const hard = why === 1 || why === true, n = why === 5 ? 12 : hard || why === 4 ? 9 : 5, c = PUFF[why] || '220,220,220';
   for (let i = 0; i < n; i++) {
-    const a = Math.random() * 7, s = 20 + Math.random() * 50;
-    parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .7, max: .7, r: 3 + Math.random() * 4, spark: hard && i < 3 });
+    const a = Math.random() * 7, s = (why === 5 ? 40 : 20) + Math.random() * 50;
+    parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .7, max: .7, r: 3 + Math.random() * 4, spark: hard && i < 3, c });
   }
 }
-function drawCar(c, x, y, th, col, h, ring, alpha = 1) {
-  const k = 1 + h / 220, sx = 2.2 + h * .05;
+// z = 점프 높이: 차가 커지고 그림자가 멀어짐
+function drawCar(c, x, y, th, col, h, ring, alpha = 1, z = 0) {
+  const ks = 1 + h / 220, k = ks + z / 40, sx = 2.2 + h * .05 + z * .8;
   c.globalAlpha = alpha;
-  c.save(); c.translate(x + sx, y + sx * 1.2); c.rotate(th); c.scale(k, k);
-  c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.roundRect(-10, -5, 20, 10, 4); c.fill();
+  c.save(); c.translate(x + sx, y + sx * 1.2); c.rotate(th); c.scale(ks, ks);
+  c.fillStyle = `rgba(0,0,0,${.35 - Math.min(z / 120, .18)})`; c.beginPath(); c.roundRect(-10, -5, 20, 10, 4); c.fill();
   c.restore();
   c.save(); c.translate(x, y); c.rotate(th); c.scale(k, k);
   if (ring) { c.strokeStyle = ring; c.lineWidth = 1.6; c.beginPath(); c.arc(0, 0, 15, 0, 7); c.stroke(); }
@@ -533,36 +624,50 @@ function label(x, y, t, col) {
   mapX(ctx);
 }
 function draw(alpha) {
+  drawScene(alpha);
+  if (TR.theme === 'snow') flakes();
+}
+function flakes() {   // 눈 내림(그림만)
+  mapX(ctx); const t = performance.now() / 1000;
+  ctx.fillStyle = 'rgba(255,255,255,.85)';
+  for (let i = 0; i < 90; i++) {
+    const r1 = (i * 7919 % 1000) / 1000, r2 = (i * 104729 % 997) / 997;
+    const x = (r1 * WW + t * 12 + Math.sin(t + i) * 8 + WW) % WW, y = (r2 * WH + t * (25 + r2 * 30)) % WH;
+    ctx.beginPath(); ctx.arc(x, y, 1 + r1 * 1.4, 0, 7); ctx.fill();
+  }
+}
+function drawScene(alpha) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(bg, 0, 0);
   mapX(ctx);
   ctx.lineJoin = ctx.lineCap = 'round';
   if (mode === 'edit') return drawEdit();
-  if (showLine) {
+  if (showLine && mode !== 'exam') {
     if (ST.firstLine && mode === 'train') { ctx.setLineDash([4, 5]); line(ST.firstLine, 'rgba(235,235,235,.6)', 1.6); ctx.setLineDash([]); }
     if (ST.bestLine) { line(ST.bestLine, 'rgba(180,108,255,.28)', 7); line(ST.bestLine, '#c48bff', 2.2); }
   }
   for (const p of parts) {
     const a = p.life / p.max;
-    ctx.fillStyle = p.spark ? `rgba(255,170,60,${a})` : `rgba(220,220,220,${a * .55})`;
+    ctx.fillStyle = p.spark ? `rgba(255,170,60,${a})` : `rgba(${p.c},${a * .55})`;
     ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (p.spark ? .6 : 2 - a), 0, 7); ctx.fill();
   }
+  if (mode === 'exam') return drawExam();
   if (!cur) return;
   const n = cur.length / FV;
   const pos = i => {
     const o = i * FV, x0 = cur[o], y0 = cur[o + 1], t0 = cur[o + 2];
-    if (!nxt || !alpha || nxt.length !== cur.length) return [x0, y0, t0, cur[o + 3], cur[o + 4]];
+    if (!nxt || !alpha || nxt.length !== cur.length) return [x0, y0, t0, cur[o + 3], cur[o + 4], cur[o + 5]];
     const x1 = nxt[o], y1 = nxt[o + 1], t1 = nxt[o + 2];
-    if (Math.abs(x1 - x0) + Math.abs(y1 - y0) > 40) return [x0, y0, t0, cur[o + 3], cur[o + 4]];   // 사고 뒤 되돌아간 차
+    if (Math.abs(x1 - x0) + Math.abs(y1 - y0) > 40) return [x0, y0, t0, cur[o + 3], cur[o + 4], cur[o + 5]];   // 사고 뒤 되돌아간 차
     let dt = t1 - t0; if (dt > Math.PI) dt -= 2 * Math.PI; if (dt < -Math.PI) dt += 2 * Math.PI;
-    return [x0 + (x1 - x0) * alpha, y0 + (y1 - y0) * alpha, t0 + dt * alpha, cur[o + 3], cur[o + 4]];
+    return [x0 + (x1 - x0) * alpha, y0 + (y1 - y0) * alpha, t0 + dt * alpha, cur[o + 3], cur[o + 4], cur[o + 5] + (nxt[o + 5] - cur[o + 5]) * alpha];
   };
   if (mode === 'race') return drawRace(pos);
   const W = pos(watch);
   if (showRay) drawRays(W);
-  const order = [...Array(n).keys()].sort((a, b) => hAt(pos(a)[0], pos(a)[1]) - hAt(pos(b)[0], pos(b)[1]));
-  for (const i of order) { if (i === watch) continue; const [x, y, th] = pos(i); drawCar(ctx, x, y, th, COL(i), hAt(x, y)); }
-  drawCar(ctx, W[0], W[1], W[2], COL(watch), hAt(W[0], W[1]), '#fff');
+  const P = [...Array(n).keys()].map(pos), order = [...Array(n).keys()].sort((a, b) => hAt(P[a][0], P[a][1]) + P[a][5] - hAt(P[b][0], P[b][1]) - P[b][5]);
+  for (const i of order) { if (i === watch) continue; const [x, y, th, , , z] = P[i]; drawCar(ctx, x, y, th, COL(i), hAt(x, y), null, 1, z); }
+  drawCar(ctx, W[0], W[1], W[2], COL(watch), hAt(W[0], W[1]), '#fff', 1, W[5]);
   label(W[0], W[1], `${Math.round(W[3] * KMH)} km/h`, W[4] ? '#ffd23f' : '#fff');
 }
 function drawRays(W) {
@@ -640,7 +745,7 @@ $('tower').addEventListener('click', e => { const r = e.target.closest('.row'); 
 
 /* ── 서킷 만들기 ── */
 let draft = null, draftBad = null, tool = 'draw', drawing = null, eMsgBase = '';
-const LIM = { hills: 6, patches: 8, cones: 12 };
+const LIM = { hills: 6, patches: 8, cones: 12, ramps: 3, bridges: 3 };
 function setMode(m) {
   mode = m; $('panel').dataset.mode = m;
   $('ctl').hidden = m !== 'train';
@@ -651,20 +756,23 @@ function setMode(m) {
 function enterEdit() {
   if (!started) return;
   setMode('edit'); send('pause', true);
-  draft = copy(circuit); draftBad = null; setTool('draw'); setWidth(draft.width);
+  draft = copy(circuit); draftBad = null; setTool('draw'); setWidth(draft.width); setThemeBtn(draft.theme || 'grass');
   eMsg('✏️ 길: 서킷을 한 바퀴 쭉 그려요. 그리기 시작한 곳이 출발선, 그린 방향으로 달려요.');
 }
 function setTool(t) { tool = t; document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === t)); }
+function setThemeBtn(t) { document.querySelectorAll('[data-th]').forEach(b => b.classList.toggle('on', b.dataset.th === t)); }
 function setWidth(w) { document.querySelectorAll('[data-w]').forEach(b => b.classList.toggle('on', +b.dataset.w === w)); }
 function eMsg(html) { $('eMsg').innerHTML = html; }
 function rebuild() {
   TR = G.buildTrack(draft);
+  if (draft.ramps) draft.ramps = TR.jumps.map(J => [J.x, J.y]);       // 새로 그린 길에서 멀어진 건 버림
+  if (draft.bridges) draft.bridges = TR.bridges.map(B => [B.x, B.y]);
   const r = G.checkTrack(TR);
   draftBad = r.ok ? null : r;
   makeBg();
   return r;
 }
-const WHY = { curve: '커브가 너무 급해요', near: '길끼리 너무 가까워요(겹치거나 붙음)', out: '서킷이 화면 밖으로 나갔어요', short: '서킷이 너무 짧아요 — 더 크게 그려 주세요' };
+const WHY = { jumpCurve: '점프대는 곧은 길에만 놓을 수 있어요(오르막부터 착지까지 곧아야 해요)', overlap: '점프대·다리끼리 또는 출발선과 너무 가까워요', curve: '커브가 너무 급해요', near: '길끼리 너무 가까워요(겹치거나 붙음)', out: '서킷이 화면 밖으로 나갔어요', short: '서킷이 너무 짧아요 — 더 크게 그려 주세요' };
 // 그린 선 → 40마다 점 → 커브가 급하면 조금씩 부드럽게(최대 30번)
 function finishDraw(raw) {
   if (raw.length < 12) return eMsg('<span class="bad">너무 짧아요. 한 바퀴 크게 그려 주세요.</span>');
@@ -702,13 +810,22 @@ function editTap(x, y) {
     draft.cones = draft.cones || [];
     if (draft.cones.length >= LIM.cones) return eMsg(`콘은 ${LIM.cones}개까지예요.`);
     draft.cones.push([Math.round(x), Math.round(y)]);
+  } else if (tool === 'ramp' || tool === 'bridge') {
+    const k = tool + 's', nm = tool === 'ramp' ? '점프대' : '다리';
+    draft[k] = draft[k] || [];
+    if (draft[k].length >= LIM[k]) return eMsg(`${nm}는 ${LIM[k]}개까지예요.`);
+    const i = nearIdx(x, y, -1);
+    if (Math.hypot(x - TR.cx[i], y - TR.cy[i]) > TR.W) return eMsg(`${nm}는 서킷 위를 눌러 놓아요.`);
+    draft[k].push([Math.round(TR.cx[i]), Math.round(TR.cy[i])]);
   } else if (tool === 'erase') {
     let best = null, bd = 50 * 50;
-    for (const k of ['hills', 'patches', 'cones']) (draft[k] || []).forEach((it, i) => { const d = (it[0] - x) ** 2 + (it[1] - y) ** 2; if (d < bd) { bd = d; best = [k, i]; } });
-    if (!best) return eMsg('지울 게 없어요. 언덕 가운데·모래·콘 가까이를 눌러 주세요.');
+    for (const k of ['hills', 'patches', 'cones', 'ramps', 'bridges']) (draft[k] || []).forEach((it, i) => { const d = (it[0] - x) ** 2 + (it[1] - y) ** 2; if (d < bd) { bd = d; best = [k, i]; } });
+    if (!best) return eMsg('지울 게 없어요. 언덕 가운데·모래·콘·점프대·다리 가까이를 눌러 주세요.');
     draft[best[0]].splice(best[1], 1);
   }
-  rebuild();
+  const r = rebuild();
+  if (!r.ok) eMsg(`<span class="bad">❌ ${WHY[r.why]}.</span> 🧽로 지우거나 다른 곳에 놓아 주세요.`);
+  else if (tool === 'ramp') eMsg('🛫 점프대를 놓았어요. 느리게 오면 구덩이에 빠져요 — AI가 속도 내는 법을 배워야 해요.');
 }
 function drawEdit() {
   if (drawing && drawing.length > 1) {
@@ -746,7 +863,8 @@ document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => {
   setTool(b.dataset.tool);
   const tips = { draw: '✏️ 길: 서킷을 한 바퀴 쭉 그려요(새로 그리면 길이 바뀌어요).', hill: '⛰ 언덕: 놓을 곳을 눌러요. 오르막은 느려지고 내리막은 빨라져요.',
     valley: '🕳 골짜기: 놓을 곳을 눌러요.', sand: '🟫 모래: 서킷 위를 눌러요. 느려지고 조금 미끄러워요.', water: '💧 웅덩이: 서킷 위를 눌러요. 많이 미끄러워요.',
-    cone: '🔶 콘: 서킷 위를 눌러요. 닿으면 사고예요(너무 막으면 못 지나가요).', erase: '🧽 지우기: 지울 언덕 가운데·모래·콘을 눌러요.' };
+    cone: '🔶 콘: 서킷 위를 눌러요. 닿으면 사고예요(너무 막으면 못 지나가요).', erase: '🧽 지우기: 지울 언덕 가운데·모래·콘·점프대·다리를 눌러요.',
+    ramp: '🛫 점프대: 곧은 길 위를 눌러요(누른 곳이 오르막 시작). 빨리 달려야 구덩이를 넘어요.', bridge: '🌉 다리: 서킷 위를 눌러요. 길이 확 좁아지고, 벗어나면 풍덩!' };
   eMsg(tips[tool]);
 });
 document.querySelectorAll('[data-w]').forEach(b => b.onclick = () => {
@@ -754,7 +872,11 @@ document.querySelectorAll('[data-w]').forEach(b => b.onclick = () => {
   const r = rebuild();
   eMsg(r.ok ? `길 폭 ${b.textContent}(${draft.width})` : `<span class="bad">❌ 폭을 ${b.textContent} 하면 ${WHY[r.why]}.</span>`);
 });
-$('eDefault').onclick = () => { draft = copy(G.CIRCUITS.main); setWidth(draft.width); rebuild(); eMsg('기본 서킷으로 돌려놨어요.'); };
+$('eDefault').onclick = () => { draft = copy(G.CIRCUITS.main); setWidth(draft.width); setThemeBtn('grass'); rebuild(); eMsg('기본 서킷으로 돌려놨어요.'); };
+document.querySelectorAll('[data-th]').forEach(b => b.onclick = () => {
+  draft.theme = b.dataset.th; setThemeBtn(draft.theme); rebuild();
+  eMsg({ grass: '🌿 잔디: 기본 배경이에요.', snow: '❄️ 눈: 서킷 전체가 미끄러워요(접지 62%). 일찍 브레이크를 밟아야 해요.', desert: '🏜 사막: 조금 미끄러워요(접지 90%).' }[draft.theme]);
+});
 $('eCancel').onclick = () => exitEdit(false);
 $('eDone').onclick = () => {
   if (draftBad) return eMsg(`<span class="bad">❌ ${WHY[draftBad.why]}.</span> 고친 뒤에 완성할 수 있어요.`);
@@ -763,6 +885,80 @@ $('eDone').onclick = () => {
 };
 $('kKeep').onclick = () => { $('keepAsk').hidden = true; exitEdit(true, true); };
 $('kNew').onclick = () => { $('keepAsk').hidden = true; exitEdit(true, false); };
+
+/* ── 처음 보는 서킷 시험: 학습 멈추고 지금 뇌로 2바퀴씩 → 결과표 + 달린 모습 다시 보기(×2) ── */
+let EX = null;   // {list, res, sel, t(다시 보기 칸), ei(다음 사건), lap, avg, prev}
+const TI = { grass: '🌿', snow: '❄️', desert: '🏜' };
+function enterExam() {
+  if (!started || (EX && !EX.res)) return;
+  setMode('exam'); send('pause', true); queue.length = 0; cur = nxt = null;
+  EX = { list: [{ ...copy(circuit), name: '배운 서킷' }, ...G.EXAM.map(copy)], res: null, sel: 0, t: 0, ei: 0, lap: 0 };
+  $('xRows').innerHTML = ''; $('xSum').innerHTML = '🎓 <b>시험 보는 중…</b> 처음 보는 서킷 4개를 2바퀴씩 달려요(학습은 잠깐 멈춤)';
+  send('exam', null, { list: EX.list });
+}
+function examDone(res) {
+  if (!EX || mode !== 'exam') return;
+  const un = res.slice(1);
+  EX.res = res; EX.avg = Math.round(un.reduce((a, r) => a + r.pct, 0) / un.length * 100);
+  EX.prev = ST.exams[ST.exams.length - 1] || null;
+  ST.exams.push([ST.updates, EX.avg]); if (ST.exams.length > 30) ST.exams.shift();
+  pickExam(1);
+}
+function pickExam(i) {
+  EX.sel = i; EX.t = 0; EX.ei = 0; EX.lap = 0; parts = []; watchIdx = -1;
+  TR = G.buildTrack(EX.list[i]); makeBg(); renderExam();
+}
+function renderExam() {
+  const R = EX.res, own = R[0], un = R.slice(1), allOk = un.every(r => r.laps >= 2);
+  $('xRows').innerHTML = '<div class="xr hd"><span>서킷(2바퀴)</span><span>결과</span><span>최고 랩</span><span>사고</span></div>'
+    + R.map((r, i) => `<div class="xr${i === EX.sel ? ' on' : ''}" data-x="${i}"><span>${i ? TI[r.theme] : '📘'} ${r.name}</span>`
+      + `<span class="${r.laps >= 2 ? 'ok' : 'no'}">${r.laps >= 2 ? '완주' : Math.round(r.pct * 100) + '%'}</span><span>${fmt(r.best)}</span><span>${r.crashes || '—'}</span></div>`).join('');
+  const v = own.laps < 2 ? '📚 <b>아직 배운 서킷도 2바퀴를 못 돌아요</b> — 더 배운 뒤에 시험해 보세요'
+    : allOk && !un.some(r => r.crashes > 2) ? '🎓 <b>진짜 운전을 배웠어요!</b> 처음 보는 길도 센서를 보고 달려요'
+    : EX.avg < 50 ? '📖 <b>길을 외운 것 같아요</b> — 배운 서킷에서만 잘 달려요'
+    : '🙂 <b>반쯤 배웠어요</b> — 처음 보는 길에서 헤매는 곳이 있어요';
+  $('xSum').innerHTML = v + `<br><span class="dim">처음 보는 서킷 평균 ${EX.avg}% · 학습 ${ST.updates.toLocaleString()}번 뇌`
+    + (EX.prev ? ` · 지난 시험 ${EX.prev[1]}%(${EX.prev[0].toLocaleString()}번)` : '') + '</span>'
+    + (allOk ? '' : '<br><span class="dim">💡 ✏️서킷에서 여러 길(점프대·다리·눈)을 \'지금 뇌로 이어서\' 배우면 처음 보는 길에 강해져요</span>');
+}
+function tickExam(dt) {
+  if (!EX || !EX.res) return;
+  const r = EX.res[EX.sel], n = r.fr.length / 6;
+  EX.t += dt * 60;   // ×2로 다시 보기
+  while (EX.ei < r.ev.length && r.ev[EX.ei].f <= EX.t) {
+    const e = r.ev[EX.ei++];
+    if (e.k === 'crash') puff(e.x, e.y, e.why); else if (e.k === 'land') puff(e.x, e.y, 0); else if (e.k === 'lap') EX.lap++;
+  }
+  if (EX.t >= n + 60) { EX.t = 0; EX.ei = 0; EX.lap = 0; parts = []; watchIdx = -1; }
+}
+function drawExam() {
+  if (!EX || !EX.res) return;
+  const r = EX.res[EX.sel], F = r.fr, n = F.length / 6, f = Math.min(Math.floor(EX.t), n - 1), g = Math.min(f + 1, n - 1), o = f * 6, q = g * 6;
+  const u = Math.abs(F[q] - F[o]) + Math.abs(F[q + 1] - F[o + 1]) > 40 ? 0 : Math.min(EX.t - f, 1);
+  let dt = F[q + 2] - F[o + 2]; if (dt > Math.PI) dt -= 2 * Math.PI; if (dt < -Math.PI) dt += 2 * Math.PI;
+  const W = [F[o] + (F[q] - F[o]) * u, F[o + 1] + (F[q + 1] - F[o + 1]) * u, F[o + 2] + dt * u, F[o + 3], F[o + 4], F[o + 5] + (F[q + 5] - F[o + 5]) * u];
+  ctx.strokeStyle = 'rgba(196,139,255,.6)'; ctx.lineWidth = 2; ctx.beginPath();   // 지나온 길
+  for (let i = 0; i <= f; i += 2) { const a = i * 6, b = Math.max(0, i - 2) * 6; Math.abs(F[a] - F[b]) + Math.abs(F[a + 1] - F[b + 1]) > 60 || !i ? ctx.moveTo(F[a], F[a + 1]) : ctx.lineTo(F[a], F[a + 1]); }
+  ctx.stroke();
+  if (showRay && W[5] <= 0) drawRays(W);
+  drawCar(ctx, W[0], W[1], W[2], '#a35cff', hAt(W[0], W[1]), '#fff', 1, W[5]);
+  label(W[0], W[1], `AI ${Math.round(W[3] * KMH)} km/h`, W[4] ? '#ffd23f' : '#e6d2ff');
+  // 위 글자: 서킷 이름 · 바퀴 · 끝나면 결과
+  const P = S * DPR, cx = MO.x + (LY.land ? WW : WH) * MK / 2, t = f >= n - 1 ? (r.laps >= 2 ? `✔ ${r.name} 2바퀴 완주!` : `⏱ ${r.name} · 60초 동안 ${Math.round(r.pct * 100)}%`)
+    : `${TI[r.theme]} ${r.name} · ${Math.min(EX.lap + 1, 2)}/2바퀴 · 다시 보기 ×2`;
+  ctx.setTransform(P, 0, 0, P, 0, 0); ctx.font = '15px Jua, sans-serif'; ctx.textAlign = 'center';
+  const w = ctx.measureText(t).width + 20;
+  ctx.fillStyle = 'rgba(10,10,16,.75)'; ctx.beginPath(); ctx.roundRect(cx - w / 2, MO.y + 8, w, 26, 13); ctx.fill();
+  ctx.fillStyle = f >= n - 1 ? (r.laps >= 2 ? '#3ddc84' : '#ffd23f') : '#fff'; ctx.fillText(t, cx, MO.y + 26);
+}
+function exitExam() {
+  EX = null; parts = []; TR = G.buildTrack(circuit); makeBg();
+  setMode('train'); queue.length = 0; cur = nxt = null; send('pause', paused); saveT = 1;
+}
+$('xRows').onclick = e => { const r = e.target.closest('[data-x]'); if (r && EX && EX.res) pickExam(+r.dataset.x); };
+$('xAgain').onclick = () => { if (EX && EX.res) { EX = null; enterExam(); } };
+$('xExit').onclick = () => { if (EX && EX.res) exitExam(); };
+$('bExam').onclick = enterExam;
 
 /* ── 나 vs AI ── */
 let RC = null;                 // {laps:[0,0], times:[[],[]], go, done, idx:[-1,-1], info}
@@ -790,7 +986,8 @@ function lightsOut() {
 }
 function raceEv(ev) {
   if (!RC || RC.done) return;
-  if (ev.k === 'crash') { puff(ev.x, ev.y, true); return; }
+  if (ev.k === 'crash') { puff(ev.x, ev.y, ev.why === 1 ? 1 : ev.why); return; }
+  if (ev.k === 'land') { puff(ev.x, ev.y, 0); return; }
   if (ev.k !== 'lap') return;
   const c = ev.c;
   RC.laps[c]++; RC.times[c].push(ev.t);
@@ -844,8 +1041,8 @@ function drawRace(pos) {
     }
   }
   if (showRay) drawRays(ai);
-  drawCar(ctx, ai[0], ai[1], ai[2], '#a35cff', hAt(ai[0], ai[1]), null);
-  drawCar(ctx, me[0], me[1], me[2], '#ff3b3b', hAt(me[0], me[1]), '#fff');
+  drawCar(ctx, ai[0], ai[1], ai[2], '#a35cff', hAt(ai[0], ai[1]), null, 1, ai[5]);
+  drawCar(ctx, me[0], me[1], me[2], '#ff3b3b', hAt(me[0], me[1]), '#fff', 1, me[5]);
   label(ai[0], ai[1], 'AI', '#c48bff');
   label(me[0], me[1], `나 ${Math.round(me[3] * KMH)}`, me[4] ? '#ffd23f' : '#fff');
   RC.me = me; RC.ai = ai;
@@ -892,6 +1089,7 @@ function frame(ts) {
     } else { while (queue.length) take(); nxt = null; }
   }
   if (mode === 'race') { readInput(dt); dirtyUI = true; }
+  if (mode === 'exam') tickExam(dt);
   for (const p of parts) { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .92; p.vy *= .92; }
   parts = parts.filter(p => p.life > 0);
   draw(alpha);
@@ -967,7 +1165,7 @@ function go(saved) {
   }
   $('intro').hidden = false;
   window.GP = { ST, get car() { return car; }, get queue() { return queue; }, get TR() { return TR; }, get mode() { return mode; }, get RC() { return RC; },
-    get draft() { return draft; }, get draftBad() { return draftBad; }, finishDraw, keys, toStage };
+    get draft() { return draft; }, get draftBad() { return draftBad; }, get EX() { return EX; }, finishDraw, keys, toStage };
   requestAnimationFrame(frame);
 })();
 </script>

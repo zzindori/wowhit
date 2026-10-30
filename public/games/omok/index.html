@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>오목 · 컴퓨터와 한판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+<style>
+/* 오목(15×15) 컴퓨터 대전. 세로(420×640)·가로(1000×640) 두 판 중 화면에 맞는 걸 골라 키움(S).
+   바둑판·돌은 캔버스, 버튼·글자는 DOM */
+:root{
+  --gold:#e8b923; --paper:#fbf6ea; --ink:#2c2b35; --red:#c2462f; --wood:#d9a65a;
+  --display:'Jua',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{margin:0;background:#2a2119 radial-gradient(ellipse at 50% 35%,#3d2f22 0,#2a2119 60%,#1a140e 100%);
+  color:#f3ead2;overflow:hidden;font-family:var(--display);user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+#stage{position:absolute;left:0;top:0;transform-origin:0 0}
+#cv{position:absolute;left:0;top:0;touch-action:none}
+#hud{position:absolute;display:flex;align-items:center;gap:6px}
+.pill{background:rgba(0,0,0,.35);border:1px solid rgba(232,185,35,.3);border-radius:99px;padding:4px 10px;font-size:14px;white-space:nowrap;line-height:1.3}
+.pill small{color:#cbbf9c;font-size:11px;margin-right:4px}
+.ib{margin-left:auto;background:rgba(0,0,0,.35);border:1px solid rgba(232,185,35,.35);color:#f3ead2;font:inherit;font-size:15px;
+  width:34px;height:34px;border-radius:50%;cursor:pointer;padding:0}
+a.ib{display:grid;place-items:center;text-decoration:none;box-sizing:border-box}
+.ib + .ib{margin-left:0}
+#players{position:absolute;display:flex;gap:8px}
+.pl{flex:1;display:flex;align-items:center;gap:7px;background:rgba(0,0,0,.28);border:2px solid transparent;border-radius:12px;padding:0 10px;
+  font-size:16px;white-space:nowrap;overflow:hidden;transition:border-color .2s,background .2s}
+.pl i{flex:none;width:18px;height:18px;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.6)}
+.pl i.b{background:radial-gradient(circle at 35% 30%,#777 0,#222 45%,#050505 100%)}
+.pl i.w{background:radial-gradient(circle at 35% 30%,#fff 0,#eeeee8 50%,#b9b9b0 100%)}
+.pl small{color:#cbbf9c;font-size:12px;margin-left:auto}
+.pl.turn{border-color:var(--gold);background:rgba(232,185,35,.14)}
+.pl.think small::after{content:'';display:inline-block;width:1.2em;text-align:left;animation:dots 1s steps(4) infinite}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+#msg{position:absolute;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;font-size:15px;line-height:1.35;
+  color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+#msg b{font-weight:normal;color:var(--gold)}
+#msg .r{color:#ff8a70}#msg .g{color:#8fe08a}#msg .o{color:#ffc06a}
+#msg .sub{font-size:13px;color:#d8ccaa}
+#acts{position:absolute;display:flex;gap:6px}
+.act{flex:1;font:inherit;font-size:16px;border:1px solid rgba(232,185,35,.4);border-radius:12px;background:linear-gradient(#4a3523,#2c1f13);
+  color:#f3ead2;cursor:pointer;padding:0 4px;box-shadow:0 2px 0 rgba(0,0,0,.4)}
+.act:disabled{opacity:.4;cursor:default}
+.act.main{background:linear-gradient(#c9562f,#8e3417);border-color:#e8875e}
+#banner{position:absolute;text-align:center;pointer-events:none;font-size:52px;color:#ffe27a;
+  text-shadow:0 3px 0 #6b4400,0 0 18px rgba(0,0,0,.7);opacity:0}
+#banner small{display:block;font-size:20px;color:#fff;margin-top:2px}
+#banner.show{animation:ban 2.4s ease-out forwards}
+@keyframes ban{0%{opacity:0;transform:scale(.4)}12%{opacity:1;transform:scale(1.12)}22%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+#toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translateX(-50%);background:rgba(20,16,10,.92);border:1px solid rgba(232,185,35,.5);
+  padding:8px 14px;border-radius:12px;font-size:15px;z-index:900;pointer-events:none;opacity:0;transition:opacity .25s;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+/* 실제로 보이는 높이(100dvh)와 안전 영역(노치·하단 내비게이션 바)을 재는 보이지 않는 막대 */
+#vp{position:fixed;left:0;top:0;width:0;height:100vh;height:100dvh;visibility:hidden;pointer-events:none;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+
+/* 세로 판 420×640 */
+#stage.port #hud{left:8px;top:8px;width:404px;height:38px}
+#stage.port #players{left:8px;top:52px;width:404px;height:36px}
+#stage.port #msg{left:8px;top:502px;width:404px;height:66px}
+#stage.port #acts{left:8px;top:576px;width:404px;height:48px}
+#stage.port #banner{left:0;top:230px;width:420px}
+/* 가로 판 1000×640 */
+#stage.land #hud{left:640px;top:24px;width:340px;height:40px}
+#stage.land #players{left:640px;top:80px;width:340px;height:96px;flex-direction:column}
+#stage.land .pl{font-size:18px}
+#stage.land #msg{left:640px;top:190px;width:340px;height:150px;font-size:17px}
+#stage.land #acts{left:640px;top:360px;width:340px;height:180px;flex-direction:column;gap:10px}
+#stage.land .act{font-size:19px}
+#stage.land #banner{left:20px;top:250px;width:600px}
+
+/* 대화창 */
+.ov{position:fixed;inset:0;background:rgba(10,8,5,.6);display:grid;place-items:center;z-index:1000;padding:16px}
+.box{background:var(--paper);color:var(--ink);border-radius:16px;padding:18px 18px 14px;width:min(380px,100%);max-height:88vh;overflow:auto;
+  box-shadow:0 8px 30px rgba(0,0,0,.5);text-align:center;box-sizing:border-box}
+.box h2{margin:0 0 6px;font-weight:normal;font-size:26px}
+.box p{margin:4px 0 12px;font-size:15px;color:#555}
+.box .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.box button{font:inherit;font-size:18px;border:0;border-radius:12px;padding:10px 18px;cursor:pointer;background:#e7dfcb;color:var(--ink)}
+.box button.main{background:var(--red);color:#fff}
+#help .box{width:min(560px,100%);text-align:left}
+#help h3{margin:14px 0 4px;font-weight:normal;font-size:19px;color:var(--red)}
+#help p,#help li{font-size:14px;color:#444;line-height:1.55;margin:2px 0}
+#help ul{padding-left:18px;margin:4px 0}
+#help svg{display:block;margin:6px auto 2px}
+.seg{display:flex;gap:4px;margin:4px 0 12px}
+.seg button{flex:1;font-size:15px;padding:8px 4px;border-radius:10px;background:#ece4d0}
+.seg button.on{background:var(--ink);color:#fff}
+.lab{font-size:14px;color:#777;text-align:left;margin-top:6px}
+.toggles{display:flex;flex-direction:column;gap:10px;margin:6px 0 14px;font-size:16px;text-align:left}
+.toggles label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.toggles input{width:18px;height:18px}
+.note{font-size:12.5px;color:#999;margin:-6px 0 10px;text-align:left}
+.stats{width:100%;font-size:14px;border-collapse:collapse;margin:4px 0 14px;text-align:left}
+.stats td{padding:3px 4px;border-bottom:1px dashed #e0d6bd}
+.stats td:not(:first-child){text-align:right}
+</style>
+</head>
+<body>
+<div id="stage" class="port">
+  <canvas id="cv" aria-label="오목판"></canvas>
+  <div id="hud">
+    <div class="pill" id="pRec"><small>전적</small><span id="vRec">0승 0패</span></div>
+    <div class="pill" id="pRule"><span id="vRule">쌍삼 금지</span></div>
+    <a class="ib" id="bHome" href="/omok" aria-label="게임 소개 · wowHit 홈페이지" title="게임 소개 · wowHit">⌂</a>
+    <button class="ib" id="bHelp" aria-label="도움말">?</button>
+    <button class="ib" id="bSet" aria-label="설정">⚙</button>
+  </div>
+  <div id="players">
+    <div class="pl" id="plMe"><i></i>나<small></small></div>
+    <div class="pl" id="plAi"><i></i>컴퓨터<small></small></div>
+  </div>
+  <div id="msg"></div>
+  <div id="acts">
+    <button class="act" id="bUndo">무르기</button>
+    <button class="act" id="bTip">추천 수</button>
+    <button class="act main" id="bNew">새 판</button>
+  </div>
+  <div id="banner"></div>
+</div>
+<div id="toast"></div>
+<div id="vp" aria-hidden="true"></div>
+
+<div class="ov" id="help" hidden><div class="box">
+  <h2 style="text-align:center">오목 하는 법</h2>
+  <h3>기본</h3>
+  <ul>
+    <li>흑과 백이 번갈아 줄이 만나는 점에 돌을 하나씩 놓아요. <b>흑이 먼저</b> 둬요.</li>
+    <li>가로·세로·대각선으로 <b>5개를 먼저 잇는 쪽</b>이 이겨요.</li>
+    <li>판을 누르고 있으면 놓일 자리가 미리 보이고, <b>손을 떼면</b> 놓여요. 손가락을 끌어 자리를 맞춘 뒤 떼면 돼요.</li>
+  </ul>
+  <h3>꼭 알아야 할 말</h3>
+  <ul>
+    <li><b>열린 3</b> — 양쪽 끝이 비어 있는 3. 그냥 두면 다음에 열린 4가 돼서 <b>바로 막아야</b> 해요(●●● 사이가 한 칸 빈 ●●_● 도 열린 3).</li>
+    <li><b>4</b> — 한 수만 더 두면 5. 무조건 막아야 해요.</li>
+    <li><b>열린 4</b> — 양쪽 끝이 다 비어 있는 4. 한쪽을 막아도 다른 쪽으로 5가 돼서 <b>이미 이긴</b> 거예요.</li>
+    <li><b>4-3</b> — 한 수로 4와 열린 3을 동시에. 4를 막으면 3이 열린 4가 돼요. 오목에서 이기는 대표적인 방법이에요.</li>
+    <li><b>쌍삼(3-3)</b> — 한 수로 열린 3을 두 개 만드는 것. 막을 수 없어서 <b>금지</b>예요(아래 규칙).</li>
+  </ul>
+  <svg width="300" height="78" viewBox="0 0 300 78" aria-label="쌍삼 예시">
+    <rect width="300" height="78" rx="8" fill="#d9a65a"/>
+    <g stroke="#3b2a14" stroke-width="1">
+      <path d="M15 13H119M15 26H119M15 39H119M15 52H119M15 65H119"/>
+      <path d="M15 13V65M28 13V65M41 13V65M54 13V65M67 13V65M80 13V65M93 13V65M106 13V65M119 13V65"/>
+    </g>
+    <g fill="#151515"><circle cx="41" cy="52" r="5.5"/><circle cx="54" cy="52" r="5.5"/><circle cx="67" cy="39" r="5.5"/><circle cx="67" cy="26" r="5.5"/></g>
+    <g fill="none" stroke="#c2462f" stroke-width="2.2"><path d="M62 47l10 10M72 47l-10 10"/></g>
+    <text x="132" y="34" font-size="13" fill="#3b2a14">✕에 두면 가로 3 + 세로 3</text>
+    <text x="132" y="54" font-size="13" fill="#c2462f">= 쌍삼 → 금지</text>
+  </svg>
+  <h3>규칙 (설정에서 고르기)</h3>
+  <ul>
+    <li><b>쌍삼 금지</b>(기본, 우리 동네 오목) — 흑·백 모두 쌍삼 금지. 4-4·4-3은 돼요. 5개 이상 이으면 이겨요.</li>
+    <li><b>자유</b> — 금지 없음. 흑이 먼저 둬서 훨씬 유리해요.</li>
+    <li><b>렌주</b>(대회 규칙) — 흑만 쌍삼·쌍사(4-4)·장목(6개 이상) 금지, 흑은 딱 5개여야 이겨요. 백은 금지 없고 6개도 이겨요. 흑이 먼저 둬서 유리한 걸 맞추는 규칙이에요.</li>
+    <li>금지인 자리는 내 차례에 판 위에 작은 ✕로 보여요. 단, 그 자리로 5가 되면 금지가 아니에요.</li>
+  </ul>
+  <h3>배우기 도움</h3>
+  <ul>
+    <li><b>수 읽기 도움</b>(설정)을 켜면 상대가 4·열린 3을 만들었을 때 막을 자리(주황·빨강), 내가 이길 수 있는 자리(초록)를 알려 주고, 컴퓨터가 왜 거기 뒀는지도 말해 줘요.</li>
+    <li><b>추천 수</b>를 누르면 '어려움' 컴퓨터가 생각한 내 다음 수를 보여 줘요.</li>
+    <li><b>무르기</b>는 내 수와 컴퓨터 수를 함께 되돌려요.</li>
+  </ul>
+  <h3>컴퓨터 난이도</h3>
+  <ul>
+    <li><b>쉬움</b> — 가끔 열린 3을 못 보고 지나쳐요. 4-3 연습에 좋아요.</li>
+    <li><b>보통</b> — 보이는 위협은 다 막고, 기회가 오면 4-3·쌍사로 공격해요.</li>
+    <li><b>어려움</b> — 4를 계속 이어 붙여 이기는 길(연속 4)을 끝까지 읽고, 내 연속 4도 미리 막아요.</li>
+  </ul>
+  <div class="row" style="margin-top:12px"><button class="main" id="bHelpX">닫기</button></div>
+</div></div>
+
+<div class="ov" id="set" hidden><div class="box">
+  <h2>설정</h2>
+  <div class="lab">컴퓨터 난이도</div>
+  <div class="seg" id="sLevel"><button data-v="easy">쉬움</button><button data-v="normal">보통</button><button data-v="hard">어려움</button></div>
+  <div class="lab">규칙</div>
+  <div class="seg" id="sRule"><button data-v="kr">쌍삼 금지</button><button data-v="free">자유</button><button data-v="renju">렌주</button></div>
+  <div class="lab">내 돌</div>
+  <div class="seg" id="sSide"><button data-v="black">흑 (먼저)</button><button data-v="white">백</button><button data-v="alt">번갈아</button></div>
+  <p class="note" id="setNote">난이도·규칙·돌은 새 판부터 바뀌어요.</p>
+  <div class="toggles">
+    <label><input type="checkbox" id="tHint"> 수 읽기 도움 (막을 자리·이길 자리 알려 주기)</label>
+    <label><input type="checkbox" id="tNum"> 돌에 수순 번호</label>
+    <label><input type="checkbox" id="tSnd"> 소리</label>
+    <label><input type="checkbox" id="tVib"> 진동 <small id="vibNo" style="color:#999"></small></label>
+  </div>
+  <table class="stats" id="stats"></table>
+  <div class="row"><button class="main" id="bSetX">닫기</button><button id="bReset">전적 지우기</button></div>
+</div></div>
+
+<div class="ov" id="end" hidden><div class="box">
+  <h2 id="endT"></h2>
+  <p id="endP"></p>
+  <div class="row"><button class="main" id="bEndNew">새 판</button><button id="bEndLook">판 보기</button></div>
+</div></div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const TAU = Math.PI * 2;
+
+/* ── 판: 15×15, 칸 번호 p = y × 15 + x, 0 빈칸 · 1 흑 · 2 백 ── */
+const N = 15, NN = N * N;
+const DIRS = [[1, 0], [0, 1], [1, 1], [1, -1]];
+const at = (x, y) => y * N + x;
+const inb = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
+const XY = p => [p % N, p / N | 0];
+let RULE = 'kr';                                    // 'kr' 쌍삼 금지 · 'free' 자유 · 'renju' 렌주
+const exact = c => RULE === 'renju' && c === 1;     // 렌주 흑은 딱 5개만 이김
+const fiveLen = (n, c) => exact(c) ? n === 5 : n >= 5;
+
+// (x,y)를 c로 보고 d 방향 양쪽으로 이어진 같은 돌 수
+function runLR(b, x, y, dx, dy, c) {
+  let l = 0, r = 0;
+  for (let i = 1; i < 6 && inb(x - dx * i, y - dy * i) && b[at(x - dx * i, y - dy * i)] === c; i++) l++;
+  for (let i = 1; i < 6 && inb(x + dx * i, y + dy * i) && b[at(x + dx * i, y + dy * i)] === c; i++) r++;
+  return [l, r];
+}
+function fiveDir(b, x, y, c, d) { const [l, r] = runLR(b, x, y, d[0], d[1], c); return fiveLen(l + r + 1, c); }
+function isFive(b, x, y, c) { return DIRS.some(d => fiveDir(b, x, y, c, d)); }
+function overline(b, x, y, c) { return DIRS.some(([dx, dy]) => { const [l, r] = runLR(b, x, y, dx, dy, c); return l + r + 1 >= 6; }); }
+// 빠른 거르기: 그 줄 ±4 안에 내 돌이 need개 이상 있어야 4·3이 될 수 있음
+function lineCount(b, x, y, c, [dx, dy]) {
+  let n = 0;
+  for (let k = -4; k <= 4; k++) { if (!k) continue; const qx = x + dx * k, qy = y + dy * k; if (inb(qx, qy) && b[at(qx, qy)] === c) n++; }
+  return n;
+}
+// b[(x,y)] = c가 놓인 상태에서, d 방향으로 한 수 더 두면 (x,y)를 포함한 5가 되는 빈칸들 = 4
+function fourPts(b, x, y, c, [dx, dy]) {
+  const out = [];
+  for (let k = -4; k <= 4; k++) {
+    if (!k) continue;
+    const qx = x + dx * k, qy = y + dy * k;
+    if (!inb(qx, qy)) continue;
+    const q = at(qx, qy); if (b[q]) continue;
+    b[q] = c; const [l, r] = runLR(b, qx, qy, dx, dy, c); b[q] = 0;
+    if (fiveLen(l + r + 1, c) && k - l <= 0 && 0 <= k + r) out.push(q);
+  }
+  return out;
+}
+// 열린 4: (x,y)를 포함해 딱 4개가 이어져 있고 양쪽 끝 어디에 둬도 5
+function straightFour(b, x, y, c, d) {
+  const [dx, dy] = d, [l, r] = runLR(b, x, y, dx, dy, c);
+  if (l + r + 1 !== 4) return false;
+  const ax = x - dx * (l + 1), ay = y - dy * (l + 1), bx = x + dx * (r + 1), by = y + dy * (r + 1);
+  if (!inb(ax, ay) || !inb(bx, by)) return false;
+  const e1 = at(ax, ay), e2 = at(bx, by);
+  if (b[e1] || b[e2]) return false;
+  b[e1] = c; const f1 = fiveDir(b, ax, ay, c, d); b[e1] = 0;
+  b[e2] = c; const f2 = fiveDir(b, bx, by, c, d); b[e2] = 0;
+  return f1 && f2;
+}
+// 열린 3: 한 수 더 두면 (x,y)를 포함한 열린 4가 됨
+function openThree(b, x, y, c, d) {
+  const [dx, dy] = d;
+  for (let k = -4; k <= 4; k++) {
+    if (!k) continue;
+    const qx = x + dx * k, qy = y + dy * k;
+    if (!inb(qx, qy)) continue;
+    const q = at(qx, qy); if (b[q]) continue;
+    b[q] = c; const ok = straightFour(b, x, y, c, d); b[q] = 0;
+    if (ok) return true;
+  }
+  return false;
+}
+// 금지 수(쌍삼 · 렌주 흑 쌍사·장목). 5가 되면 금지 아님
+function forbidden(b, p, c) {
+  if (RULE === 'free' || b[p]) return false;
+  if (RULE === 'renju' && c !== 1) return false;
+  const [x, y] = XY(p);
+  b[p] = c;
+  let res = false;
+  if (!isFive(b, x, y, c)) {
+    if (RULE === 'renju' && overline(b, x, y, c)) res = true;
+    else {
+      let f = 0, t = 0;
+      for (const d of DIRS) {
+        if (lineCount(b, x, y, c, d) < 2) continue;
+        if (straightFour(b, x, y, c, d)) { f++; continue; }
+        const n = fourPts(b, x, y, c, d).length;
+        if (n) { f += n; continue; }
+        if (openThree(b, x, y, c, d)) t++;
+      }
+      res = t >= 2 || (RULE === 'renju' && f >= 2);
+    }
+  }
+  b[p] = 0;
+  return res;
+}
+// p에 c를 두면 생기는 모양: 5 · 열린 4 · 4 · 열린 3 · 닫힌 3 · 그 밖 점수(w)
+const WIN5 = [0, 1, 4, 12, 30, 0];
+function analyze(b, p, c) {
+  const [x, y] = XY(p), o = 3 - c, a = {five: 0, o4: 0, f4: 0, o3: 0, c3: 0, w: 0};
+  b[p] = c;
+  for (const d of DIRS) {
+    const [dx, dy] = d;
+    if (fiveDir(b, x, y, c, d)) { a.five++; continue; }
+    const lc = lineCount(b, x, y, c, d);
+    if (lc >= 3) {
+      if (straightFour(b, x, y, c, d)) { a.o4++; continue; }
+      const fp = fourPts(b, x, y, c, d).length;
+      if (fp) { a.f4 += fp; continue; }
+    }
+    if (lc >= 2) {
+      if (openThree(b, x, y, c, d)) { a.o3++; continue; }
+      let c3 = false;
+      for (let k = -4; k <= 4 && !c3; k++) {
+        if (!k) continue;
+        const qx = x + dx * k, qy = y + dy * k;
+        if (!inb(qx, qy) || b[at(qx, qy)]) continue;
+        const q = at(qx, qy); b[q] = c; if (fourPts(b, x, y, c, d).length) c3 = true; b[q] = 0;
+      }
+      if (c3) { a.c3++; continue; }
+    }
+    // 5칸 창(그 돌 포함, 상대 돌 없음)에 든 내 돌 수로 잔 점수
+    for (let s = -4; s <= 0; s++) {
+      let n = 0, ok = true;
+      for (let k = s; k < s + 5; k++) {
+        const qx = x + dx * k, qy = y + dy * k;
+        if (!inb(qx, qy) || b[at(qx, qy)] === o) { ok = false; break; }
+        if (b[at(qx, qy)] === c) n++;
+      }
+      if (ok) a.w += WIN5[Math.min(n, 5)];
+    }
+  }
+  b[p] = 0;
+  return a;
+}
+// 모양 → 점수(def = 상대가 거기 두는 걸 막는 값)
+function val(a, def) {
+  if (a.five) return def ? 5e8 : 1e9;
+  if (a.o4 || a.f4 >= 2) return def ? 4e6 : 1e7;
+  if (a.f4 && a.o3) return def ? 3e6 : 5e6;
+  if (a.o3 >= 2) return def ? 6e5 : 1e6;
+  return def ? a.f4 * 1500 + a.o3 * 1800 + a.c3 * 250 + a.w * 8
+             : a.f4 * 6000 + a.o3 * 5000 + a.c3 * 500 + a.w * 10;
+}
+// 돌 둘레 2칸 안의 빈칸
+function near(b, dist = 2) {
+  const mark = new Uint8Array(NN), out = [];
+  let any = false;
+  for (let p = 0; p < NN; p++) {
+    if (!b[p]) continue;
+    any = true;
+    const [x, y] = XY(p);
+    for (let dy = -dist; dy <= dist; dy++) for (let dx = -dist; dx <= dist; dx++) {
+      const qx = x + dx, qy = y + dy;
+      if (!inb(qx, qy)) continue;
+      const q = at(qx, qy);
+      if (!b[q] && !mark[q]) { mark[q] = 1; out.push(q); }
+    }
+  }
+  if (!any) out.push(at(7, 7));
+  return out;
+}
+const fiveAt = (b, p, c) => { if (b[p]) return false; const [x, y] = XY(p); b[p] = c; const f = isFive(b, x, y, c); b[p] = 0; return f; };
+const fivePoints = (b, c, cs = near(b, 1)) => cs.filter(p => fiveAt(b, p, c));
+
+/* 연속 4(VCF): 4를 계속 두어 상대가 막을 곳을 하나로 몰다가 이기는 길이 있으면 첫 수 */
+let nodes = 0, nodeMax = 0;
+function vcf(b, c, depth = 12, budget = 2500) { nodes = 0; nodeMax = budget; return vcfR(b, c, depth); }
+function vcfR(b, c, depth) {
+  if (++nodes > nodeMax) return null;
+  const o = 3 - c, cs = near(b, 1);
+  for (const p of cs) if (fiveAt(b, p, c)) return p;
+  if (depth <= 0 || fivePoints(b, o, cs).length) return null;
+  for (const p of near(b, 2)) {
+    const [x, y] = XY(p);
+    if (!DIRS.some(d => lineCount(b, x, y, c, d) >= 3)) continue;
+    if (forbidden(b, p, c)) continue;
+    b[p] = c;
+    const qs = new Set();
+    for (const d of DIRS) if (lineCount(b, x, y, c, d) >= 3) fourPts(b, x, y, c, d).forEach(q => qs.add(q));
+    if (!qs.size) { b[p] = 0; continue; }
+    if (qs.size >= 2) { b[p] = 0; return p; }          // 열린 4 · 쌍사 → 다 못 막음
+    const q = [...qs][0];
+    if (forbidden(b, q, o)) { b[p] = 0; return p; }    // 렌주: 흑이 막을 자리가 금지
+    b[q] = o;
+    const [qx, qy] = XY(q);
+    const ok = !isFive(b, qx, qy, o) && vcfR(b, c, depth - 1) !== null;
+    b[q] = 0; b[p] = 0;
+    if (ok) return p;
+    if (nodes > nodeMax) return null;
+  }
+  return null;
+}
+
+/* 컴퓨터 생각: 후보마다 공격 + 막기 점수, 어려움은 연속 4 읽기 */
+function think(b, c, level, rnd = Math.random) {
+  const o = 3 - c, list = [];
+  for (const p of near(b)) {
+    if (forbidden(b, p, c)) continue;
+    const a = analyze(b, p, c), d = forbidden(b, p, o) ? null : analyze(b, p, o);
+    const [x, y] = XY(p);
+    let s = val(a, false) + (d ? val(d, true) : 0) - (Math.abs(x - 7) + Math.abs(y - 7)) * .5;
+    if (level === 'easy') {
+      if (d && !d.five && (d.o4 || d.f4 >= 2) && rnd() < .4) s -= val(d, true) * .95;   // 가끔 열린 3을 못 봄
+      if (!a.five && !(d && d.five)) s *= .85 + rnd() * .3;
+    }
+    list.push({p, s, a, d});
+  }
+  if (!list.length) return null;
+  list.sort((u, v) => v.s - u.s);
+  const top = list[0];
+  if (top.a.five || (top.d && top.d.five)) return top;
+  if (level === 'hard') {
+    const w = vcf(b, c, 14, 4000);
+    if (w !== null) { const m = list.find(m => m.p === w) || {p: w, a: analyze(b, w, c), d: null}; m.vcf = true; return m; }
+    for (const m of list.slice(0, 10)) {
+      if (m.a.o4 || m.a.f4 >= 2) return m;
+      b[m.p] = c; const ov = vcf(b, o, 10, 1200); b[m.p] = 0;
+      if (ov === null) return m;
+    }
+    return top;
+  }
+  if (level === 'normal') {
+    const close = list.filter(m => m.s >= top.s - Math.abs(top.s) * .03);
+    return close[Math.floor(rnd() * close.length)];
+  }
+  return top;
+}
+// 컴퓨터가 둔 이유(배우기 도움)
+function whyOf(m) {
+  if (!m) return '';
+  const a = m.a, d = m.d || {};
+  if (a.five) return '5목!';
+  if (d.five) return '내 4를 <b>막았어요</b>.';
+  if (m.vcf && (a.f4 || a.o4)) return '<span class="r">연속 4 공격!</span> 4를 이어 붙여 이기려 해요.';
+  if (a.o4 || a.f4 >= 2) return '<span class="r">열린 4(쌍사)!</span> 이제 다 막을 수 없어요.';
+  if (a.f4 && a.o3) return '<span class="r">4-3 공격!</span> 4를 막으면 3이 열린 4가 돼요.';
+  if (a.o3 >= 2) return '<span class="r">3-3 공격!</span>';
+  if (d.o4 || d.f4 >= 2) return '내 <b>열린 3을 막았어요</b>.';
+  if (a.f4) return '<span class="o">4를 만들었어요</span> — 막아야 해요.';
+  if (a.o3) return '<span class="o">열린 3을 만들었어요</span> — 끝을 막아요.';
+  if (d.f4 && d.o3) return '내 4-3 자리를 미리 막았어요.';
+  if (d.o3 >= 2) return '내 3-3 자리를 미리 막았어요.';
+  return '';
+}
+
+/* ── 저장 ── */
+const KEY = 'omok-v1';
+const store = {moves: [], me: 1, level: 'normal', rule: 'kr', side: 'black', hint: true, nums: false, snd: true, vib: true,
+  st: {easy: {w: 0, l: 0, d: 0}, normal: {w: 0, l: 0, d: 0}, hard: {w: 0, l: 0, d: 0}}, over: null, glvl: 'normal', grule: 'kr', undo: 0, alt: 0};
+try { const s = JSON.parse(localStorage.getItem(KEY) || '{}'); Object.assign(store, s); store.st = Object.assign({easy: {w: 0, l: 0, d: 0}, normal: {w: 0, l: 0, d: 0}, hard: {w: 0, l: 0, d: 0}}, s.st || {}); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
+
+/* ── 게임 상태 ── */
+const B = new Int8Array(NN);
+let turn = 1, winLine = null, thinking = false, tipP = -1, marks = null, why = '', drop = {p: -1, t: 0}, forb = [];
+const ai = () => 3 - store.me;
+function rebuild() {
+  B.fill(0);
+  store.moves.forEach((p, i) => { B[p] = i % 2 ? 2 : 1; });
+  turn = store.moves.length % 2 ? 2 : 1;
+  RULE = store.grule;
+  winLine = null;
+  if (store.over && store.moves.length) { const p = store.moves[store.moves.length - 1]; winLine = lineOf(p, B[p]); }
+}
+function lineOf(p, c) {
+  const [x, y] = XY(p);
+  for (const d of DIRS) {
+    if (!fiveDir(B, x, y, c, d)) continue;
+    const [l, r] = runLR(B, x, y, d[0], d[1], c), out = [];
+    for (let k = -l; k <= r; k++) out.push(at(x + d[0] * k, y + d[1] * k));
+    return out;
+  }
+  return null;
+}
+function newGame() {
+  if (store.moves.length && !store.over) {          // 두다 만 판은 진 걸로
+    store.st[store.glvl].l++;
+  }
+  store.moves = []; store.over = null; store.undo = 0;
+  store.glvl = store.level; store.grule = store.rule;
+  if (store.side === 'alt') { store.alt = (store.alt || 0) + 1; store.me = store.alt % 2 ? 1 : 2; }
+  else store.me = store.side === 'white' ? 2 : 1;
+  why = ''; tipP = -1; save(); rebuild(); refresh();
+  if (turn === ai()) aiMove();
+}
+function place(p, c) {
+  B[p] = c; store.moves.push(p); turn = 3 - c; tipP = -1;
+  drop = {p, t: performance.now()};
+  SFX.stone(c); vib(12);
+  const [x, y] = XY(p);
+  if (isFive(B, x, y, c)) { finish(c, lineOf(p, c)); return true; }
+  if (store.moves.length >= NN) { finish(0, null); return true; }
+  save();
+  return false;
+}
+function finish(c, line) {
+  winLine = line;
+  const r = c === 0 ? 'd' : c === store.me ? 'w' : 'l';
+  store.over = r; store.st[store.glvl][r]++; save();
+  refresh();
+  const T = {w: ['이겼어요!', '5목 완성'], l: ['졌어요', '컴퓨터가 5목'], d: ['비겼어요', '판이 다 찼어요']}[r];
+  banner(T[0], T[1]);
+  if (r === 'w') SFX.win(); else if (r === 'l') SFX.lose(); else SFX.draw();
+  vib(r === 'w' ? [30, 60, 30, 60, 80] : [80]);
+  setTimeout(() => {
+    if (store.over !== r || !store.moves.length) return;
+    const s = store.st[store.glvl];
+    $('endT').textContent = T[0];
+    $('endP').innerHTML = `${LVL[store.glvl]} · ${RULES[store.grule]} · ${store.moves.length}수` +
+      (store.undo ? ` · 무르기 ${store.undo}번` : '') + `<br>${LVL[store.glvl]} 전적 ${s.w}승 ${s.l}패${s.d ? ' ' + s.d + '무' : ''}`;
+    $('end').hidden = false;
+  }, 1700);
+}
+function aiMove() {
+  if (store.over || turn !== ai()) return;
+  thinking = true; refresh();
+  const t0 = performance.now();
+  setTimeout(() => {
+    RULE = store.grule;
+    const m = think(B, ai(), store.glvl);
+    const wait = Math.max(0, (store.moves.length < 2 ? 350 : 520) - (performance.now() - t0));
+    setTimeout(() => {
+      thinking = false;
+      if (!m || store.over || turn !== ai()) { refresh(); return; }
+      why = whyOf(m);
+      if (!place(m.p, ai())) refresh();
+    }, wait);
+  }, 30);
+}
+function tryPlace(p) {
+  if (store.over || thinking || turn !== store.me || B[p]) return;
+  RULE = store.grule;
+  if (forbidden(B, p, store.me)) {
+    toast(RULE === 'renju' ? '흑은 거기 못 둬요 (쌍삼·쌍사·장목 금지)' : '쌍삼(열린 3 두 개)은 금지예요');
+    SFX.no(); vib(40); return;
+  }
+  why = '';
+  if (place(p, store.me)) return;
+  refresh();
+  aiMove();
+}
+function undo() {
+  if (thinking || !store.moves.length) return;
+  if (store.over) return toast('끝난 판은 무를 수 없어요');
+  // 내 수 하나가 빠질 때까지 되돌림(보통 컴퓨터 수 + 내 수) → 다시 내 차례
+  while (store.moves.length) { const c = (store.moves.length - 1) % 2 ? 2 : 1; store.moves.pop(); if (c === store.me) break; }
+  store.undo++; why = ''; tipP = -1; save(); rebuild(); refresh(); SFX.undo();
+  if (turn === ai()) aiMove();
+}
+function tip() {
+  if (store.over || thinking || turn !== store.me) return;
+  RULE = store.grule;
+  const m = think(B, store.me, 'hard');
+  if (!m) return;
+  tipP = m.p; SFX.tip();
+  why = '<b>추천</b>: 반짝이는 자리' + tipWhy(m);
+  refresh();
+}
+
+function tipWhy(m) {
+  const a = m.a, d = m.d || {};
+  if (a.five) return ' — 5목, 이겨요!';
+  if (d.five) return ' — 컴퓨터 4를 막아요.';
+  if (m.vcf) return ' — 4를 계속 이어 붙이면 이기는 길이 있어요.';
+  if (a.o4 || a.f4 >= 2) return ' — 열린 4(쌍사), 다 못 막아요.';
+  if (a.f4 && a.o3) return ' — 4-3 공격!';
+  if (a.o3 >= 2) return ' — 3-3 공격!';
+  if (d.o4 || d.f4 >= 2) return ' — 컴퓨터 열린 3을 막아요.';
+  if (a.f4) return ' — 4로 몰아붙여요.';
+  if (a.o3) return ' — 열린 3을 만들어요.';
+  if (d.f4 && d.o3 || d.o3 >= 2) return ' — 컴퓨터가 노리는 자리를 먼저 막아요.';
+  return '.';
+}
+
+/* 수 읽기 도움: 막을 자리·이길 자리 */
+function computeMarks() {
+  marks = null; forb = [];
+  if (store.over || turn !== store.me || thinking) return;
+  RULE = store.grule;
+  const me = store.me, o = ai(), cs = near(B);
+  forb = RULE === 'free' ? [] : cs.filter(p => forbidden(B, p, me));
+  if (!store.hint) return;
+  const win = cs.filter(p => fiveAt(B, p, me) && !forb.includes(p));
+  if (win.length) { marks = {pts: win, col: '#59d06a', msg: '<span class="g">5목 자리가 있어요!</span> 초록 자리에 두면 이겨요.'}; return; }
+  const danger = cs.filter(p => fiveAt(B, p, o));
+  if (danger.length) { marks = {pts: danger, col: '#ff5a43', msg: '<span class="r">컴퓨터가 4!</span> 빨간 자리를 막지 않으면 져요.'}; return; }
+  const myO4 = cs.filter(p => !forb.includes(p) && (a => a.o4 || a.f4 >= 2 || (a.f4 && a.o3))(analyze(B, p, me)));
+  const three = cs.filter(p => !forbidden(B, p, o) && (a => a.o4 || a.f4 >= 2)(analyze(B, p, o)));
+  if (myO4.length && !three.length) { marks = {pts: myO4, col: '#59d06a', msg: '<span class="g">이길 기회!</span> 초록 자리 = 열린 4·쌍사·4-3.'}; return; }
+  if (three.length) { marks = {pts: three, col: '#ffa83a', msg: '<span class="o">컴퓨터 열린 3!</span> 주황 자리 중 하나로 막아요' + (myO4.length ? ' (아니면 초록 자리로 먼저 공격)' : '') + '.'}; if (myO4.length) marks.pts2 = myO4; return; }
+}
+
+/* ── 화면 ── */
+const LVL = {easy: '쉬움', normal: '보통', hard: '어려움'};
+const RULES = {kr: '쌍삼 금지', free: '자유', renju: '렌주'};
+function refresh() {
+  computeMarks();
+  const me = store.me, s = store.st[store.glvl];
+  $('vRec').textContent = `${LVL[store.glvl]} ${s.w}승 ${s.l}패`;
+  $('vRule').textContent = RULES[store.grule];
+  $('plMe').querySelector('i').className = me === 1 ? 'b' : 'w';
+  $('plAi').querySelector('i').className = me === 1 ? 'w' : 'b';
+  $('plMe').querySelector('small').textContent = me === 1 ? '흑 · 먼저' : '백';
+  $('plAi').querySelector('small').textContent = thinking ? '생각 중' : LVL[store.glvl];
+  $('plMe').classList.toggle('turn', !store.over && turn === me);
+  $('plAi').classList.toggle('turn', !store.over && turn !== me);
+  $('plAi').classList.toggle('think', thinking);
+  $('bUndo').disabled = thinking || !!store.over || !store.moves.some((_, i) => (i % 2 ? 2 : 1) === me);
+  $('bTip').disabled = thinking || !!store.over || turn !== me;
+  let m = '';
+  if (store.over) m = `<div>${{w: '<b>이겼어요!</b>', l: '컴퓨터가 이겼어요', d: '비겼어요'}[store.over]}</div><div class="sub">새 판을 눌러 다시 해요</div>`;
+  else if (thinking) m = '<div>컴퓨터가 생각하고 있어요…</div>';
+  else {
+    const lines = [];
+    if (why && store.moves.length && (store.hint || tipP >= 0)) lines.push((tipP >= 0 ? '' : '컴퓨터: ') + why);
+    if (marks) lines.push(marks.msg);
+    if (!lines.length) lines.push(!store.moves.length ? '판을 누른 채로 자리를 맞추고, <b>손을 떼면</b> 돌이 놓여요.' : '내 차례예요.');
+    if (forb.length && lines.length < 2) lines.push('✕ = 금지 자리(' + (RULE === 'renju' ? '쌍삼·쌍사·장목' : '쌍삼') + ')');
+    m = lines.slice(0, 2).map((l, i) => `<div${i ? ' class="sub"' : ''}>${l}</div>`).join('');
+  }
+  $('msg').innerHTML = m;
+  dirty = true;
+}
+let toastT = 0;
+function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove('show'), 2200); }
+function banner(t, s) { const e = $('banner'); e.innerHTML = t + (s ? `<small>${s}</small>` : ''); e.classList.remove('show'); void e.offsetWidth; e.classList.add('show'); }
+
+/* ── 그리기 ── */
+const cv = $('cv'), ctx = cv.getContext('2d');
+const LAYOUTS = {
+  port: {W: 420, H: 640, bx: 8, by: 96, bs: 404},
+  land: {W: 1000, H: 640, bx: 20, by: 20, bs: 600, land: true},
+};
+let LY = LAYOUTS.port, S = 1, DPR = 1, dirty = true, woodC = null, hover = -1, press = false;
+const cell = () => LY.bs / 15.3;
+const marg = () => (LY.bs - cell() * 14) / 2;
+const px = p => { const [x, y] = XY(p), c = cell(), m = marg(); return [LY.bx + m + x * c, LY.by + m + y * c]; };
+function makeWood() {
+  const s = LY.bs, k = S * DPR, c = document.createElement('canvas');
+  c.width = c.height = Math.round(s * k);
+  const x = c.getContext('2d'); x.scale(k, k);
+  const g = x.createLinearGradient(0, 0, s, s);
+  g.addColorStop(0, '#e9be72'); g.addColorStop(.5, '#dcaa5c'); g.addColorStop(1, '#c99347');
+  x.fillStyle = g; x.fillRect(0, 0, s, s);
+  // 나뭇결(비자나무 느낌): 살짝 휘는 가로 결
+  let seed = 7; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 90; i++) {
+    const y0 = r() * s, amp = 2 + r() * 6, f = .004 + r() * .01, ph = r() * 6;
+    x.strokeStyle = r() < .5 ? `rgba(120,70,20,${.05 + r() * .09})` : `rgba(255,235,190,${.05 + r() * .08})`;
+    x.lineWidth = .6 + r() * 1.8;
+    x.beginPath();
+    for (let xx = 0; xx <= s; xx += 6) { const yy = y0 + Math.sin(xx * f + ph) * amp + Math.sin(xx * f * 3.1) * amp * .3; xx ? x.lineTo(xx, yy) : x.moveTo(xx, yy); }
+    x.stroke();
+  }
+  const v = x.createRadialGradient(s / 2, s / 2, s * .3, s / 2, s / 2, s * .75);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(70,35,5,.22)');
+  x.fillStyle = v; x.fillRect(0, 0, s, s);
+  woodC = c;
+}
+function stone(x, y, r, c, alpha = 1) {
+  ctx.save(); ctx.globalAlpha = alpha;
+  if (alpha === 1) { ctx.fillStyle = 'rgba(40,20,0,.35)'; ctx.beginPath(); ctx.arc(x + r * .12, y + r * .16, r * 1.02, 0, TAU); ctx.fill(); }
+  const g = ctx.createRadialGradient(x - r * .35, y - r * .4, r * .08, x, y, r * 1.05);
+  if (c === 1) { g.addColorStop(0, '#7a7a7a'); g.addColorStop(.25, '#2c2c2c'); g.addColorStop(1, '#050505'); }
+  else { g.addColorStop(0, '#ffffff'); g.addColorStop(.55, '#ecece6'); g.addColorStop(1, '#a9a9a0'); }
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+function draw(now) {
+  const k = S * DPR;
+  ctx.setTransform(k, 0, 0, k, 0, 0);
+  ctx.clearRect(0, 0, LY.W, LY.H);
+  const {bx, by, bs} = LY, c = cell(), m = marg(), R = c * .46;
+  // 판 그림자 + 두께
+  ctx.fillStyle = 'rgba(0,0,0,.45)'; rr(bx + 4, by + 8, bs, bs, 10); ctx.fill();
+  ctx.fillStyle = '#8a5a22'; rr(bx, by + 4, bs, bs, 10); ctx.fill();
+  ctx.save(); rr(bx, by, bs, bs, 10); ctx.clip(); ctx.drawImage(woodC, bx, by, bs, bs); ctx.restore();
+  // 줄
+  ctx.strokeStyle = 'rgba(45,28,10,.85)'; ctx.lineWidth = .9;
+  ctx.beginPath();
+  for (let i = 0; i < N; i++) {
+    const t = m + i * c;
+    ctx.moveTo(bx + m, by + t); ctx.lineTo(bx + m + 14 * c, by + t);
+    ctx.moveTo(bx + t, by + m); ctx.lineTo(bx + t, by + m + 14 * c);
+  }
+  ctx.stroke();
+  ctx.lineWidth = 1.8; ctx.strokeRect(bx + m, by + m, 14 * c, 14 * c);
+  ctx.fillStyle = 'rgba(45,28,10,.9)';
+  [[3, 3], [11, 3], [7, 7], [3, 11], [11, 11]].forEach(([x, y]) => { const [X, Y] = px(at(x, y)); ctx.beginPath(); ctx.arc(X, Y, c * .11, 0, TAU); ctx.fill(); });
+  // 놓을 자리 미리보기: 십자선
+  const myTurn = !store.over && !thinking && turn === store.me;
+  if (myTurn && hover >= 0 && !B[hover]) {
+    const [X, Y] = px(hover);
+    ctx.strokeStyle = 'rgba(194,70,47,.55)'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(bx + m, Y); ctx.lineTo(bx + m + 14 * c, Y); ctx.moveTo(X, by + m); ctx.lineTo(X, by + m + 14 * c); ctx.stroke();
+  }
+  // 도움 표시(돌 아래)
+  if (myTurn && marks) {
+    const pulse = .55 + .45 * Math.sin(now / 260);
+    const ring = (pts, col) => pts.forEach(p => { const [X, Y] = px(p); ctx.strokeStyle = col; ctx.globalAlpha = pulse; ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.arc(X, Y, R * .62, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; });
+    ring(marks.pts, marks.col);
+    if (marks.pts2) ring(marks.pts2, '#59d06a');
+    dirty = true;
+  }
+  // 돌
+  const nums = store.nums;
+  store.moves.forEach((p, i) => {
+    const [X, Y] = px(p), col = i % 2 ? 2 : 1;
+    let r = R;
+    if (p === drop.p) { const t = (now - drop.t) / 140; if (t < 1) { r = R * (1.25 - .25 * t); dirty = true; } }
+    stone(X, Y, r, col);
+    if (nums) {
+      ctx.fillStyle = col === 1 ? '#f3ead2' : '#2a2a2a';
+      ctx.font = `${i >= 99 ? c * .32 : c * .4}px Jua, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(i + 1, X, Y + 1);
+    }
+  });
+  // 마지막 수
+  const last = store.moves[store.moves.length - 1];
+  if (last !== undefined && !nums) { const [X, Y] = px(last); ctx.fillStyle = '#e8432f'; ctx.beginPath(); ctx.arc(X, Y, R * .24, 0, TAU); ctx.fill(); }
+  else if (last !== undefined) { const [X, Y] = px(last); ctx.strokeStyle = '#e8432f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y, R * 1.02, 0, TAU); ctx.stroke(); }
+  // 금지 ✕
+  if (myTurn && forb.length) {
+    ctx.strokeStyle = 'rgba(194,40,30,.75)'; ctx.lineWidth = 1.8;
+    const d = c * .16;
+    forb.forEach(p => { const [X, Y] = px(p); ctx.beginPath(); ctx.moveTo(X - d, Y - d); ctx.lineTo(X + d, Y + d); ctx.moveTo(X + d, Y - d); ctx.lineTo(X - d, Y + d); ctx.stroke(); });
+  }
+  // 추천 수
+  if (tipP >= 0 && !B[tipP]) {
+    const [X, Y] = px(tipP), t = .5 + .5 * Math.sin(now / 200);
+    stone(X, Y, R, store.me, .35 + .25 * t);
+    ctx.strokeStyle = '#ffe27a'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(X, Y, R * (1.05 + .12 * t), 0, TAU); ctx.stroke();
+    dirty = true;
+  }
+  // 미리보기 돌
+  if (myTurn && hover >= 0 && !B[hover]) {
+    const [X, Y] = px(hover), bad = forb.includes(hover);
+    stone(X, Y, R, store.me, bad ? .3 : press ? .7 : .45);
+    if (bad) { ctx.strokeStyle = '#d0301e'; ctx.lineWidth = 3; const d = R * .55;
+      ctx.beginPath(); ctx.moveTo(X - d, Y - d); ctx.lineTo(X + d, Y + d); ctx.moveTo(X + d, Y - d); ctx.lineTo(X - d, Y + d); ctx.stroke(); }
+  }
+  // 5목 줄
+  if (winLine) {
+    const [x1, y1] = px(winLine[0]), [x2, y2] = px(winLine[winLine.length - 1]), t = .6 + .4 * Math.sin(now / 180);
+    ctx.save(); ctx.lineCap = 'round';
+    ctx.strokeStyle = `rgba(255,214,90,${.35 * t})`; ctx.lineWidth = R * 1.5;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.strokeStyle = '#ffd65a'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.restore();
+    winLine.forEach(p => { const [X, Y] = px(p); ctx.strokeStyle = '#ffd65a'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.arc(X, Y, R * 1.06, 0, TAU); ctx.stroke(); });
+    dirty = true;
+  }
+}
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function loop(now) { if (dirty) { dirty = false; draw(now); } requestAnimationFrame(loop); }
+
+/* ── 입력: 누르고 있는 동안 미리보기, 떼면 놓기 ── */
+function pointAt(e) {
+  const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) / (r.width / LY.W), sy = (e.clientY - r.top) / (r.height / LY.H);
+  const c = cell(), m = marg(), gx = Math.round((sx - LY.bx - m) / c), gy = Math.round((sy - LY.by - m) / c);
+  if (!inb(gx, gy)) return -1;
+  const [X, Y] = px(at(gx, gy));
+  return Math.hypot(sx - X, sy - Y) < c * .75 ? at(gx, gy) : -1;
+}
+cv.addEventListener('pointerdown', e => { press = true; hover = pointAt(e); try { cv.setPointerCapture(e.pointerId); } catch (_) {} dirty = true; });
+cv.addEventListener('pointermove', e => {
+  if (!press && e.pointerType !== 'mouse') return;
+  const p = pointAt(e); if (p !== hover) { hover = p; dirty = true; if (press && p >= 0) SFX.tick(); }
+});
+cv.addEventListener('pointerup', e => {
+  if (!press) return;
+  press = false; const p = pointAt(e);
+  if (p >= 0 && p === hover) tryPlace(p);
+  if (e.pointerType !== 'mouse') hover = -1;
+  dirty = true;
+});
+cv.addEventListener('pointercancel', () => { press = false; hover = -1; dirty = true; });
+cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !press) { hover = -1; dirty = true; } });
+
+/* ── 소리·진동: WebAudio 합성, 진동은 navigator.vibrate(아이폰 브라우저는 미지원) ── */
+let AC = null;
+function ac() {
+  if (!store.snd) return null;
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); return AC; } catch (e) { return null; }
+}
+addEventListener('pointerdown', () => { ac(); }, {once: true, capture: true});
+function tone(f, at0, dur, {type = 'sine', vol = .25, to = null} = {}) {
+  const a = ac(); if (!a) return;
+  const t = a.currentTime + at0, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .005);
+  g.gain.exponentialRampToValueAtTime(.0008, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+}
+function noise(at0, dur, {freq = 1800, type = 'bandpass', q = 1, vol = .5, pow = 4} = {}) {
+  const a = ac(); if (!a) return;
+  const t = a.currentTime + at0, b = a.createBuffer(1, Math.max(1, a.sampleRate * dur | 0), a.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, pow);
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  f.type = type; f.Q.value = q; f.frequency.setValueAtTime(freq, t);
+  g.gain.value = vol; s.buffer = b; s.connect(f).connect(g).connect(a.destination); s.start(t);
+}
+const arp = (fs, step, type = 'triangle', vol = .18, len = .24) => fs.forEach((f, i) => tone(f, i * step, len, {type, vol}));
+const SFX = {
+  stone(c) { noise(0, .045, {freq: c === 1 ? 2600 : 3200, q: 2.5, vol: .7}); noise(0, .08, {freq: 260, type: 'lowpass', vol: .8, pow: 3}); tone(c === 1 ? 980 : 1150, 0, .05, {type: 'triangle', vol: .06}); },  // 판에 '딱'
+  tick() { tone(1500, 0, .02, {type: 'triangle', vol: .03}); },
+  no() { tone(220, 0, .16, {type: 'square', vol: .07, to: 160}); },
+  undo() { noise(0, .12, {freq: 3000, vol: .2, pow: 1.5}); },
+  tip() { arp([1319, 1760], .06, 'triangle', .1, .16); },
+  win() { arp([523, 659, 784, 1047, 1319], .09, 'triangle', .2, .3); tone(1568, .5, .5, {type: 'triangle', vol: .12}); },
+  lose() { arp([392, 330, 262], .16, 'triangle', .16, .36); },
+  draw() { arp([523, 523], .14, 'triangle', .14, .2); },
+};
+const canVib = 'vibrate' in navigator;
+function vib(pt) { if (store.vib && canVib) try { navigator.vibrate(pt); } catch (e) {} }
+
+/* ── 화면 맞춤: 실제로 보이는 높이 − 안전 영역 ── */
+function viewBox() {
+  const el = $('vp'), cs = getComputedStyle(el), pxv = v => parseFloat(v) || 0;
+  const sT = pxv(cs.paddingTop), sB = pxv(cs.paddingBottom), sL = pxv(cs.paddingLeft), sR = pxv(cs.paddingRight);
+  const dvh = el.getBoundingClientRect().height - sT - sB;
+  const vv = window.visualViewport, zoomed = vv && Math.abs(vv.scale - 1) > .01;
+  const hs = [innerHeight, document.documentElement.clientHeight, dvh];
+  if (vv && !zoomed) hs.push(vv.height);
+  const h = Math.min(...hs.filter(x => x > 100)), w = Math.min(innerWidth, document.documentElement.clientWidth || innerWidth);
+  return {x: sL, y: sT, w: w - sL - sR, h: h - sT - sB - 6};
+}
+function resize() {
+  const V = viewBox(), vw = V.w, vh = V.h;
+  LY = vw > vh * 1.2 ? LAYOUTS.land : LAYOUTS.port;
+  S = Math.min(vw / LY.W, vh / LY.H); DPR = Math.min(3, window.devicePixelRatio || 1);
+  const st = $('stage'); st.className = LY.land ? 'land' : 'port';
+  st.style.width = LY.W + 'px'; st.style.height = LY.H + 'px';
+  st.style.transform = `translate(${V.x + (vw - LY.W * S) / 2}px,${V.y + (vh - LY.H * S) / 2}px) scale(${S})`;
+  cv.style.width = LY.W + 'px'; cv.style.height = LY.H + 'px';
+  cv.width = Math.round(LY.W * S * DPR); cv.height = Math.round(LY.H * S * DPR);
+  makeWood(); dirty = true;
+}
+addEventListener('resize', resize);
+window.visualViewport && visualViewport.addEventListener('resize', resize);
+addEventListener('orientationchange', () => setTimeout(resize, 300));
+
+/* ── 버튼·창 ── */
+$('bNew').onclick = () => {
+  if (store.moves.length && !store.over && store.moves.length > 2) {
+    if (!confirm('두던 판을 그만두고 새 판을 시작할까요? (진 걸로 쳐요)')) return;
+  } else if (store.moves.length && !store.over) { store.moves = []; }   // 첫 수 근처면 그냥 다시
+  $('end').hidden = true; newGame();
+};
+$('bUndo').onclick = undo;
+$('bTip').onclick = tip;
+$('bEndNew').onclick = () => { $('end').hidden = true; newGame(); };
+$('bEndLook').onclick = () => { $('end').hidden = true; };
+$('bHelp').onclick = () => { $('help').hidden = false; };
+$('bHelpX').onclick = () => { $('help').hidden = true; };
+$('bSet').onclick = () => { syncSet(); $('set').hidden = false; };
+$('bSetX').onclick = () => {
+  $('set').hidden = true;
+  // 아직 아무도 안 뒀거나 끝난 판이면 바로 새 설정으로
+  const sideOff = (store.side === 'black' && store.me !== 1) || (store.side === 'white' && store.me !== 2);
+  const changed = store.level !== store.glvl || store.rule !== store.grule || sideOff;
+  if (changed && (!store.moves.length || (store.moves.length === 1 && turn === store.me))) { store.moves = []; newGame(); }
+  else refresh();
+};
+$('bReset').onclick = () => {
+  if (!confirm('전적을 모두 지울까요?')) return;
+  store.st = {easy: {w: 0, l: 0, d: 0}, normal: {w: 0, l: 0, d: 0}, hard: {w: 0, l: 0, d: 0}}; save(); syncSet(); refresh();
+};
+document.querySelectorAll('.ov').forEach(o => o.addEventListener('click', e => { if (e.target === o && o.id !== 'end') o.hidden = true; }));
+[['sLevel', 'level'], ['sRule', 'rule'], ['sSide', 'side']].forEach(([id, k]) => {
+  $(id).querySelectorAll('button').forEach(b => b.onclick = () => { store[k] = b.dataset.v; save(); syncSet(); });
+});
+[['tHint', 'hint'], ['tNum', 'nums'], ['tSnd', 'snd'], ['tVib', 'vib']].forEach(([id, k]) => {
+  $(id).onchange = () => { store[k] = $(id).checked; save(); refresh(); if (k === 'vib' && store.vib) vib(30); };
+});
+function syncSet() {
+  [['sLevel', 'level'], ['sRule', 'rule'], ['sSide', 'side']].forEach(([id, k]) =>
+    $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === store[k])));
+  $('tHint').checked = store.hint; $('tNum').checked = store.nums; $('tSnd').checked = store.snd; $('tVib').checked = store.vib;
+  $('vibNo').textContent = canVib ? '' : '(이 브라우저는 지원 안 함)';
+  const changed = store.level !== store.glvl || store.rule !== store.grule;
+  $('setNote').textContent = changed && store.moves.length > 1 && !store.over ? '바꾼 난이도·규칙은 새 판부터 적용돼요.' : '난이도·규칙·돌은 새 판부터 바뀌어요.';
+  $('stats').innerHTML = '<tr><td></td><td>승</td><td>패</td><td>무</td><td>승률</td></tr>' +
+    Object.keys(LVL).map(k => { const s = store.st[k], n = s.w + s.l + s.d;
+      return `<tr><td>${LVL[k]}</td><td>${s.w}</td><td>${s.l}</td><td>${s.d}</td><td>${n ? Math.round(s.w / n * 100) + '%' : '-'}</td></tr>`; }).join('');
+}
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+  else if (e.key === 'h') tip();
+  else if (e.key === 'Escape') document.querySelectorAll('.ov').forEach(o => { if (o.id !== 'end') o.hidden = true; });
+});
+
+/* ── 시작 ── */
+resize(); rebuild(); refresh();
+requestAnimationFrame(loop);
+document.fonts && document.fonts.ready.then(() => { dirty = true; });
+if (!store.over && turn === ai()) aiMove();
+// 테스트용
+window.OM = {B, store, think, vcf, forbidden, analyze, isFive, near, place, tryPlace, newGame, undo, rebuild, refresh, setRule: r => { RULE = r; },
+  get turn() { return turn; }, get thinking() { return thinking; }, get LY() { return LY; }, px, at, XY, get marks() { return marks; }, get forb() { return forb; }};
+</script>
+</body>
+</html>

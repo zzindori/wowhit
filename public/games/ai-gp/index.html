@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI 그랑프리 · 스스로 배우는 레이싱</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+<style>
+/* AI 그랑프리: 차 24대가 뇌 하나를 같이 쓰며 강화학습(PPO)으로 운전을 배움. 학습은 core.js(Web Worker),
+   여기는 받은 위치를 그리기만. 가로 1280×720 / 세로 420×1000(서킷을 90도 돌려 세로로) 두 판 */
+:root{
+  --bg:#15171c; --card:#1f232b; --line:#323844; --ink:#eef1f6; --dim:#9aa3b2;
+  --pur:#b46cff; --grn:#3ddc84; --yel:#ffd23f; --red:#ff4d4d;
+  --display:'Jua',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;font-family:var(--display);
+  user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+#stage{position:absolute;left:0;top:0;transform-origin:0 0}
+#cv{position:absolute;left:0;top:0;touch-action:none}
+.bar{position:absolute;display:flex;align-items:center;gap:6px}
+.title{font-size:20px;white-space:nowrap}
+.title small{font-size:12px;color:var(--dim);margin-left:6px}
+.b{background:#262b35;border:1px solid var(--line);color:var(--ink);font:inherit;font-size:14px;height:34px;min-width:34px;
+  border-radius:10px;cursor:pointer;padding:0 9px;white-space:nowrap;display:grid;place-items:center;text-decoration:none;box-sizing:border-box}
+.b.on{background:#3a2d52;border-color:var(--pur);color:#fff}
+.b.sp.on{background:#5a2222;border-color:var(--red)}
+.grp{display:flex;gap:3px}
+.push{margin-left:auto}
+#panel{position:absolute;display:grid;gap:8px;align-content:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+#bestCard .lb{font-size:12px;color:var(--dim)}
+#bBest{font-size:30px;color:var(--pur);letter-spacing:.5px;line-height:1.1}
+#bSub{font-size:13px;color:var(--dim)}
+#status{font-size:14px;line-height:1.35}
+#status b{font-weight:normal;color:var(--yel)}
+#gc{width:100%;height:100%;display:block}
+#gwrap{padding:4px}
+#tower{padding:4px 6px;font-size:14px}
+.row{display:grid;grid-template-columns:24px 12px 1fr 52px;align-items:center;gap:6px;height:22px;border-radius:6px;padding:0 4px;cursor:pointer}
+.row.me{background:#2c3342}
+.row i{width:10px;height:10px;border-radius:3px}
+.row .p{color:var(--dim);font-size:12px}
+.row .t{font-variant-numeric:tabular-nums}
+.row .t.none{color:#5c6474}
+.sx{display:flex;gap:2px}
+.sx s{flex:1;height:6px;border-radius:2px;background:#3a404c;text-decoration:none}
+.sx s.p{background:var(--pur)}.sx s.g{background:var(--grn)}.sx s.y{background:var(--yel)}
+#stats{font-size:12px;color:var(--dim);line-height:1.5}
+#stats b{font-weight:normal;color:var(--ink)}
+#toast{position:absolute;left:50%;transform:translateX(-50%);background:rgba(20,16,30,.9);border:1px solid var(--pur);
+  padding:6px 14px;border-radius:12px;font-size:16px;pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap;z-index:5}
+#toast.show{opacity:1}
+#toast b{font-weight:normal;color:var(--pur)}
+.ov{position:fixed;inset:0;background:rgba(5,6,10,.72);display:grid;place-items:center;z-index:20;padding:16px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 18px 14px;max-width:440px;max-height:86vh;overflow:auto;line-height:1.5;font-size:15px}
+.box h2{margin:0 0 8px;font-weight:normal;font-size:24px}
+.box p{margin:6px 0}
+.box ul{margin:4px 0 8px;padding-left:20px}
+.box .dim{color:var(--dim);font-size:13px}
+.box .acts{display:flex;gap:8px;margin-top:12px}
+.box .acts .b{flex:1;height:42px;font-size:17px}
+.box .acts .go{background:#7a1e1e;border-color:var(--red)}
+.k{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:3px;vertical-align:-1px}
+#vp{position:fixed;left:0;top:0;width:0;height:100vh;height:100dvh;visibility:hidden;pointer-events:none;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+
+/* 가로 1280×720 */
+#stage.land #top{left:8px;top:8px;width:1264px;height:40px}
+#stage.land #ctl{left:270px;top:11px;height:34px}
+#stage.land #panel{left:920px;top:56px;width:352px;height:656px;grid-template-rows:auto auto 170px auto auto}
+#stage.land #toast{top:64px;left:458px}
+/* 세로 420×1000 */
+#stage.port #top{left:8px;top:6px;width:404px;height:38px}
+#stage.port #ctl{left:8px;top:48px;width:404px;height:34px}
+#stage.port #panel{left:8px;top:728px;width:404px;height:266px;grid-template-columns:1fr 1fr;grid-template-rows:auto auto 1fr}
+#stage.port #bestCard{grid-column:1/3;display:flex;align-items:baseline;gap:10px;padding:6px 10px}
+#stage.port #bBest{font-size:24px}
+#stage.port #status{grid-column:1/3;font-size:13px;padding:6px 10px}
+#stage.port #stats{display:none}
+#stage.port #toast{top:96px}
+#stage.port .title small{display:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="top" class="bar">
+    <a class="b" id="bHome" href="/" title="홈">⌂</a>
+    <div class="title">AI 그랑프리<small>스스로 배우는 레이싱</small></div>
+    <div class="push"></div>
+    <button class="b" id="bHelp" title="설명">?</button>
+    <button class="b" id="bReset" title="처음부터 다시 배우기">⟲</button>
+  </div>
+  <div id="ctl" class="bar">
+    <button class="b" id="bPause" title="멈춤">⏸</button>
+    <div class="grp"><button class="b sp" data-sp="1">×1</button><button class="b sp" data-sp="3">×3</button><button class="b sp on" data-sp="0">⚡최대</button></div>
+    <button class="b on" id="bLine">레이싱 라인</button>
+    <button class="b on" id="bRay">센서</button>
+  </div>
+  <div id="panel">
+    <div class="card" id="bestCard"><div class="lb">최고 랩</div><div id="bBest">—</div><div id="bSub">아직 기록 없음</div></div>
+    <div class="card" id="status">준비 중…</div>
+    <div class="card" id="gwrap"><canvas id="gc"></canvas></div>
+    <div class="card" id="tower"></div>
+    <div class="card" id="stats"></div>
+  </div>
+  <div id="toast"></div>
+</div>
+<div id="vp"></div>
+
+<div class="ov" id="intro" hidden><div class="box">
+  <h2>🏁 AI 그랑프리</h2>
+  <p>차 <b id="nCars">24</b>대가 <b>운전을 하나도 모르는 채</b> 출발해요. 아무도 가르쳐 주지 않아요.</p>
+  <p>앞으로 간 만큼 점수를 받고 벽에 박으면 점수를 잃는 것만 알려 주면, 넘어지면서 걸음마를 배우듯 스스로 운전을 익혀요(강화학습).</p>
+  <p class="dim">처음엔 다 벽에 박아요 → 첫 완주 → 랩타임이 점점 줄어들어요. 언덕 오르막은 느려지고 내리막은 빨라져요.</p>
+  <div class="acts" id="introActs"></div>
+</div></div>
+
+<div class="ov" id="help" hidden><div class="box">
+  <h2>이렇게 배워요</h2>
+  <p>차 24대가 <b>뇌(작은 신경망) 하나</b>를 같이 써요. 128칸(약 4초) 달릴 때마다 모은 경험으로 뇌를 고쳐요 — <b>PPO</b>라는 강화학습 방법이에요(걷는 오리 로봇도 같은 방법).</p>
+  <p><b>점수 규칙</b></p>
+  <ul><li>서킷을 앞으로 간 거리만큼 +</li><li>벽에 박거나, 멈춰 있거나, 거꾸로 가면 −</li><li>핸들을 홱홱 꺾으면 조금 −</li></ul>
+  <p>빨리 갈수록 같은 시간에 점수가 많아서, 시키지 않아도 <b>랩타임 줄이기</b>를 배워요.</p>
+  <p><b>차가 보는 것</b> — 벽까지 거리 센서 7개(초록 선), 속도, 서킷 방향과 어긋난 정도, 앞 커브 셋, 오르막·내리막</p>
+  <p><b>레이싱 라인</b> — <span class="k" style="background:var(--pur)"></span>지금 최고 랩이 달린 길 · <span class="k" style="background:#aaa"></span>처음 완주한 길(점선). 가운데로만 다니던 차가 코너 바깥 → 안쪽 → 바깥으로 도는 길을 스스로 찾아요.</p>
+  <p><b>구간 색</b> — 서킷을 셋으로 나눠 <span class="k" style="background:var(--pur)"></span>전체 최고 · <span class="k" style="background:var(--grn)"></span>그 차 최고 · <span class="k" style="background:var(--yel)"></span>더 느림</p>
+  <p><b>⚡최대</b>는 화면을 띄엄띄엄 그리고 학습에 힘을 다 써요. <b>×1</b>은 실제 속도로 봐요.</p>
+  <p class="dim">차끼리는 부딪히지 않아요(연습 주행). 배운 뇌는 이 기기에 저장돼서 다시 열면 이어서 달려요. 서킷을 누르면 가까운 차를 따라 봐요.</p>
+  <div class="acts"><button class="b" id="bHelpClose">닫기</button></div>
+</div></div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d'), gc = $('gc'), gx = gc.getContext('2d');
+const LAYOUTS = {
+  land: { W: 1280, H: 720, land: true, map: { x: 8, y: 56, w: 900, h: 656 } },
+  port: { W: 420, H: 1000, land: false, map: { x: 8, y: 88, w: 404, h: 632 } },
+};
+const WW = 1000, WH = 640, KMH = .54, FV = 5, KEY = 'aigp-v1';
+let LY = LAYOUTS.land, S = 1, DPR = 1, MK = 1, MO = { x: 0, y: 0 }, bg = null;
+
+/* ── 상태 ── */
+let TR = null, nC = 24, worker = null, started = false, paused = false, speed = 0, playAcc = 0;
+const queue = [];           // {f: Float32Array, ev: []}
+let cur = null, nxt = null;   // 지금 칸 · 다음 칸(×1·×3일 때 사이를 부드럽게)
+const ST = {
+  best: Infinity, first: 0, bestLine: null, firstLine: null, bestCar: -1, laps: 0, crashes: 0, far: 0,
+  bestSec: [Infinity, Infinity, Infinity], hist: [], samples: 0, updates: 0, lastBestAt: 0,
+};
+let car = [];               // 차마다 {best, last, sec:[t,t,t], col:['','',''], cb:[...]}
+let watch = 0, showLine = true, showRay = true, parts = [], toastT = 0, toastNext = null, dirtyUI = true;
+const COL = i => `hsl(${(i * 47) % 360} 80% 58%)`;
+const fmt = t => !isFinite(t) || !t ? '—' : `${Math.floor(t / 60)}:${(t % 60).toFixed(3).padStart(6, '0')}`;
+
+function resetCars() {
+  car = Array.from({ length: nC }, () => ({ best: Infinity, last: 0, sec: [0, 0, 0], col: ['', '', ''], cb: [Infinity, Infinity, Infinity] }));
+}
+
+/* ── 저장 ── */
+function loadSave() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
+function writeSave(brain) {
+  const h = ST.hist; while (h.length > 1500) for (let i = h.length - 2; i > 0; i -= 2) h.splice(i, 1);
+  const o = { brain, st: { best: ST.best, first: ST.first, bestLine: ST.bestLine, firstLine: ST.firstLine, laps: ST.laps, crashes: ST.crashes,
+    far: ST.far, bestSec: ST.bestSec, hist: ST.hist, lastBestAt: ST.lastBestAt } };
+  try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {}
+}
+
+/* ── 일꾼 ── */
+function startWorker(saved) {
+  if (worker) worker.terminate();
+  worker = new Worker('core.js?v=1');
+  worker.onmessage = onMsg;
+  worker.postMessage({ cmd: 'init', saved: saved && saved.brain });
+  worker.postMessage({ cmd: 'speed', v: speed });
+}
+function onMsg(e) {
+  const m = e.data;
+  if (m.type === 'track') {
+    TR = m.track; nC = m.cars; ST.samples = m.samples; ST.updates = m.updates;
+    if (car.length !== nC) resetCars();
+    makeBg(); dirtyUI = true;
+  } else if (m.type === 'frames') {
+    const sz = nC * FV;
+    for (let i = 0; i < m.n; i++) queue.push({ f: m.buf.subarray(i * sz, i * sz + sz), ev: [], s: m.samples });
+    for (const ev of m.ev) {
+      if (m.n && queue.length) queue[queue.length - m.n + Math.min(ev.f, m.n - 1)].ev.push(ev); else applyEv(ev, m.samples);
+    }
+    if (m.stat) { ST.updates = m.stat.updates; ST.samples = m.stat.samples; ST.last = m.stat; dirtyUI = true; }
+    if (!speed && queue.length > 400) queue.splice(0, queue.length - 200);
+  } else if (m.type === 'save') writeSave(m.data);
+  else if (m.type === 'reset') { queue.length = 0; cur = nxt = null; }
+}
+const send = (cmd, v) => worker && worker.postMessage({ cmd, v });
+
+/* ── 사건: 랩·구간·사고 ── */
+function secColor(c, b, t) {
+  const C = car[c];
+  let k = 'y';
+  if (t < ST.bestSec[b]) { ST.bestSec[b] = t; k = 'p'; }
+  else if (t < C.cb[b]) k = 'g';
+  if (t < C.cb[b]) C.cb[b] = t;
+  C.sec[b] = t; C.col[b] = k;
+  if (b === 0) { C.col[1] = C.col[2] = ''; }
+}
+function applyEv(ev, samples) {
+  const c = ev.c, C = car[c];
+  if (!C) return;
+  if (ev.k === 'sec') secColor(c, ev.b, ev.t);
+  else if (ev.k === 'lap') {
+    secColor(c, 2, ev.sec[2]);
+    C.last = ev.t; if (ev.t < C.best) C.best = ev.t;
+    ST.laps++; ST.hist.push([samples, +ev.t.toFixed(3)]);
+    if (!ST.first) { ST.first = ev.t; ST.firstLine = ev.line; banner('🏁 첫 완주!', `${fmt(ev.t)} · 이제 빨라지는 법을 배워요`); }
+    if (ev.t < ST.best) {
+      const gain = isFinite(ST.best) ? ST.best - ev.t : 0;
+      ST.best = ev.t; ST.bestLine = ev.line; ST.bestCar = c; ST.lastBestAt = samples;
+      if (gain) toast(`⚡ 새 최고 랩 <b>${fmt(ev.t)}</b> (−${gain.toFixed(3)}초)`);
+    }
+    dirtyUI = true;
+  } else if (ev.k === 'crash') {
+    ST.crashes++; if (ev.run > ST.far) ST.far = ev.run;
+    if (speed || parts.length < 200) puff(ev.x, ev.y, ev.why === 1);
+  }
+}
+
+/* ── 알림 ── */
+function toast(html) { toastNext = html; }
+function banner(a, b) { toastNext = `${a} <b>${b}</b>`; toastT = 0; }
+function tickToast(dt) {
+  toastT -= dt;
+  if (toastNext && toastT < 1.2) {
+    $('toast').innerHTML = toastNext; $('toast').classList.add('show'); toastNext = null; toastT = 2.6;
+  } else if (toastT <= 0) $('toast').classList.remove('show');
+}
+
+/* ── 화면 맞춤 ── */
+function viewBox() {
+  const el = $('vp'), cs = getComputedStyle(el), pxv = v => parseFloat(v) || 0;
+  const sT = pxv(cs.paddingTop), sB = pxv(cs.paddingBottom), sL = pxv(cs.paddingLeft), sR = pxv(cs.paddingRight);
+  const dvh = el.getBoundingClientRect().height - sT - sB;
+  const vv = window.visualViewport, zoomed = vv && Math.abs(vv.scale - 1) > .01;
+  const hs = [innerHeight, document.documentElement.clientHeight, dvh];
+  if (vv && !zoomed) hs.push(vv.height);
+  const h = Math.min(...hs.filter(x => x > 100)), w = Math.min(innerWidth, document.documentElement.clientWidth || innerWidth);
+  return { x: sL, y: sT, w: w - sL - sR, h: h - sT - sB - 6 };
+}
+function resize() {
+  const V = viewBox(), vw = V.w, vh = V.h;
+  LY = vw > vh * 1.05 ? LAYOUTS.land : LAYOUTS.port;
+  S = Math.min(vw / LY.W, vh / LY.H); DPR = Math.min(2.5, window.devicePixelRatio || 1);
+  const st = $('stage'); st.className = LY.land ? 'land' : 'port';
+  st.style.width = LY.W + 'px'; st.style.height = LY.H + 'px';
+  st.style.transform = `translate(${V.x + (vw - LY.W * S) / 2}px,${V.y + (vh - LY.H * S) / 2}px) scale(${S})`;
+  cv.style.width = LY.W + 'px'; cv.style.height = LY.H + 'px';
+  cv.width = Math.round(LY.W * S * DPR); cv.height = Math.round(LY.H * S * DPR);
+  const M = LY.map;
+  if (LY.land) { MK = Math.min(M.w / WW, M.h / WH); MO = { x: M.x + (M.w - WW * MK) / 2, y: M.y + (M.h - WH * MK) / 2 }; }
+  else { MK = Math.min(M.w / WH, M.h / WW); MO = { x: M.x + (M.w - WH * MK) / 2, y: M.y + (M.h - WW * MK) / 2 }; }
+  const r = gc.getBoundingClientRect();
+  gc.width = Math.max(10, Math.round(r.width / S * S * DPR)); gc.height = Math.max(10, Math.round(r.height / S * S * DPR));
+  if (TR) makeBg();
+  dirtyUI = true;
+}
+// 서킷 좌표 → 캔버스 픽셀(세로 판은 90도 돌림)
+function mapX(c, k = 1) {
+  const P = S * DPR * k;
+  if (LY.land) c.setTransform(MK * P, 0, 0, MK * P, MO.x * P, MO.y * P);
+  else c.setTransform(0, MK * P, -MK * P, 0, (MO.x + WH * MK) * P, MO.y * P);
+}
+function toStage(x, y) { return LY.land ? [MO.x + x * MK, MO.y + y * MK] : [MO.x + (WH - y) * MK, MO.y + x * MK]; }
+function fromStage(sx, sy) { return LY.land ? [(sx - MO.x) / MK, (sy - MO.y) / MK] : [(sy - MO.y) / MK, WH - (sx - MO.x) / MK]; }
+
+/* ── 지형·서킷 그림(한 번 그려 둠) ── */
+function hAt(x, y) { let h = 0; for (const [hx, hy, A, s] of TR.hills) { const dx = x - hx, dy = y - hy; h += A * Math.exp(-(dx * dx + dy * dy) / (2 * s * s)); } return h; }
+function rng(seed) { return () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }; }
+function nearTrack(x, y) {
+  let d = Infinity;
+  for (let i = 0; i < TR.N; i += 3) { const dx = x - TR.cx[i], dy = y - TR.cy[i]; d = Math.min(d, dx * dx + dy * dy); }
+  return Math.sqrt(d);
+}
+function makeBg() {
+  bg = document.createElement('canvas'); bg.width = cv.width; bg.height = cv.height;
+  const c = bg.getContext('2d');
+  c.fillStyle = '#15171c'; c.fillRect(0, 0, bg.width, bg.height);
+  mapX(c);
+  c.save();
+  c.beginPath(); c.roundRect(0, 0, WW, WH, 14); c.clip();
+  // 잔디 + 깎은 줄무늬
+  c.fillStyle = '#4b8a39'; c.fillRect(0, 0, WW, WH);
+  c.fillStyle = 'rgba(255,255,255,.045)';
+  for (let x = 0; x < WW; x += 80) c.fillRect(x, 0, 40, WH);
+  // 언덕 빛·그늘(왼쪽 위에서 빛) + 높이 색
+  const gw = 250, gh = 160, cell = 4, sh = document.createElement('canvas'); sh.width = gw; sh.height = gh;
+  const sc = sh.getContext('2d'), img = sc.createImageData(gw, gh);
+  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
+    const x = (i + .5) * cell, y = (j + .5) * cell, h = hAt(x, y), hx = hAt(x + 2, y) - hAt(x - 2, y), hy = hAt(x, y + 2) - hAt(x, y - 2);
+    const lit = clamp((-hx * -.6 - hy * -.7) * -.9, -1, 1), k = (j * gw + i) * 4;
+    if (lit > 0) { img.data[k] = 255; img.data[k + 1] = 250; img.data[k + 2] = 220; img.data[k + 3] = lit * 120; }
+    else { img.data[k] = 10; img.data[k + 1] = 25; img.data[k + 2] = 15; img.data[k + 3] = -lit * 150; }
+    if (h > 4 && lit > -0.05) { img.data[k + 3] = Math.max(img.data[k + 3], h * 1.2); img.data[k] = 255; img.data[k + 1] = 236; img.data[k + 2] = 170; }
+    if (h < -4) { img.data[k] = 20; img.data[k + 1] = 50; img.data[k + 2] = 60; img.data[k + 3] = Math.max(img.data[k + 3], -h * 2.2); }
+  }
+  sc.putImageData(img, 0, 0);
+  c.imageSmoothingEnabled = true; c.drawImage(sh, 0, 0, WW, WH);
+  contours(c);
+  // 나무·관중석
+  const R = rng(7);
+  for (let n = 0, tries = 0; n < 90 && tries < 2000; tries++) {
+    const x = 20 + R() * (WW - 40), y = 20 + R() * (WH - 40);
+    if (nearTrack(x, y) < TR.W / 2 + 22 || (y > 606 && x > 280 && x < 720)) continue;
+    const r = 7 + R() * 7; n++;
+    c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.arc(x + 3, y + 4, r, 0, 7); c.fill();
+    c.fillStyle = R() < .5 ? '#2f6b2a' : '#3a7a2e'; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.12)'; c.beginPath(); c.arc(x - r * .3, y - r * .3, r * .5, 0, 7); c.fill();
+  }
+  c.fillStyle = '#5b6170'; c.fillRect(300, 616, 400, 22); c.fillStyle = '#8a92a3'; c.fillRect(300, 614, 400, 4);
+  const R2 = rng(3);
+  for (let x = 304; x < 698; x += 5) for (let y = 621; y < 636; y += 5) { c.fillStyle = `hsl(${R2() * 360} 70% ${55 + R2() * 20}%)`; c.fillRect(x, y, 3, 3); }
+  // 서킷
+  const N = TR.N, edge = (side, rev) => { const X = side ? TR.lx : TR.rx, Y = side ? TR.ly : TR.ry; for (let k = 0; k <= N; k++) { const i = rev ? (N - k) % N : k % N; c.lineTo(X[i], Y[i]); } };
+  c.beginPath(); edge(1, false); edge(0, true); c.closePath();
+  c.fillStyle = 'rgba(0,0,0,.35)'; c.save(); c.translate(2, 3); c.fill('evenodd'); c.restore();
+  c.fillStyle = '#3c4048'; c.fill('evenodd');
+  // 서킷 위 언덕 빛(옅게)
+  c.save(); c.clip('evenodd'); c.globalAlpha = .55; c.drawImage(sh, 0, 0, WW, WH); c.restore();
+  // 연석(코너 안쪽 빨강·흰색)
+  for (let i = 0; i < N; i++) {
+    if (Math.abs(TR.k[i]) < 1 / 110) continue;
+    const j = (i + 1) % N, inL = TR.k[i] > 0, X = inL ? TR.lx : TR.rx, Y = inL ? TR.ly : TR.ry, s = inL ? -1 : 1;
+    c.fillStyle = (i >> 1) % 2 ? '#e8e8e8' : '#d8342c';
+    c.beginPath(); c.moveTo(X[i], Y[i]); c.lineTo(X[j], Y[j]);
+    c.lineTo(X[j] + s * TR.nx[j] * 6, Y[j] + s * TR.ny[j] * 6); c.lineTo(X[i] + s * TR.nx[i] * 6, Y[i] + s * TR.ny[i] * 6); c.fill();
+  }
+  // 벽
+  c.lineJoin = 'round';
+  for (const side of [1, 0]) { c.beginPath(); edge(side, false); c.strokeStyle = '#f4f4f4'; c.lineWidth = 2.6; c.stroke(); }
+  // 출발선(체크무늬)·구간 선
+  const ln = (i, f) => { const hw = TR.W / 2; c.save(); c.translate(TR.cx[i], TR.cy[i]); c.rotate(TR.ang[i]); f(hw); c.restore(); };
+  ln(0, hw => { for (let a = 0; a < 2; a++) for (let b = 0; b < 8; b++) { c.fillStyle = (a + b) % 2 ? '#111' : '#fff'; c.fillRect(-4 + a * 4, -hw + b * hw / 4, 4, hw / 4); } });
+  for (const b of [1, 2]) ln(Math.round(N * b / 3) % N, hw => { c.fillStyle = 'rgba(255,210,63,.75)'; c.fillRect(-1, -hw, 2, hw * 2); });
+  c.restore();
+  // 글자(돌리지 않음)
+  c.setTransform(S * DPR, 0, 0, S * DPR, 0, 0);
+  c.font = '12px Jua, sans-serif'; c.textAlign = 'center';
+  for (const [hx, hy, A] of TR.hills) {
+    const [sx, sy] = toStage(hx, hy + (A > 0 ? -0 : 0));
+    const t = A > 0 ? `⛰ 언덕 +${A}` : `골짜기 ${A}`;
+    c.fillStyle = 'rgba(0,0,0,.55)'; const w = c.measureText(t).width + 10; c.beginPath(); c.roundRect(sx - w / 2, sy - 9, w, 17, 8); c.fill();
+    c.fillStyle = A > 0 ? '#ffe9a8' : '#a8dcff'; c.fillText(t, sx, sy + 4);
+  }
+  for (const [b, lb] of [[0, 'S1 출발'], [1, 'S2'], [2, 'S3']]) {
+    const i = Math.round(TR.N * b / 3) % TR.N, o = TR.W / 2 + 12, [sx, sy] = toStage(TR.cx[i] - TR.nx[i] * o, TR.cy[i] - TR.ny[i] * o);
+    c.fillStyle = 'rgba(0,0,0,.55)'; const w = c.measureText(lb).width + 8; c.beginPath(); c.roundRect(sx - w / 2, sy - 8, w, 15, 6); c.fill();
+    c.fillStyle = '#ffd23f'; c.fillText(lb, sx, sy + 4);
+  }
+}
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+// 등고선(높이 12마다)
+function contours(c) {
+  const cs = 8, nx = WW / cs + 1, ny = WH / cs + 1, H = new Float32Array(nx * ny);
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) H[j * nx + i] = hAt(i * cs, j * cs);
+  c.lineWidth = .9;
+  for (let lv = -48; lv <= 72; lv += 12) {
+    if (!lv) continue;
+    c.strokeStyle = lv > 0 ? 'rgba(60,50,10,.28)' : 'rgba(10,40,60,.3)';
+    c.beginPath();
+    for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
+      const a = H[j * nx + i] - lv, b = H[j * nx + i + 1] - lv, d = H[(j + 1) * nx + i] - lv, e = H[(j + 1) * nx + i + 1] - lv;
+      const pts = [], x = i * cs, y = j * cs;
+      if ((a > 0) !== (b > 0)) pts.push([x + cs * a / (a - b), y]);
+      if ((b > 0) !== (e > 0)) pts.push([x + cs, y + cs * b / (b - e)]);
+      if ((d > 0) !== (e > 0)) pts.push([x + cs * d / (d - e), y + cs]);
+      if ((a > 0) !== (d > 0)) pts.push([x, y + cs * a / (a - d)]);
+      for (let k = 0; k + 1 < pts.length; k += 2) { c.moveTo(pts[k][0], pts[k][1]); c.lineTo(pts[k + 1][0], pts[k + 1][1]); }
+    }
+    c.stroke();
+  }
+}
+
+/* ── 센서(그림용, core.js와 같은 계산) ── */
+const RAYS = [-1.2, -0.7, -0.3, 0, 0.3, 0.7, 1.2], RAY_LEN = 250;
+function nearIdx(x, y, hint) {
+  let best = hint, bd = Infinity;
+  const from = hint < 0 ? 0 : hint - 20, to = hint < 0 ? TR.N : hint + 40;
+  for (let k = from; k < to; k++) { const j = (k + TR.N) % TR.N, dx = x - TR.cx[j], dy = y - TR.cy[j], d = dx * dx + dy * dy; if (d < bd) { bd = d; best = j; } }
+  return best;
+}
+function segHit(px, py, dx, dy, ax, ay, bx, by, best) {
+  const ex = bx - ax, ey = by - ay, den = dx * ey - dy * ex;
+  if (den > -1e-9 && den < 1e-9) return best;
+  const qx = ax - px, qy = ay - py, u = (qx * ey - qy * ex) / den, w = (qx * dy - qy * dx) / den;
+  return u > 0 && u < best && w >= 0 && w <= 1 ? u : best;
+}
+let watchIdx = -1;
+function rays(x, y, th) {
+  watchIdx = nearIdx(x, y, watchIdx);
+  return RAYS.map(a => {
+    const dx = Math.cos(th + a), dy = Math.sin(th + a);
+    let best = RAY_LEN;
+    for (let k = -15; k < 70; k++) {
+      const i = (watchIdx + k + TR.N) % TR.N, j = (i + 1) % TR.N;
+      best = segHit(x, y, dx, dy, TR.lx[i], TR.ly[i], TR.lx[j], TR.ly[j], best);
+      best = segHit(x, y, dx, dy, TR.rx[i], TR.ry[i], TR.rx[j], TR.ry[j], best);
+    }
+    return [dx, dy, best];
+  });
+}
+
+/* ── 그리기 ── */
+function puff(x, y, hard) {
+  const n = hard ? 9 : 5;
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * 7, s = 20 + Math.random() * 50;
+    parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .7, max: .7, r: 3 + Math.random() * 4, spark: hard && i < 3 });
+  }
+}
+function drawCar(c, x, y, th, col, h, me) {
+  const k = 1 + h / 220, sx = 2.2 + h * .05;
+  c.save(); c.translate(x + sx, y + sx * 1.2); c.rotate(th); c.scale(k, k);
+  c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.roundRect(-10, -5, 20, 10, 4); c.fill();
+  c.restore();
+  c.save(); c.translate(x, y); c.rotate(th); c.scale(k, k);
+  if (me) { c.strokeStyle = '#fff'; c.lineWidth = 1.6; c.beginPath(); c.arc(0, 0, 15, 0, 7); c.stroke(); }
+  c.fillStyle = '#111';
+  for (const [tx, ty] of [[-6, -5.6], [-6, 5.6], [5.5, -5], [5.5, 5]]) c.fillRect(tx - 2.4, ty - 1.7, 4.8, 3.4);
+  c.fillStyle = col;
+  c.beginPath(); c.moveTo(11, 0); c.lineTo(5, -2.6); c.lineTo(-4, -3.6); c.lineTo(-9, -3); c.lineTo(-9, 3); c.lineTo(-4, 3.6); c.lineTo(5, 2.6); c.closePath(); c.fill();
+  c.fillRect(8.5, -5, 2.4, 10);    // 앞날개
+  c.fillRect(-11, -4.6, 2.6, 9.2); // 뒷날개
+  c.fillStyle = '#16181d'; c.beginPath(); c.ellipse(-1.5, 0, 2.6, 1.7, 0, 0, 7); c.fill();
+  c.restore();
+}
+function draw(alpha) {
+  const P = S * DPR;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (bg) ctx.drawImage(bg, 0, 0); else { ctx.fillStyle = '#15171c'; ctx.fillRect(0, 0, cv.width, cv.height); }
+  if (!TR) return;
+  mapX(ctx);
+  ctx.lineJoin = ctx.lineCap = 'round';
+  if (showLine) {
+    if (ST.firstLine) { ctx.setLineDash([4, 5]); line(ST.firstLine, 'rgba(235,235,235,.6)', 1.6); ctx.setLineDash([]); }
+    if (ST.bestLine) { line(ST.bestLine, 'rgba(180,108,255,.28)', 7); line(ST.bestLine, '#c48bff', 2.2); }
+  }
+  // 연기
+  for (const p of parts) {
+    const a = p.life / p.max;
+    ctx.fillStyle = p.spark ? `rgba(255,170,60,${a})` : `rgba(220,220,220,${a * .55})`;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (p.spark ? .6 : 2 - a), 0, 7); ctx.fill();
+  }
+  if (!cur) return;
+  const pos = i => {
+    const o = i * FV, x0 = cur[o], y0 = cur[o + 1], t0 = cur[o + 2];
+    if (!nxt || !alpha) return [x0, y0, t0, cur[o + 3], cur[o + 4]];
+    const x1 = nxt[o], y1 = nxt[o + 1], t1 = nxt[o + 2];
+    if (Math.abs(x1 - x0) + Math.abs(y1 - y0) > 40) return [x0, y0, t0, cur[o + 3], cur[o + 4]];   // 사고 뒤 되돌아간 차
+    let dt = t1 - t0; if (dt > Math.PI) dt -= 2 * Math.PI; if (dt < -Math.PI) dt += 2 * Math.PI;
+    return [x0 + (x1 - x0) * alpha, y0 + (y1 - y0) * alpha, t0 + dt * alpha, cur[o + 3], cur[o + 4]];
+  };
+  const W = pos(watch);
+  if (showRay) {
+    for (const [dx, dy, d] of rays(W[0], W[1], W[2])) {
+      const f = d / RAY_LEN, col = f < .2 ? '255,77,77' : f < .45 ? '255,210,63' : '61,220,132';
+      ctx.strokeStyle = `rgba(${col},.75)`; ctx.lineWidth = 1.1;
+      ctx.beginPath(); ctx.moveTo(W[0], W[1]); ctx.lineTo(W[0] + dx * d, W[1] + dy * d); ctx.stroke();
+      if (d < RAY_LEN) { ctx.fillStyle = `rgb(${col})`; ctx.beginPath(); ctx.arc(W[0] + dx * d, W[1] + dy * d, 2.2, 0, 7); ctx.fill(); }
+    }
+  }
+  const order = [...Array(nC).keys()].sort((a, b) => hAt(pos(a)[0], pos(a)[1]) - hAt(pos(b)[0], pos(b)[1]));
+  for (const i of order) {
+    if (i === watch) continue;
+    const [x, y, th] = pos(i); drawCar(ctx, x, y, th, COL(i), hAt(x, y), false);
+  }
+  drawCar(ctx, W[0], W[1], W[2], COL(watch), hAt(W[0], W[1]), true);
+  // 따라 보는 차 꼬리표
+  ctx.setTransform(P, 0, 0, P, 0, 0);
+  const [sx, sy] = toStage(W[0], W[1]), t = `${Math.round(W[3] * KMH)} km/h`;
+  ctx.font = '12px Jua, sans-serif'; ctx.textAlign = 'center';
+  const w = ctx.measureText(t).width + 10;
+  ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.beginPath(); ctx.roundRect(sx - w / 2, sy - 30, w, 16, 8); ctx.fill();
+  ctx.fillStyle = W[4] ? '#ffd23f' : '#fff'; ctx.fillText(t, sx, sy - 18);
+}
+function line(L, col, w) {
+  if (!L || L.length < 4) return;
+  ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(L[0], L[1]);
+  for (let i = 2; i < L.length; i += 2) ctx.lineTo(L[i], L[i + 1]);
+  ctx.stroke();
+}
+
+/* ── 오른쪽 판(최고 랩·상태·그래프·순위) ── */
+function drawGraph() {
+  const w = gc.width, h = gc.height, p = DPR * S;
+  gx.setTransform(1, 0, 0, 1, 0, 0); gx.clearRect(0, 0, w, h);
+  gx.font = `${11 * p}px Jua, sans-serif`;
+  const H = ST.hist;
+  if (H.length < 2) {
+    gx.fillStyle = '#7b8494'; gx.textAlign = 'center';
+    gx.fillText('완주하면 랩타임 그래프가 그려져요', w / 2, h / 2 - 6 * p);
+    gx.fillText(`한 번에 간 가장 먼 거리: 서킷의 ${Math.round(Math.min(ST.far, 1) * 100)}%`, w / 2, h / 2 + 12 * p);
+    return;
+  }
+  const L = 34 * p, B = 16 * p, T0 = 8 * p, R0 = 8 * p;
+  const sMax = Math.max(ST.samples, H[H.length - 1][0]) || 1;
+  let tMax = 0; for (const [, t] of H) tMax = Math.max(tMax, t);
+  tMax = Math.min(tMax, ST.best * 1.9); const tMin = ST.best * .97;
+  const X = s => L + (w - L - R0) * s / sMax, Y = t => T0 + (h - T0 - B) * (1 - (Math.min(t, tMax) - tMin) / (tMax - tMin || 1));
+  gx.strokeStyle = '#323844'; gx.lineWidth = p;
+  for (let k = 0; k <= 3; k++) { const y = T0 + (h - T0 - B) * k / 3; gx.beginPath(); gx.moveTo(L, y); gx.lineTo(w - R0, y); gx.stroke(); }
+  gx.fillStyle = '#7b8494'; gx.textAlign = 'right';
+  for (let k = 0; k <= 3; k++) { const t = tMax - (tMax - tMin) * k / 3; gx.fillText(t.toFixed(1) + '초', L - 4 * p, T0 + (h - T0 - B) * k / 3 + 4 * p); }
+  gx.textAlign = 'left'; gx.fillText('연습할수록 →', L, h - 3 * p);
+  gx.fillStyle = 'rgba(220,226,236,.32)';
+  const step = Math.max(1, Math.floor(H.length / 900));
+  for (let i = 0; i < H.length; i += step) gx.fillRect(X(H[i][0]) - p, Y(H[i][1]) - p, 2 * p, 2 * p);
+  gx.strokeStyle = '#c48bff'; gx.lineWidth = 2 * p; gx.beginPath();
+  let b = Infinity;
+  for (let i = 0; i < H.length; i++) { if (H[i][1] < b) { b = H[i][1]; const x = X(H[i][0]), y = Y(b); i ? gx.lineTo(x, y) : gx.moveTo(x, y); } }
+  gx.lineTo(X(sMax), Y(b)); gx.stroke();
+}
+function ui() {
+  dirtyUI = false;
+  $('bBest').textContent = fmt(ST.best);
+  $('bSub').innerHTML = ST.first ? `첫 완주 ${fmt(ST.first)} → <b style="color:var(--grn);font-weight:normal">${Math.round((1 - ST.best / ST.first) * 100)}% 빨라짐</b>` : '아직 한 바퀴도 못 돌았어요';
+  let s;
+  if (!started) s = '출발 대기 중';
+  else if (!ST.laps) s = `🚧 <b>벽에 박으며 배우는 중</b> · 한 번에 간 가장 먼 거리 ${Math.round(Math.min(ST.far, 1) * 100)}%`;
+  else {
+    const since = ST.samples - ST.lastBestAt;
+    s = since > 600000 ? `🧱 <b>거의 한계</b> · 한동안 최고 랩이 안 줄어요 (이 차·이 서킷의 한계에 가까움)`
+      : `🏎 <b>랩타임 줄이는 중</b> · 완주 ${ST.laps.toLocaleString()}바퀴`;
+  }
+  $('status').innerHTML = s;
+  // 순위: 최고 랩 순
+  const n = LY.land ? 9 : 6, ids = [...Array(nC).keys()].sort((a, b) => car[a].best - car[b].best).slice(0, n);
+  if (!ids.includes(watch)) ids[n - 1] = watch;
+  $('tower').innerHTML = ids.map((i, r) => {
+    const C = car[i], has = isFinite(C.best);
+    return `<div class="row${i === watch ? ' me' : ''}" data-c="${i}"><span class="p">P${r + 1}</span><i style="background:${COL(i)}"></i>`
+      + `<span class="t${has ? '' : ' none'}">${has ? fmt(C.best) : '기록 없음'}</span><span class="sx">${C.col.map(k => `<s class="${k}"></s>`).join('')}</span></div>`;
+  }).join('');
+  const hrs = ST.samples / 30 / 3600;
+  $('stats').innerHTML = `학습 <b>${ST.updates.toLocaleString()}</b>번 · 연습 주행 <b>${hrs >= 1 ? hrs.toFixed(1) + '시간' : Math.round(hrs * 60) + '분'}</b>(차 ${nC}대 합)`
+    + ` · 완주 <b>${ST.laps.toLocaleString()}</b> · 사고 <b>${ST.crashes.toLocaleString()}</b>`
+    + (ST.last ? `<br>운전 흔들림(탐험) <b>${ST.last.std.toFixed(2)}</b> — 줄어들수록 자신 있게 운전` : '');
+  drawGraph();
+}
+$('tower').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) { watch = +r.dataset.c; watchIdx = -1; dirtyUI = true; } });
+
+/* ── 돌리기 ── */
+let lastTs = 0, uiT = 0, saveT = 0;
+function frame(ts) {
+  const dt = Math.min(.1, (ts - (lastTs || ts)) / 1000); lastTs = ts;
+  let alpha = 0;
+  if (started && !paused) {
+    const take = () => { const q = queue.shift(); cur = q.f; q.ev.forEach(e => applyEv(e, q.s)); };
+    if (speed) {
+      playAcc += dt * 30 * speed;
+      let used = 0;
+      while (playAcc >= 1 && queue.length) { take(); playAcc -= 1; used++; }
+      if (!queue.length) playAcc = Math.min(playAcc, .999);
+      nxt = queue.length ? queue[0].f : null; alpha = playAcc;
+      if (used) send('ack', used);
+    } else { while (queue.length) take(); nxt = null; }
+  }
+  for (const p of parts) { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .92; p.vy *= .92; }
+  parts = parts.filter(p => p.life > 0);
+  draw(alpha);
+  tickToast(dt);
+  uiT -= dt; if (dirtyUI && uiT <= 0) { ui(); uiT = .25; }
+  saveT -= dt; if (started && saveT <= 0) { send('save'); saveT = 20; }
+  requestAnimationFrame(frame);
+}
+
+/* ── 버튼 ── */
+document.querySelectorAll('.sp').forEach(b => b.onclick = () => {
+  speed = +b.dataset.sp; playAcc = 0; queue.length = 0;
+  document.querySelectorAll('.sp').forEach(x => x.classList.toggle('on', x === b)); send('speed', speed);
+});
+$('bPause').onclick = () => { paused = !paused; $('bPause').textContent = paused ? '▶' : '⏸'; send('pause', paused); };
+$('bLine').onclick = () => { showLine = !showLine; $('bLine').classList.toggle('on', showLine); };
+$('bRay').onclick = () => { showRay = !showRay; $('bRay').classList.toggle('on', showRay); };
+$('bHelp').onclick = () => $('help').hidden = false;
+$('bHelpClose').onclick = () => $('help').hidden = true;
+$('help').onclick = e => { if (e.target.id === 'help') $('help').hidden = true; };
+$('bReset').onclick = () => {
+  if (!confirm('배운 걸 다 지우고 처음부터 다시 배울까요?')) return;
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  Object.assign(ST, { best: Infinity, first: 0, bestLine: null, firstLine: null, bestCar: -1, laps: 0, crashes: 0, far: 0,
+    bestSec: [Infinity, Infinity, Infinity], hist: [], samples: 0, updates: 0, lastBestAt: 0, last: null });
+  resetCars(); parts = []; queue.length = 0; cur = nxt = null;
+  send('reset'); started = true; dirtyUI = true;
+};
+cv.addEventListener('pointerdown', e => {
+  if (!cur) return;
+  const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) / r.width * LY.W, sy = (e.clientY - r.top) / r.height * LY.H;
+  const [x, y] = fromStage(sx, sy);
+  let bi = -1, bd = 40 * 40;
+  for (let i = 0; i < nC; i++) { const dx = cur[i * FV] - x, dy = cur[i * FV + 1] - y, d = dx * dx + dy * dy; if (d < bd) { bd = d; bi = i; } }
+  if (bi >= 0) { watch = bi; watchIdx = -1; dirtyUI = true; }
+});
+addEventListener('resize', resize);
+window.visualViewport && visualViewport.addEventListener('resize', resize);
+addEventListener('orientationchange', () => setTimeout(resize, 300));
+document.addEventListener('visibilitychange', () => { if (document.hidden && started) send('save'); });
+
+/* ── 시작 ── */
+function go(saved) {
+  $('intro').hidden = true; started = true;
+  if (saved && saved.st) Object.assign(ST, saved.st, { best: saved.st.best ?? Infinity, bestSec: (saved.st.bestSec || []).map(t => t ?? Infinity) });
+  startWorker(saved); dirtyUI = true;
+}
+(function init() {
+  resetCars(); resize();
+  const saved = loadSave();
+  const A = $('introActs');
+  if (saved && saved.brain) {
+    A.innerHTML = '<button class="b" id="iNew">처음부터</button><button class="b go" id="iGo">이어서 달리기</button>';
+    $('iGo').onclick = () => go(saved);
+    $('iNew').onclick = () => { try { localStorage.removeItem(KEY); } catch (e) {} go(null); };
+  } else {
+    A.innerHTML = '<button class="b go" id="iGo">출발!</button>';
+    $('iGo').onclick = () => go(null);
+  }
+  // 출발 전에도 서킷은 보이게
+  worker = new Worker('core.js?v=1'); worker.onmessage = e => { if (e.data.type === 'track') { TR = e.data.track; nC = e.data.cars; makeBg(); dirtyUI = true; worker.terminate(); worker = null; } };
+  worker.postMessage({ cmd: 'init' }); worker.postMessage({ cmd: 'pause', v: true });
+  $('intro').hidden = false;
+  window.GP = { ST, get car() { return car; }, get queue() { return queue; }, get TR() { return TR; } };
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

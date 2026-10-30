@@ -1,13 +1,16 @@
-'use strict';
 /* AI 그랑프리 — 서킷·차 물리 + PPO(강화학습) 학습 일꾼.
-   index.html이 Web Worker로 띄움(화면은 index.html이 그림). Node에서도 require 해서
-   화면 없이 학습만 돌려 볼 수 있음(scripts/ai-gp/train.cjs). 라이브러리 없이 신경망·역전파·Adam 직접 구현 */
+   index.html이 Web Worker로 띄움. 화면도 같은 파일을 <script>로 읽어 서킷 만들기·센서 그리기에 씀(window.GPCORE).
+   Node에서도 읽어서 화면 없이 학습만 돌려 볼 수 있음(scripts/ai-gp/train.cjs). 라이브러리 없이 신경망·역전파·Adam 직접 구현 */
+(function () {
+'use strict';
 
 const DT = 1 / 30;                       // 물리 한 칸 = 1/30초
 // 차: 가속·브레이크·최고 속도·구름 저항·공기 저항·최소 회전 반지름·타이어 접지(옆으로 버티는 힘)·미끄러질 때 속도 손실·언덕 힘
 const CAR = { ACC: 260, BRK: 520, VTOP: 380, ROLL: 8, DRAG: 0.0003, RMIN: 30, GRIP: 650, SCRUB: 0.6, SCRUB_MAX: 700, G: 350 };
 const RAYS = [-1.2, -0.7, -0.3, 0, 0.3, 0.7, 1.2], RAY_LEN = 250;   // 벽까지 거리 센서 7개(라디안, 앞 기준)
-const OBS = RAYS.length + 11, ACT = 2;   // 보는 것 18개 → 핸들·페달 2개
+const OBS = RAYS.length + 17, ACT = 2;   // 보는 것 24개 → 핸들·페달 2개
+// 바닥: 모래 = 느려지고 조금 미끄러움 · 웅덩이 = 많이 미끄러움. 콘은 닿으면 사고
+const SURF = [null, { drag: 1.2, grip: .75 }, { drag: .25, grip: .4 }], CONE_R = 6, CAR_R = 5;
 const PPO = { cars: 24, T: 128, epochs: 4, mb: 512, gamma: 0.99, lam: 0.95, clip: 0.2, lr: 3e-4, ent: 0.0005,
   maxGrad: 0.5, hidden: 64, kl: 0.03 };
 // 점수 규칙: 앞으로 간 거리 + / 벽에 박음 − / 핸들 홱 꺾음 −(조금)
@@ -38,7 +41,7 @@ function buildTrack(c) {
   let tot = 0;
   for (let i = 0; i < m; i++) { const a = raw[i], b = raw[(i + 1) % m]; seg[i] = Math.hypot(b[0] - a[0], b[1] - a[1]); tot += seg[i]; }
   const N = Math.round(tot / 4), step = tot / N;
-  const T = { name: c.name, W: c.width, hills: c.hills, N, L: tot, step };
+  const T = { name: c.name, W: c.width, hills: c.hills || [], patches: c.patches || [], cones: c.cones || [], N, L: tot, step };
   for (const k of ['cx', 'cy', 'tx', 'ty', 'nx', 'ny', 'ang', 'k', 's', 'h', 'lx', 'ly', 'rx', 'ry']) T[k] = new Float64Array(N);
   let j = 0, acc = 0;
   for (let i = 0; i < N; i++) {
@@ -74,10 +77,35 @@ function grad(T, x, y) {
   return [gx, gy];
 }
 
+// 바닥 종류: 0 아스팔트 · 1 모래 · 2 웅덩이(나중에 놓은 게 위)
+function surfAt(T, x, y) {
+  let k = 0;
+  for (const [px, py, r, t] of T.patches) { const dx = x - px, dy = y - py; if (dx * dx + dy * dy < r * r) k = t === 'water' ? 2 : 1; }
+  return k;
+}
+// 서킷 검사: 너무 급한 커브·길끼리 너무 가까움·밖으로 나감 → {ok, i(문제 자리), why}
+function checkTrack(T) {
+  const hw = T.W / 2;
+  for (let i = 0; i < T.N; i++) {
+    if (Math.abs(T.k[i]) * hw * .95 > 1) return { ok: false, i, why: 'curve' };
+    for (const [x, y] of [[T.lx[i], T.ly[i]], [T.rx[i], T.ry[i]]]) if (x < 10 || y < 10 || x > 990 || y > 630) return { ok: false, i, why: 'out' };
+  }
+  const gap = Math.ceil(T.W * 2.4 / T.step), lim = (T.W * 1.2) ** 2;
+  for (let i = 0; i < T.N; i += 2) for (let j = i + gap; j < T.N; j += 2) {
+    if (T.N - (j - i) < gap) continue;
+    const dx = T.cx[i] - T.cx[j], dy = T.cy[i] - T.cy[j];
+    if (dx * dx + dy * dy < lim) return { ok: false, i, why: 'near' };
+  }
+  if (T.L < 1200) return { ok: false, i: 0, why: 'short' };
+  return { ok: true };
+}
+
 /* ── 차 ── */
-function place(T, car, idx) {
-  car.idx = idx; car.x = T.cx[idx]; car.y = T.cy[idx]; car.th = T.ang[idx]; car.v = 0; car.s = T.s[idx]; car.lat = 0;
-  car.lapValid = false; car.stuck = 0; car.back = 0; car.ps = 0; car.pt = 0; car.slide = 0; car.trail = []; car.run = 0;
+// keep: 경주 중엔 사고 나도 랩 기록을 이어감
+function place(T, car, idx, keep, lat = 0) {
+  car.idx = idx; car.x = T.cx[idx] + T.nx[idx] * lat; car.y = T.cy[idx] + T.ny[idx] * lat; car.th = T.ang[idx]; car.v = 0; car.s = T.s[idx]; car.lat = lat;
+  car.stuck = 0; car.back = 0; car.ps = 0; car.pt = 0; car.slide = 0; car.run = 0;
+  if (!keep) { car.lapValid = false; car.trail = []; }
 }
 function locate(T, car) {
   let best = car.idx, bd = Infinity;
@@ -106,6 +134,12 @@ function ray(T, car, a) {
     best = segHit(car.x, car.y, dx, dy, T.lx[i], T.ly[i], T.lx[j], T.ly[j], best);
     best = segHit(car.x, car.y, dx, dy, T.rx[i], T.ry[i], T.rx[j], T.ry[j], best);
   }
+  for (const [cx, cy] of T.cones) {   // 콘도 센서에 걸림
+    const fx = cx - car.x, fy = cy - car.y, pr = fx * dx + fy * dy;
+    if (pr <= 0 || pr - CONE_R > best) continue;
+    const pp = fx * fx + fy * fy - pr * pr;
+    if (pp < CONE_R * CONE_R) { const u = pr - Math.sqrt(CONE_R * CONE_R - pp); if (u > 0 && u < best) best = u; }
+  }
   return best;
 }
 function observe(T, car, o, off) {
@@ -120,20 +154,24 @@ function observe(T, car, o, off) {
   o[k++] = (gx * Math.cos(car.th) + gy * Math.sin(car.th)) * 2;                 // 지금 오르막(+)·내리막(−)
   o[k++] = (T.h[(car.idx + 30) % T.N] - T.h[car.idx]) / 50;                    // 120 앞 높이 차
   o[k++] = car.ps; o[k++] = car.pt;
+  const here = surfAt(T, car.x, car.y);   // 바닥: 지금·앞 60·앞 140 (모래, 웅덩이)
+  o[k++] = here === 1; o[k++] = here === 2;
+  for (const d of [60, 140]) { const f = surfAt(T, car.x + Math.cos(car.th) * d, car.y + Math.sin(car.th) * d); o[k++] = f === 1; o[k++] = f === 2; }
 }
 // 한 칸 움직이고 점수·끝남·사건 돌려줌. time = 학습 전체 칸 수
 function stepCar(T, car, a0, a1, time, ev, ci) {
   const st = clamp(a0, -1, 1), th = clamp(a1, -1, 1);
   const c = Math.cos(car.th), s = Math.sin(car.th), [gx, gy] = grad(T, car.x, car.y);
+  const sf = SURF[surfAt(T, car.x, car.y)], grip = CAR.GRIP * (sf ? sf.grip : 1);
   let acc = th >= 0 ? CAR.ACC * th * (1 - car.v / CAR.VTOP) : CAR.BRK * th;
-  acc -= CAR.G * (gx * c + gy * s) + CAR.ROLL + CAR.DRAG * car.v * car.v;
+  acc -= CAR.G * (gx * c + gy * s) + CAR.ROLL + CAR.DRAG * car.v * car.v + (sf ? sf.drag * car.v : 0);
   car.v = Math.max(0, car.v + acc * DT);
   let yaw = car.v * st / CAR.RMIN;
   const lat = Math.abs(car.v * yaw);
   car.slide = 0;
-  if (lat > CAR.GRIP) {   // 접지 넘음 → 덜 돌고 속도 깎임(밀려 나감)
-    yaw = Math.sign(yaw) * CAR.GRIP / car.v;
-    car.v = Math.max(0, car.v - Math.min((lat - CAR.GRIP) * CAR.SCRUB, CAR.SCRUB_MAX) * DT); car.slide = 1;
+  if (lat > grip) {   // 접지 넘음 → 덜 돌고 속도 깎임(밀려 나감)
+    yaw = Math.sign(yaw) * grip / car.v;
+    car.v = Math.max(0, car.v - Math.min((lat - grip) * CAR.SCRUB, CAR.SCRUB_MAX) * DT); car.slide = 1;
   }
   car.th = wrap(car.th + yaw * DT);
   car.x += Math.cos(car.th) * car.v * DT; car.y += Math.sin(car.th) * car.v * DT;
@@ -159,13 +197,18 @@ function stepCar(T, car, a0, a1, time, ev, ci) {
   // 벽·멈춤·거꾸로
   let done = 0;
   if (Math.abs(car.lat) > T.W / 2 - 4) { done = 1; r -= RW.crash; }
+  if (!done) for (const [cx, cy] of T.cones) { const dx = car.x - cx, dy = car.y - cy; if (dx * dx + dy * dy < (CONE_R + CAR_R) ** 2) { done = 1; r -= RW.crash; break; } }
   car.stuck = car.v < 8 ? car.stuck + DT : 0;
   if (!done && car.stuck > 3) { done = 2; r -= RW.crash * .5; }
   car.back = Math.abs(wrap(car.th - T.ang[car.idx])) > 2 ? car.back + DT : 0;
   if (!done && car.back > 1) { done = 3; r -= RW.crash; }
   if (done) {
     ev.push({ k: 'crash', c: ci, x: car.x, y: car.y, why: done, run: car.run / T.L });
-    place(T, car, (car.idx - 8 + T.N) % T.N);
+    // 다시 출발: 조금 뒤 + 옆으로 살짝 흩어서. 같은 곳에서 3번 연속 박으면(콘 바로 뒤 등) 서킷 아무 데서나(학습 차만)
+    car.fails = car.run < T.L * .05 ? (car.fails || 0) + 1 : 0;
+    let idx = (car.idx - 20 + T.N) % T.N;
+    if (!car.race && car.fails >= 3) { idx = Math.floor(Math.random() * T.N); car.fails = 0; }
+    place(T, car, idx, car.race, car.race ? 0 : (Math.random() - .5) * T.W * .4);
   }
   return [r, done ? 1 : 0];
 }
@@ -369,6 +412,14 @@ class Trainer {
     this.updates++;
     this.last = { kl, clip: cf / Math.max(cnt, 1), vloss: vl / Math.max(cnt, 1), rew: rsum / nC, std: Math.exp(this.logstd[0]) };
   }
+  setTrack(T) {   // 새 서킷: 뇌는 그대로, 차만 새 자리로
+    this.T = T; this.t = 0; this.ret.fill(0);
+    this.cars.forEach((c, i) => place(T, c, Math.floor(i * T.N / this.nC)));
+  }
+  drive(car) {   // 경주용: 흔들림 없이 뇌가 제일 좋다고 보는 대로
+    observe(this.T, car, this.cur, 0); this.norm(this.cur, this.curN, 1);
+    const m = this.pi.forward(this.curN, 1); return [m[0], m[1]];
+  }
   dump() {
     const r = a => Array.from(a, x => Math.round(x * 1e5) / 1e5);
     return { v: 1, pi: r(this.pi.P), vf: r(this.vf.P), ls: r(this.logstd), om: r(this.obsRms.mean), ov: r(this.obsRms.var), oc: this.obsRms.count,
@@ -389,11 +440,34 @@ function trackData(T) {
 
 /* ── Web Worker 연결 ── */
 if (typeof importScripts === 'function') {
-  let T, tr, speed = 0, paused = false, ahead = 0, timer = 0;
+  let T, tr, speed = 0, paused = false, ahead = 0, timer = 0, race = null;
   const FV = 5;   // 차 한 대 = x, y, 방향, 속도, 미끄러짐
+  const pack = (cars, frames) => { const f = new Float32Array(cars.length * FV); cars.forEach((c, i) => f.set([c.x, c.y, c.th, c.v, c.slide], i * FV)); frames.push(f); };
+  const post = (frames, ev, nc, extra) => {
+    const buf = new Float32Array(frames.length * nc * FV);
+    frames.forEach((f, i) => buf.set(f, i * nc * FV));
+    postMessage({ type: 'frames', n: frames.length, nc, buf, ev, samples: tr.samples, ...extra }, [buf.buffer]);
+  };
+  // 경주: 나(0)·AI(1) 두 대, 화면이 받아 간 만큼만 앞서 만듦(실제 속도)
+  const raceLoop = () => {
+    const frames = [], ev = [];
+    while (ahead < 3) {
+      if (race.go) {
+        const e = [], a = tr.drive(race.cars[1]);
+        stepCar(T, race.cars[0], race.input[0], race.input[1], race.t, e, 0);
+        stepCar(T, race.cars[1], a[0], a[1], race.t, e, 1);
+        race.t++;
+        for (const x of e) { x.f = frames.length; ev.push(x); }
+      }
+      pack(race.cars, frames); ahead++;
+    }
+    if (frames.length) post(frames, ev, 2, { race: { t: race.t, ls: race.cars.map(c => c.lapValid ? c.lapStart : -1) } });
+  };
   const loop = () => {
     timer = 0;
-    if (!tr || paused) return;
+    if (!tr) return;
+    if (race) { raceLoop(); timer = setTimeout(loop, 8); return; }
+    if (paused) return;
     const limit = speed ? Math.max(60, speed * 45) : Infinity, every = speed ? 1 : 3;
     const frames = [], ev = [], t0 = Date.now();
     let upd = false;
@@ -401,31 +475,34 @@ if (typeof importScripts === 'function') {
       const e = [];
       if (tr.tick(e)) upd = true;
       for (const x of e) { x.f = frames.length; ev.push(x); }
-      if (speed || tr.time % every === 0) {
-        const f = new Float32Array(tr.nC * FV);
-        tr.cars.forEach((c, i) => { f.set([c.x, c.y, c.th, c.v, c.slide], i * FV); });
-        frames.push(f); if (speed) ahead++;
-      }
+      if (speed || tr.time % every === 0) { pack(tr.cars, frames); if (speed) ahead++; }
     }
-    if (frames.length || ev.length) {
-      const buf = new Float32Array(frames.length * tr.nC * FV);
-      frames.forEach((f, i) => buf.set(f, i * tr.nC * FV));
-      postMessage({ type: 'frames', n: frames.length, buf, ev, stat: upd ? { ...tr.last, updates: tr.updates, samples: tr.samples, time: tr.time } : null,
-        samples: tr.samples }, [buf.buffer]);
-    }
+    if (frames.length || ev.length) post(frames, ev, tr.nC, { stat: upd ? { ...tr.last, updates: tr.updates, samples: tr.samples, time: tr.time } : null });
     timer = setTimeout(loop, ahead >= limit ? 16 : 0);
   };
   const kick = () => { if (!timer) timer = setTimeout(loop, 0); };
   self.onmessage = e => {
     const m = e.data;
-    if (m.cmd === 'init') {
-      T = buildTrack(CIRCUITS[m.circuit] || CIRCUITS.main); tr = new Trainer(T, m.saved);
-      postMessage({ type: 'track', track: trackData(T), cars: tr.nC, samples: tr.samples, updates: tr.updates }); kick();
-    } else if (m.cmd === 'speed') { speed = m.v; ahead = 0; kick(); }
+    if (m.cmd === 'init') { T = buildTrack(m.circuit || CIRCUITS.main); tr = new Trainer(T, m.saved); postMessage({ type: 'ready', cars: tr.nC, samples: tr.samples, updates: tr.updates }); kick(); }
+    else if (m.cmd === 'circuit') { T = buildTrack(m.circuit); if (m.keep) tr.setTrack(T); else tr = new Trainer(T, null); ahead = 0; postMessage({ type: 'reset' }); kick(); }
+    else if (m.cmd === 'speed') { speed = m.v; ahead = 0; kick(); }
     else if (m.cmd === 'pause') { paused = m.v; if (!paused) kick(); }
     else if (m.cmd === 'ack') { ahead = Math.max(0, ahead - m.v); kick(); }
     else if (m.cmd === 'save') postMessage({ type: 'save', data: tr.dump() });
     else if (m.cmd === 'reset') { tr = new Trainer(T, null); ahead = 0; postMessage({ type: 'reset' }); kick(); }
+    else if (m.cmd === 'race') {
+      ahead = 0;
+      if (m.v) {
+        const st = (T.N - 10) % T.N, mk = lat => { const c = { race: true, secs: [0, 0, 0] }; place(T, c, st, false, lat); return c; };
+        race = { cars: [mk(T.W * .22), mk(-T.W * .22)], input: [0, 0], t: 0, go: false };
+      } else race = null;
+      kick();
+    }
+    else if (m.cmd === 'input') { if (race) race.input = m.v; }
+    else if (m.cmd === 'go') { if (race) race.go = true; }
   };
 }
-if (typeof module !== 'undefined') module.exports = { DT, CAR, PPO, RW, OBS, CIRCUITS, buildTrack, Trainer, height, grad, ray, place, trackData, RAYS, RAY_LEN };
+const API = { DT, CAR, PPO, RW, OBS, CIRCUITS, CONE_R, buildTrack, checkTrack, surfAt, Trainer, height, grad, ray, place, stepCar, trackData, RAYS, RAY_LEN };
+if (typeof module !== 'undefined') module.exports = API;
+else if (typeof window !== 'undefined') window.GPCORE = API;
+})();

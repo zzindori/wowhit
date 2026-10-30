@@ -1,11 +1,12 @@
 // AI 그랑프리 학습을 화면 없이 확인: node scripts/ai-gp/train.cjs [학습 횟수] [--check] [--track]
-// --check: 신경망 역전파를 수치 미분과 비교 / --track: 서킷 좌표를 out/track.json으로
+// --check: 신경망 역전파를 수치 미분과 비교 / --track: 서킷 좌표를 out/track.json으로 / --obst: 모래·웅덩이·콘 놓은 서킷
 const path = require('path'), fs = require('fs');
 // core.js는 브라우저용 일반 스크립트(저장소가 type: module이라 require 대신 직접 읽어 실행)
 const G = (() => { const module = { exports: {} }; new Function('module', fs.readFileSync(path.join(__dirname, '../../public/games/ai-gp/core.js'), 'utf8'))(module); return module.exports; })();
 const OUT = path.join(__dirname, 'out'); fs.mkdirSync(OUT, { recursive: true });
 const args = process.argv.slice(2), N = parseInt(args.find(a => /^\d+$/.test(a)) || '100');
-const T = G.buildTrack(G.CIRCUITS.main);
+const OBST = { patches: [[480, 580, 45, 'sand'], [905, 420, 50, 'water'], [300, 92, 40, 'sand']], cones: [[640, 568], [130, 210], [380, 452]] };
+const T = G.buildTrack(args.includes('--obst') ? { ...G.CIRCUITS.main, ...OBST } : G.CIRCUITS.main);
 
 if (args.includes('--track')) {
   fs.writeFileSync(path.join(OUT, 'track.json'), JSON.stringify(G.trackData(T)));

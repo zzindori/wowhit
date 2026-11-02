@@ -106,7 +106,7 @@ button,input,select{font-family:inherit;color:inherit}
 .fsearch{display:flex;gap:6px}.fsearch .fin{flex:1;margin:0}.qgo{flex:none;width:64px;border-radius:10px;border:2px solid var(--ink);background:var(--pri);color:#fff;font:16px Jua,sans-serif;cursor:pointer}
 .qbs{display:flex;gap:6px;margin:8px 0}.qbs button{flex:1;height:40px;border-radius:12px;border:2px solid var(--ink);background:#fff;font:15px Jua,sans-serif;cursor:pointer}
 .qmsg{text-align:center;color:#6b6876;font-size:14px;padding:12px}
-#qRes .mr b{display:flex;flex-direction:column}#qRes .mr b small{font-weight:400;font-size:11px;color:#8a8794;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw}
+#qRes .mr b{display:flex;flex-direction:column}#qRes .mr .ko{font-weight:400;font-size:13px;color:#2f6fd0}#qRes .mr b small{font-weight:400;font-size:11px;color:#8a8794;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw}
 .mfoot{display:flex;gap:8px;margin-top:8px}.mfoot button{flex:1;height:38px;border-radius:10px;border:2px solid #d8d3c8;background:#fff;font:14px Jua,sans-serif;color:#a33;cursor:pointer}
 .empty{text-align:center;color:#8a8794;font-size:14px;padding:24px 8px;line-height:1.6}
 
@@ -334,8 +334,8 @@ const P = { x: S.pos.x, y: S.pos.y, vx: 0, vy: 0, hd: 0, trail: [], warnAt: {}, 
 const CAM = { x: P.x, y: P.y, z: 1 };
 const FX = [];
 const NEAR = { city: 9, spot: 1.6 };
-// 공항 범위는 화면 크기 기준: 걸을 땐 공항 아이콘 주변 약 24px(0.8~15km), 비행기 착륙은 약 28px(25~120km)
-const airR = () => Math.max(.8, Math.min(15, 24 / CAM.z));
+// 공항 범위는 화면 크기 기준: 걸을 땐 공항 아이콘 주변 약 24px(0.8~5km — 넓으면 마쓰야마 6km·다카마쓰 14km 시내에 멈추기만 해도 탑승됨), 비행기 착륙은 약 28px(25~120km)
+const airR = () => Math.max(.8, Math.min(5, 24 / CAM.z));
 const askR = () => Math.max(25, Math.min(120, 28 / CAM.z));
 const FLY = m => m === 'ground' || m === 'takeoff' || m === 'plane' || m === 'landing';
 const GAUGE = { board: 1.5, land: 1.2 };
@@ -1280,20 +1280,78 @@ function koToJa(q) {
     return out;
   }).filter(Boolean).join(' ');
 }
-async function search(q) {
-  const out = [], ja = koToJa(q), here = unproj(CAM.x, CAM.y);
-  const vb = `&viewbox=${here.lon - 1.2},${here.lat + 1},${here.lon + 1.2},${here.lat - 1}&bounded=0`;   // 지금 보는 곳 먼저
-  const nom = q2 => fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&countrycodes=jp,kr&accept-language=ko${vb}&q=${encodeURIComponent(q2)}`).then(r => r.json());
-  const tasks = [nom(q), fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(ja)}`).then(r => r.json())];
-  if (ja !== q) tasks.push(nom(ja));
-  const [n1, gsi, n2] = await Promise.allSettled(tasks), seen = new Set();
-  for (const nn of [n1, n2]) if (nn && nn.status === 'fulfilled') for (const r of nn.value) {
-    if (seen.has(r.place_id)) continue; seen.add(r.place_id);
-    out.push({ lat: +r.lat, lon: +r.lon, name: r.name || r.display_name.split(',')[0], sub: r.display_name, src: 'OSM' });
+
+// 일본어 이름 → 한글 함께 보기: 아는 말은 뜻(사전 반대로), 가나는 소리대로, 모르는 한자는 그대로
+const KANA = (() => {
+  const m = {}, rows = [['アイウエオ', '아이우에오'], ['カキクケコ', '카키쿠케코'], ['サシスセソ', '사시스세소'], ['タチツテト', '타치쓰테토'], ['ナニヌネノ', '나니누네노'], ['ハヒフヘホ', '하히후헤호'],
+    ['マミムメモ', '마미무메모'], ['ヤユヨ', '야유요'], ['ラリルレロ', '라리루레로'], ['ワヲ', '와오'], ['ガギグゲゴ', '가기구게고'], ['ザジズゼゾ', '자지즈제조'], ['ダヂヅデド', '다지즈데도'],
+    ['バビブベボ', '바비부베보'], ['パピプペポ', '파피푸페포'], ['ァィゥェォ', '아이우에오'], ['ャュョ', '야유요']];
+  for (const [k, h] of rows) [...k].forEach((c, i) => m[c] = h[i]);
+  ('キャ캬キュ큐キョ쿄シャ샤シュ슈ショ쇼チャ차チュ추チョ초ニャ냐ニュ뉴ニョ뇨ヒャ햐ヒュ휴ヒョ효ミャ먀ミュ뮤ミョ묘リャ랴リュ류リョ료ギャ갸ギュ규ギョ교ジャ자ジュ주ジョ조'
+    + 'ビャ뱌ビュ뷰ビョ뵤ピャ퍄ピュ퓨ピョ표ティ티ディ디ファ파フィ피フェ페フォ포ウィ위ウェ웨ウォ워ヴ부').match(/[^가-힣]+[가-힣]/g).forEach(t => m[t.slice(0, -1)] = t.slice(-1));
+  return m;
+})();
+function kanaKo(run) {
+  run = run.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));   // 히라가나 → 가타카나
+  let out = '';
+  for (let i = 0; i < run.length;) {
+    const two = run.slice(i, i + 2);
+    if (KANA[two] && two.length === 2) { out += KANA[two]; i += 2; continue; }
+    const c = run[i++], last = out.charCodeAt(out.length - 1), open = last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28 === 0;
+    if (c === 'ン') out = open ? out.slice(0, -1) + String.fromCharCode(last + 4) : out + 'ㄴ';        // 받침 ㄴ
+    else if (c === 'ッ') { if (open) out = out.slice(0, -1) + String.fromCharCode(last + 19); }    // 받침 ㅅ
+    else if (c === 'ー') { /* 장음은 생략 */ }
+    else if (c === '・') out += ' ';
+    else out += KANA[c] || c;
   }
-  const p0 = proj(here.lon, here.lat);
-  out.sort((a, b) => { const pa = proj(a.lon, a.lat), pb = proj(b.lon, b.lat); return Math.hypot(pa.x - p0.x, pa.y - p0.y) - Math.hypot(pb.x - p0.x, pb.y - p0.y); });
-  if (gsi.status === 'fulfilled' && out.length < 3) for (const r of gsi.value.slice(0, 4))   // 이름으로 충분히 찾았으면 주소 결과(엉뚱한 동명 지명)는 뺌 out.push({ lat: r.geometry.coordinates[1], lon: r.geometry.coordinates[0], name: r.properties.title, sub: '주소 (국토지리원)', src: 'GSI' });
+  return out;
+}
+let REV = null;
+function jaToKo(name) {
+  if (!name || /^[\s가-힣0-9a-zA-Z,.'()-]+$/.test(name)) return '';
+  if (!REV) { koToJa('가'); REV = {}; for (const [ko, ja] of Object.entries(KODICT)) if (ja && !REV[ja]) REV[ja] = ko; Object.assign(REV, { '店': '점', '市': '시', '県': '현', '前': ' 앞', '駅前': '역 앞', '本館': '본관', '本店': '본점', '支店': '지점', '手打ち': '수타 ', '手打': '수타 ',
+    'セブン-イレブン': '세븐일레븐', 'セブンイレブン': '세븐일레븐', 'ミニストップ': '미니스톱', 'スターバックスコーヒー': '스타벅스', 'ドトールコーヒー': '도토루', 'コメダ珈琲店': '코메다 커피', '珈琲': '커피' }); }
+  const keys = Object.keys(REV).sort((a, b) => b.length - a.length), isKana = c => /[ぁ-ゖァ-ー]/.test(c);
+  let out = '', buf = '';
+  for (let i = 0; i < name.length;) {
+    const k = keys.find(k => name.startsWith(k, i));
+    if (k) { out += kanaKo(buf) + (out && !/\s$/.test(out) ? '' : '') + REV[k]; buf = ''; i += k.length; continue; }
+    if (isKana(name[i])) buf += name[i]; else { out += kanaKo(buf) + name[i]; buf = ''; }
+    i++;
+  }
+  out += kanaKo(buf);
+  return /[가-힣]/.test(out) && out !== name ? out : '';
+}
+// 오픈스트리트맵 검색은 1초에 한 번만 허용 → 동시에 보내지 않고 차례로, 충분하면 멈춤
+let NOM_AT = 0;
+async function nomFetch(params) {
+  const wait = NOM_AT + 1100 - Date.now(); if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  NOM_AT = Date.now();
+  return fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&countrycodes=jp,kr&accept-language=ko&${params}`).then(r => r.ok ? r.json() : [], () => []);
+}
+async function search(q) {
+  const ja = koToJa(q), here = unproj(CAM.x, CAM.y), out = [], seen = new Set();
+  const add = rs => { for (const r of rs) { const k2 = (r.name || '') + '@' + (+r.lat).toFixed(4) + ',' + (+r.lon).toFixed(4); if (seen.has(r.place_id) || seen.has(k2)) continue; seen.add(r.place_id); seen.add(k2); out.push({ lat: +r.lat, lon: +r.lon, name: r.name || r.display_name.split(',')[0], sub: r.display_name, src: 'OSM' }); } };
+  const box = (lon, lat, dx, dy) => `viewbox=${lon - dx},${lat + dy},${lon + dx},${lat - dy}&bounded=1`;
+  const gsiP = fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(ja)}`).then(r => r.json(), () => []);
+  // 1) 검색어에 도시 이름(高松·松山…)이 있으면 그 도시 안(약 25km)에서 나머지 말만 — '高松'이 고베 '高松町' 같은 동네로 잡히던 것
+  const cityHit = [...CITY.map(c => ({ ja: c.ja.replace(/[市町]$/, ''), lat: c.lat, lon: c.lon })), ...M.places.filter(p => p.c === 'JPN' && p.ja).map(p => { const u = unproj(p.x, p.y); return { ja: p.ja.replace(/市$/, ''), lat: u.lat, lon: u.lon }; })]
+    .filter(c => c.ja.length > 1 && ja.includes(c.ja)).sort((a, b) => b.ja.length - a.ja.length)[0];
+  if (cityHit) {
+    const cb = box(cityHit.lon, cityHit.lat, .3, .22), rest = ja.replace(cityHit.ja, ' ').replace(/\s+/g, ' ').trim();
+    add(await nomFetch(`${cb}&q=${encodeURIComponent(ja)}`));                                            // '高松駅' 그대로 도시 안에서
+    const generic = /^(駅|公園|店|空港|城|港|温泉|寺|神社|市場|橋|ホテル|駐車場)$/;
+    if (!out.length && rest && !generic.test(rest)) add(await nomFetch(`${cb}&q=${encodeURIComponent(rest)}`));   // 'タイムズカー'처럼 이름만
+  }
+  // 2) 지금 보는 곳 주변(약 150km)
+  if (out.length < 3) add(await nomFetch(`${box(here.lon, here.lat, 1.6, 1.3)}&q=${encodeURIComponent(ja)}`));
+  // 3) 그래도 부족하면 전국(한국어 원래 말도)
+  if (out.length < 3) add(await nomFetch(`q=${encodeURIComponent(ja)}`));
+  if (out.length < 3 && ja !== q) add(await nomFetch(`q=${encodeURIComponent(q)}`));
+  // 이름으로 충분히 찾았으면 주소 결과(엉뚱한 동명 지명)는 뺌
+  if (out.length < 3) for (const r of (await gsiP).slice(0, 4)) out.push({ lat: r.geometry.coordinates[1], lon: r.geometry.coordinates[0], name: r.properties.title, sub: '주소 (국토지리원)', src: 'GSI' });
+  for (const r of out) { const p = proj(r.lon, r.lat); r.km = Math.hypot(p.x - P.x, p.y - P.y); }   // 내 위치에서 거리 → 가까운 순
+  out.sort((a, b) => a.km - b.km);
   search.last = ja !== q ? ja : '';
   return out.slice(0, 12);
 }
@@ -1318,10 +1376,11 @@ window.doFind = async () => {
     const tr = search.last ? `<div class="qmsg" style="padding:4px">🇯🇵 「${esc(search.last)}」로도 찾았어요</div>` : '';
     if (!res.length) { box.innerHTML = tr + `<div class="qmsg">못 찾았어요 · 가게는 일본어 이름이 잘 찾아져요 (예: タイムズカー 高松)</div>`; return; }
     if (res.length === 1 && (res[0].sub === '구글 지도 링크' || res[0].sub === '좌표')) return beginPick(res[0].lat, res[0].lon, res[0].name);
-    box.innerHTML = tr + res.map((r, i) => `<div class="mr" onclick="pickRes(${i})"><span class="ic">${r.src === 'GSI' ? '🏠' : '📍'}</span><b>${esc(r.name)}<small>${esc(r.sub)}</small></b><i>›</i></div>`).join('');
+    res.forEach(r => { r.ko = jaToKo(r.name); });
+    box.innerHTML = tr + res.map((r, i) => `<div class="mr" onclick="pickRes(${i})"><span class="ic">${r.src === 'GSI' ? '🏠' : '📍'}</span><b>${esc(r.name)}${r.ko ? ` <span class="ko">${esc(r.ko)}</span>` : ''}<small>${esc(r.sub)}</small></b><i>${r.km == null ? '›' : r.km < 1 ? Math.round(r.km * 1000) + 'm' : r.km < 100 ? r.km.toFixed(1) + 'km' : Math.round(r.km) + 'km'}</i></div>`).join('');
   } catch (e) { box.innerHTML = `<div class="qmsg">⚠️ ${esc(e.message || '검색 실패')} · 잠시 뒤 다시 해 보세요</div>`; }
 };
-window.pickRes = i => { const r = QRES[i]; beginPick(r.lat, r.lon, r.name); };
+window.pickRes = i => { const r = QRES[i]; beginPick(r.lat, r.lon, r.ko ? `${r.ko} (${r.name})` : r.name); };
 // 십자선 모드: 화면을 끌면 지도가 움직이고 가운데 ＋에 꽂음. 사람은 제자리
 function beginPick(lat, lon, name) {
   const p = lat != null ? proj(lon, lat) : { x: CAM.x, y: CAM.y };

@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>jjWay · Japan Joy Way</title>
+<meta name="description" content="가족과 떠나는 일본 소도시 여행 지도 — 한국 공항에서 비행기로 변신해 일본으로">
+<meta name="theme-color" content="#bfe3f2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2c2b35;--sea:#bfe3f2;--card:#fffdf7;--pri:#e8594f;--blue:#2f6fd0;--line:rgba(44,43,53,.14)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--sea);color:var(--ink);font-family:Jua,system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+#vp{position:fixed;inset:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);pointer-events:none;height:100dvh}
+#cv{position:fixed;left:0;top:0;touch-action:none}
+button,input,select{font-family:inherit;color:inherit}
+.chip{position:fixed;background:rgba(255,253,247,.94);border:2px solid var(--ink);border-radius:999px;padding:5px 12px;font-size:15px;box-shadow:0 3px 0 rgba(44,43,53,.25);z-index:20}
+#loc{left:calc(10px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));max-width:calc(100vw - 200px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#btns{position:fixed;left:calc(10px + env(safe-area-inset-left));top:calc(50px + env(safe-area-inset-top));display:flex;gap:8px;z-index:20}
+.ib{width:42px;height:42px;border-radius:50%;border:2px solid var(--ink);background:var(--card);font-size:20px;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer;display:grid;place-items:center;padding:0}
+.ib:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
+#pipWrap{position:fixed;right:calc(10px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));z-index:20;pointer-events:none;text-align:center}
+#pip{border-radius:50%;border:3px solid var(--ink);box-shadow:0 4px 0 rgba(44,43,53,.25),0 0 0 5px rgba(255,255,255,.7);background:var(--sea);display:block}
+#pipTxt{margin-top:6px;font-size:13px;background:rgba(255,253,247,.94);border:2px solid var(--ink);border-radius:10px;padding:3px 8px;max-width:190px;line-height:1.3}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,440px)}
+.t{background:var(--ink);color:#fff;border-radius:12px;padding:8px 14px;font-size:15px;line-height:1.35;text-align:center;animation:tin .25s ease-out}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));width:min(96vw,460px);max-height:46vh;overflow:auto;background:var(--card);border:2px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 rgba(44,43,53,.25);z-index:30;padding:12px 14px 14px;touch-action:pan-y;font-family:system-ui,sans-serif}
+#sheet h2{font-family:Jua,sans-serif;font-weight:400;margin:0 0 2px;font-size:22px}
+#sheet .sub{color:#6b6876;font-size:13px;margin-bottom:8px}
+#sheet .x{position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:50%;border:none;background:#eee9df;font-size:16px;cursor:pointer}
+.rt{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px dashed var(--line);font-size:14px}
+.rt b{font-family:Jua,sans-serif;font-weight:400;font-size:16px;min-width:88px}
+.al{display:inline-block;background:#eef3ff;border:1px solid #c9d6f5;border-radius:999px;padding:1px 7px;margin:1px 2px;font-size:12px;white-space:nowrap}
+.al.ex{background:#fff3e6;border-color:#f3cfa5}
+.note{font-size:12px;color:#8a8794;margin-top:8px;line-height:1.45}
+.warn{background:#fff0ee;border:1px solid #f2c2bb;border-radius:10px;padding:8px 10px;font-size:14px;margin:6px 0}
+.soon{background:#f3f7ee;border:1px dashed #b9cfa3;border-radius:10px;padding:8px 10px;font-size:13px;margin-top:8px}
+.ov{position:fixed;inset:0;z-index:60;background:rgba(44,43,53,.45);display:grid;place-items:center;padding:12px;touch-action:pan-y}
+.box{background:var(--card);border:3px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 rgba(44,43,53,.3);width:min(96vw,440px);max-height:92vh;overflow:auto;padding:18px 16px;font-family:system-ui,sans-serif}
+.box h1{font-family:Jua,sans-serif;font-weight:400;margin:0;font-size:30px;text-align:center}
+.box h1 small{display:block;font-size:15px;color:#6b6876;margin-top:2px}
+.box h3{font-family:Jua,sans-serif;font-weight:400;font-size:18px;margin:14px 0 6px}
+.step{display:flex;align-items:center;justify-content:center;gap:14px;font-family:Jua,sans-serif;font-size:26px;margin:6px 0}
+.step button{width:44px;height:44px;border-radius:50%;border:2px solid var(--ink);background:#fff;font-size:24px;cursor:pointer}
+.mem{display:grid;grid-template-columns:34px 1fr 82px 74px;gap:6px;align-items:center;margin:6px 0}
+.mem input,.mem select{height:38px;border:2px solid #d8d3c8;border-radius:10px;padding:0 8px;font-size:15px;background:#fff;min-width:0}
+.dot{width:34px;height:34px;border-radius:50%;border:2px solid var(--ink);cursor:pointer;padding:0}
+.go{display:block;width:100%;margin-top:16px;height:52px;border-radius:16px;border:3px solid var(--ink);background:var(--pri);color:#fff;font-family:Jua,sans-serif;font-size:22px;box-shadow:0 4px 0 rgba(44,43,53,.35);cursor:pointer}
+.go:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(44,43,53,.35)}
+.small{font-size:12px;color:#8a8794;line-height:1.5;margin-top:8px}
+.int{display:flex;align-items:center;gap:8px;padding:7px 4px;border-top:1px dashed var(--line);font-size:16px}
+.int .nm{flex:1}
+.int button{width:34px;height:30px;border-radius:8px;border:2px solid #d8d3c8;background:#fff;cursor:pointer}
+.sw{width:50px;height:28px;border-radius:999px;border:2px solid var(--ink);background:#ddd;position:relative;cursor:pointer;padding:0}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid var(--ink);transition:left .15s}
+.sw.on{background:#7cc576}.sw.on::after{left:24px}
+.row2{display:flex;gap:8px;margin-top:12px}
+.row2 button{flex:1;height:42px;border-radius:12px;border:2px solid var(--ink);background:#fff;font-family:Jua,sans-serif;font-size:17px;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="vp"></div>
+<canvas id="cv" aria-label="한국·일본 여행 지도"></canvas>
+<div id="loc" class="chip">📍 불러오는 중…</div>
+<div id="btns">
+  <button class="ib" id="bParty" title="가족 설정">👨‍👩‍👧‍👦</button>
+  <button class="ib" id="bSet" title="관심 분야">⚙️</button>
+  <button class="ib" id="bHome" title="wowhit 홈">⌂</button>
+</div>
+<div id="pipWrap"><canvas id="pip"></canvas><div id="pipTxt" hidden></div></div>
+<div id="sheet" hidden></div>
+<div id="toast"></div>
+
+<div class="ov" id="setup" hidden>
+  <div class="box">
+    <h1>jjWay<small>Japan Joy Way · 가족과 떠나는 일본 소도시 여행</small></h1>
+    <h3>몇 명이 떠나요?</h3>
+    <div class="step"><button id="nMinus">−</button><span id="nVal">4</span>명<button id="nPlus">＋</button></div>
+    <h3>함께 가는 사람</h3>
+    <div id="mems"></div>
+    <div class="small">색 동그라미를 누르면 캐릭터 색이 바뀌어요. 이름·구성은 <b>이 폰(브라우저)에만</b> 저장돼요.<br>여권번호·주민번호 같은 정보는 받지 않아요.</div>
+    <button class="go" id="goBtn">✈️ 출발!</button>
+  </div>
+</div>
+
+<div class="ov" id="settings" hidden>
+  <div class="box">
+    <h1 style="font-size:24px">⚙️ 관심 분야</h1>
+    <div class="small" style="text-align:center">켠 분야만 보이고, 위에 있을수록 먼저 보여요.</div>
+    <div id="ints"></div>
+    <div class="row2"><button id="resetBtn">처음부터</button><button id="setClose">닫기</button></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d'), pip = $('pip'), pctx = pip.getContext('2d');
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- 저장 ---------- */
+const KEY = 'jjway-v1';
+const COLORS = ['#e8594f', '#2f6fd0', '#f2b134', '#3fa66b', '#9b59b6', '#ef7fb0', '#16a5a5', '#8d6e4c'];
+const RELS = ['나', '아빠', '엄마', '남편', '아내', '아들', '딸', '형제·자매', '할아버지', '할머니', '친구', '기타'];
+const AGES = ['성인', '학생', '어린이', '유아'];
+const INTERESTS = [
+  ['food', '🍜 맛집', 1], ['shop', '🛍️ 쇼핑', 1], ['stay', '🏨 숙박', 1], ['onsen', '♨️ 온천', 0], ['sight', '🏯 관광·명소', 0],
+  ['nature', '🌿 자연·풍경', 0], ['cafe', '🍰 카페·디저트', 0], ['izakaya', '🍶 이자카야·술집', 0], ['fest', '🎎 축제·행사', 0], ['move', '🚃 이동·교통', 0]];
+const SEOUL = { x: -457.8, y: -284.2 };
+function defParty(n) {
+  const base = [['아빠', '아빠'], ['엄마', '엄마'], ['', '아들'], ['', '딸']];
+  return Array.from({ length: n }, (_, i) => ({ name: base[i] ? base[i][0] : '', rel: base[i] ? base[i][1] : '기타', age: '성인', col: COLORS[i % COLORS.length] }));
+}
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.party) return s; } catch (e) {}
+  return null;
+}
+let S = load() || { party: defParty(4), ints: INTERESTS.map(([k, , on]) => ({ k, on: !!on })), pos: { ...SEOUL }, mode: 'walk', country: 'KOR', from: null, stamps: {}, started: false };
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+/* ---------- 데이터 ---------- */
+let M = null, R = null;            // map.json, routes.json
+const LAND = {}, ADM = [];         // Path2D
+let AIR = [];                      // 공항 목록
+let mask = null, MK = null;        // 땅 판정 격자
+function decode(arr, q) {
+  const p = new Path2D(); let x = 0, y = 0;
+  for (let i = 0; i < arr.length; i += 2) { x += arr[i]; y += arr[i + 1]; i ? p.lineTo(x / q, y / q) : p.moveTo(x / q, y / q); }
+  p.closePath(); return p;
+}
+function buildMask() {
+  // 2km 격자: 1 = 한국 땅, 2 = 일본 땅 (걷기 판정)
+  const x0 = -820, y0 = -960, sc = 0.5, w = Math.ceil(2300 * sc), h = Math.ceil(2260 * sc);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); g.setTransform(sc, 0, 0, sc, -x0 * sc, -y0 * sc);
+  g.fillStyle = '#f00'; LAND.KOR.forEach(p => g.fill(p));
+  g.fillStyle = '#0f0'; LAND.JPN.forEach(p => g.fill(p));
+  const d = g.getImageData(0, 0, w, h).data, m = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) m[i] = d[i * 4] > 110 ? 1 : d[i * 4 + 1] > 110 ? 2 : 0;
+  mask = m; MK = { x0, y0, sc, w, h };
+}
+function landAt(x, y) {
+  const i = Math.floor((x - MK.x0) * MK.sc), j = Math.floor((y - MK.y0) * MK.sc);
+  return i < 0 || j < 0 || i >= MK.w || j >= MK.h ? 0 : mask[j * MK.w + i];
+}
+const LANDC = { KOR: 1, JPN: 2 };
+function canStand(x, y, c) {      // 땅이거나 땅에서 5km 안(좁은 해협·다리)
+  const v = LANDC[c]; if (landAt(x, y) === v) return true;
+  for (let a = 0; a < 8; a++) if (landAt(x + Math.cos(a * Math.PI / 4) * 5, y + Math.sin(a * Math.PI / 4) * 5) === v) return true;
+  return false;
+}
+
+/* ---------- 노선 ---------- */
+const AL = c => R.airlines[c] || c;
+function destsFrom(code) {         // 이 공항에서 내릴 수 있는 곳 {code: [항공사]}
+  const out = {}, a = R.kr[code] ? 'kr' : 'jp';
+  if (a === 'kr') {
+    Object.assign(out, R.routes[code] || {});
+    if (R.domestic.CJU.includes(code)) out.CJU = ['국내선'];
+    if (code === 'CJU') R.domestic.CJU.forEach(k => out[k] = ['국내선']);
+  } else {
+    for (const k in R.routes) if (R.routes[k][code]) out[k] = R.routes[k][code];
+  }
+  return out;
+}
+function krFor(jp) { return Object.keys(R.routes).filter(k => R.routes[k][jp]); }
+function seasonal(k, j, al) { return R.seasonal[`${k}-${j}-${al}`] || R.seasonal[`${j}-${k}-${al}`] || ''; }
+function airName(c) { return (R.kr[c] || R.jp[c]).ko; }
+function cityName(c) { return (R.kr[c] || R.jp[c]).city; }
+
+/* ---------- 화면 크기 ---------- */
+let W = 0, H = 0, DPR = 1, PIPS = 150;
+function resize() {
+  const vv = window.visualViewport;
+  W = Math.min(innerWidth, document.documentElement.clientWidth || innerWidth);
+  H = Math.min(...[innerHeight, document.documentElement.clientHeight, vv && Math.abs(vv.scale - 1) < .01 ? vv.height : 1e9].filter(v => v > 100));
+  DPR = Math.min(3, devicePixelRatio || 1);
+  cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  PIPS = Math.round(Math.max(120, Math.min(190, Math.min(W, H) * .34)));
+  pip.style.width = pip.style.height = PIPS + 'px'; pip.width = pip.height = Math.round(PIPS * DPR);
+  $('pipTxt').style.maxWidth = Math.max(PIPS + 30, 170) + 'px';
+}
+addEventListener('resize', resize); window.visualViewport && visualViewport.addEventListener('resize', resize);
+
+/* ---------- 입력 ---------- */
+let joy = null; const keys = new Set();
+cv.addEventListener('pointerdown', e => { joy = { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove', e => { if (joy && e.pointerId === joy.id) { joy.x = e.clientX; joy.y = e.clientY; } });
+const endJoy = e => { if (joy && e.pointerId === joy.id) joy = null; };
+cv.addEventListener('pointerup', endJoy); cv.addEventListener('pointercancel', endJoy);
+addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; keys.add(e.key.toLowerCase()); if (e.key.startsWith('Arrow')) e.preventDefault(); });
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => { keys.clear(); joy = null; });
+function input() {
+  let ix = 0, iy = 0;
+  if (keys.has('arrowleft') || keys.has('a')) ix -= 1; if (keys.has('arrowright') || keys.has('d')) ix += 1;
+  if (keys.has('arrowup') || keys.has('w')) iy -= 1; if (keys.has('arrowdown') || keys.has('s')) iy += 1;
+  const k = Math.hypot(ix, iy); if (k) { ix /= k; iy /= k; }
+  if (joy) { const dx = joy.x - joy.ox, dy = joy.y - joy.oy, d = Math.hypot(dx, dy); if (d > 6) { const m = Math.min(1, d / 55); ix = dx / d * m; iy = dy / d * m; } }
+  return [ix, iy];
+}
+
+/* ---------- 상태 ---------- */
+const P = { x: S.pos.x, y: S.pos.y, vx: 0, vy: 0, hd: 0, trail: [], hold: 0, holdAt: null, fx: 0, warnAt: {}, sheetFor: null };
+const CAM = { x: P.x, y: P.y, z: 1 };
+const FX = [];                    // 변신 연기
+const SPEED = { walk: 85, plane: 270 };
+const NEAR = { walk: 14, plane: 32 };
+const HOLD = { board: 1.1, land: .55 };
+
+function toast(msg, ms = 2600) {
+  const t = document.createElement('div'); t.className = 't'; t.textContent = msg; $('toast').appendChild(t);
+  while ($('toast').children.length > 3) $('toast').firstChild.remove();
+  setTimeout(() => t.remove(), ms);
+}
+function puff(x, y, n = 18) { if (RM) n = 6; for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, s = 20 + Math.random() * 60; FX.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0, life: .7 + Math.random() * .4, r: 6 + Math.random() * 8 }); } }
+
+function nearestAirport(maxD, filter) {
+  let best = null, bd = maxD;
+  for (const a of AIR) { if (filter && !filter(a)) continue; const d = Math.hypot(a.x - P.x, a.y - P.y); if (d < bd) { bd = d; best = a; } }
+  return best;
+}
+
+/* ---------- 공항 정보 창 ---------- */
+function chips(list, k, j) {
+  return list.map(c => { const s = k && j ? seasonal(k, j, c) : ''; const ex = c === 'OZ' || s; return `<span class="al${ex ? ' ex' : ''}">${AL(c)}${s ? ' · ' + s : c === 'OZ' ? ' · 12/17 종료' : ''}</span>`; }).join('');
+}
+function sheetAirport(a, how) {
+  const sh = $('sheet'); P.sheetFor = a.code;
+  const meta = R.kr[a.code] || R.jp[a.code];
+  let h = `<button class="x" onclick="closeSheet()">✕</button>`;
+  if (a.c === 'KOR') {
+    h += `<h2>✈️ ${meta.ko}</h2><div class="sub">${meta.pref || a.pref} · ${a.code}</div>`;
+    if (meta.closed) h += `<div class="warn">⛔ ${meta.closed}</div>`;
+    const r = R.routes[a.code] || {}, ks = Object.keys(r).sort((x, y) => r[y].length - r[x].length);
+    if (!meta.closed) {
+      h += ks.length ? `<div class="sub">일본 직항 <b>${ks.length}곳</b> — 잠깐 서 있으면 비행기로 변신해요</div>` : `<div class="warn">이 공항엔 일본 직항이 없어요.</div>`;
+      h += ks.map(j => `<div class="rt"><b>${R.jp[j].city}</b><div>${chips(r[j], a.code, j)}</div></div>`).join('');
+      const dom = destsFrom(a.code).CJU || (a.code === 'CJU' ? 1 : 0);
+      if (a.code === 'CJU') h += `<div class="rt"><b>국내선</b><div>${R.domestic.CJU.map(k => `<span class="al">${R.kr[k].city}</span>`).join('')}</div></div>`;
+      else if (dom) h += `<div class="rt"><b>국내선</b><div><span class="al">제주</span></div></div>`;
+    }
+  } else {
+    const ks = krFor(a.code);
+    h += `<h2>🛬 ${meta.ko}</h2><div class="sub">${meta.ja} · ${a.pref} · ${a.code}</div>`;
+    h += `<div class="sub">한국에서 오는 직항</div>` + ks.map(k => `<div class="rt"><b>${R.kr[k].city}</b><div>${chips(R.routes[k][a.code], k, a.code)}</div></div>`).join('');
+    const near = M.places.filter(p => p.c === 'JPN' && Math.hypot(p.x - a.x, p.y - a.y) < 90).slice(0, 6);
+    if (near.length) h += `<div class="rt"><b>주변 도시</b><div>${near.map(p => `<span class="al">${p.ko.replace(/시$/, '')}</span>`).join('')}</div></div>`;
+    const on = S.ints.filter(i => i.on).map(i => INTERESTS.find(x => x[0] === i.k)[1]);
+    h += `<div class="soon">🔦 ${on.join(' · ')} 정보는 다음 단계에서 이 자리에 채워져요 (유튜브 현지인·한국인 영상 정리).</div>`;
+    if (how === 'land') h += `<div class="sub" style="margin-top:8px">돌아갈 땐 공항에 잠깐 서 있으면 다시 비행기로 변신해요.</div>`;
+  }
+  h += `<div class="note">노선: ${R.source}, ${R.checked} 확인. 예약 전 항공사에서 다시 확인하세요.</div>`;
+  sh.innerHTML = h; sh.hidden = false;
+}
+function closeSheet() { $('sheet').hidden = true; P.sheetFor = null; }
+window.closeSheet = closeSheet;
+
+/* ---------- 변신·착륙 ---------- */
+function board(a) {
+  S.mode = 'plane'; S.from = a.code; P.hold = 0; P.armAt = a.code; puff(P.x, P.y); closeSheet();
+  const n = Object.keys(destsFrom(a.code)).length;
+  toast(`✈️ ${cityName(a.code)}에서 탑승! 점선 따라 날아가요 (${n}곳)`);
+  vib(30); save();
+}
+function land(a) {
+  S.mode = 'walk'; S.country = a.c; P.x = a.x; P.y = a.y; P.vx = P.vy = 0; P.trail = []; P.hold = 0;
+  const first = !S.stamps[a.code]; S.stamps[a.code] = S.stamps[a.code] || Date.now();
+  puff(a.x, a.y, 24);
+  toast(`🛬 ${airName(a.code)} 도착!${first ? ' · 🏅 첫 도장' : ''}`);
+  S.from = null; P.armAt = a.code;  // 내린 공항에선 한 번 벗어났다 와야 다시 탐
+  sheetAirport(a, 'land'); vib([20, 40, 20]); save();
+}
+function vib(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+/* ---------- 갱신 ---------- */
+let locT = 0;
+function step(dt) {
+  const [ix, iy] = input(), mode = S.mode, sp = SPEED[mode];
+  const ax = ix * sp, ay = iy * sp, k = 1 - Math.exp(-dt * (mode === 'plane' ? 3.2 : 9));
+  P.vx += (ax - P.vx) * k; P.vy += (ay - P.vy) * k;
+  let nx = P.x + P.vx * dt, ny = P.y + P.vy * dt;
+  if (mode === 'walk') {
+    // 바다 위 공항(간사이·주부 등)에선 땅에 닿을 때까지 다리 건너듯 걸을 수 있음
+    // 걸을 수 있는 곳 = 땅(5km 안) 또는 공항 22km 안(바다 위 공항 연결 다리)
+    const ok = (x, y) => canStand(x, y, S.country) || AIR.some(a => a.c === S.country && Math.hypot(a.x - x, a.y - y) < 22);
+    if (!ok(nx, ny)) { if (ok(nx, P.y)) ny = P.y; else if (ok(P.x, ny)) nx = P.x; else { nx = P.x; ny = P.y; } }
+  } else {
+    nx = Math.max(-820, Math.min(1450, nx)); ny = Math.max(-960, Math.min(1290, ny));
+  }
+  const moved = Math.hypot(nx - P.x, ny - P.y); P.x = nx; P.y = ny;
+  if (Math.hypot(P.vx, P.vy) > 8) { const t = Math.atan2(P.vy, P.vx); let d = t - P.hd; d = Math.atan2(Math.sin(d), Math.cos(d)); P.hd += d * Math.min(1, dt * 8); }
+  if (moved > 0) { P.trail.unshift({ x: P.x, y: P.y }); if (P.trail.length > 400) P.trail.length = 400; }
+
+  // 공항
+  if (mode === 'walk') {
+    const a = nearestAirport(NEAR.walk, a => a.c === S.country);
+    if (P.armAt && (!a || a.code !== P.armAt)) P.armAt = null;
+    if (a) {
+      if (P.sheetFor !== a.code) sheetAirport(a);
+      const meta = R.kr[a.code] || R.jp[a.code], n = Object.keys(destsFrom(a.code)).length;
+      const ok = !meta.closed && n > 0 && P.armAt !== a.code;
+      if (ok) { P.hold += dt; P.holdAt = a; if (P.hold >= HOLD.board) board(a); }
+      else { P.hold = 0; P.holdAt = null; }
+    } else { P.hold = 0; P.holdAt = null; if (P.sheetFor && AIR.find(x => x.code === P.sheetFor && Math.hypot(x.x - P.x, x.y - P.y) > NEAR.walk * 2.5)) closeSheet(); }
+  } else {
+    const dests = destsFrom(S.from), a = nearestAirport(NEAR.plane);
+    if (P.armAt && (!a || a.code !== P.armAt)) P.armAt = null;
+    if (a && a.code === P.armAt) { P.hold = 0; P.holdAt = null; }
+    else if (a) {
+      const ok = dests[a.code] || a.code === S.from;
+      if (ok) { P.hold += dt; P.holdAt = a; if (P.hold >= HOLD.land) land(a); }
+      else {
+        P.hold = 0; P.holdAt = null;
+        if (!P.warnAt[a.code] || performance.now() - P.warnAt[a.code] > 6000) {
+          P.warnAt[a.code] = performance.now();
+          const alt = a.c === 'JPN' ? krFor(a.code).map(k => R.kr[k].city) : [];
+          toast(`${cityName(S.from)}에선 ${cityName(a.code)} 직항이 없어요` + (alt.length ? ` → ${alt.join('·')}에서 가요` : ''), 3400);
+        }
+      }
+    } else { P.hold = 0; P.holdAt = null; }
+  }
+
+  // 연기
+  for (let i = FX.length - 1; i >= 0; i--) { const f = FX[i]; f.t += dt; f.x += f.vx * dt / CAM.z; f.y += f.vy * dt / CAM.z; f.vx *= .92; f.vy *= .92; if (f.t > f.life) FX.splice(i, 1); }
+
+  // 카메라
+  const base = Math.min(W, H);
+  const tz = mode === 'plane' ? base / 1500 : base / 430;
+  CAM.z += (tz - CAM.z) * (1 - Math.exp(-dt * 2.2));
+  CAM.x += (P.x - CAM.x) * (1 - Math.exp(-dt * 5)); CAM.y += (P.y - CAM.y) * (1 - Math.exp(-dt * 5));
+
+  locT -= dt; if (locT <= 0) { locT = .35; updLoc(); }
+  if ((S._st = (S._st || 0) + dt) > 2) { S._st = 0; S.pos = { x: P.x, y: P.y }; save(); }
+}
+const hit = document.createElement('canvas').getContext('2d');
+function admAt(x, y) { for (const a of ADM) if (a.p.some(p => hit.isPointInPath(p, x, y))) return a; return null; }
+function updLoc() {
+  let t;
+  if (S.mode === 'plane') {
+    const dests = destsFrom(S.from);
+    t = `✈️ ${cityName(S.from)} 출발 · 비행 중`;
+    const a = nearestAirport(NEAR.plane * 3);
+    $('pipTxt').hidden = false;
+    if (a && dests[a.code]) $('pipTxt').innerHTML = `<b>${cityName(a.code)}</b><br>${dests[a.code].map(AL).slice(0, 4).join(' · ')}${dests[a.code].length > 4 ? ' 외' : ''}<br>가까이 가면 착륙`;
+    else if (a && a.code === S.from) $('pipTxt').innerHTML = `${cityName(a.code)}로 돌아가기`;
+    else $('pipTxt').innerHTML = `${cityName(S.from)}에서 갈 수 있는 곳<br><b>${Object.keys(dests).length}곳</b> (점선)`;
+  } else {
+    const a = admAt(P.x, P.y);
+    t = `📍 ${S.country === 'KOR' ? '대한민국' : '일본'}${a ? ' · ' + a.ko : ''}`;
+    $('pipTxt').hidden = true;
+  }
+  $('loc').textContent = t;
+}
+
+/* ---------- 그리기 ---------- */
+const SEA = '#bfe3f2', SEA2 = '#a9d6ea';
+function worldTo(g, cam, cx, cy) { g.setTransform(DPR * cam.z, 0, 0, DPR * cam.z, DPR * (cx - cam.x * cam.z), DPR * (cy - cam.y * cam.z)); }
+function drawLand(g, z, detail) {
+  g.lineJoin = 'round';
+  g.fillStyle = '#e4dccb'; g.strokeStyle = 'rgba(80,90,100,.35)'; g.lineWidth = 1 / z;
+  for (const k of ['CHN', 'RUS', 'PRK', 'TWN']) (LAND[k] || []).forEach(p => { g.fill(p); g.stroke(p); });
+  g.fillStyle = '#f4ecd2'; LAND.KOR.forEach(p => g.fill(p));
+  g.fillStyle = '#f7e9d6'; LAND.JPN.forEach(p => g.fill(p));
+  // 해안선 두 겹(물가 느낌)
+  g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 4 / z; LAND.KOR.forEach(p => g.stroke(p)); LAND.JPN.forEach(p => g.stroke(p));
+  g.strokeStyle = '#5c6f7e'; g.lineWidth = 1.2 / z; LAND.KOR.forEach(p => g.stroke(p)); LAND.JPN.forEach(p => g.stroke(p));
+  if (detail) { g.strokeStyle = 'rgba(92,111,126,.45)'; g.lineWidth = 1 / z; g.setLineDash([4 / z, 3 / z]); ADM.forEach(a => a.p.forEach(p => g.stroke(p))); g.setLineDash([]); }
+}
+let LBL = [];                     // 이번 그림에서 이미 쓴 글자 자리
+function free(x, y, w, h) { if (LBL.some(b => Math.abs(b[0] - x) < (b[2] + w) / 2 && Math.abs(b[1] - y) < (b[3] + h) / 2)) return false; LBL.push([x, y, w, h]); return true; }
+function text(g, s, x, y, size, col = '#2c2b35', halo = '#fff', font = 'Jua') {
+  g.font = `${size}px ${font},sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineWidth = Math.max(2, size / 4); g.strokeStyle = halo; g.lineJoin = 'round'; g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y);
+}
+function drawRoutes(g, z, t) {
+  if (S.mode !== 'plane') return;
+  const o = AIR.find(a => a.code === S.from), d = destsFrom(S.from);
+  g.lineWidth = 2.2 / z; g.setLineDash([7 / z, 6 / z]); g.lineDashOffset = -t * 30 / z;
+  for (const k in d) {
+    const b = AIR.find(a => a.code === k); if (!b) continue;
+    const mx = (o.x + b.x) / 2, my = (o.y + b.y) / 2, dx = b.x - o.x, dy = b.y - o.y, L = Math.hypot(dx, dy);
+    g.strokeStyle = d[k][0] === '국내선' ? 'rgba(47,111,208,.55)' : 'rgba(232,89,79,.75)';
+    g.beginPath(); g.moveTo(o.x, o.y); g.quadraticCurveTo(mx - dy / L * L * .12, my + dx / L * L * .12, b.x, b.y); g.stroke();
+  }
+  g.setLineDash([]);
+}
+function airportMarks(g, cam, cx, cy, labelAll) {
+  const dests = S.mode === 'plane' ? destsFrom(S.from) : null;
+  for (const a of AIR) {
+    const sx = cx + (a.x - cam.x) * cam.z, sy = cy + (a.y - cam.y) * cam.z;
+    if (sx < -40 || sy < -40 || sx > g.canvas.width / DPR + 40 || sy > g.canvas.height / DPR + 40) continue;
+    const meta = R.kr[a.code] || R.jp[a.code];
+    const live = dests ? (dests[a.code] || a.code === S.from) : a.c === S.country;
+    const closed = !!meta.closed;
+    g.globalAlpha = live ? 1 : .45;
+    g.fillStyle = closed ? '#9a9aa2' : a.c === 'KOR' ? '#2f6fd0' : '#e8594f';
+    g.strokeStyle = '#fff'; g.lineWidth = 2.5;
+    g.beginPath(); g.arc(sx, sy, live ? 9 : 6.5, 0, 6.29); g.fill(); g.stroke();
+    g.fillStyle = '#fff'; g.font = `${live ? 11 : 9}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(closed ? '×' : '✈', sx, sy + .5);
+    const lb = meta.city + (closed ? '(운항 중단)' : ''), fs = live ? 14 : 12;
+    if ((labelAll || live) && free(sx, sy - 19, lb.length * fs * .95, fs + 2)) text(g, lb, sx, sy - 19, fs, live ? '#2c2b35' : '#6b6876');
+    LBL.push([sx, sy, 20, 20]);
+    g.globalAlpha = 1;
+  }
+}
+function cityLabels(g, cam, cx, cy, minPop, size) {
+  for (const p of M.places) {
+    if (p.pop < minPop) continue;
+    const sx = cx + (p.x - cam.x) * cam.z, sy = cy + (p.y - cam.y) * cam.z;
+    if (sx < 0 || sy < 0 || sx > g.canvas.width / DPR || sy > g.canvas.height / DPR) continue;
+    const nm = p.ko.replace(/(특별시|광역시|시)$/, '');
+    if (!free(sx, sy - 6, Math.max(20, nm.length * size * .95), size + 14)) continue;
+    g.fillStyle = '#6b6876'; g.beginPath(); g.arc(sx, sy, 2.2, 0, 6.29); g.fill();
+    text(g, nm, sx, sy - 10, size, '#55525f');
+  }
+}
+function admLabels(g, cam, cx, cy, size) {
+  for (const a of ADM) {
+    const sx = cx + (a.lx - cam.x) * cam.z, sy = cy + (a.ly - cam.y) * cam.z;
+    if (sx < 0 || sy < 0 || sx > g.canvas.width / DPR || sy > g.canvas.height / DPR) continue;
+    if (free(sx, sy, a.ko.length * size * .95, size + 2)) text(g, a.ko, sx, sy, size, 'rgba(92,111,126,.55)', 'rgba(255,255,255,.6)');
+  }
+}
+function person(g, x, y, s, col, bob, face) {
+  g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(x, y + 1, 7 * s, 2.6 * s, 0, 0, 6.29); g.fill();
+  const b = bob * s;
+  g.fillStyle = col; g.strokeStyle = '#2c2b35'; g.lineWidth = 1.6;
+  g.beginPath(); g.roundRect(x - 5.5 * s, y - 15 * s - b, 11 * s, 13 * s, 4 * s); g.fill(); g.stroke();
+  g.fillStyle = '#ffe0c2'; g.beginPath(); g.arc(x, y - 20 * s - b, 5.6 * s, 0, 6.29); g.fill(); g.stroke();
+  if (face) { g.fillStyle = '#2c2b35'; g.beginPath(); g.arc(x - 2 * s, y - 20.5 * s - b, .9 * s, 0, 6.29); g.arc(x + 2 * s, y - 20.5 * s - b, .9 * s, 0, 6.29); g.fill(); }
+}
+function plane(g, x, y, ang, s, t) {
+  g.save(); g.translate(x, y);
+  g.fillStyle = 'rgba(0,0,0,.16)'; g.beginPath(); g.ellipse(10, 26, 22 * s, 8 * s, 0, 0, 6.29); g.fill();
+  g.rotate(ang); g.scale(s, s);
+  g.strokeStyle = '#2c2b35'; g.lineWidth = 2 / s; g.lineJoin = 'round';
+  g.fillStyle = '#dfe6ef';
+  g.beginPath(); g.moveTo(-4, -2); g.lineTo(-14, -26); g.lineTo(-6, -26); g.lineTo(10, -3); g.closePath(); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(-4, 2); g.lineTo(-14, 26); g.lineTo(-6, 26); g.lineTo(10, 3); g.closePath(); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(-24, -1); g.lineTo(-31, -10); g.lineTo(-26, -10); g.lineTo(-18, -2); g.closePath(); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(-24, 1); g.lineTo(-31, 10); g.lineTo(-26, 10); g.lineTo(-18, 2); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#fff'; g.beginPath(); g.moveTo(-28, -5); g.quadraticCurveTo(14, -7, 28, 0); g.quadraticCurveTo(14, 7, -28, 5); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#e8594f'; g.beginPath(); g.moveTo(-28, -5); g.lineTo(-20, -5); g.lineTo(-20, 5); g.lineTo(-28, 5); g.closePath(); g.fill();
+  // 창문 = 가족 색
+  const n = S.party.length, gap = Math.min(5, 34 / n);
+  S.party.forEach((m, i) => { g.fillStyle = m.col; g.beginPath(); g.arc(14 - i * gap - 2, 0, 1.9, 0, 6.29); g.fill(); });
+  g.fillStyle = '#7fb7e6'; g.beginPath(); g.ellipse(22, 0, 3.2, 2.4, 0, 0, 6.29); g.fill();
+  g.restore();
+}
+function trailPos(dist) {
+  let acc = 0;
+  for (let i = 1; i < P.trail.length; i++) { const a = P.trail[i - 1], b = P.trail[i], d = Math.hypot(a.x - b.x, a.y - b.y); if (acc + d >= dist) { const f = (dist - acc) / d; return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f }; } acc += d; }
+  return P.trail.length ? P.trail[P.trail.length - 1] : { x: P.x, y: P.y };
+}
+function drawParty(g, cam, cx, cy, t) {
+  const moving = Math.hypot(P.vx, P.vy) > 10;
+  const spacing = 15 / cam.z;
+  const list = S.party.map((m, i) => ({ m, p: i ? trailPos(spacing * i) : { x: P.x, y: P.y }, i }));
+  list.sort((a, b) => a.p.y - b.p.y);
+  for (const { m, p, i } of list) {
+    const sx = cx + (p.x - cam.x) * cam.z, sy = cy + (p.y - cam.y) * cam.z;
+    const bob = moving ? Math.abs(Math.sin(t * 12 + i * 1.3)) * 2.5 : 0;
+    person(g, sx, sy, i ? .9 : 1.05, m.col, bob, true);
+    if (!i) { g.fillStyle = '#2c2b35'; g.beginPath(); g.moveTo(sx - 4, sy - 34 - bob); g.lineTo(sx + 4, sy - 34 - bob); g.lineTo(sx, sy - 29 - bob); g.fill(); }
+  }
+}
+function holdRing(g, sx, sy, f, col) {
+  g.lineWidth = 5; g.strokeStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(sx, sy, 26, 0, 6.29); g.stroke();
+  g.strokeStyle = col; g.beginPath(); g.arc(sx, sy, 26, -Math.PI / 2, -Math.PI / 2 + f * 6.283); g.stroke();
+}
+let CY = .55;
+function draw(t) {
+  const sh = $('sheet'), sheetH = sh.hidden ? 0 : sh.offsetHeight + 10;
+  const ty = sheetH ? Math.max(.22, Math.min(.55, (H - sheetH) / H * .55)) : .55;
+  CY += (ty - CY) * .12;
+  $('toast').style.bottom = `calc(${16 + sheetH}px + env(safe-area-inset-bottom))`;
+  const g = ctx, cx = W / 2, cy = H * CY; LBL = [];
+  g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const grd = g.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, SEA); grd.addColorStop(1, SEA2); g.fillStyle = grd; g.fillRect(0, 0, W, H);
+  worldTo(g, CAM, cx, cy);
+  drawLand(g, CAM.z, CAM.z > Math.min(W, H) / 700);
+  drawRoutes(g, CAM.z, t);
+  g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  LBL.push([W / 2 + (P.x - CAM.x) * CAM.z, cy + (P.y - CAM.y) * CAM.z - 14, 40, 40]);
+  airportMarks(g, CAM, cx, cy, S.mode === 'walk');
+  cityLabels(g, CAM, cx, cy, S.mode === 'plane' ? 2e6 : 2.5e5, 12);
+  if (S.mode === 'walk' && CAM.z < Math.min(W, H) / 500) admLabels(g, CAM, cx, cy, 12);
+  const sx = cx + (P.x - CAM.x) * CAM.z, sy = cy + (P.y - CAM.y) * CAM.z;
+  if (P.holdAt) holdRing(g, cx + (P.holdAt.x - CAM.x) * CAM.z, cy + (P.holdAt.y - CAM.y) * CAM.z, Math.min(1, P.hold / (S.mode === 'plane' ? HOLD.land : HOLD.board)), S.mode === 'plane' ? '#3fa66b' : '#e8594f');
+  if (S.mode === 'plane') plane(g, sx, sy - 6 + Math.sin(t * 3) * 2, P.hd, 1.1, t);
+  else drawParty(g, CAM, cx, cy, t);
+  for (const f of FX) { const k = f.t / f.life; g.fillStyle = `rgba(255,255,255,${(1 - k) * .9})`; g.beginPath(); g.arc(cx + (f.x - CAM.x) * CAM.z, cy + (f.y - CAM.y) * CAM.z, f.r * (1 + k), 0, 6.29); g.fill(); }
+  if (joy) {
+    g.strokeStyle = 'rgba(44,43,53,.35)'; g.lineWidth = 3; g.beginPath(); g.arc(joy.ox, joy.oy, 55, 0, 6.29); g.stroke();
+    const dx = joy.x - joy.ox, dy = joy.y - joy.oy, d = Math.hypot(dx, dy), m = d > 55 ? 55 / d : 1;
+    g.fillStyle = 'rgba(44,43,53,.4)'; g.beginPath(); g.arc(joy.ox + dx * m, joy.oy + dy * m, 22, 0, 6.29); g.fill();
+  }
+  drawPip(t);
+}
+function drawPip(t) {
+  const g = pctx, s = PIPS, c = s / 2;
+  const cam = { x: P.x, y: P.y, z: Math.max(CAM.z * 4.5, s / 120) };
+  g.setTransform(DPR, 0, 0, DPR, 0, 0); g.fillStyle = SEA; g.fillRect(0, 0, s, s);
+  worldTo(g, cam, c, c); drawLand(g, cam.z, true); drawRoutes(g, cam.z, t);
+  g.setTransform(DPR, 0, 0, DPR, 0, 0); LBL = [[c, c - 8, 30, 36]];
+  airportMarks(g, cam, c, c, true);
+  cityLabels(g, cam, c, c, 0, 11);
+  if (S.mode === 'walk') admLabels(g, cam, c, c, 11);
+  if (S.mode === 'plane') plane(g, c, c, P.hd, .8, t);
+  else person(g, c, c + 8, 1, S.party[0].col, 0, true);
+}
+
+/* ---------- 설정 화면 ---------- */
+let draftN = S.party.length, draft = S.party.map(m => ({ ...m }));
+function renderSetup() {
+  $('nVal').textContent = draftN;
+  while (draft.length < draftN) draft.push(...defParty(draft.length + 1).slice(draft.length).map(m => ({ ...m, col: COLORS[draft.length % COLORS.length] })));
+  const box = $('mems'); box.innerHTML = '';
+  draft.slice(0, draftN).forEach((m, i) => {
+    const row = document.createElement('div'); row.className = 'mem';
+    row.innerHTML = `<button class="dot" style="background:${m.col}" aria-label="색"></button>
+      <input maxlength="10" placeholder="이름·별명" value="${(m.name || '').replace(/"/g, '&quot;')}">
+      <select>${RELS.map(r => `<option${r === m.rel ? ' selected' : ''}>${r}</option>`).join('')}</select>
+      <select>${AGES.map(r => `<option${r === m.age ? ' selected' : ''}>${r}</option>`).join('')}</select>`;
+    const [dot, inp, rel, age] = row.children;
+    dot.onclick = () => { m.col = COLORS[(COLORS.indexOf(m.col) + 1) % COLORS.length]; dot.style.background = m.col; };
+    inp.oninput = () => m.name = inp.value.trim(); rel.onchange = () => m.rel = rel.value; age.onchange = () => m.age = age.value;
+    box.appendChild(row);
+  });
+}
+$('nMinus').onclick = () => { draftN = Math.max(1, draftN - 1); renderSetup(); };
+$('nPlus').onclick = () => { draftN = Math.min(8, draftN + 1); renderSetup(); };
+$('goBtn').onclick = () => {
+  S.party = draft.slice(0, draftN).map(m => ({ ...m, name: m.name || m.rel }));
+  const first = !S.started; S.started = true; save(); $('setup').hidden = true;
+  if (first) toast('화면을 끌어서 움직여요 · 공항(✈)에 잠깐 서 있으면 비행기로 변신!', 4200);
+  else toast(`${S.party.length}명 출발 준비 완료`);
+};
+$('bParty').onclick = () => { draftN = S.party.length; draft = S.party.map(m => ({ ...m })); renderSetup(); $('setup').hidden = false; };
+function renderInts() {
+  const box = $('ints'); box.innerHTML = '';
+  S.ints.forEach((it, i) => {
+    const nm = INTERESTS.find(x => x[0] === it.k)[1];
+    const row = document.createElement('div'); row.className = 'int';
+    row.innerHTML = `<span class="nm">${nm}</span><button aria-label="위로">▲</button><button aria-label="아래로">▼</button><button class="sw${it.on ? ' on' : ''}" aria-label="켜기"></button>`;
+    const [, up, dn, sw] = row.children;
+    up.onclick = () => { if (i) { [S.ints[i - 1], S.ints[i]] = [S.ints[i], S.ints[i - 1]]; save(); renderInts(); } };
+    dn.onclick = () => { if (i < S.ints.length - 1) { [S.ints[i + 1], S.ints[i]] = [S.ints[i], S.ints[i + 1]]; save(); renderInts(); } };
+    sw.onclick = () => { it.on = !it.on; if (!S.ints.some(x => x.on)) it.on = true; save(); renderInts(); };
+    box.appendChild(row);
+  });
+}
+$('bSet').onclick = () => { renderInts(); $('settings').hidden = false; };
+$('setClose').onclick = () => { $('settings').hidden = true; if (P.sheetFor) { const a = AIR.find(x => x.code === P.sheetFor); a && sheetAirport(a); } };
+$('resetBtn').onclick = () => { if (confirm('가족 설정·도장·위치를 모두 지우고 처음부터 할까요?')) { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); } };
+$('bHome').onclick = () => location.href = '/';
+
+/* ---------- 시작 ---------- */
+let last = 0;
+function frame(ts) {
+  const t = ts / 1000, dt = Math.min(.05, last ? t - last : 0); last = t;
+  if ($('setup').hidden && $('settings').hidden) step(dt); else { P.vx = P.vy = 0; }
+  draw(t); requestAnimationFrame(frame);
+}
+(async () => {
+  resize();
+  const [m, r] = await Promise.all([fetch('map.json').then(x => x.json()), fetch('routes.json').then(x => x.json())]);
+  M = m; R = r;
+  for (const k in M.land) LAND[k] = M.land[k].map(a => decode(a, M.proj.q));
+  for (const a of M.adm) ADM.push({ ko: a.ko, ja: a.ja, c: a.c, lx: a.lx, ly: a.ly, p: a.r.map(x => decode(x, M.proj.q)) });
+  AIR = Object.entries(M.airports).map(([code, a]) => ({ code, ...a, pref: (R.kr[code] && R.kr[code].pref) || a.pref }));
+  buildMask();
+  if (S.mode === 'plane' && !S.from) S.mode = 'walk';
+  if (S.mode === 'walk' && !canStand(P.x, P.y, S.country)) { P.x = SEOUL.x; P.y = SEOUL.y; S.country = 'KOR'; }
+  CAM.x = P.x; CAM.y = P.y; CAM.z = Math.min(W, H) / (S.mode === 'plane' ? 1500 : 430);
+  if (!S.started) { renderSetup(); $('setup').hidden = false; }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

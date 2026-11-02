@@ -139,7 +139,21 @@ def run(w, h, tag):
         pg.evaluate('save()'); pg.reload(); pg.wait_for_function('typeof AIR !== "undefined" && SPOT.length > 0'); time.sleep(.4)
         assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('S.party.length') == 4 and len(pg.evaluate('Object.keys(S.seen)')) >= 2
         assert pg.evaluate('FLAGS.length') == 1 and pg.evaluate('S.pts') >= 26, '새로고침 뒤 깃발·포인트 없음'
-        pg.once('dialog', lambda d: d.accept()); pg.evaluate('deleteFlag(S.flags[0].id)'); time.sleep(.2); assert pg.evaluate('S.flags.length') == 0
+        # 🏅 기록 창: 명소(현·도시 묶음·진행도) · 공항 · 깃발 탭, 항목 누르면 창
+        pg.click('#pts'); time.sleep(.2); assert pg.is_visible('#medals')
+        ml = pg.inner_text('#mList'); assert '가가와현' in ml and '리쓰린 공원' in ml and '에히메현' in ml and '도고 온천' in ml, ml[:200]
+        assert '2/' in pg.inner_text('#mSum')
+        pg.click('.mtabs button[data-t="air"]'); assert '다카마쓰공항' in pg.inner_text('#mList')
+        pg.click('.mtabs button[data-t="flag"]'); assert '고친 우동집' in pg.inner_text('#mList')
+        pg.click('.mr[data-flag]'); time.sleep(.3); assert not pg.is_visible('#medals') and '고친 우동집' in pg.inner_text('#sheet')
+        time.sleep(.6); assert pg.is_visible('#sheet'), '목록에서 연 창이 바로 닫힘'
+        # 탭 지우기(공항) → 전체 초기화
+        pg.click('#pts'); time.sleep(.2); pg.click('.mtabs button[data-t="air"]')
+        pg.once('dialog', lambda d: d.accept()); pg.click('#mResetTab'); time.sleep(.2)
+        assert pg.evaluate('Object.keys(S.stamps).length') == 0 and pg.evaluate('S.flags.length') == 1 and pg.evaluate('S.pts') > 0
+        pg.once('dialog', lambda d: d.accept()); pg.click('#mResetAll'); time.sleep(.2)
+        assert pg.evaluate('S.flags.length + Object.keys(S.seen).length + S.pts') == 0 and pg.inner_text('#ptsN') == '0' and pg.evaluate('S.party.length') == 4
+        pg.click('#mClose')
         # 마쓰야마공항에서 탑승 대기 중 새로고침
         pg.click('#bTarget')
         at(pg, AIRJ('MYJ'), 3); wait(pg, 'S.mode === "ground"', 3); pg.evaluate('save()')

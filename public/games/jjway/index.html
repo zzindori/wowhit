@@ -83,6 +83,27 @@ button,input,select{font-family:inherit;color:inherit}
 #zoom button.on{background:#ffcf5a;box-shadow:0 0 0 3px rgba(255,207,90,.5),0 3px 0 rgba(44,43,53,.25)}
 #zoom button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 #sheet a{color:var(--blue)}
+#pts{cursor:pointer}#pts:active{transform:translateY(2px)}
+.mbox{max-height:88vh;display:flex;flex-direction:column;padding-bottom:10px}
+.mhead{display:flex;align-items:center;justify-content:space-between}
+.mx{width:34px;height:34px;border-radius:50%;border:2px solid var(--ink);background:#fff;font-size:16px;cursor:pointer}
+#mSum{display:flex;gap:6px;margin:10px 0}
+#mSum div{flex:1;background:#fff7e0;border:1px solid #f0d98c;border-radius:12px;padding:6px 4px;text-align:center;font-size:12px;color:#6b6876}
+#mSum b{display:block;font-family:Jua,sans-serif;font-weight:400;font-size:20px;color:var(--ink)}
+.mtabs{display:flex;gap:4px;border-bottom:2px solid var(--ink);margin-bottom:6px}
+.mtabs button{flex:1;border:2px solid #d8d3c8;border-bottom:none;border-radius:10px 10px 0 0;background:#f3efe6;padding:7px 0;font:15px Jua,sans-serif;cursor:pointer}
+.mtabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+#mList{overflow:auto;flex:1;min-height:120px}
+.mg{margin:10px 0 4px;font-family:Jua,sans-serif;font-size:17px;display:flex;align-items:center;gap:8px}
+.mg small{font:12px system-ui,sans-serif;color:#8a8794}
+.bar{flex:1;height:8px;background:#eee8da;border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#f2b134,#e8594f)}
+.mc{font:14px Jua,sans-serif;color:#6b6876;margin:6px 0 2px 2px;display:flex;align-items:center;gap:6px}
+.mr{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:10px;cursor:pointer;font-size:14px}
+.mr:active{background:#fff3c4}.mr .ic{font-size:18px;width:26px;text-align:center}.mr b{font-weight:600;flex:1}.mr i{font-style:normal;font-size:12px;color:#8a8794;white-space:nowrap}
+.mr.no{opacity:.45}.mr.ok b{color:#8a6a1d}
+.mfoot{display:flex;gap:8px;margin-top:8px}.mfoot button{flex:1;height:38px;border-radius:10px;border:2px solid #d8d3c8;background:#fff;font:14px Jua,sans-serif;color:#a33;cursor:pointer}
+.empty{text-align:center;color:#8a8794;font-size:14px;padding:24px 8px;line-height:1.6}
+
 #peek{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:28;max-width:calc(100vw - 130px)}
 #peek.in{animation:pin .28s cubic-bezier(.3,1.6,.5,1)}
 @keyframes pin{from{transform:translate(-50%,30px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
@@ -138,6 +159,15 @@ button,input,select{font-family:inherit;color:inherit}
   </div>
 </div>
 
+<div class="ov" id="medals" hidden>
+  <div class="box mbox">
+    <div class="mhead"><h1 style="font-size:24px;text-align:left">🏅 나의 여행 기록</h1><button class="mx" id="mClose" aria-label="닫기">✕</button></div>
+    <div id="mSum"></div>
+    <div class="mtabs"><button data-t="spot" class="on">📍 명소</button><button data-t="air">✈️ 공항</button><button data-t="flag">🚩 깃발</button></div>
+    <div id="mList"></div>
+    <div class="mfoot"><button id="mResetTab">이 탭 기록 지우기</button><button id="mResetAll">전체 초기화</button></div>
+  </div>
+</div>
 <div class="ov" id="settings" hidden>
   <div class="box">
     <h1 style="font-size:24px">⚙️ 관심 분야</h1>
@@ -330,7 +360,7 @@ function openSheet(head, body, key, kind) {
   sh.innerHTML = `<div class="top"><div class="grab"></div><div class="hd">${title}${cb || info ? `<div class="side">${cb}${info}</div>` : ''}</div></div>` + body;
   sh.hidden = false; sh.scrollTop = 0; sh.style.transform = ''; P.sheetFor = key; P.sheetKind = kind; P.closedFor = null;
 }
-function closeSheet() { $('sheet').hidden = true; P.sheetFor = null; P.sheetKind = null; }
+function closeSheet() { $('sheet').hidden = true; P.sheetFor = null; P.sheetKind = null; P.pinned = false; }
 window.xClose = () => { const c = P.sheetFor; closeSheet(); P.closedFor = c; $('sheet').style.transform = ''; };
 window.toggleHint = () => { const h = $('sheet').querySelector('.hint'), b = $('sheet').querySelector('.info'); if (h) { h.hidden = !h.hidden; b.classList.toggle('on', !h.hidden); } };
 
@@ -463,7 +493,7 @@ let PEEK = null;
 function peek(key, title, open) {
   // 다른 것의 창이 열려 있으면 닫음(멀어졌으니)
   const kinds = key ? ['spot', 'flag', 'city', 'air', 'land'] : ['spot', 'flag', 'city'];   // 공항 창은 autoSheet가 맡음
-  if (kinds.includes(P.sheetKind) && P.sheetFor !== key) closeSheet();
+  if (!P.pinned && kinds.includes(P.sheetKind) && P.sheetFor !== key) closeSheet();
   const el = $('peek');
   if (!key || P.sheetFor === key) { el.hidden = true; PEEK = key ? { key, open } : null; return; }
   if (!PEEK || PEEK.key !== key) { $('peekBtn').innerHTML = `${title} <span>▲ 자세히</span>`; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); }
@@ -471,12 +501,14 @@ function peek(key, title, open) {
 }
 $('peekBtn').onclick = () => { if (PEEK) { PEEK.open(); P.fresh = null; } $('peek').hidden = true; };
 function autoSheet(key, open) {
+  if (P.pinned) return;
   if (P.closedFor && P.closedFor !== key) P.closedFor = null;
   if (!key) { if (['air', 'land', 'city', 'spot', 'flag'].includes(P.sheetKind)) closeSheet(); return; }
   if (P.sheetFor !== key && P.closedFor !== key) open();
 }
 function step(dt) {
   const [ix, iy] = input(), mode = S.mode, still = Math.hypot(ix, iy) < .05;
+  if (!still && P.pinned) P.pinned = false;
   const bridge = (x, y) => AIR.some(a => a.c === S.country && Math.hypot(a.x - x, a.y - y) < 22);
   if (mode === 'walk') {
     const sp = S.span.walk * SPF.walk;
@@ -1100,6 +1132,69 @@ function flagMarks(g, cam, cx, cy, span, small) {
 }
 $('bFlag').onclick = () => { if (S.mode === 'walk' && !far()) openFlagForm(null); };
 
+
+/* ---------- 🏅 나의 여행 기록 ---------- */
+let MTAB = 'spot';
+const dstr = t => t > 1 ? new Date(t).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }) : '';
+function renderMedals() {
+  const seenN = SPOT.filter(x => S.seen[x.key]).length, airN = Object.keys(S.stamps).length;
+  $('mSum').innerHTML = `<div><b>${S.pts || 0}</b>포인트</div><div><b>${seenN}/${SPOT.length}</b>명소 도장</div><div><b>${airN}</b>공항</div><div><b>${S.flags.length}</b>내 깃발</div>`;
+  document.querySelectorAll('.mtabs button').forEach(b => b.classList.toggle('on', b.dataset.t === MTAB));
+  let h = '';
+  if (MTAB === 'spot') {
+    const prefs = [...new Set(CITY.map(c => c.pref))];
+    for (const pf of prefs) {
+      const cs = CITY.filter(c => c.pref === pf), all = cs.flatMap(c => c.spots), got = all.filter(x => S.seen[x.key]).length;
+      h += `<div class="mg">${pf}<small>${got}/${all.length}</small><span class="bar"><i style="width:${all.length ? got / all.length * 100 : 0}%"></i></span></div>`;
+      for (const c of cs) {
+        const g2 = c.spots.filter(x => S.seen[x.key]).length;
+        h += `<div class="mc">🏙️ ${c.ko} <small>${g2}/${c.spots.length}</small>${g2 === c.spots.length ? ' 🏆' : ''}</div>`;
+        h += c.spots.slice().sort((a, b) => (S.seen[b.key] ? 1 : 0) - (S.seen[a.key] ? 1 : 0)).map(x => { const t = S.seen[x.key]; return `<div class="mr ${t ? 'ok' : 'no'}" data-spot="${x.key}"><span class="ic">${t ? '🏅' : ICON[x.t] || '📍'}</span><b>${x.ko}</b><i>${t ? dstr(t) : x.ferry ? '⛴️ 페리' : '아직'}</i></div>`; }).join('');
+      }
+    }
+  } else if (MTAB === 'air') {
+    const ks = Object.keys(S.stamps).sort((a, b) => S.stamps[b] - S.stamps[a]);
+    if (!ks.length) h = `<div class="empty">아직 착륙한 공항이 없어요.<br>공항에 서 있으면 탑승 게이지가 차요 ✈️</div>`;
+    for (const [lab, test] of [['🇯🇵 일본', c => R.jp[c]], ['🇰🇷 한국', c => R.kr[c]]]) {
+      const list = ks.filter(test); if (!list.length) continue;
+      const total = Object.keys(lab.includes('일본') ? R.jp : R.kr).length;
+      h += `<div class="mg">${lab}<small>${list.length}/${total}</small><span class="bar"><i style="width:${list.length / total * 100}%"></i></span></div>`;
+      h += list.map(c => `<div class="mr ok" data-air="${c}"><span class="ic">🛬</span><b>${airName(c)}</b><i>${dstr(S.stamps[c])}</i></div>`).join('');
+    }
+  } else {
+    if (!S.flags.length) h = `<div class="empty">아직 꽂은 깃발이 없어요.<br>확대해서 걷다가 🚩 버튼으로 맛집·가게·숙소를 기록해 보세요</div>`;
+    for (const [k, c] of Object.entries(CATS)) {
+      const list = S.flags.filter(f => f.cat === k).sort((a, b) => b.created - a.created); if (!list.length) continue;
+      const been = list.filter(f => f.status === 'been').length;
+      h += `<div class="mg">${c[0]} ${c[1]}<small>${list.length}곳 · 다녀옴 ${been}</small></div>`;
+      h += list.map(f => `<div class="mr ${f.status === 'been' ? 'ok' : ''}" data-flag="${f.id}"><span class="ic">${f.status === 'been' ? '✔' : '💭'}</span><b>${esc(f.name)}</b><i>${f.star ? '★'.repeat(f.star) + ' · ' : ''}${dstr(f.created)}</i></div>`).join('');
+    }
+  }
+  $('mList').innerHTML = h;
+}
+// 기록 지우기: 탭별(포인트는 그대로) · 전체(도장·깃발·포인트, 가족 설정·위치는 그대로)
+$('mResetTab').onclick = () => {
+  const nm = { spot: '명소 도장', air: '공항 도장', flag: '내 깃발' }[MTAB];
+  if (!confirm(`${nm}을(를) 모두 지울까요? 되돌릴 수 없어요. (포인트는 그대로)`)) return;
+  if (MTAB === 'spot') S.seen = {}; else if (MTAB === 'air') S.stamps = {}; else { S.flags = []; FLAGS.length = 0; }
+  save(); closeSheet(); renderMedals(); toast(`${nm}을(를) 지웠어요`);
+};
+$('mResetAll').onclick = () => {
+  if (!confirm('명소·공항 도장, 내 깃발, 포인트를 모두 처음으로 돌릴까요? 되돌릴 수 없어요.\n(가족 설정·지금 위치는 그대로)')) return;
+  S.seen = {}; S.stamps = {}; S.flags = []; FLAGS.length = 0; S.pts = 0; $('ptsN').textContent = 0;
+  save(); closeSheet(); renderMedals(); toast('기록을 모두 처음으로 돌렸어요');
+};
+$('pts').onclick = () => { MTAB = 'spot'; renderMedals(); $('medals').hidden = false; };
+$('mClose').onclick = () => { $('medals').hidden = true; };
+document.querySelectorAll('.mtabs button').forEach(b => b.onclick = () => { MTAB = b.dataset.t; renderMedals(); $('mList').scrollTop = 0; });
+$('mList').onclick = e => {
+  const r = e.target.closest('.mr'); if (!r) return;
+  $('medals').hidden = true; P.closedFor = null;
+  if (r.dataset.spot) sheetSpot(SPOT.find(x => x.key === r.dataset.spot));
+  else if (r.dataset.flag) sheetFlag(FLAGS.find(x => x.f.id === r.dataset.flag));
+  else if (r.dataset.air) sheetAirport(airport(r.dataset.air));
+  P.pinned = true;   // 목록에서 연 창은 멀리 있어도 바로 안 닫히게
+};
 /* ---------- 설정 화면 ---------- */
 let draftN = S.party.length, draft = S.party.map(m => ({ ...m }));
 function renderSetup() {
@@ -1171,7 +1266,7 @@ $('loc').onclick = () => { S.pos = { x: P.x, y: P.y }; save(); location.replace(
 let last = 0;
 function frame(ts) {
   const t = ts / 1000, dt = Math.min(.05, last ? t - last : 0); last = t;
-  if ($('setup').hidden && $('settings').hidden) step(dt); else { P.vx = P.vy = 0; }
+  if ($('setup').hidden && $('settings').hidden && $('medals').hidden) step(dt); else { P.vx = P.vy = 0; }
   draw(t); requestAnimationFrame(frame);
 }
 (async () => {

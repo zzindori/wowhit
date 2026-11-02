@@ -56,6 +56,7 @@ def run(w, h, tag):
         pg.click('#pip'); time.sleep(.2); assert pg.is_visible('#sheet .cbtn'), '탑승 창 다시 안 열림'
         # 탑승 취소 → 걷기, 바로 다시 안 참 → 벗어났다 와서 다시 탑승
         pg.click('#sheet .cbtn'); wait(pg, 'S.mode === "walk"', 1)
+        assert '탑승을 취소했어요' in pg.inner_text('#sheet')
         time.sleep(2); assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('P.g') == 0, '취소 뒤 바로 다시 탐'
         at(pg, 'CJJ', 40); time.sleep(.2); at(pg, 'CJJ', 3); wait(pg, 'S.mode === "ground"', 3)
         time.sleep(1.5); assert pg.evaluate('S.mode') == 'ground', '가만히 있는데 이륙함'
@@ -74,7 +75,8 @@ def run(w, h, tag):
         time.sleep(2.2); assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('P.g') == 0, '내린 공항에서 바로 탐'
         # 착륙 취소 → 다시 이륙(도장도 되돌림, 출발지 청주 그대로) → 간사이 다시 물어보지 않다가 멀어졌다 오면 착륙
         assert '착륙 취소' in pg.inner_text('#sheet')
-        pg.click('#sheet .cbtn'); wait(pg, 'S.mode === "plane"', 4)
+        pg.click('#sheet .cbtn'); time.sleep(.15)
+        assert pg.evaluate('S.mode') == 'plane' and '비행 중' in pg.inner_text('#loc'), '착륙 취소 뒤 바로 비행 상태 아님'
         assert pg.evaluate('S.from') == 'CJJ' and 'KIX' not in pg.evaluate('Object.keys(S.stamps)')
         time.sleep(.3); assert pg.evaluate('P.g') == 0, '취소한 공항 게이지가 바로 참'
         at(pg, 'KIX', 150); time.sleep(.3); at(pg, 'KIX', 8); wait(pg, 'S.mode === "walk" && S.country === "JPN"', 6)

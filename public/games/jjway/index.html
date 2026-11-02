@@ -259,6 +259,7 @@ function sheetAirport(a, how) {
   if (how === 'land') {
     h += HINT('🚶 걸어서 둘러보세요 · 공항을 벗어나면 도착 확정' + (fly ? ' · 다시 와서 서 있으면 탑승 게이지가 차요' : ''));
   }
+  else if (how === 'cancel' || (fly && P.quiet === a.code)) h += HINT('✕ 탑승을 취소했어요 · 공항을 벗어났다 다시 오면 탑승 게이지가 차요');
   else if (fly) h += HINT('⭕ 가만히 서 있으면 돋보기 테두리가 차올라요 · 꽉 차면 탑승 · 움직이면 취소');
   if (a.c === 'KOR') {
     const r = R.routes[a.code] || {}, ks = Object.keys(r).sort((x, y) => r[y].length - r[x].length);
@@ -321,14 +322,16 @@ function arrive(a) {
 function cancelBoard() {
   if (S.mode !== 'ground') return;
   const a = airport(S.from); S.mode = 'walk'; S.country = a.c; S.from = null; P.quiet = a.code; gaugeOff();
-  puff(a.x, a.y); toast('✕ 탑승 취소 · 다시 걸어요'); sheetAirport(a); save();
+  puff(a.x, a.y); toast('✕ 탑승 취소 · 다시 걸어요'); sheetAirport(a, 'cancel'); save();
 }
 function cancelLanding() {
   const a = airport(P.quiet); if (S.mode !== 'walk' || !P.lastFrom || !a) return;
   if (P.lastFirst) delete S.stamps[a.code];
-  S.from = P.lastFrom; P.lastFrom = null; P.quiet = null; P.x = a.x; P.y = a.y;
-  toast('↩ 착륙 취소 · 다시 이륙해요');   // 내려앉던 방향 그대로 다시 뜸
-  takeoff(P.hd); P.skip = a.code; save();
+  // 착륙 취소 = 곧바로 비행 상태(복행): 이륙 장면 없이 내려앉던 방향으로 날며 고도만 올라감
+  S.from = P.lastFrom; P.lastFrom = null; P.quiet = null; P.x = a.x; P.y = a.y; P.anim = null;
+  S.mode = 'plane'; P.skip = a.code; gaugeOff();
+  P.vx = Math.cos(P.hd) * SPEED.plane * .5; P.vy = Math.sin(P.hd) * SPEED.plane * .5;
+  locT = 0; closeSheet(); toast('↩ 착륙 취소 · 계속 비행해요'); vib(15); save();
 }
 Object.assign(window, { cancelBoard, cancelLanding });
 
@@ -374,7 +377,7 @@ function step(dt) {
     P.alt = 1 - ease(Math.min(1, f / .8));
     if (f >= 1) arrive(a);
   } else if (mode === 'plane') {
-    P.alt = 1;
+    P.alt = Math.min(1, P.alt + dt * 1.1);
     const k = 1 - Math.exp(-dt * 3.2);
     P.vx += (ix * SPEED.plane - P.vx) * k; P.vy += (iy * SPEED.plane - P.vy) * k;
     P.x = Math.max(-820, Math.min(1450, P.x + P.vx * dt)); P.y = Math.max(-960, Math.min(1290, P.y + P.vy * dt));

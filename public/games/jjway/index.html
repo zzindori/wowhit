@@ -1394,10 +1394,32 @@ function jaToKo(name) {
 }
 // 오픈스트리트맵 검색은 1초에 한 번만 허용 → 동시에 보내지 않고 차례로, 충분하면 멈춤
 let NOM_AT = 0, LANDMARKS = null;
-async function nomFetch(params) {
+async function nomFetch(params, lang = 'ko') {
   const wait = NOM_AT + 1100 - Date.now(); if (wait > 0) await new Promise(r => setTimeout(r, wait));
   NOM_AT = Date.now();
-  return fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&countrycodes=jp,kr&accept-language=ko&${params}`).then(r => r.ok ? r.json() : [], () => []);
+  return fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&countrycodes=jp,kr&accept-language=${lang}&${params}`).then(r => r.ok ? r.json() : [], () => []);
+}
+// 구글 공유 링크 중엔 좌표 없이 '일본 〒794-0803 Ehime, Imabari, Kitatoriucho, 5 Chome−1−40 가게이름'만 든 것이 있음(폰 앱 공유)
+// → 영어 동네 이름을 오픈스트리트맵으로 일본어(北鳥生町五丁目·今治市)로 바꾼 뒤 국토지리원 주소 검색으로 번지까지
+const gsiAddr = q => fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(q)}`).then(r => r.json(), () => []);
+async function addrGeocode(text) {
+  text = text.replace(/^\s*(일본|日本|Japan)\s*/, '').replace(/〒?\s*\d{3}-\d{4}\s*/, '').replace(/[−‐–]/g, '-').trim();
+  // 일본어 주소가 그대로 온 경우: 県·市·町 + 番地
+  const jm = text.match(/^(.*?[都道府県].*?[市区町村].*?[0-9０-９]+(?:\s*(?:丁目|番地?|号|[-の－])\s*[0-9０-９]+)*(?:\s*号)?)\s*(.*)$/);
+  if (jm) { const g = await gsiAddr(jm[1]); if (g.length) return { lat: g[0].geometry.coordinates[1], lon: g[0].geometry.coordinates[0], name: jm[2] || '', addr: g[0].properties.title }; }
+  const parts = text.split(/,\s*/); if (parts.length < 4) return null;
+  const [pref, city, town] = parts, rest = parts.slice(3).join(', ');
+  const cm = rest.match(/^(\d+)\s*Chome-(\d+)(?:-(\d+))?\s*(.*)$/i) || rest.match(/^()(\d+)(?:-(\d+))?\s*(.*)$/);
+  if (!cm) return null;
+  const [, chome, a, b, shop] = cm;
+  const hits = await nomFetch(`q=${encodeURIComponent(`${town}${chome ? ' ' + chome + ' Chome' : ''}, ${city}, ${pref}`)}`, 'ja');
+  const h = hits.find(x => /町|丁目|村|大字/.test(x.name || '')) || hits[0]; if (!h) return null;
+  // 현 + 시(○○市 먼저, 없으면 町·村) — '横田町' 같은 작은 동네를 시로 잘못 잡던 것
+  const dn = h.display_name.split(/,\s*/).filter(x => x !== h.name);
+  const prefJa = dn.find(x => /[都道府県]$/.test(x)) || '', cityJa = dn.find(x => /市$/.test(x)) || dn.find(x => /郡$/.test(x)) || '';
+  const g = await gsiAddr(`${prefJa}${cityJa}${h.name}${a}${b ? '-' + b : ''}`);
+  if (g.length) return { lat: g[0].geometry.coordinates[1], lon: g[0].geometry.coordinates[0], name: shop, addr: g[0].properties.title };
+  return { lat: +h.lat, lon: +h.lon, name: shop, addr: h.name + ' (동네 가운데)' };
 }
 async function search(q) {
   const ja = koToJa(q), here = unproj(CAM.x, CAM.y), out = [], seen = new Set();
@@ -1461,12 +1483,16 @@ window.doFind = async () => {
       }
       const g = parseG(u); if (!g.name && lead) g.name = lead;
       if (g.lat != null) res = [{ lat: g.lat, lon: g.lon, name: g.name, sub: '구글 지도 링크' }];
-      else if (g.name) res = await search(g.name);
+      else if (g.name) {
+        box.innerHTML = `<div class="qmsg">📡 링크에 좌표가 없어서 주소로 찾는 중…</div>`;
+        const ad = await addrGeocode(g.name);
+        res = ad ? [{ lat: ad.lat, lon: ad.lon, name: ad.name || lead || g.name, sub: '구글 지도 링크 · ' + ad.addr }] : await search(g.name);
+      }
     } else res = await search(q);
     QRES = res;
     const tr = search.last ? `<div class="qmsg" style="padding:4px">🇯🇵 「${esc(search.last)}」로도 찾았어요</div>` : '';
     if (!res.length) { box.innerHTML = tr + `<div class="qmsg">못 찾았어요 · 가게는 일본어 이름이 잘 찾아져요 (예: タイムズカー 高松)</div>`; return; }
-    if (res.length === 1 && (res[0].sub === '구글 지도 링크' || res[0].sub === '좌표')) return beginPick(res[0].lat, res[0].lon, res[0].name);
+    if (res.length === 1 && (/^구글 지도 링크/.test(res[0].sub) || res[0].sub === '좌표')) return beginPick(res[0].lat, res[0].lon, res[0].name);
     res.forEach(r => { r.ko = jaToKo(r.name); });
     box.innerHTML = tr + res.map((r, i) => `<div class="mr" onclick="pickRes(${i})"><span class="ic">${r.src === 'GSI' ? '🏠' : '📍'}</span><b>${esc(r.name)}${r.ko ? ` <span class="ko">${esc(r.ko)}</span>` : ''}<small>${esc(r.sub)}</small></b><i>${r.km == null ? '›' : r.km < 1 ? Math.round(r.km * 1000) + 'm' : r.km < 100 ? r.km.toFixed(1) + 'km' : Math.round(r.km) + 'km'}</i></div>`).join('');
   } catch (e) { box.innerHTML = `<div class="qmsg">⚠️ ${esc(e.message || '검색 실패')} · 잠시 뒤 다시 해 보세요</div>`; }

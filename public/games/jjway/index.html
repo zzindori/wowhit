@@ -1234,7 +1234,7 @@ function openFind(q) {
   let h = `<div class="fsearch"><input id="qIn" class="fin" maxlength="400" placeholder="이름·주소·구글 지도 링크 붙여넣기" value="${esc(q || '')}" onkeydown="if(event.key==='Enter')doFind()"><button class="qgo" onclick="doFind()">찾기</button></div>`;
   h += `<div class="qbs"><button onclick="startPick()">🎯 지도에서 고르기</button><button onclick="hereFlag()">📍 지금 서 있는 곳</button></div>`;
   h += `<div id="qRes"></div>`;
-  h += HINT('예: 리쓰린 공원 · 栗林公園 · 香川県高松市栗林町 · 구글 지도 공유 링크 · 34.3295, 134.0439<br>📞 전화번호 검색은 준비 중이에요(구글 키가 필요해요)');
+  h += HINT('예: 리쓰린 공원 · 타임즈렌트카 다카마쓰 · タイムズカー 高松 · 香川県高松市栗林町 · 구글 지도 공유 링크 · 34.3295, 134.0439<br>한국어는 일본어로 바꿔서 같이 찾아요. 가게는 일본어 이름이 가장 정확해요.<br>📞 전화번호 검색은 준비 중이에요(구글 키가 필요해요)');
   openSheet(head, h, 'find', 'flagform');
   setTimeout(() => $('qIn') && $('qIn').focus(), 50);
 }
@@ -1246,14 +1246,56 @@ function parseG(u) {
   try { const qq = new URL(u).searchParams.get('q') || new URL(u).searchParams.get('query') || ''; if (!m) m = isLL(qq); if (!name && qq && !isLL(qq)) name = qq; } catch (e) {}
   return { lat: m ? +m[1] : null, lon: m ? +m[2] : null, name };
 }
+// 한국어 검색어 → 일본어(일본 가게·역 이름은 지도 데이터에 일본어로만 있는 경우가 대부분)
+const KO2JA = {
+  '타임즈렌트카': 'タイムズカー', '타임즈렌터카': 'タイムズカー', '타임즈카': 'タイムズカー', '토요타렌트카': 'トヨタレンタカー', '토요타렌터카': 'トヨタレンタカー',
+  '닛폰렌트카': 'ニッポンレンタカー', '닛폰렌터카': 'ニッポンレンタカー', '오릭스렌트카': 'オリックスレンタカー', '닛산렌트카': '日産レンタカー', '버짓렌트카': 'バジェットレンタカー',
+  '렌트카': 'レンタカー', '렌터카': 'レンタカー', '타임즈': 'タイムズ', '토요타': 'トヨタ',
+  '세븐일레븐': 'セブンイレブン', '로손': 'ローソン', '패밀리마트': 'ファミリーマート', '편의점': 'コンビニ', '돈키호테': 'ドン・キホーテ', '다이소': 'ダイソー', '유니클로': 'ユニクロ', '이온몰': 'イオンモール', '이온': 'イオン',
+  '스타벅스': 'スターバックス', '맥도날드': 'マクドナルド', '모스버거': 'モスバーガー', '요시노야': '吉野家', '스키야': 'すき家', '마루가메제면': '丸亀製麺',
+  '우동': 'うどん', '라멘': 'ラーメン', '라면': 'ラーメン', '스시': '寿司', '초밥': '寿司', '돈카츠': 'とんかつ', '야키니쿠': '焼肉', '이자카야': '居酒屋', '카페': 'カフェ',
+  '공항': '空港', '역': '駅', '공원': '公園', '온천': '温泉', '신사': '神社', '절': '寺', '성': '城', '시장': '市場', '항구': '港', '항': '港', '다리': '橋', '미술관': '美術館', '박물관': '博物館', '수족관': '水族館',
+  '호텔': 'ホテル', '료칸': '旅館', '주차장': '駐車場', '버스터미널': 'バスターミナル', '쇼핑몰': 'ショッピングモール', '백화점': '百貨店', '상점가': '商店街'
+};
+let KODICT = null;
+function koToJa(q) {
+  if (!/[가-힣]/.test(q)) return q;
+  if (!KODICT) {   // 지명은 지도 데이터의 한국어·일본어 짝(…시 빼고) + 우리 도시
+    KODICT = { ...KO2JA };
+    for (const p of M.places) if (p.c === 'JPN' && p.ja) { const ko = p.ko.replace(/시$/, ''), ja = p.ja.replace(/市$/, ''); if (ko.length > 1 && !KODICT[ko]) KODICT[ko] = ja; }
+    for (const c of CITY) { const ko = c.ko.replace(/\s*\(.*\)/, ''), ja = c.ja.replace(/[市町]$/, ''); KODICT[ko] = KODICT[ko] || ja; }
+    for (const sp of SPOT) { const ko = sp.ko.replace(/\s*\(.*\)/, ''), ja = sp.ja.replace(/\(.*\)/, ''); KODICT[ko] = ja; KODICT[ko.replace(/\s+/g, '')] = ja; }
+    for (const a of M.adm) if (a.c === 'JPN' && a.ja) { KODICT[a.ko] = a.ja; KODICT[a.ko.replace(/[현부도]$/, '')] = KODICT[a.ko.replace(/[현부도]$/, '')] || a.ja.replace(/[県府都道]$/, ''); }
+  }
+  const keys = Object.keys(KODICT).sort((x, y) => y.length - x.length);
+  const whole = KODICT[q.trim()] || KODICT[q.replace(/\s+/g, '')]; if (whole) return whole;   // 명소 이름 통째로
+  return q.split(/\s+/).map(tok => {
+    let out = '', i = 0;
+    while (i < tok.length) {
+      const k = keys.find(k => tok.startsWith(k, i));
+      if (k) { out += KODICT[k]; i += k.length; }
+      else if (tok[i] === '점' && i === tok.length - 1) i++;   // '다카마쓰점' → 高松 (지점명은 빼고)
+      else { out += tok[i]; i++; }
+    }
+    return out;
+  }).filter(Boolean).join(' ');
+}
 async function search(q) {
-  const out = [];
-  const [nom, gsi] = await Promise.allSettled([
-    fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=jp,kr&accept-language=ko&q=${encodeURIComponent(q)}`).then(r => r.json()),
-    fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(q)}`).then(r => r.json())]);
-  if (nom.status === 'fulfilled') for (const r of nom.value) out.push({ lat: +r.lat, lon: +r.lon, name: r.name || r.display_name.split(',')[0], sub: r.display_name, src: 'OSM' });
-  if (gsi.status === 'fulfilled') for (const r of gsi.value.slice(0, 5)) out.push({ lat: r.geometry.coordinates[1], lon: r.geometry.coordinates[0], name: r.properties.title, sub: '주소 (국토지리원)', src: 'GSI' });
-  return out;
+  const out = [], ja = koToJa(q), here = unproj(CAM.x, CAM.y);
+  const vb = `&viewbox=${here.lon - 1.2},${here.lat + 1},${here.lon + 1.2},${here.lat - 1}&bounded=0`;   // 지금 보는 곳 먼저
+  const nom = q2 => fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&countrycodes=jp,kr&accept-language=ko${vb}&q=${encodeURIComponent(q2)}`).then(r => r.json());
+  const tasks = [nom(q), fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(ja)}`).then(r => r.json())];
+  if (ja !== q) tasks.push(nom(ja));
+  const [n1, gsi, n2] = await Promise.allSettled(tasks), seen = new Set();
+  for (const nn of [n1, n2]) if (nn && nn.status === 'fulfilled') for (const r of nn.value) {
+    if (seen.has(r.place_id)) continue; seen.add(r.place_id);
+    out.push({ lat: +r.lat, lon: +r.lon, name: r.name || r.display_name.split(',')[0], sub: r.display_name, src: 'OSM' });
+  }
+  const p0 = proj(here.lon, here.lat);
+  out.sort((a, b) => { const pa = proj(a.lon, a.lat), pb = proj(b.lon, b.lat); return Math.hypot(pa.x - p0.x, pa.y - p0.y) - Math.hypot(pb.x - p0.x, pb.y - p0.y); });
+  if (gsi.status === 'fulfilled' && out.length < 3) for (const r of gsi.value.slice(0, 4))   // 이름으로 충분히 찾았으면 주소 결과(엉뚱한 동명 지명)는 뺌 out.push({ lat: r.geometry.coordinates[1], lon: r.geometry.coordinates[0], name: r.properties.title, sub: '주소 (국토지리원)', src: 'GSI' });
+  search.last = ja !== q ? ja : '';
+  return out.slice(0, 12);
 }
 let QRES = [];
 window.doFind = async () => {
@@ -1273,9 +1315,10 @@ window.doFind = async () => {
       else if (g.name) res = await search(g.name);
     } else res = await search(q);
     QRES = res;
-    if (!res.length) { box.innerHTML = `<div class="qmsg">못 찾았어요 · 일본어 이름이나 주소로도 해 보세요</div>`; return; }
+    const tr = search.last ? `<div class="qmsg" style="padding:4px">🇯🇵 「${esc(search.last)}」로도 찾았어요</div>` : '';
+    if (!res.length) { box.innerHTML = tr + `<div class="qmsg">못 찾았어요 · 가게는 일본어 이름이 잘 찾아져요 (예: タイムズカー 高松)</div>`; return; }
     if (res.length === 1 && (res[0].sub === '구글 지도 링크' || res[0].sub === '좌표')) return beginPick(res[0].lat, res[0].lon, res[0].name);
-    box.innerHTML = res.map((r, i) => `<div class="mr" onclick="pickRes(${i})"><span class="ic">${r.src === 'GSI' ? '🏠' : '📍'}</span><b>${esc(r.name)}<small>${esc(r.sub)}</small></b><i>›</i></div>`).join('');
+    box.innerHTML = tr + res.map((r, i) => `<div class="mr" onclick="pickRes(${i})"><span class="ic">${r.src === 'GSI' ? '🏠' : '📍'}</span><b>${esc(r.name)}<small>${esc(r.sub)}</small></b><i>›</i></div>`).join('');
   } catch (e) { box.innerHTML = `<div class="qmsg">⚠️ ${esc(e.message || '검색 실패')} · 잠시 뒤 다시 해 보세요</div>`; }
 };
 window.pickRes = i => { const r = QRES[i]; beginPick(r.lat, r.lon, r.name); };

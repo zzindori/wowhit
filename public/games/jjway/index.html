@@ -156,7 +156,7 @@ button,input,select{font-family:inherit;color:inherit}
   <button class="ib" id="bHome" title="wowhit 홈">⌂</button>
 </div>
 <div id="pipWrap"><canvas id="pip"></canvas><div id="pipTxt" hidden></div></div>
-<div id="zoom"><button id="bFlag" aria-label="장소 찾아 깃발 꽂기" hidden>🚩</button><button id="bTarget" aria-label="내 위치 · 기본 비율">⌖</button></div>
+<div id="zoom"><button id="bFlag" aria-label="장소 찾기" hidden>🔍</button><button id="bTarget" aria-label="내 위치 · 기본 비율">⌖</button></div>
 <div id="sheet" hidden></div>
 
 <div id="peek" hidden><button id="peekBtn"></button><div id="card" hidden></div></div>
@@ -1298,7 +1298,7 @@ $('bFlag').onclick = () => { if (S.mode === 'walk') openFind(); };
 // 이름·주소(오픈스트리트맵 Nominatim + 국토지리원 주소 검색, 둘 다 키 없음) · 좌표 · 구글 지도 링크(짧은 링크는 /api/jjway/expand로 풂)
 function openFind(q) {
   P.pick = null;
-  const head = `<h2>🚩 장소 찾기</h2><button class="cbtn" onclick="closeSheet()">닫기</button>`;
+  const head = `<h2>🔍 장소 찾기</h2><button class="cbtn" onclick="closeSheet()">닫기</button>`;
   let h = `<div class="fsearch"><input id="qIn" class="fin" maxlength="400" placeholder="이름·주소·구글 지도 링크 붙여넣기" value="${esc(q || '')}" onkeydown="if(event.key==='Enter')doFind()"><button class="qgo" onclick="doFind()">찾기</button></div>`;
   h += `<div class="qbs"><button onclick="startPick()">🎯 지도에서 고르기</button><button onclick="hereFlag()">📍 지금 서 있는 곳</button></div>`;
   h += `<div id="qRes"></div>`;
@@ -1526,7 +1526,7 @@ function renderMedals() {
       h += list.map(c => `<div class="mr ok" data-air="${c}"><span class="ic">🛬</span><b>${airName(c)}</b><i>${dstr(S.stamps[c])}</i></div>`).join('');
     }
   } else {
-    if (!S.flags.length) h = `<div class="empty">아직 꽂은 깃발이 없어요.<br>확대해서 걷다가 🚩 버튼으로 맛집·가게·숙소를 기록해 보세요</div>`;
+    if (!S.flags.length) h = `<div class="empty">아직 꽂은 깃발이 없어요.<br>🔍 버튼으로 장소를 찾아 🚩 깃발로 맛집·가게·숙소를 기록해 보세요</div>`;
     for (const [k, c] of Object.entries(CATS)) {
       const list = S.flags.filter(f => f.cat === k).sort((a, b) => b.created - a.created); if (!list.length) continue;
       const been = list.filter(f => f.status === 'been').length;

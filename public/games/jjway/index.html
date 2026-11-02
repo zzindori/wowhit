@@ -103,6 +103,10 @@ button,input,select{font-family:inherit;color:inherit}
 .seg.st{display:flex;margin:6px 0 4px}.seg.st button{flex:1;padding:7px 4px}
 .fb{display:flex;align-items:center;gap:8px;margin:4px 0 8px}.fb .bar{position:relative;max-width:120px;height:10px}.fb .bar u{position:absolute;left:50%;top:-2px;bottom:-2px;border-left:2px solid #e8594f}.fb small{font-size:12px;color:#6b6876}
 #peekBtn small{font:12px system-ui,sans-serif;color:#d4a017}
+.fsearch{display:flex;gap:6px}.fsearch .fin{flex:1;margin:0}.qgo{flex:none;width:64px;border-radius:10px;border:2px solid var(--ink);background:var(--pri);color:#fff;font:16px Jua,sans-serif;cursor:pointer}
+.qbs{display:flex;gap:6px;margin:8px 0}.qbs button{flex:1;height:40px;border-radius:12px;border:2px solid var(--ink);background:#fff;font:15px Jua,sans-serif;cursor:pointer}
+.qmsg{text-align:center;color:#6b6876;font-size:14px;padding:12px}
+#qRes .mr b{display:flex;flex-direction:column}#qRes .mr b small{font-weight:400;font-size:11px;color:#8a8794;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw}
 .mfoot{display:flex;gap:8px;margin-top:8px}.mfoot button{flex:1;height:38px;border-radius:10px;border:2px solid #d8d3c8;background:#fff;font:14px Jua,sans-serif;color:#a33;cursor:pointer}
 .empty{text-align:center;color:#8a8794;font-size:14px;padding:24px 8px;line-height:1.6}
 
@@ -142,7 +146,7 @@ button,input,select{font-family:inherit;color:inherit}
   <button class="ib" id="bHome" title="wowhit 홈">⌂</button>
 </div>
 <div id="pipWrap"><canvas id="pip"></canvas><div id="pipTxt" hidden></div></div>
-<div id="zoom"><button id="bFlag" aria-label="여기에 깃발 꽂기" hidden>🚩</button><button id="bTarget" aria-label="내 위치 · 기본 비율">⌖</button></div>
+<div id="zoom"><button id="bFlag" aria-label="장소 찾아 깃발 꽂기" hidden>🚩</button><button id="bTarget" aria-label="내 위치 · 기본 비율">⌖</button></div>
 <div id="sheet" hidden></div>
 
 <div id="peek" hidden><button id="peekBtn"></button></div>
@@ -366,7 +370,7 @@ function openSheet(head, body, key, kind) {
   sh.innerHTML = `<div class="top"><div class="grab"></div><div class="hd">${title}${cb || info ? `<div class="side">${cb}${info}</div>` : ''}</div></div>` + body;
   sh.hidden = false; sh.scrollTop = 0; sh.style.transform = ''; P.sheetFor = key; P.sheetKind = kind; P.closedFor = null;
 }
-function closeSheet() { $('sheet').hidden = true; P.sheetFor = null; P.sheetKind = null; P.pinned = false; }
+function closeSheet() { $('sheet').hidden = true; P.sheetFor = null; P.sheetKind = null; P.pinned = false; P.pick = null; }
 window.xClose = () => { const c = P.sheetFor; closeSheet(); P.closedFor = c; $('sheet').style.transform = ''; };
 window.toggleHint = () => { const h = $('sheet').querySelector('.hint'), b = $('sheet').querySelector('.info'); if (h) { h.hidden = !h.hidden; b.classList.toggle('on', !h.hidden); } };
 
@@ -533,6 +537,12 @@ function step(dt) {
   LASTDT = dt;
   const [ix, iy] = input(), mode = S.mode, still = Math.hypot(ix, iy) < .05;
   if (!still && P.pinned) P.pinned = false;
+  if (P.pick && mode === 'walk') {
+    pickStep(dt, ix, iy); stepFX(dt);
+    CAM.z *= Math.exp((Math.log(Math.min(W, H) / S.span.walk) - Math.log(CAM.z)) * (1 - Math.exp(-dt * 3)));
+    CAM.x += (P.pick.x - CAM.x) * (1 - Math.exp(-dt * 6)); CAM.y += (P.pick.y - CAM.y) * (1 - Math.exp(-dt * 6));
+    return;
+  }
   const bridge = (x, y) => AIR.some(a => a.c === S.country && Math.hypot(a.x - x, a.y - y) < 22);
   if (mode === 'walk') {
     const sp = S.span.walk * SPF.walk;
@@ -617,10 +627,11 @@ function step(dt) {
   const span = FLY(S.mode) ? S.span.walk + (S.span.plane - S.span.walk) * P.alt : S.span.walk;
   const tz = Math.min(W, H) / span;
   CAM.z *= Math.exp((Math.log(tz) - Math.log(CAM.z)) * (1 - Math.exp(-dt * 3)));
-  CAM.x += (P.x - CAM.x) * (1 - Math.exp(-dt * 6)); CAM.y += (P.y - CAM.y) * (1 - Math.exp(-dt * 6));
+  const look = P.look && performance.now() < P.look.until ? P.look : P;
+  CAM.x += (look.x - CAM.x) * (1 - Math.exp(-dt * 6)); CAM.y += (look.y - CAM.y) * (1 - Math.exp(-dt * 6));
 
   $('zoom').hidden = S.mode !== 'walk' && S.mode !== 'ground';
-  $('bFlag').hidden = !(S.mode === 'walk' && !far());
+  $('bFlag').hidden = S.mode !== 'walk';
   stepFX(dt);
   pipLabel();
   locT -= dt; if (locT <= 0) { locT = .35; updLoc(); }
@@ -700,7 +711,10 @@ function tileImg(z, x, y, want) {
   }
   return null;
 }
-function tileAlpha(span) { return S.country === 'JPN' || (FLY(S.mode) && S.from && R.jp[S.from]) ? Math.max(0, Math.min(1, (260 - span) / 140)) : 0; }
+function tileAlpha(span) {
+  const jp = S.country === 'JPN' || (FLY(S.mode) && S.from && R.jp[S.from]) || ((P.pick || P.look) && landAt(CAM.x, CAM.y) !== 1 && unproj(CAM.x, CAM.y).lon > 129.3);
+  return jp ? Math.max(0, Math.min(1, (260 - span) / 140)) : 0;
+}
 function drawTiles(g, cam, cx, cy, w, h, alpha) {
   if (alpha <= 0) return 0;
   const lat = unproj(cam.x, cam.y).lat, mpp = 1000 / (cam.z * Math.min(DPR, 2));
@@ -977,6 +991,7 @@ function draw(t) {
   if (P.g > 0 && P.gAt) ring(g, cx + (P.gAt.x - CAM.x) * CAM.z, cy + (P.gAt.y - CAM.y) * CAM.z, 20, 4, P.g, GCOL[P.gKind]);
   drawMe(g, CAM, cx, cy, t, 1);
   overhead(g, cx, cy, t);
+  drawPick(g, cx, cy, t);
   airArrow(g, cx, cy);
   drawFX(g, cx, cy);
   for (const f of FX) { const k = f.t / f.life; g.fillStyle = `rgba(255,255,255,${(1 - k) * .9})`; g.beginPath(); g.arc(cx + (f.x - CAM.x) * CAM.z, cy + (f.y - CAM.y) * CAM.z, f.r * (1 + k), 0, 6.29); g.fill(); }
@@ -1082,13 +1097,14 @@ function flagRT(f, born) { const p = proj(f.lon, f.lat); return { f, x: p.x, y: 
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let FORM = null;   // 작성 중 {id?, lat, lon, cat, star, status}
-function openFlagForm(rt) {
-  const f = rt ? rt.f : null, here = unproj(P.x, P.y);
+function openFlagForm(rt, pre) {
+  const f = rt ? rt.f : null, here = pre || unproj(P.x, P.y);
   FORM = f ? { id: f.id, lat: f.lat, lon: f.lon, cat: f.cat, star: f.star || 0, status: f.status || 'want' } : { lat: here.lat, lon: here.lon, cat: 'food', star: 0, status: 'want' };
+  const fa = (() => { const p = proj(FORM.lon, FORM.lat); return admAt(p.x, p.y); })();
   const head = `<h2>🚩 ${f ? '깃발 고치기' : '여기에 깃발 꽂기'}</h2><button class="cbtn" onclick="cancelFlag()">취소</button>`;
-  let h = `<div class="sub">${FORM.lat.toFixed(5)}, ${FORM.lon.toFixed(5)}${P.adm ? ' · ' + P.adm.ko : ''}</div>`;
+  let h = `<div class="sub">${FORM.lat.toFixed(5)}, ${FORM.lon.toFixed(5)}${fa ? ' · ' + fa.ko : ''}</div>`;
   h += `<div class="cats">${Object.entries(CATS).map(([k, c]) => `<button data-c="${k}" class="${k === FORM.cat ? 'on' : ''}" onclick="pickCat('${k}')">${c[0]}<span>${c[1]}</span></button>`).join('')}</div>`;
-  h += `<input id="fName" class="fin" maxlength="40" placeholder="이름 (예: 우동 바카이치)" value="${esc(f && f.name)}">`;
+  h += `<input id="fName" class="fin" maxlength="40" placeholder="이름 (예: 우동 바카이치)" value="${esc(f ? f.name : pre && pre.name ? pre.name.slice(0, 40) : '')}">`;
   h += `<textarea id="fMemo" class="fin" maxlength="200" rows="2" placeholder="한 줄 메모 (선택)">${esc(f && f.memo)}</textarea>`;
   h += `<input id="fLink" class="fin" maxlength="300" placeholder="링크 (선택) — 구글 지도·타베로그·유튜브" value="${esc(f && f.link)}">`;
   h += `<div class="frow"><div class="stars">${[1, 2, 3, 4, 5].map(i => `<button data-s="${i}" onclick="pickStar(${i})">★</button>`).join('')}</div>`;
@@ -1108,7 +1124,7 @@ function paintForm() {
 window.pickCat = k => { FORM.cat = k; SFX.pop(); paintForm(); };
 window.pickStar = i => { FORM.star = FORM.star === i ? 0 : i; paintForm(); };
 window.pickStatus = v => { FORM.status = v; paintForm(); };
-window.cancelFlag = () => { FORM = null; closeSheet(); };
+window.cancelFlag = () => { FORM = null; P.look = null; closeSheet(); };
 window.saveFlag = () => {
   const name = ($('fName').value || '').trim();
   if (!name) { $('fName').classList.add('bad'); $('fName').focus(); toast('이름을 적어 주세요'); return; }
@@ -1119,6 +1135,7 @@ window.saveFlag = () => {
   }
   const f = { id: uid(), lat: FORM.lat, lon: FORM.lon, ...data, vis: 'private', created: now, updated: now };
   S.flags.push(f); const rt = flagRT(f, performance.now()); FLAGS.push(rt); FORM = null; save();
+  if (P.look) P.look.until = performance.now() + 2200;   // 꽂히는 연출을 보고 내 위치로
   closeSheet(); P.closedFor = 'flag:' + f.id;
   // 생성 연출: 하늘에서 깃발이 떨어져 꽂힘 → 충격파 · 색종이 · 아이콘 뿅 · 동전
   const col = CATS[f.cat][2];
@@ -1200,8 +1217,89 @@ function flagMarks(g, cam, cx, cy, span, small) {
     LBL.push([sx + 8, sy - 18, 26, 34]);
   }
 }
-$('bFlag').onclick = () => { if (S.mode === 'walk' && !far()) openFlagForm(null); };
+$('bFlag').onclick = () => { if (S.mode === 'walk') openFind(); };
 
+
+
+/* ---------- 🔎 장소 찾기 → 🎯 십자선으로 자리 확인 → 🚩 꽂기 ---------- */
+// 이름·주소(오픈스트리트맵 Nominatim + 국토지리원 주소 검색, 둘 다 키 없음) · 좌표 · 구글 지도 링크(짧은 링크는 /api/jjway/expand로 풂)
+function openFind(q) {
+  P.pick = null;
+  const head = `<h2>🚩 장소 찾기</h2><button class="cbtn" onclick="closeSheet()">닫기</button>`;
+  let h = `<div class="fsearch"><input id="qIn" class="fin" maxlength="400" placeholder="이름·주소·구글 지도 링크 붙여넣기" value="${esc(q || '')}" onkeydown="if(event.key==='Enter')doFind()"><button class="qgo" onclick="doFind()">찾기</button></div>`;
+  h += `<div class="qbs"><button onclick="startPick()">🎯 지도에서 고르기</button><button onclick="hereFlag()">📍 지금 서 있는 곳</button></div>`;
+  h += `<div id="qRes"></div>`;
+  h += HINT('예: 리쓰린 공원 · 栗林公園 · 香川県高松市栗林町 · 구글 지도 공유 링크 · 34.3295, 134.0439<br>📞 전화번호 검색은 준비 중이에요(구글 키가 필요해요)');
+  openSheet(head, h, 'find', 'flagform');
+  setTimeout(() => $('qIn') && $('qIn').focus(), 50);
+}
+window.hereFlag = () => openFlagForm(null);
+const isLL = q => q.match(/^\s*(-?\d{1,2}\.\d+)\s*,\s*(-?\d{2,3}\.\d+)\s*$/);
+function parseG(u) {
+  let m = u.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/), name = '';
+  const pm = u.match(/\/maps\/place\/([^/@?]+)/); if (pm) name = decodeURIComponent(pm[1].replace(/\+/g, ' '));
+  try { const qq = new URL(u).searchParams.get('q') || new URL(u).searchParams.get('query') || ''; if (!m) m = isLL(qq); if (!name && qq && !isLL(qq)) name = qq; } catch (e) {}
+  return { lat: m ? +m[1] : null, lon: m ? +m[2] : null, name };
+}
+async function search(q) {
+  const out = [];
+  const [nom, gsi] = await Promise.allSettled([
+    fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=jp,kr&accept-language=ko&q=${encodeURIComponent(q)}`).then(r => r.json()),
+    fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(q)}`).then(r => r.json())]);
+  if (nom.status === 'fulfilled') for (const r of nom.value) out.push({ lat: +r.lat, lon: +r.lon, name: r.name || r.display_name.split(',')[0], sub: r.display_name, src: 'OSM' });
+  if (gsi.status === 'fulfilled') for (const r of gsi.value.slice(0, 5)) out.push({ lat: r.geometry.coordinates[1], lon: r.geometry.coordinates[0], name: r.properties.title, sub: '주소 (국토지리원)', src: 'GSI' });
+  return out;
+}
+let QRES = [];
+window.doFind = async () => {
+  const q = ($('qIn').value || '').trim(), box = $('qRes'); if (!q) return;
+  box.innerHTML = `<div class="qmsg">📡 찾는 중…</div>`; SFX.pop();
+  try {
+    let ll = isLL(q), res = [];
+    if (ll) res = [{ lat: +ll[1], lon: +ll[2], name: '', sub: '좌표' }];
+    else if (/^https?:\/\/|goo\.gl\/|google\.[a-z.]+\/maps/.test(q)) {
+      let u = /^https?:\/\//.test(q) ? q : 'https://' + q;
+      if (/(maps\.app\.goo\.gl|goo\.gl|g\.co)\//.test(u)) {
+        const r = await fetch('/api/jjway/expand?url=' + encodeURIComponent(u)); if (!r.ok) throw new Error('짧은 링크를 못 풀었어요');
+        u = (await r.json()).url;
+      }
+      const g = parseG(u);
+      if (g.lat != null) res = [{ lat: g.lat, lon: g.lon, name: g.name, sub: '구글 지도 링크' }];
+      else if (g.name) res = await search(g.name);
+    } else res = await search(q);
+    QRES = res;
+    if (!res.length) { box.innerHTML = `<div class="qmsg">못 찾았어요 · 일본어 이름이나 주소로도 해 보세요</div>`; return; }
+    if (res.length === 1 && (res[0].sub === '구글 지도 링크' || res[0].sub === '좌표')) return beginPick(res[0].lat, res[0].lon, res[0].name);
+    box.innerHTML = res.map((r, i) => `<div class="mr" onclick="pickRes(${i})"><span class="ic">${r.src === 'GSI' ? '🏠' : '📍'}</span><b>${esc(r.name)}<small>${esc(r.sub)}</small></b><i>›</i></div>`).join('');
+  } catch (e) { box.innerHTML = `<div class="qmsg">⚠️ ${esc(e.message || '검색 실패')} · 잠시 뒤 다시 해 보세요</div>`; }
+};
+window.pickRes = i => { const r = QRES[i]; beginPick(r.lat, r.lon, r.name); };
+// 십자선 모드: 화면을 끌면 지도가 움직이고 가운데 ＋에 꽂음. 사람은 제자리
+function beginPick(lat, lon, name) {
+  const p = lat != null ? proj(lon, lat) : { x: CAM.x, y: CAM.y };
+  P.pick = { x: p.x, y: p.y, name: name || '' };
+  if (Math.min(W, H) / CAM.z > 6) S.span.walk = 3;
+  const head = `<h2>🎯 자리 고르기</h2><button class="cbtn" onclick="cancelPick()">취소</button>`;
+  const h = `<div class="sub" id="pkInfo">${esc(name || '')}</div><button class="go" style="margin-top:6px;height:48px" onclick="pickHere()">✨ 여기에 꽂기</button>` + HINT('화면을 끌면 지도가 움직여요 · 가운데 ＋를 가게·장소에 맞추세요 · 두 손가락으로 확대');
+  openSheet(head, h, 'pick', 'flagform'); SFX.pop();
+}
+window.startPick = () => beginPick();   // 버튼용(같은 이름으로 덮으면 자기 자신을 부름)
+window.cancelPick = () => { P.pick = null; closeSheet(); };
+window.pickHere = () => { const pk = P.pick, ll = unproj(pk.x, pk.y); P.pick = null; P.look = { x: pk.x, y: pk.y, until: 1e15 }; /* 깃발 창 쓰는 동안 그 자리를 계속 보여 줌 */ openFlagForm(null, { lat: ll.lat, lon: ll.lon, name: pk.name }); };
+function pickStep(dt, ix, iy) {
+  const span = Math.min(W, H) / CAM.z;
+  P.pick.x -= ix * span * .55 * dt; P.pick.y -= iy * span * .55 * dt;   // 지도를 손가락 쪽으로 끄는 느낌
+  const el = $('pkInfo'); if (el) { const ll = unproj(P.pick.x, P.pick.y), a = admAt(P.pick.x, P.pick.y); el.textContent = `${P.pick.name ? P.pick.name + ' · ' : ''}${ll.lat.toFixed(5)}, ${ll.lon.toFixed(5)}${a ? ' · ' + a.ko : ''}`; }
+}
+function drawPick(g, cx, cy, t) {
+  if (!P.pick) return;
+  const x = cx + (P.pick.x - CAM.x) * CAM.z, y = cy + (P.pick.y - CAM.y) * CAM.z, k = (Math.sin(t * 5) + 1) / 2;
+  g.strokeStyle = '#e8594f'; g.lineWidth = 2.5;
+  g.beginPath(); g.arc(x, y, 16 + 3 * k, 0, 6.29); g.stroke();
+  g.beginPath(); g.moveTo(x - 30, y); g.lineTo(x - 8, y); g.moveTo(x + 8, y); g.lineTo(x + 30, y); g.moveTo(x, y - 30); g.lineTo(x, y - 8); g.moveTo(x, y + 8); g.lineTo(x, y + 30); g.stroke();
+  g.fillStyle = '#e8594f'; g.beginPath(); g.arc(x, y, 3, 0, 6.29); g.fill();
+  g.font = '22px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'bottom'; g.globalAlpha = .55; g.fillText('🚩', x + 9, y - 6); g.globalAlpha = 1;
+}
 
 /* ---------- 🏅 나의 여행 기록 ---------- */
 let MTAB = 'spot';

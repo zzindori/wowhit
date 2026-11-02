@@ -122,7 +122,7 @@ def run(w, h, tag):
         assert pg.is_visible('#bFlag')
         pts0 = pg.evaluate('S.pts || 0')
         pg.evaluate('(() => { P.x += 3; P.y += 2; })()'); time.sleep(.3)
-        pg.click('#bFlag'); time.sleep(.2); assert '깃발 꽂기' in pg.inner_text('#sheet')
+        pg.click('#bFlag'); time.sleep(.2); pg.click('#sheet .qbs button:nth-child(2)'); time.sleep(.2); assert '깃발 꽂기' in pg.inner_text('#sheet')
         pg.click('#sheet .go'); time.sleep(.2); assert pg.evaluate('S.flags.length') == 0, '이름 없이 저장됨'
         pg.fill('#fName', '테스트 우동집'); pg.click('#sheet .cats button[data-c="cafe"]'); pg.click('#sheet .stars button[data-s="4"]'); pg.click('#sheet .seg button[data-v="been"]')
         pg.click('#sheet .go'); time.sleep(1.4)
@@ -133,6 +133,25 @@ def run(w, h, tag):
         assert pg.evaluate('S.pts') == pts0 + 6 and '테스트 우동집' in pg.inner_text('#peek'), '지나가도 동전·제목 띠 없음'
         pg.click('#peekBtn'); time.sleep(.2); pg.click('#sheet .cbtn'); time.sleep(.2); pg.fill('#fName', '고친 우동집'); pg.click('#sheet .go'); time.sleep(.3)
         assert pg.evaluate('S.flags[0].name') == '고친 우동집' and pg.evaluate('S.flags.length') == 1
+        # 🔎 장소 찾기: 좌표 → 십자선 → 지도 끌어 조정 → 꽂기 / 구글 지도 긴 링크 → 이름까지 / 이름 검색(네트워크)
+        pg.click('#bFlag'); time.sleep(.2); assert '장소 찾기' in pg.inner_text('#sheet')
+        pg.fill('#qIn', '34.3295, 134.0439'); pg.click('#sheet .qgo'); time.sleep(.4)
+        assert pg.evaluate('!!P.pick') and '자리 고르기' in pg.inner_text('#sheet'), '좌표로 십자선 안 됨'
+        px0 = pg.evaluate('P.x'); hold(pg, 'ArrowRight', .3)
+        assert pg.evaluate('P.x') == px0, '십자선 모드인데 사람이 움직임'
+        pg.click('#sheet .go'); time.sleep(.3); assert '깃발 꽂기' in pg.inner_text('#sheet')
+        pg.fill('#fName', '리쓰린 근처 카페'); pg.click('#sheet .go'); time.sleep(.5)
+        nf = pg.evaluate('S.flags.find(f => f.name === "리쓰린 근처 카페")'); assert nf and abs(nf['lat'] - 34.3295) < .02 and abs(nf['lon'] - 134.0439) < .02, nf
+        pg.click('#bFlag'); time.sleep(.2)
+        pg.fill('#qIn', 'https://www.google.com/maps/place/Ritsurin+Garden/@34.3299,134.0442,17z/data=!3m1!4b1!4m6!3m5!1s0x0:0x0!8m2!3d34.329497!4d134.043926')
+        pg.click('#sheet .qgo'); time.sleep(.4)
+        assert pg.evaluate('!!P.pick') and 'Ritsurin Garden' in pg.inner_text('#pkInfo') and '34.3295' in pg.inner_text('#pkInfo'), pg.inner_text('#sheet')[:200]
+        pg.click('#sheet .cbtn'); time.sleep(.2); assert not pg.evaluate('!!P.pick')
+        pg.click('#bFlag'); time.sleep(.2); pg.fill('#qIn', '리쓰린 공원'); pg.click('#sheet .qgo')
+        try:
+            pg.wait_for_selector('#qRes .mr', timeout=8000); print(tag, '이름 검색 결과', pg.locator('#qRes .mr').count(), '개:', pg.inner_text('#qRes .mr >> nth=0')[:40].replace('\n', ' '))
+        except Exception: print(tag, '이름 검색: 네트워크 응답 없음(건너뜀)', pg.inner_text('#qRes')[:60])
+        pg.evaluate('closeSheet()')
         # 확대·축소
         s0 = pg.evaluate('S.span.walk'); pg.mouse.move(w / 2, h / 3); pg.mouse.wheel(0, 400); time.sleep(.1); assert pg.evaluate('S.span.walk') > s0, '휠 축소 안 됨'
         pg.mouse.wheel(0, -400); time.sleep(.1)
@@ -145,19 +164,19 @@ def run(w, h, tag):
         assert pg.evaluate('S.ints[3].on') is True
         pg.evaluate('save()'); pg.reload(); pg.wait_for_function('typeof AIR !== "undefined" && SPOT.length > 0'); time.sleep(.4)
         assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('S.party.length') == 4 and len(pg.evaluate('Object.keys(S.seen)')) >= 2
-        assert pg.evaluate('FLAGS.length') == 1 and pg.evaluate('S.pts') >= 26, '새로고침 뒤 깃발·포인트 없음'
+        assert pg.evaluate('FLAGS.length') == 2 and pg.evaluate('S.pts') >= 26, '새로고침 뒤 깃발·포인트 없음'
         # 🏅 기록 창: 명소(현·도시 묶음·진행도) · 공항 · 깃발 탭, 항목 누르면 창
         pg.click('#pts'); time.sleep(.2); assert pg.is_visible('#medals')
         ml = pg.inner_text('#mList'); assert '가가와현' in ml and '리쓰린 공원' in ml and '에히메현' in ml and '도고 온천' in ml, ml[:200]
         assert '2/' in pg.inner_text('#mSum')
         pg.click('.mtabs button[data-t="air"]'); assert '다카마쓰공항' in pg.inner_text('#mList')
         pg.click('.mtabs button[data-t="flag"]'); assert '고친 우동집' in pg.inner_text('#mList')
-        pg.click('.mr[data-flag]'); time.sleep(.3); assert not pg.is_visible('#medals') and '고친 우동집' in pg.inner_text('#sheet')
+        pg.click('.mr[data-flag]:has-text("고친 우동집")'); time.sleep(.3); assert not pg.is_visible('#medals') and '고친 우동집' in pg.inner_text('#sheet')
         time.sleep(.6); assert pg.is_visible('#sheet'), '목록에서 연 창이 바로 닫힘'
         # 탭 지우기(공항) → 전체 초기화
         pg.click('#pts'); time.sleep(.2); pg.click('.mtabs button[data-t="air"]')
         pg.once('dialog', lambda d: d.accept()); pg.click('#mResetTab'); time.sleep(.2)
-        assert pg.evaluate('Object.keys(S.stamps).length') == 0 and pg.evaluate('S.flags.length') == 1 and pg.evaluate('S.pts') > 0
+        assert pg.evaluate('Object.keys(S.stamps).length') == 0 and pg.evaluate('S.flags.length') == 2 and pg.evaluate('S.pts') > 0
         pg.once('dialog', lambda d: d.accept()); pg.click('#mResetAll'); time.sleep(.2)
         assert pg.evaluate('S.flags.length + Object.keys(S.seen).length + S.pts') == 0 and pg.inner_text('#ptsN') == '0' and pg.evaluate('S.party.length') == 4
         pg.click('#mClose')

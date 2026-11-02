@@ -83,6 +83,8 @@ button,input,select{font-family:inherit;color:inherit}
 #zoom button.on{background:#ffcf5a;box-shadow:0 0 0 3px rgba(255,207,90,.5),0 3px 0 rgba(44,43,53,.25)}
 #zoom button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 #sheet a{color:var(--blue)}
+#attr{position:fixed;left:calc(6px + env(safe-area-inset-left));bottom:calc(4px + env(safe-area-inset-bottom));z-index:15;font:10px system-ui,sans-serif;color:#555;background:rgba(255,255,255,.75);padding:1px 5px;border-radius:4px}
+#attr a{color:inherit}
 </style>
 </head>
 <body>
@@ -99,6 +101,7 @@ button,input,select{font-family:inherit;color:inherit}
 <div id="sheet" hidden></div>
 
 <div id="toast"></div>
+<div id="attr" hidden>出典：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院 地理院タイル(淡色地図)</a></div>
 
 <div class="ov" id="setup" hidden>
   <div class="box">
@@ -138,7 +141,7 @@ const INTERESTS = [
   ['nature', '🌿 자연·풍경', 0], ['cafe', '🍰 카페·디저트', 0], ['izakaya', '🍶 이자카야·술집', 0], ['fest', '🎎 축제·행사', 0], ['move', '🚃 이동·교통', 0]];
 const SEOUL = { x: -457.8, y: -284.2 };
 // 모드마다 화면 짧은 쪽에 보이는 거리(km): [기본, 최소, 최대] — 두 손가락·휠로 바꾸면 모드별로 기억
-const SPAN = { walk: [70, 18, 200], car: [260, 90, 700], plane: [1500, 700, 2600] };
+const SPAN = { walk: [70, 1.2, 200], car: [260, 60, 700], plane: [1500, 700, 2600] };
 const SPF = { walk: .22, car: .32, plane: .18 };   // 속도 = 보이는 거리 × 이 값(km/초) → 화면에서 늘 비슷한 빠르기
 function defParty(n) {
   const base = [['아빠', '아빠'], ['엄마', '엄마'], ['', '아들'], ['', '딸']];
@@ -562,6 +565,51 @@ function drawLand(g, z, detail) {
   if (detail) { g.strokeStyle = 'rgba(92,111,126,.45)'; g.lineWidth = 1 / z; g.setLineDash([4 / z, 3 / z]); ADM.forEach(a => a.p.forEach(p => g.stroke(p))); g.setLineDash([]); }
   if (P.adm) { g.strokeStyle = '#e39a12'; g.lineWidth = 2.4 / z; P.adm.p.forEach(p => g.stroke(p)); }
 }
+
+/* ---------- 지리원 타일(일본, 걷기로 확대할 때) ---------- */
+// 出典：国土地理院 地理院タイル(淡色地図). 타일은 메르카토르라 네 귀퉁이를 우리 좌표로 바꿔 늘려 붙임(도시 크기에선 오차 거의 없음)
+const TILE = { url: (z, x, y) => `https://cyberjapandata.gsi.go.jp/xyz/pale/${z}/${x}/${y}.png`, min: 5, max: 18, cache: new Map(), loading: 0 };
+const unproj = (x, y) => ({ lon: x / M.proj.kx + M.proj.lon0, lat: M.proj.lat0 - y / M.proj.ky });
+const t2lon = (x, n) => x / n * 360 - 180, t2lat = (y, n) => Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI;
+const lon2t = (lon, n) => (lon + 180) / 360 * n, lat2t = (lat, n) => { const r = lat * Math.PI / 180; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n; };
+function tileImg(z, x, y, want) {
+  const k = z + '/' + x + '/' + y; let t = TILE.cache.get(k);
+  if (t) { t.used = performance.now(); return t.ok ? t.img : null; }
+  if (!want || TILE.loading > 8) return null;
+  const img = new Image(); t = { img, ok: false, used: performance.now() }; TILE.cache.set(k, t); TILE.loading++;
+  img.onload = () => { t.ok = true; TILE.loading--; };
+  img.onerror = () => { t.bad = true; TILE.loading--; };
+  img.src = TILE.url(z, x, y);
+  if (TILE.cache.size > 500) {           // 오래 안 쓴 것부터 버림
+    const old = [...TILE.cache.entries()].filter(([, v]) => v.ok || v.bad).sort((a, b) => a[1].used - b[1].used).slice(0, 120);
+    old.forEach(([kk]) => TILE.cache.delete(kk));
+  }
+  return null;
+}
+function tileAlpha(span) { return S.country === 'JPN' || (FLY(S.mode) && S.from && R.jp[S.from]) ? Math.max(0, Math.min(1, (260 - span) / 140)) : 0; }
+function drawTiles(g, cam, cx, cy, w, h, alpha) {
+  if (alpha <= 0) return 0;
+  const lat = unproj(cam.x, cam.y).lat, mpp = 1000 / (cam.z * Math.min(DPR, 2));
+  const z = Math.max(TILE.min, Math.min(TILE.max, Math.round(Math.log2(156543.03 * Math.cos(lat * Math.PI / 180) / mpp))));
+  const n = 2 ** z;
+  const tl = unproj(cam.x - cx / cam.z, cam.y - cy / cam.z), br = unproj(cam.x + (w - cx) / cam.z, cam.y + (h - cy) / cam.z);
+  const x0 = Math.floor(lon2t(tl.lon, n)), x1 = Math.floor(lon2t(br.lon, n)), y0 = Math.floor(lat2t(tl.lat, n)), y1 = Math.floor(lat2t(br.lat, n));
+  if ((x1 - x0 + 1) * (y1 - y0 + 1) > 120) return 0;
+  g.save(); g.globalAlpha = alpha; g.imageSmoothingEnabled = true;
+  let drawn = 0;
+  for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
+    const a = proj(t2lon(tx, n), t2lat(ty, n)), b = proj(t2lon(tx + 1, n), t2lat(ty + 1, n));
+    let img = tileImg(z, tx, ty, true), sx = 0, sy = 0, sw = 256;
+    // 아직 없으면 위 단계 타일 일부를 늘려서 대신
+    for (let up = 1; !img && up <= 4 && z - up >= TILE.min; up++) {
+      const p = tileImg(z - up, tx >> up, ty >> up, false);
+      if (p) { const f = 2 ** up; sw = 256 / f; sx = (tx % f) * sw; sy = (ty % f) * sw; img = p; }
+    }
+    if (img) { g.drawImage(img, sx, sy, sw, sw, a.x, a.y, b.x - a.x + .02, b.y - a.y + .02); drawn++; }
+  }
+  g.restore();
+  return drawn;
+}
 let LBL = [];
 function free(x, y, w, h) { if (LBL.some(b => Math.abs(b[0] - x) < (b[2] + w) / 2 && Math.abs(b[1] - y) < (b[3] + h) / 2)) return false; LBL.push([x, y, w, h]); return true; }
 function text(g, s, x, y, size, col = '#2c2b35', halo = '#fff', font = 'Jua') {
@@ -760,6 +808,10 @@ function draw(t) {
   const grd = g.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, SEA); grd.addColorStop(1, SEA2); g.fillStyle = grd; g.fillRect(0, 0, W, H);
   worldTo(g, CAM, cx, cy);
   drawLand(g, CAM.z, span < 700);
+  const ta = tileAlpha(span), tn = drawTiles(g, CAM, cx, cy, W, H, ta);
+  // 우리 도·현 경계는 거칠어서 타일이 진할 땐 숨김(항구 바다를 가로지르던 것)
+  if (ta > 0 && ta < .6 && P.adm) { g.strokeStyle = `rgba(227,154,18,${.75 * (1 - ta / .6)})`; g.lineWidth = 3 / CAM.z; P.adm.p.forEach(p => g.stroke(p)); }
+  $('attr').hidden = !(ta > .05 && tn);
   drawRoutes(g, CAM.z, t);
   g.setTransform(DPR, 0, 0, DPR, 0, 0);
   LBL.push([cx + (P.x - CAM.x) * CAM.z, cy + (P.y - CAM.y) * CAM.z - 14, 40, 40]);

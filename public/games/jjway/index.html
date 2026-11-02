@@ -23,6 +23,7 @@ button,input,select{font-family:inherit;color:inherit}
 .ib:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 #pipWrap{position:fixed;right:calc(10px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));z-index:20;pointer-events:none;text-align:center}
 #pip{border-radius:50%;border:3px solid var(--ink);box-shadow:0 4px 0 rgba(44,43,53,.25),0 0 0 5px rgba(255,255,255,.7);background:var(--sea);display:block}
+.hint{background:#fff7e0;border:1px solid #f0d98c;border-radius:10px;padding:7px 10px;font-size:13px;line-height:1.45;margin:4px 0 8px}
 #pipTxt{margin-top:6px;font-size:13px;background:rgba(255,253,247,.94);border:2px solid var(--ink);border-radius:10px;padding:3px 8px;max-width:190px;line-height:1.3}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,440px)}
 .t{background:var(--ink);color:#fff;border-radius:12px;padding:8px 14px;font-size:15px;line-height:1.35;text-align:center;animation:tin .25s ease-out}
@@ -58,15 +59,6 @@ button,input,select{font-family:inherit;color:inherit}
 .sw::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid var(--ink);transition:left .15s}
 .sw.on{background:#7cc576}.sw.on::after{left:24px}
 .row2{display:flex;gap:8px;margin-top:12px}
-.acts{display:flex;gap:8px;margin:10px 0 8px}
-.pbtn,.sbtn{flex:1;height:46px;border-radius:14px;border:2px solid var(--ink);font-family:Jua,sans-serif;font-size:18px;box-shadow:0 3px 0 rgba(44,43,53,.3);cursor:pointer}
-.pbtn{background:var(--pri);color:#fff}.sbtn{background:#fff;flex:.7}
-.pbtn:active,.sbtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.3)}
-.dst{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:#fff;border:1.5px solid #d8d3c8;border-radius:12px;padding:8px 10px;margin:5px 0;cursor:pointer;font-family:system-ui,sans-serif}
-.dst b{font-family:Jua,sans-serif;font-weight:400;font-size:17px;min-width:72px}.dst span{flex:1;font-size:12px;color:#6b6876}.dst i{font-style:normal;color:var(--pri)}
-.dst:active{background:#fff3e6}
-#flyBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));z-index:25}
-#flyBar button{height:44px;padding:0 18px;border-radius:999px;border:2px solid var(--ink);background:var(--card);font-family:Jua,sans-serif;font-size:16px;box-shadow:0 3px 0 rgba(44,43,53,.3);cursor:pointer;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis}
 .row2 button{flex:1;height:42px;border-radius:12px;border:2px solid var(--ink);background:#fff;font-family:Jua,sans-serif;font-size:17px;cursor:pointer}
 </style>
 </head>
@@ -81,7 +73,7 @@ button,input,select{font-family:inherit;color:inherit}
 </div>
 <div id="pipWrap"><canvas id="pip"></canvas><div id="pipTxt" hidden></div></div>
 <div id="sheet" hidden></div>
-<div id="flyBar" hidden><button id="bRet">↩ 돌아가기</button></div>
+
 <div id="toast"></div>
 
 <div class="ov" id="setup" hidden>
@@ -215,11 +207,11 @@ function input() {
 
 /* ---------- 상태 ---------- */
 // S.mode: walk 걷기 · ground 탑승(활주로 대기) · takeoff 이륙 연출 · plane 비행 · landing 착륙 연출
-const P = { x: S.pos.x, y: S.pos.y, vx: 0, vy: 0, hd: 0, trail: [], warnAt: {}, sheetFor: null, alt: 0, anim: null, auto: null, skip: null, ask: null, quiet: null };
+const P = { x: S.pos.x, y: S.pos.y, vx: 0, vy: 0, hd: 0, trail: [], warnAt: {}, sheetFor: null, alt: 0, anim: null, skip: null, quiet: null, g: 0, gFor: null, gKind: null, bad: null };
 const CAM = { x: P.x, y: P.y, z: 1 };
 const FX = [];                    // 변신 연기
 const SPEED = { walk: 85, plane: 270 };
-const NEAR = { walk: 14, ask: 38, auto: 18 };
+const NEAR = { walk: 14, ask: 38 };
 const FLY = m => m !== 'walk';
 
 function toast(msg, ms = 2600) {
@@ -236,26 +228,21 @@ function nearestAirport(maxD, filter) {
 }
 function canFly(a) { const m = R.kr[a.code] || R.jp[a.code]; return !m.closed && Object.keys(destsFrom(a.code)).length > 0; }
 
-/* ---------- 정보 창 ---------- */
+/* ---------- 정보 창 (보기 전용) ---------- */
 function chips(list, k, j) {
   return list.map(c => { if (c === '국내선') return `<span class="al">국내선</span>`; const s = k && j ? seasonal(k, j, c) : ''; const ex = c === 'OZ' || s; return `<span class="al${ex ? ' ex' : ''}">${AL(c)}${s ? ' · ' + s : c === 'OZ' ? ' · 12/17 종료' : ''}</span>`; }).join('');
 }
 const NOTE = () => `<div class="note">노선: ${R.source}, ${R.checked} 확인. 예약 전 항공사에서 다시 확인하세요.</div>`;
-function openSheet(h, code, kind) { locT = 0; const sh = $('sheet'); sh.innerHTML = h; sh.hidden = false; sh.scrollTop = 0; P.sheetFor = code; P.sheetKind = kind; }
+function openSheet(h, code, kind) { locT = 0; const sh = $('sheet'); sh.innerHTML = `<button class="x" onclick="xClose()" aria-label="닫기">✕</button>` + h; sh.hidden = false; sh.scrollTop = 0; P.sheetFor = code; P.sheetKind = kind; }
 function closeSheet() { $('sheet').hidden = true; P.sheetFor = null; P.sheetKind = null; }
-window.closeSheet = closeSheet;
+window.xClose = () => { P.closedFor = P.sheetFor; closeSheet(); };   // ✕: 그 공항을 벗어날 때까지 다시 안 염
+const HINT = t => `<div class="hint">${t}</div>`;
 function sheetAirport(a, how) {
-  const meta = R.kr[a.code] || R.jp[a.code];
-  let h = `<button class="x" onclick="doExit()" aria-label="닫기">✕</button>`;
-  const fly = canFly(a);
-  if (a.c === 'KOR') {
-    h += `<h2>✈️ ${meta.ko}</h2><div class="sub">${meta.pref || a.pref} · ${a.code}</div>`;
-    if (meta.closed) h += `<div class="warn">⛔ ${meta.closed}</div>`;
-  } else {
-    h += `<h2>🛬 ${meta.ko}</h2><div class="sub">${meta.ja} · ${a.pref} · ${a.code}</div>`;
-  }
-  if (how === 'land') h += `<div class="acts"><button class="pbtn" onclick="doExit()">🚶 공항 밖으로</button>${fly ? `<button class="sbtn" onclick="doBoard()">✈️ 다시 탑승</button>` : ''}</div>`;
-  else if (fly) h += `<div class="acts"><button class="pbtn" onclick="doBoard()">✈️ 탑승하기</button><button class="sbtn" onclick="doExit()">지나가기</button></div>`;
+  const meta = R.kr[a.code] || R.jp[a.code], fly = canFly(a);
+  let h = a.c === 'KOR' ? `<h2>✈️ ${meta.ko}</h2><div class="sub">${meta.pref || a.pref} · ${a.code}</div>` : `<h2>🛬 ${meta.ko}</h2><div class="sub">${meta.ja} · ${a.pref} · ${a.code}</div>`;
+  if (meta.closed) h += `<div class="warn">⛔ ${meta.closed}</div>`;
+  if (how === 'land') h += HINT(fly ? '🚶 걸어서 둘러보세요 · 공항을 벗어났다 다시 와서 서 있으면 탑승 게이지가 차요' : '🚶 걸어서 둘러보세요');
+  else if (fly) h += HINT('⭕ 가만히 서 있으면 돋보기 테두리가 차올라요 · 꽉 차면 탑승 · 움직이면 취소');
   if (a.c === 'KOR') {
     const r = R.routes[a.code] || {}, ks = Object.keys(r).sort((x, y) => r[y].length - r[x].length);
     if (!meta.closed) {
@@ -275,69 +262,50 @@ function sheetAirport(a, how) {
 }
 function sheetGround(a) {
   const d = destsFrom(a.code), dom = k => d[k][0] === '국내선' ? 1 : 0, ks = Object.keys(d).sort((x, y) => dom(x) - dom(y) || d[y].length - d[x].length);
-  let h = `<h2>🎫 탑승 완료 · ${cityName(a.code)}</h2><div class="sub">어디로 갈까요? <b>목적지</b>를 누르면 자동으로 날아가고, <b>이륙</b>을 누르면 직접 조종해요.</div>`;
-  h += `<div class="acts"><button class="pbtn" onclick="doTakeoff()">🛫 이륙 (직접 조종)</button><button class="sbtn" onclick="doDeplane()">내리기</button></div>`;
-  h += ks.map(k => { const m = R.kr[k] || R.jp[k]; return `<button class="dst" onclick="doAuto('${k}')"><b>${m.city}</b><span>${m.ko} · ${d[k][0] === '국내선' ? '국내선' : d[k].map(AL).slice(0, 3).join('·') + (d[k].length > 3 ? ` 외 ${d[k].length - 3}` : '')}</span><i>▶</i></button>`; }).join('');
+  let h = `<h2>🎫 탑승 완료 · ${cityName(a.code)}</h2>`;
+  h += HINT('🛫 화면을 끄는 방향으로 이륙해요 · 점선 끝 공항 위에 머무르면 착륙 게이지가 차요 · 취소하려면 이 공항에 다시 내리면 돼요');
+  h += `<div class="sub">갈 수 있는 곳 ${ks.length}곳</div>`;
+  h += ks.map(k => { const m = R.kr[k] || R.jp[k]; return `<div class="rt"><b>${m.city}</b><div>${chips(d[k], a.code, k)}</div></div>`; }).join('');
   openSheet(h + NOTE(), a.code, 'ground');
 }
-function sheetAsk(a) {
-  const d = destsFrom(S.from)[a.code], back = a.code === S.from, m = R.kr[a.code] || R.jp[a.code];
-  let h = `<h2>🛬 ${m.ko}에 착륙할까요?</h2><div class="sub">${back ? '출발한 공항으로 돌아가요' : `${cityName(S.from)} → ${m.city}`}</div>`;
-  if (d && !back) h += `<div style="margin:4px 0 2px">${chips(d, S.from, a.code)}</div>`;
-  h += `<div class="acts"><button class="pbtn" onclick="doLand()">🛬 착륙</button><button class="sbtn" onclick="doKeep()">계속 날기</button></div>`;
-  openSheet(h, a.code, 'ask');
-}
 
-/* ---------- 탑승·이륙·착륙 ---------- */
+/* ---------- 탑승·이륙·착륙 (게이지) ---------- */
+const GAUGE = { board: 1.5, land: 1.2 };
 function vib(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
 function headTo(a, b) { return Math.atan2(b.y - a.y, b.x - a.x); }
-function doBoard() {
-  const a = airport(P.sheetFor); if (!a || !canFly(a) || S.mode !== 'walk') return;
-  S.mode = 'ground'; S.from = a.code; P.x = a.x; P.y = a.y; P.vx = P.vy = 0; P.alt = 0; P.trail = [];
+function gaugeOff() { P.g = 0; P.gFor = null; P.gKind = null; }
+function gauge(dt, a, kind, still) {
+  if (P.gFor !== a.code || P.gKind !== kind) { P.g = 0; P.gFor = a.code; P.gKind = kind; }
+  P.g = still ? Math.min(1, P.g + dt / GAUGE[kind]) : Math.max(0, P.g - dt * 1.6);
+  return P.g >= 1;
+}
+function board(a) {
+  gaugeOff(); S.mode = 'ground'; S.from = a.code; P.x = a.x; P.y = a.y; P.vx = P.vy = 0; P.alt = 0; P.trail = [];
   const d = Object.keys(destsFrom(a.code)).map(airport);
   P.hd = Math.atan2(d.reduce((s, b) => s + b.y - a.y, 0), d.reduce((s, b) => s + b.x - a.x, 0));
-  puff(a.x, a.y); sheetGround(a); vib(25); save();
+  puff(a.x, a.y); sheetGround(a); toast('🎫 탑승! 화면을 끄는 방향으로 이륙해요'); vib(25); save();
 }
-function doDeplane() {
-  const a = airport(S.from); S.mode = 'walk'; S.country = a.c; S.from = null; P.auto = null; puff(a.x, a.y);
-  toast('🚶 비행기에서 내렸어요'); sheetAirport(a); save();
-}
-function doTakeoff(auto) {
-  if (S.mode !== 'ground') return;
-  P.auto = auto || null; P.skip = S.from;
-  if (auto) P.hd = headTo(P, airport(auto));
+function takeoff(hd) {
+  P.hd = hd; P.skip = S.from; gaugeOff();
   S.mode = 'takeoff'; P.anim = { t: 0, dur: RM ? .6 : 1.9, x0: P.x, y0: P.y };
-  locT = 0; closeSheet(); toast(auto ? `🛫 이륙! ${cityName(auto)}까지 자동 비행` : '🛫 이륙! 화면을 끌어서 조종해요'); vib([15, 30, 15]);
+  locT = 0; closeSheet(); vib([15, 30, 15]);
 }
-function doAuto(code) { doTakeoff(code); }
-function doReturn() { if (S.mode !== 'plane') return; P.auto = S.from; P.skip = null; toast(`↩ ${cityName(S.from)}로 돌아가요`); }
-function doLand() {
-  const a = P.ask || airport(P.sheetFor); if (!a || S.mode !== 'plane') return;
-  S.mode = 'landing'; P.anim = { t: 0, dur: RM ? .7 : 2.1, x0: P.x, y0: P.y, a, h0: P.hd }; P.ask = null; P.auto = null;
-  locT = 0; closeSheet(); toast(`🛬 ${airName(a.code)} 착륙 중…`);
+function startLanding(a) {
+  gaugeOff(); S.mode = 'landing'; P.anim = { t: 0, dur: RM ? .7 : 2.1, x0: P.x, y0: P.y, a };
+  locT = 0; closeSheet(); vib(20);
 }
-function doKeep() { if (P.ask) P.skip = P.ask.code; P.ask = null; closeSheet(); }
 function arrive(a) {
   S.mode = 'walk'; S.country = a.c; P.x = a.x; P.y = a.y; P.vx = P.vy = 0; P.trail = []; P.alt = 0; P.anim = null;
   const first = !S.stamps[a.code]; S.stamps[a.code] = S.stamps[a.code] || Date.now();
   puff(a.x, a.y, 24); toast(`📍 ${airName(a.code)} 도착!${first ? ' · 🏅 첫 도장' : ''}`);
-  S.from = null; sheetAirport(a, 'land'); vib([20, 40, 20]); save();
+  S.from = null; P.quiet = a.code; sheetAirport(a, 'land'); vib([20, 40, 20]); save();
 }
-function doExit() { if (S.mode !== 'walk') return; P.quiet = P.sheetFor; closeSheet(); }
-Object.assign(window, { doBoard, doDeplane, doTakeoff, doAuto, doReturn, doLand, doKeep, doExit });
-$('bRet').onclick = doReturn;
-addEventListener('keydown', e => {
-  if ((e.key === 'Enter' || e.key === ' ') && !$('sheet').hidden && $('setup').hidden && $('settings').hidden && e.target.tagName !== 'BUTTON') {
-    const b = $('sheet').querySelector('.pbtn'); if (b) { e.preventDefault(); b.click(); }
-  }
-  if (e.key === 'Escape' && !$('sheet').hidden) { const b = $('sheet').querySelector('.sbtn'); if (b) b.click(); }
-});
 
 /* ---------- 갱신 ---------- */
 let locT = 0;
 const ease = f => f * f * (3 - 2 * f);
 function step(dt) {
-  let [ix, iy] = input(); const mode = S.mode;
+  const [ix, iy] = input(), mode = S.mode, still = Math.hypot(ix, iy) < .05;
   if (mode === 'walk') {
     const ax = ix * SPEED.walk, ay = iy * SPEED.walk, k = 1 - Math.exp(-dt * 9);
     P.vx += (ax - P.vx) * k; P.vy += (ay - P.vy) * k;
@@ -351,20 +319,23 @@ function step(dt) {
     P.alt = 0;
     const a = nearestAirport(NEAR.walk, a => a.c === S.country);
     if (P.quiet && (!a || a.code !== P.quiet)) P.quiet = null;
-    if (a && P.sheetFor !== a.code && P.quiet !== a.code) sheetAirport(a);
+    if (P.closedFor && (!a || a.code !== P.closedFor)) P.closedFor = null;
+    if (a && P.sheetFor !== a.code && P.closedFor !== a.code) sheetAirport(a);
+    if (a && canFly(a) && P.quiet !== a.code) { if (gauge(dt, a, 'board', still)) board(a); }
+    else gaugeOff();
     if (!a && P.sheetKind === 'air') { const o = airport(P.sheetFor); if (o && Math.hypot(o.x - P.x, o.y - P.y) > NEAR.walk * 2.5) closeSheet(); }
   } else if (mode === 'ground') {
     P.vx = P.vy = 0; P.alt = 0;
+    if (Math.hypot(ix, iy) > .35) takeoff(Math.atan2(iy, ix));
   } else if (mode === 'takeoff') {
     const A = P.anim; A.t += dt; const f = Math.min(1, A.t / A.dur);
+    if (!still) { let d = Math.atan2(iy, ix) - P.hd; d = Math.atan2(Math.sin(d), Math.cos(d)); P.hd += d * Math.min(1, dt * 1.5 * f); }
     const dist = 70 * f * f; P.x = A.x0 + Math.cos(P.hd) * dist; P.y = A.y0 + Math.sin(P.hd) * dist;
     P.alt = ease(Math.max(0, (f - .3) / .7));
     if (f >= 1) { S.mode = 'plane'; P.vx = Math.cos(P.hd) * SPEED.plane * .5; P.vy = Math.sin(P.hd) * SPEED.plane * .5; P.anim = null; save(); }
   } else if (mode === 'landing') {
     const A = P.anim; A.t += dt; const f = Math.min(1, A.t / A.dur), a = A.a;
-    const g = ease(Math.min(1, f / .8));
-    // 공항 앞 20km에서 활주로로: 마지막 20%는 활주
-    const hd = headTo({ x: A.x0, y: A.y0 }, a);
+    const g = ease(Math.min(1, f / .8)), hd = headTo({ x: A.x0, y: A.y0 }, a);
     const tx = a.x - Math.cos(hd) * 6, ty = a.y - Math.sin(hd) * 6;
     if (f < .8) { P.x = A.x0 + (tx - A.x0) * g; P.y = A.y0 + (ty - A.y0) * g; }
     else { const r = (f - .8) / .2; P.x = tx + Math.cos(hd) * 6 * ease(r); P.y = ty + Math.sin(hd) * 6 * ease(r); }
@@ -373,24 +344,20 @@ function step(dt) {
     if (f >= 1) arrive(a);
   } else if (mode === 'plane') {
     P.alt = 1;
-    const user = Math.hypot(ix, iy) > .05;
-    if (P.auto && user) { P.auto = null; toast('✋ 직접 조종으로 바꿨어요'); }
-    if (P.auto) { const t = airport(P.auto), d = Math.hypot(t.x - P.x, t.y - P.y); ix = (t.x - P.x) / d; iy = (t.y - P.y) / d; }
-    if (P.ask) { ix = iy = 0; }
-    const sp = SPEED.plane * (P.auto ? 1.15 : 1), k = 1 - Math.exp(-dt * (P.ask ? 2.5 : 3.2));
-    P.vx += (ix * sp - P.vx) * k; P.vy += (iy * sp - P.vy) * k;
+    const k = 1 - Math.exp(-dt * 3.2);
+    P.vx += (ix * SPEED.plane - P.vx) * k; P.vy += (iy * SPEED.plane - P.vy) * k;
     P.x = Math.max(-820, Math.min(1450, P.x + P.vx * dt)); P.y = Math.max(-960, Math.min(1290, P.y + P.vy * dt));
     if (Math.hypot(P.vx, P.vy) > 8) { const t = Math.atan2(P.vy, P.vx); let d = t - P.hd; d = Math.atan2(Math.sin(d), Math.cos(d)); P.hd += d * Math.min(1, dt * 6); }
     const dests = destsFrom(S.from);
     if (P.skip) { const s = airport(P.skip); if (Math.hypot(s.x - P.x, s.y - P.y) > NEAR.ask * 1.6) P.skip = null; }
-    if (P.auto) {
-      const t = airport(P.auto);
-      if (Math.hypot(t.x - P.x, t.y - P.y) < NEAR.auto) { P.ask = t; doLand(); }
-    } else if (!P.ask) {
-      const a = nearestAirport(NEAR.ask);
+    const a = nearestAirport(NEAR.ask);
+    P.bad = null;
+    if (a && a.code !== P.skip && (dests[a.code] || a.code === S.from)) { if (gauge(dt, a, 'land', still)) startLanding(a); }
+    else {
+      gaugeOff();
       if (a && a.code !== P.skip) {
-        if (dests[a.code] || a.code === S.from) { P.ask = a; sheetAsk(a); vib(15); }
-        else if (!P.warnAt[a.code] || performance.now() - P.warnAt[a.code] > 6000) {
+        P.bad = a;
+        if (!P.warnAt[a.code] || performance.now() - P.warnAt[a.code] > 6000) {
           P.warnAt[a.code] = performance.now();
           const alt = a.c === 'JPN' ? krFor(a.code).map(k => R.kr[k].city) : [];
           toast(`${cityName(S.from)}에선 ${cityName(a.code)} 직항이 없어요` + (alt.length ? ` → ${alt.join('·')}에서 가요` : ''), 3400);
@@ -407,28 +374,39 @@ function step(dt) {
   CAM.z += (tz - CAM.z) * (1 - Math.exp(-dt * 2.6));
   CAM.x += (P.x - CAM.x) * (1 - Math.exp(-dt * 5)); CAM.y += (P.y - CAM.y) * (1 - Math.exp(-dt * 5));
 
-  $('flyBar').hidden = !(S.mode === 'plane' && !P.ask);
-  $('bRet').textContent = P.auto ? `✈️ ${cityName(P.auto)}까지 자동 비행 중 · 화면을 끌면 직접 조종` : `↩ ${cityName(S.from || 'ICN')}로 돌아가기`;
+  pipLabel();
   locT -= dt; if (locT <= 0) { locT = .35; updLoc(); }
   if ((S._st = (S._st || 0) + dt) > 2) { S._st = 0; S.pos = { x: P.x, y: P.y }; save(); }
 }
 const hit = document.createElement('canvas').getContext('2d');
 function admAt(x, y) { for (const a of ADM) if (a.p.some(p => hit.isPointInPath(p, x, y))) return a; return null; }
+let pipLast = '';
+function pipLabel() {
+  let h = '';
+  const m = S.mode;
+  if (P.g > 0 && P.gFor) {
+    const pct = Math.round(P.g * 100);
+    h = P.gKind === 'board' ? `<b>✈️ 탑승까지 ${pct}%</b><br>움직이면 취소` : `<b>🛬 ${cityName(P.gFor)} 착륙 ${pct}%</b><br>움직이면 계속 비행`;
+  } else if (m === 'ground') h = `<b>🛫 끄는 방향으로 이륙</b>`;
+  else if (m === 'takeoff') h = `🛫 이륙 중`;
+  else if (m === 'landing') h = `🛬 착륙 중`;
+  else if (m === 'plane') {
+    if (P.bad) h = `${cityName(P.bad.code)}<br>여기선 직항 없음`;
+    else {
+      const dests = destsFrom(S.from), a = nearestAirport(NEAR.ask * 3);
+      if (a && (dests[a.code] || a.code === S.from) && a.code !== P.skip) h = `<b>${cityName(a.code)}</b>${a.code === S.from ? ' (출발지)' : ''}<br>위에 멈추면 착륙`;
+      else h = `${cityName(S.from)}에서 갈 수 있는 곳<br><b>${Object.keys(dests).length}곳</b> (점선)`;
+    }
+  } else if (m === 'walk' && P.quiet && nearestAirport(NEAR.walk)) h = `벗어났다 다시 오면<br>탑승 게이지`;
+  if (h !== pipLast) { pipLast = h; $('pipTxt').innerHTML = h; $('pipTxt').hidden = !h; }
+}
 function updLoc() {
   const m = S.mode; let t;
-  $('pipTxt').hidden = m !== 'plane';
   if (m === 'walk') { const a = admAt(P.x, P.y); t = `🚶 ${S.country === 'KOR' ? '대한민국' : '일본'}${a ? ' · ' + a.ko : ''}`; }
-  else if (m === 'ground') t = `🎫 탑승 대기 · ${airName(S.from)}`;
+  else if (m === 'ground') t = `🎫 탑승 완료 · ${airName(S.from)}`;
   else if (m === 'takeoff') t = `🛫 이륙 중 · ${cityName(S.from)}`;
   else if (m === 'landing') t = `🛬 착륙 중 · ${P.anim ? airName(P.anim.a.code) : ''}`;
-  else {
-    const dests = destsFrom(S.from);
-    t = `✈️ 비행 중 · ${cityName(S.from)} 출발${P.auto ? ' → ' + cityName(P.auto) : ''}`;
-    const a = nearestAirport(NEAR.ask * 3);
-    if (a && dests[a.code]) $('pipTxt').innerHTML = `<b>${cityName(a.code)}</b><br>${dests[a.code][0] === '국내선' ? '국내선' : dests[a.code].map(AL).slice(0, 3).join(' · ') + (dests[a.code].length > 3 ? ' 외' : '')}<br>가까이 가면 착륙 확인`;
-    else if (a && a.code === S.from) $('pipTxt').innerHTML = `${cityName(a.code)}로 돌아가기`;
-    else $('pipTxt').innerHTML = `${cityName(S.from)}에서 갈 수 있는 곳<br><b>${Object.keys(dests).length}곳</b> (점선)`;
-  }
+  else t = `✈️ 비행 중 · ${cityName(S.from)} 출발`;
   $('loc').textContent = t;
 }
 
@@ -559,7 +537,7 @@ function drawParty(g, cam, cx, cy, t) {
 }
 let CY = .55;
 function draw(t) {
-  const sh = $('sheet'), fb = $('flyBar'), sheetH = sh.hidden ? (fb.hidden ? 0 : fb.offsetHeight + 8) : sh.offsetHeight + 10;
+  const sh = $('sheet'), sheetH = sh.hidden ? 0 : sh.offsetHeight + 10;
   const ty = sheetH ? Math.max(.22, Math.min(.55, (H - sheetH) / H * .55)) : .55;
   CY += (ty - CY) * .12;
   $('toast').style.bottom = `calc(${16 + sheetH}px + env(safe-area-inset-bottom))`;
@@ -575,7 +553,7 @@ function draw(t) {
   cityLabels(g, CAM, cx, cy, P.alt > .5 ? 2e6 : 2.5e5, 12);
   if (S.mode === 'walk' && CAM.z < Math.min(W, H) / 500) admLabels(g, CAM, cx, cy, 12);
   const sx = cx + (P.x - CAM.x) * CAM.z, sy = cy + (P.y - CAM.y) * CAM.z;
-  if (P.ask) { const ax = cx + (P.ask.x - CAM.x) * CAM.z, ay = cy + (P.ask.y - CAM.y) * CAM.z, r = 18 + Math.sin(t * 5) * 4; g.strokeStyle = '#3fa66b'; g.lineWidth = 4; g.beginPath(); g.arc(ax, ay, r, 0, 6.29); g.stroke(); }
+  if (P.g > 0 && P.gFor) { const a = airport(P.gFor), ax = cx + (a.x - CAM.x) * CAM.z, ay = cy + (a.y - CAM.y) * CAM.z; ring(g, ax, ay, 20, 4, P.g, P.gKind === 'board' ? '#e8594f' : '#3fa66b'); }
   if (FLY(S.mode)) plane(g, sx, sy - P.alt * (6 + Math.sin(t * 3) * 2), P.hd, 1.15, P.alt);
   else drawParty(g, CAM, cx, cy, t);
   for (const f of FX) { const k = f.t / f.life; g.fillStyle = `rgba(255,255,255,${(1 - k) * .9})`; g.beginPath(); g.arc(cx + (f.x - CAM.x) * CAM.z, cy + (f.y - CAM.y) * CAM.z, f.r * (1 + k), 0, 6.29); g.fill(); }
@@ -597,6 +575,15 @@ function drawPip(t) {
   if (S.mode === 'walk') admLabels(g, cam, c, c, 11);
   if (FLY(S.mode)) plane(g, c, c, P.hd, .75, P.alt);
   else person(g, c, c + 8, 1, S.party[0].col, 0, true);
+  // 테두리 = 게이지 (탑승 빨강 · 착륙 초록 · 직항 없음 회색 깜빡)
+  if (P.g > 0 && P.gFor) ring(g, c, c, c - 5, 8, P.g, P.gKind === 'board' ? '#e8594f' : '#3fa66b');
+  else if (P.bad && Math.sin(t * 8) > 0) { g.strokeStyle = 'rgba(120,120,130,.8)'; g.lineWidth = 8; g.beginPath(); g.arc(c, c, c - 5, 0, 6.29); g.stroke(); }
+}
+function ring(g, x, y, r, w, f, col) {
+  g.lineCap = 'round';
+  g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = w + 3; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.stroke();
+  g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + f * 6.283); g.stroke();
+  g.lineCap = 'butt';
 }
 
 /* ---------- 설정 화면 ---------- */
@@ -622,7 +609,7 @@ $('nPlus').onclick = () => { draftN = Math.min(8, draftN + 1); renderSetup(); };
 $('goBtn').onclick = () => {
   S.party = draft.slice(0, draftN).map(m => ({ ...m, name: m.name || m.rel }));
   const first = !S.started; S.started = true; save(); $('setup').hidden = true;
-  if (first) toast('화면을 끌어서 움직여요 · 공항(✈)에 가면 탑승할 수 있어요', 4200);
+  if (first) toast('화면을 끌어서 움직여요 · 공항(✈)에 서 있으면 돋보기 테두리가 차올라 탑승해요', 4600);
   else toast(`${S.party.length}명 출발 준비 완료`);
 };
 $('bParty').onclick = () => { draftN = S.party.length; draft = S.party.map(m => ({ ...m })); renderSetup(); $('setup').hidden = false; };

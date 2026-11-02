@@ -15,7 +15,7 @@ class Q(http.server.SimpleHTTPRequestHandler):
 srv = http.server.ThreadingHTTPServer(('127.0.0.1', PORT), functools.partial(Q, directory=ROOT))
 threading.Thread(target=srv.serve_forever, daemon=True).start()
 
-def at(pg, js_obj, dx=0, dy=0):
+def at(pg, js_obj, dx=0, dy=0):  # dx는 JS 식도 됨
     pg.evaluate(f'(() => {{ const a = {js_obj}; P.x = a.x + {dx}; P.y = a.y + {dy}; P.vx = P.vy = 0; P.trail = []; }})()')
 AIRJ = lambda c: f'AIR.find(a => a.code === "{c}")'
 CITYJ = lambda c: f'CITY.find(a => a.id === "{c}")'
@@ -75,21 +75,30 @@ def run(w, h, tag):
         assert not pg.evaluate('far()') and pg.evaluate('Math.min(innerWidth, innerHeight) / CAM.z') < 120, '확대 안 됨'
         pg.screenshot(path=f'{OUT}/jj_{tag}_2walk.png')
         # 리쓰린 공원 도장 + 도시 창
-        at(pg, SPOTJ('리쓰린 공원'), .3); wait(pg, 'S.seen[SPOT.find(a=>a.ko==="리쓰린 공원").key]', 2)
-        assert '도장' in pg.inner_text('#sheet')
+        # 덜 확대하면 아이콘에 닿아도 반응 없음(안내만)
+        pg.evaluate('S.span.walk = 30'); time.sleep(.6); at(pg, SPOTJ('리쓰린 공원')); time.sleep(.4)
+        assert not pg.evaluate('S.seen[SPOT.find(a=>a.ko==="리쓰린 공원").key]') and '더 확대' in pg.inner_text('#toast'), '최대 확대 아닌데 반응'
+        # 최대 확대: 근처(아이콘 밖)에선 반응 없음 → 아이콘에 닿으면 도장 + 아래 제목 띠 → 눌러야 창
+        at(pg, SPOTJ('리쓰린 공원'), 5); time.sleep(.3); pg.evaluate('S.span.walk = 2'); time.sleep(1.2)
+        at(pg, SPOTJ('리쓰린 공원'), 'Math.max(.2, 60 / CAM.z)'); time.sleep(.3)
+        assert not pg.evaluate('S.seen[SPOT.find(a=>a.ko==="리쓰린 공원").key]'), '아이콘 밖인데 반응'
+        at(pg, SPOTJ('리쓰린 공원')); wait(pg, 'S.seen[SPOT.find(a=>a.ko==="리쓰린 공원").key]', 2)
+        assert pg.is_visible('#peek') and '리쓰린' in pg.inner_text('#peek') and not pg.is_visible('#sheet'), '제목 띠 대신 창이 뜸'
+        pg.click('#peekBtn'); time.sleep(.2); assert '도장' in pg.inner_text('#sheet')
         pg.screenshot(path=f'{OUT}/jj_{tag}_3spot.png')
         at(pg, CITYJ('takamatsu'), -4, 4); time.sleep(.5)
+        assert '다카마쓰' in pg.inner_text('#peek'); pg.click('#peekBtn'); time.sleep(.2)
         sh = pg.inner_text('#sheet'); assert '다카마쓰' in sh and '리쓰린 공원' in sh and '사누키 우동' in sh, sh[:200]
         pg.screenshot(path=f'{OUT}/jj_{tag}_4city.png')
         # ⌖ 버튼: 자동차 비율(260km)로 → 🚗 그림·공항 화살표, 마쓰야마에서 확대 → 도고 온천
         pg.click('#bTarget'); time.sleep(1.5)
         assert pg.evaluate('S.span.walk') == 260 and pg.evaluate('far()') and pg.evaluate('Math.min(innerWidth, innerHeight) / CAM.z') > 180, '⌖ 뒤 축소 안 됨'
         pg.screenshot(path=f'{OUT}/jj_{tag}_5car.png')
-        at(pg, CITYJ('matsuyama'), -3, 3); time.sleep(.6)
+        at(pg, CITYJ('matsuyama'), 3, -3); time.sleep(.6)
         assert pg.evaluate('S.mode') == 'walk', '시내에서 저절로 탐'
         assert '마쓰야마' in pg.inner_text('#loc') and '🚗' in pg.inner_text('#loc')
-        pg.evaluate('S.span.walk = 40'); time.sleep(.3)
-        at(pg, SPOTJ('도고 온천'), .2); wait(pg, 'S.seen[SPOT.find(a=>a.ko==="도고 온천").key]', 2)
+        pg.evaluate('S.span.walk = 2'); time.sleep(1.2)
+        at(pg, SPOTJ('도고 온천')); wait(pg, 'S.seen[SPOT.find(a=>a.ko==="도고 온천").key]', 2)
         # 🚩 깃발: 확대 상태에서만 버튼 → 이름 없으면 막힘 → 꽂기(+5) → 지나가면 +1 → 고치기
         assert pg.is_visible('#bFlag')
         pts0 = pg.evaluate('S.pts || 0')
@@ -102,13 +111,14 @@ def run(w, h, tag):
         assert pg.evaluate('S.pts') == pts0 + 5, ('포인트', pg.evaluate('S.pts'), pts0)
         pg.screenshot(path=f'{OUT}/jj_{tag}_6flag.png')
         pg.evaluate('(() => { P.x += 4; })()'); time.sleep(.4); pg.evaluate('(() => { P.x -= 4; })()'); time.sleep(.6)
-        assert pg.evaluate('S.pts') == pts0 + 6 and '테스트 우동집' in pg.inner_text('#sheet'), '지나가도 동전·팝업 없음'
-        pg.click('#sheet .cbtn'); time.sleep(.2); pg.fill('#fName', '고친 우동집'); pg.click('#sheet .go'); time.sleep(.3)
+        assert pg.evaluate('S.pts') == pts0 + 6 and '테스트 우동집' in pg.inner_text('#peek'), '지나가도 동전·제목 띠 없음'
+        pg.click('#peekBtn'); time.sleep(.2); pg.click('#sheet .cbtn'); time.sleep(.2); pg.fill('#fName', '고친 우동집'); pg.click('#sheet .go'); time.sleep(.3)
         assert pg.evaluate('S.flags[0].name') == '고친 우동집' and pg.evaluate('S.flags.length') == 1
         # 확대·축소
         s0 = pg.evaluate('S.span.walk'); pg.mouse.move(w / 2, h / 3); pg.mouse.wheel(0, 400); time.sleep(.1); assert pg.evaluate('S.span.walk') > s0, '휠 축소 안 됨'
         pg.mouse.wheel(0, -400); time.sleep(.1)
         # 쓸어내려 닫기 → 돋보기로 다시
+        if not pg.is_visible('#sheet'): pg.click('#peekBtn'); time.sleep(.2)
         swipe_down(pg); assert not pg.is_visible('#sheet')
         pg.click('#pip'); time.sleep(.2); assert pg.is_visible('#sheet')
         # 설정·새로고침

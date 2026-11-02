@@ -83,6 +83,12 @@ button,input,select{font-family:inherit;color:inherit}
 #zoom button.on{background:#ffcf5a;box-shadow:0 0 0 3px rgba(255,207,90,.5),0 3px 0 rgba(44,43,53,.25)}
 #zoom button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 #sheet a{color:var(--blue)}
+#peek{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:28;max-width:calc(100vw - 130px)}
+#peek.in{animation:pin .28s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pin{from{transform:translate(-50%,30px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+#peekBtn{height:44px;padding:0 16px;border-radius:999px;border:2px solid var(--ink);background:var(--card);font-family:Jua,sans-serif;font-size:17px;box-shadow:0 3px 0 rgba(44,43,53,.3);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#peekBtn span{font-size:13px;color:#8a8794;margin-left:4px}#peekBtn em{font-style:normal;color:#d4a017}
+#peekBtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.3)}
 #pts{left:calc(10px + env(safe-area-inset-left));top:calc(102px + env(safe-area-inset-top));padding:3px 11px;font-size:14px}
 #pts b{font-weight:400;font-size:16px}
 #pts.bump{animation:bump .35s ease-out}
@@ -116,6 +122,7 @@ button,input,select{font-family:inherit;color:inherit}
 <div id="zoom"><button id="bFlag" aria-label="여기에 깃발 꽂기" hidden>🚩</button><button id="bTarget" aria-label="내 위치 · 기본 비율">⌖</button></div>
 <div id="sheet" hidden></div>
 
+<div id="peek" hidden><button id="peekBtn"></button></div>
 <div id="toast"></div>
 <div id="attr" hidden>出典：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院 地理院タイル(淡色地図)</a></div>
 
@@ -161,6 +168,7 @@ const SEOUL = { x: -457.8, y: -284.2 };
 const SPAN = { walk: [260, 1.2, 700], plane: [1500, 700, 2600] };
 const SPF = { walk: .26, plane: .18 };   // 속도 = 보이는 거리 × 이 값(km/초) → 화면에서 늘 비슷한 빠르기
 const CARV = 120;                         // 이보다 멀리 보면 자동차 그림·명소 숨김·공항 화살표
+const DEEP = 3;                           // 이보다 가까이(최대 확대 쪽) 볼 때만 명소·깃발에 들어감
 function defParty(n) {
   const base = [['아빠', '아빠'], ['엄마', '엄마'], ['', '아들'], ['', '딸']];
   return Array.from({ length: n }, (_, i) => ({ name: base[i] ? base[i][0] : '', rel: base[i] ? base[i][1] : '기타', age: '성인', col: COLORS[i % COLORS.length] }));
@@ -448,6 +456,17 @@ function moveOnLand(dt, ix, iy, sp, okFn) {
   return moved;
 }
 // 지금 가까이 있는 것에 맞춰 창 자동으로 열기·닫기 (명소 > 공항 > 도시)
+let PEEK = null;
+function peek(key, title, open) {
+  // 다른 것의 창이 열려 있으면 닫음(멀어졌으니)
+  const kinds = key ? ['spot', 'flag', 'city', 'air', 'land'] : ['spot', 'flag', 'city'];   // 공항 창은 autoSheet가 맡음
+  if (kinds.includes(P.sheetKind) && P.sheetFor !== key) closeSheet();
+  const el = $('peek');
+  if (!key || P.sheetFor === key) { el.hidden = true; PEEK = key ? { key, open } : null; return; }
+  if (!PEEK || PEEK.key !== key) { $('peekBtn').innerHTML = `${title} <span>▲ 자세히</span>`; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); }
+  PEEK = { key, open }; el.hidden = false;
+}
+$('peekBtn').onclick = () => { if (PEEK) { PEEK.open(); P.fresh = null; } $('peek').hidden = true; };
 function autoSheet(key, open) {
   if (P.closedFor && P.closedFor !== key) P.closedFor = null;
   if (!key) { if (['air', 'land', 'city', 'spot', 'flag'].includes(P.sheetKind)) closeSheet(); return; }
@@ -462,21 +481,30 @@ function step(dt) {
     P.alt = 0;
     const air = nearestAirport(NEAR.walkAir, a => a.c === S.country);
     if (P.quiet && (!air || air.code !== P.quiet)) { P.quiet = null; P.lastFrom = null; }
-    const spot = !far() ? nearest(SPOT, NEAR.spot) : null;     // 명소 도장은 확대했을 때만
+    // 명소·깃발은 사람이 아이콘에 직접 닿아야 반응(화면에서 약 20px — 확대 정도와 상관없이 '닿기')
+    const hitR = Math.max(.02, 20 / CAM.z), deep = S.span.walk <= DEEP;
+    const spotT = !far() ? nearest(SPOT, hitR) : null, spot = deep ? spotT : null;
+    if (spotT && !deep && P.onSpotT !== spotT.key) toast(`🔍 ${spotT.ko} — 더 확대하면 들어갈 수 있어요`, 2000);
+    P.onSpotT = spotT ? spotT.key : null;
     const city = nearest(CITY, NEAR.city * (far() ? 1.3 : 1));
-    // 명소 도착 = 도장
-    const fl = flagStep();
-    if (spot && !S.seen[spot.key]) {
-      S.seen[spot.key] = Date.now(); vib([15, 30, 15]); burst(spot.x, spot.y, 22, ['#ffd84d', '#fff', '#ff8a5c']); shock(spot.x, spot.y, '#ffd84d'); SFX.stamp();
-      coinsTo(W / 2 + (spot.x - CAM.x) * CAM.z, H * CY + (spot.y - CAM.y) * CAM.z, 6); addPts(10);
-      toast(`📍 ${spot.ko} 도장! +10`); save(); if (P.sheetKind !== 'flagform') { sheetSpot(spot, true); P.closedFor = null; }
+    const fl = flagStep(hitR);
+    if (spot && P.onSpot !== spot.key) {       // 닿는 순간: 아이콘 통통 + 소리, 첫 방문이면 도장·금화
+      spot.hit = performance.now();
+      if (!S.seen[spot.key]) {
+        S.seen[spot.key] = Date.now(); P.fresh = 'spot:' + spot.key; vib([15, 30, 15]);
+        burst(spot.x, spot.y, 22, ['#ffd84d', '#fff', '#ff8a5c']); shock(spot.x, spot.y, '#ffd84d'); SFX.stamp();
+        coinsTo(W / 2 + (spot.x - CAM.x) * CAM.z, H * CY + (spot.y - CAM.y) * CAM.z, 6); addPts(10);
+        toast(`📍 ${spot.ko} 도장! +10`); save();
+      } else { SFX.pop(); burst(spot.x, spot.y, 8, ['#fff', '#ffd84d'], 40); vib(10); }
     }
+    P.onSpot = spot ? spot.key : null;
+    // 명소·깃발·도시는 아래에 제목만 살짝(눌러야 자세히), 공항은 예전처럼 창
     if (P.sheetKind === 'flagform') { /* 깃발 적는 중 */ }
-    else if (spot) autoSheet('spot:' + spot.key, () => sheetSpot(spot));
-    else if (fl) autoSheet('flag:' + fl.f.id, () => sheetFlag(fl));
-    else if (air) autoSheet('air:' + air.code, () => sheetAirport(air, P.lastFrom && P.quiet === air.code ? 'land' : undefined));
-    else if (city) autoSheet('city:' + city.id, () => sheetCity(city));
-    else autoSheet(null);
+    else if (spot) peek('spot:' + spot.key, `${ICON[spot.t] || '📍'} ${spot.ko}${S.seen[spot.key] ? ' <em>✔</em>' : ''}`, () => sheetSpot(spot, P.fresh === 'spot:' + spot.key));
+    else if (fl) peek('flag:' + fl.f.id, `${CATS[fl.f.cat][0]} ${esc(fl.f.name)}`, () => sheetFlag(fl));
+    else if (air) { peek(null); autoSheet('air:' + air.code, () => sheetAirport(air, P.lastFrom && P.quiet === air.code ? 'land' : undefined)); }
+    else if (city) peek('city:' + city.id, `🏙️ ${city.ko}`, () => sheetCity(city));
+    else { peek(null); autoSheet(null); }
     // 게이지: 공항에 서 있으면 탑승
     if (air && canFly(air) && P.quiet !== air.code) { if (gauge(dt, air.code, air, 'board', still)) board(air); }
     else gaugeOff();
@@ -691,10 +719,15 @@ function spotMarks(g, cam, cx, cy, span, small) {
   for (const s of SPOT) {
     const sx = cx + (s.x - cam.x) * cam.z, sy = cy + (s.y - cam.y) * cam.z;
     if (!onScr(g, sx, sy)) continue;
-    const seen = S.seen[s.key], r = small ? 9 : 12;
-    g.fillStyle = seen ? '#fff3c4' : '#ffffff'; g.strokeStyle = seen ? '#d4a017' : '#6b6876'; g.lineWidth = seen ? 2.6 : 1.6;
+    const seen = S.seen[s.key], hk = s.hit ? (performance.now() - s.hit) / 450 : 1, r = (small ? 9 : 12) * (hk < 1 ? 1 + Math.sin(hk * Math.PI) * .45 : 1);
+    // 올라가 있는 동안 깜빡이는 빛(다녀온 곳이어도)
+    if (P.onSpot === s.key) { const k = (Math.sin(performance.now() / 140) + 1) / 2; g.fillStyle = `rgba(255,216,77,${.25 + .45 * k})`; g.beginPath(); g.arc(sx, sy, r + 6 + 4 * k, 0, 6.29); g.fill(); }
+    // 도장 받은 곳: 금색 원 + 오른쪽 위 메달 → 한눈에 '다녀온 곳'
+    if (seen) { const gg = g.createRadialGradient(sx - r * .3, sy - r * .3, 1, sx, sy, r); gg.addColorStop(0, '#fff6c9'); gg.addColorStop(1, '#f2b134'); g.fillStyle = gg; g.strokeStyle = '#a8790f'; g.lineWidth = 2.6; }
+    else { g.fillStyle = '#ffffff'; g.strokeStyle = '#6b6876'; g.lineWidth = 1.6; }
     g.beginPath(); g.arc(sx, sy, r, 0, 6.29); g.fill(); g.stroke();
     g.font = `${small ? 10 : 13}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ICON[s.t] || '📍', sx, sy + 1);
+    if (seen) { const bx = sx + r * .78, by = sy - r * .78, br = small ? 4.5 : 6.5; g.fillStyle = '#e8594f'; g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.beginPath(); g.arc(bx, by, br, 0, 6.29); g.fill(); g.stroke(); g.fillStyle = '#fff'; g.font = `bold ${small ? 6 : 8}px sans-serif`; g.fillText('✔', bx, by + .5); }
     if (span < 110 && free(sx, sy - r - 9, s.ko.length * 12, 14)) text(g, s.ko, sx, sy - r - 9, small ? 10 : 12, '#2c2b35');
     LBL.push([sx, sy, r * 2, r * 2]);
   }
@@ -823,7 +856,7 @@ function drawMe(g, cam, cx, cy, t, s) {
 }
 let CY = .55;
 function draw(t) {
-  const sh = $('sheet'), sheetH = sh.hidden ? 0 : sh.offsetHeight + 10;
+  const sh = $('sheet'), pk = $('peek'), sheetH = sh.hidden ? (pk.hidden ? 0 : pk.offsetHeight + 8) : sh.offsetHeight + 10;
   const ty = sheetH ? Math.max(.22, Math.min(.55, (H - sheetH) / H * .55)) : .55;
   CY += (ty - CY) * .12;
   $('toast').style.bottom = `calc(${16 + sheetH}px + env(safe-area-inset-bottom))`;
@@ -1004,19 +1037,18 @@ function sheetFlag(rt) {
   openSheet(head, h, 'flag:' + f.id, 'flag');
 }
 // 지나가면: 동전 짤랑(층층이 돈 줍듯) + 팝업. 멀어졌다 다시 오면 또.
-function flagStep() {
-  if (S.mode !== 'walk' || far()) return null;
-  let near = null, nd = .7;
+function flagStep(hitR) {
+  if (S.mode !== 'walk' || S.span.walk > DEEP) return null;
+  let near = null, nd = hitR * 1.3;
   for (const r of FLAGS) {
     const d = Math.hypot(r.x - P.x, r.y - P.y);
-    if (d > 1.6) r.armed = true;
+    if (d > Math.max(hitR * 3, .05)) r.armed = true;
     if (d < nd) { nd = d; near = r; }
   }
   if (near && near.armed && performance.now() - near.born > 1500) {
     near.armed = false; near.last = performance.now();
     const sx = W / 2 + (near.x - CAM.x) * CAM.z, sy = H * CY + (near.y - CAM.y) * CAM.z;
     burst(near.x, near.y, 18, ['#ffd84d', '#fff3a0', CATS[near.f.cat][2]], 60); coinsTo(sx, sy, 3); addPts(1); SFX.coin(); vib(20);
-    if (P.closedFor === 'flag:' + near.f.id) P.closedFor = null;
   }
   return near;
 }
@@ -1034,6 +1066,7 @@ function flagMarks(g, cam, cx, cy, span, small) {
     g.save(); g.translate(sx, sy + dy); g.scale(k * sc, k * sc);
     g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(0, 1, 7, 2.6, 0, 0, 6.29); g.fill();
     if (glow) { g.fillStyle = `rgba(255,216,77,${glow * .6})`; g.beginPath(); g.arc(0, -16, 22, 0, 6.29); g.fill(); }
+    if (PEEK && PEEK.key === 'flag:' + r.f.id && !small) { const q = (Math.sin(now / 140) + 1) / 2; g.fillStyle = `rgba(255,216,77,${.25 + .45 * q})`; g.beginPath(); g.arc(0, -16, 20 + 5 * q, 0, 6.29); g.fill(); }
     g.strokeStyle = '#4a3b2a'; g.lineWidth = 2.2; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -30); g.stroke();
     const wave = Math.sin(now / 260 + r.x) * 2;
     g.fillStyle = c[2]; g.strokeStyle = '#2c2b35'; g.lineWidth = 1.4;
@@ -1106,6 +1139,7 @@ $('pip').addEventListener('click', () => {
   P.closedFor = null;
   if (S.mode === 'ground') return sheetGround(airport(S.from));
   if (S.mode !== 'walk') return;
+  if (PEEK) { PEEK.open(); $('peek').hidden = true; return; }   // 아래 제목 띠에 떠 있는 것 먼저
   const spot = !far() ? nearest(SPOT, NEAR.spot) : null, air = nearestAirport(NEAR.walkAir, a => a.c === S.country), city = nearest(CITY, NEAR.city * 1.3);
   if (spot) sheetSpot(spot); else if (air) sheetAirport(air, P.lastFrom && P.quiet === air.code ? 'land' : undefined); else if (city) sheetCity(city);
   else { const c = nearest(CITY, 400); if (c) { sheetCity(c); } else toast('공항·도시 근처에서 누르면 정보가 열려요'); }

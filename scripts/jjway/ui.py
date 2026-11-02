@@ -104,6 +104,13 @@ def run(w, h, tag):
         p1 = pg.evaluate('S.pts'); pg.click('#sheet .seg.st button:nth-child(2)'); assert not pg.evaluate(f'S.seen[{k}]')
         pg.click('#sheet .seg.st button:nth-child(1)'); assert pg.evaluate(f'S.wish[{k}]')
         pg.click('#sheet .seg.st button:nth-child(2)'); assert pg.evaluate(f'S.seen[{k}]') and not pg.evaluate(f'S.wish[{k}]') and pg.evaluate('S.pts') == p1, '수동 상태/포인트'
+        # 다카마쓰성 터: 서자마자 창 열고 읽는 동안엔 채움 멈춤 → 창 닫으면 차서 한 번 자동 → 손으로 끄면 다시 서 있어도 자동 안 됨
+        k2 = 'SPOT.find(a=>a.ko==="다카마쓰성 터").key'
+        at(pg, SPOTJ('다카마쓰성 터')); time.sleep(.3); pg.click('#peekBtn'); time.sleep(4)
+        assert not pg.evaluate(f'S.seen[{k2}]') and pg.evaluate(f'(S.fill[{k2}]||0)') < .2, ('읽는 중인데 채워짐', pg.evaluate(f'S.fill[{k2}]'))
+        pg.evaluate('xClose()'); wait(pg, f'S.seen[{k2}]', 5)
+        pg.click('#peekBtn'); time.sleep(.2); pg.click('#sheet .seg.st button:nth-child(2)'); pg.evaluate('xClose()')
+        time.sleep(4); assert not pg.evaluate(f'S.seen[{k2}]') and pg.evaluate(f'S.lock[{k2}]'), '한 번 뒤에도 자동으로 바뀜'
         pg.screenshot(path=f'{OUT}/jj_{tag}_3spot.png')
         at(pg, CITYJ('takamatsu'), -4, 4); time.sleep(.5)
         assert '다카마쓰' in pg.inner_text('#peek'); pg.click('#peekBtn'); time.sleep(.2)

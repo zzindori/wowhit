@@ -107,6 +107,16 @@ button,input,select{font-family:inherit;color:inherit}
 .qbs{display:flex;gap:6px;margin:8px 0}.qbs button{flex:1;height:40px;border-radius:12px;border:2px solid var(--ink);background:#fff;font:15px Jua,sans-serif;cursor:pointer}
 .qmsg{text-align:center;color:#6b6876;font-size:14px;padding:12px}
 #qRes .mr b{display:flex;flex-direction:column}#qRes .mr .ko{font-weight:400;font-size:13px;color:#2f6fd0}#qRes .mr b small{font-weight:400;font-size:11px;color:#8a8794;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw}
+#peek:has(#card:not([hidden])){max-width:none}
+#card{background:var(--card);border:2px solid var(--ink);border-radius:16px;box-shadow:0 4px 0 rgba(44,43,53,.3);padding:10px 12px;width:min(92vw,380px);font-family:system-ui,sans-serif}
+.ct{display:flex;align-items:center;gap:7px}.ct .ci{font-size:22px}.ct b{font:400 18px Jua,sans-serif;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{font:12px Jua,sans-serif;border-radius:999px;padding:2px 8px;white-space:nowrap}.chip.ok{background:#fff3c4;color:#8a6a1d;border:1px solid #e2c25a}.chip.wi{background:#ffe6ef;color:#b3305f;border:1px solid #f3b6cb}
+.cb{display:flex;align-items:center;gap:8px;margin:7px 0 2px}.cb .bar{position:relative;flex:1;height:10px}.cb .bar u{position:absolute;left:50%;top:-2px;bottom:-2px;border-left:2px solid #e8594f}.cb small{font-size:12px;color:#6b6876;white-space:nowrap}
+.cd{font-size:13px;color:#6b6876;margin:4px 0 0}
+.cbtns{display:flex;gap:8px;margin-top:8px}.cbtns button{flex:1;height:40px;border-radius:12px;border:2px solid var(--ink);background:#fff;font:16px Jua,sans-serif;cursor:pointer;box-shadow:0 2px 0 rgba(44,43,53,.25)}
+.cbtns button.go2{background:var(--pri);color:#fff;flex:1.4}.cbtns button.on{background:#ffe6ef;border-color:#b3305f;color:#b3305f}
+.cbtns button:active{transform:translateY(2px);box-shadow:none}
+.hb{flex:none;width:32px;height:28px;border-radius:8px;border:1.5px solid #e2dcd0;background:#fff;color:#d8d3c8;font-size:16px;cursor:pointer;margin-left:4px}.hb.on{color:#e05a8a;border-color:#f3b6cb;background:#ffe6ef}
 .mfoot{display:flex;gap:8px;margin-top:8px}.mfoot button{flex:1;height:38px;border-radius:10px;border:2px solid #d8d3c8;background:#fff;font:14px Jua,sans-serif;color:#a33;cursor:pointer}
 .empty{text-align:center;color:#8a8794;font-size:14px;padding:24px 8px;line-height:1.6}
 
@@ -149,7 +159,7 @@ button,input,select{font-family:inherit;color:inherit}
 <div id="zoom"><button id="bFlag" aria-label="장소 찾아 깃발 꽂기" hidden>🚩</button><button id="bTarget" aria-label="내 위치 · 기본 비율">⌖</button></div>
 <div id="sheet" hidden></div>
 
-<div id="peek" hidden><button id="peekBtn"></button></div>
+<div id="peek" hidden><button id="peekBtn"></button><div id="card" hidden></div></div>
 <div id="toast"></div>
 <div id="attr" hidden>出典：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院 地理院タイル(淡色地図)</a></div>
 
@@ -222,7 +232,7 @@ S.wish = S.wish || {};          // 명소 '가고 싶어요'
 S.fill = S.fill || {};          // 명소 아이콘 채움 0~1(서 있으면 차오름, 반 넘으면 다녀왔어요)
 if (!S.paid) { S.paid = {}; for (const k in S.seen) { S.paid[k] = 1; S.fill[k] = 1; } }
 // 자동 '다녀왔어요'는 명소마다 딱 한 번. 한 번 자동으로 됐거나 손으로 바꾼 곳은 그 뒤 수동만(S.lock)
-S.lock = S.lock || {}; for (const k in S.seen) S.lock[k] = 1; for (const k in S.wish) S.lock[k] = 1;
+S.lock = S.lock || {}; for (const k in S.seen) S.lock[k] = 1;   // '가고 싶어요'는 미리 표시라 잠그지 않음
 const FILL_T = 6;               // 아이콘이 다 차는 데 걸리는 시간(초) — 반(3초)이면 다녀왔어요
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
@@ -301,7 +311,13 @@ function zoomBy(f) { const k = spanKey(); setSpan(k, S.span[k] * f); }
 cv.addEventListener('pointerdown', e => {
   PTR.set(e.pointerId, { x: e.clientX, y: e.clientY }); cv.setPointerCapture(e.pointerId);
   if (PTR.size === 2) { const [a, b] = [...PTR.values()]; joy = null; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), span: S.span[spanKey()], k: spanKey() }; }
-  else if (PTR.size === 1) joy = { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY };
+  else if (PTR.size === 1) { joy = { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY }; TAP = { x: e.clientX, y: e.clientY, t: performance.now() }; }
+  else TAP = null;
+});
+let TAP = null;
+cv.addEventListener('pointerup', e => {
+  if (!TAP || PTR.size > 1) return; const t = TAP; TAP = null;
+  if (Math.hypot(e.clientX - t.x, e.clientY - t.y) < 8 && performance.now() - t.t < 350) tapMap(e.clientX, e.clientY);
 });
 cv.addEventListener('pointermove', e => {
   if (!PTR.has(e.pointerId)) return; PTR.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -437,7 +453,7 @@ function markBeen(k, auto) {
   if (P.sheetFor === 'spot:' + k) sheetSpot(s);
 }
 window.setSpotSt = (k, st) => {
-  S.lock[k] = 1;   // 손으로 바꾼 곳은 이제 자동 안 됨
+  if (st === 'been') S.lock[k] = 1;   // 다녀왔어요를 손으로 바꾼 곳은 이제 자동 안 됨
   if (st === 'been') { if (S.seen[k]) { delete S.seen[k]; save(); } else markBeen(k, false); }
   else { if (S.wish[k]) delete S.wish[k]; else { S.wish[k] = Date.now(); delete S.seen[k]; SFX.pop(); } save(); }
   const s = SPOT.find(x => x.key === k); if (P.sheetFor === 'spot:' + k) sheetSpot(s);
@@ -518,16 +534,64 @@ function moveOnLand(dt, ix, iy, sp, okFn) {
 }
 // 지금 가까이 있는 것에 맞춰 창 자동으로 열기·닫기 (명소 > 공항 > 도시)
 let PEEK = null;
-function peek(key, title, open) {
+function peek(key, title, open, card) {
   // 다른 것의 창이 열려 있으면 닫음(멀어졌으니)
   const kinds = key ? ['spot', 'flag', 'city', 'air', 'land'] : ['spot', 'flag', 'city'];   // 공항 창은 autoSheet가 맡음
   if (!P.pinned && kinds.includes(P.sheetKind) && P.sheetFor !== key) closeSheet();
   const el = $('peek');
-  if (!key || P.sheetFor === key) { el.hidden = true; PEEK = key ? { key, open } : null; return; }
-  if (!PEEK || PEEK.key !== key) { el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); }
-  if (!PEEK || PEEK.title !== title) $('peekBtn').innerHTML = `${title} <span>▲ 자세히</span>`;
-  PEEK = { key, open, title }; el.hidden = false;
+  if (!key || P.sheetFor === key) { el.hidden = true; PEEK = key ? { key, open, card } : null; return; }
+  if (!PEEK || PEEK.key !== key) { el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); CARD_SIG = ''; }
+  if (!card && (!PEEK || PEEK.title !== title)) $('peekBtn').innerHTML = `${title} <span>▲ 자세히</span>`;
+  if (card && PEEK && PEEK.key === key && PEEK.card) Object.assign(card, { prevWish: PEEK.card.prevWish, prev: PEEK.card.prev });
+  PEEK = { key, open, title, card }; el.hidden = false;
+  $('peekBtn').hidden = !!card; $('card').hidden = !card;
+  if (card) renderCard();
 }
+// 도착 카드: 이름·상태 + 채움 막대 + [✔ 다녀왔어요]/[↩ 되돌리기] + [자세히]. 멀리서 핀을 누르면 [💭 가고 싶어요]
+let CARD_SIG = '';
+function cardState(c) {
+  if (c.type === 'spot') { const k = c.s.key; return { icon: ICON[c.s.t] || '📍', name: c.s.ko, been: !!S.seen[k], wish: !!S.wish[k], fill: S.fill[k] || 0, lock: !!S.lock[k], x: c.s.x, y: c.s.y }; }
+  const f = c.rt.f; return { icon: CATS[f.cat][0], name: f.name, been: f.status === 'been', wish: f.status !== 'been', fill: f.status === 'been' ? 1 : f.fill || 0, lock: !!f.lock, x: c.rt.x, y: c.rt.y };
+}
+function renderCard() {
+  const c = PEEK && PEEK.card; if (!c) return;
+  const st = cardState(c), sig = [PEEK.key, st.been, st.wish, st.lock, !!c.remote].join('|');
+  if (sig !== CARD_SIG) {
+    CARD_SIG = sig;
+    const chip = st.been ? '<span class="chip ok">✔ 다녀옴</span>' : st.wish && c.type === 'spot' ? '<span class="chip wi">💭 가고 싶었던 곳</span>' : '';
+    let h = `<div class="ct"><span class="ci">${st.icon}</span><b>${esc(st.name)}</b>${chip}</div>`;
+    if (c.remote) {
+      const d = Math.hypot(st.x - P.x, st.y - P.y);
+      h += `<div class="cd">📍 여기서 ${d < 1 ? Math.round(d * 1000) + 'm' : d.toFixed(1) + 'km'}</div><div class="cbtns">`;
+      h += st.been ? '' : c.type === 'spot' ? `<button class="${st.wish ? 'on' : ''}" onclick="cardWish()">${st.wish ? '💭 가고 싶어요 ✓' : '💭 가고 싶어요'}</button>` : '';
+      h += `<button onclick="cardOpen()">자세히 ▲</button></div>`;
+    } else {
+      if (!st.been) h += `<div class="cb"><span class="bar"><i id="cBar"></i><u></u></span><small id="cPct"></small></div>`;
+      h += `<div class="cbtns">${st.been ? '<button onclick="cardUndo()">↩ 되돌리기</button>' : '<button class="go2" onclick="cardBeen()">✔ 다녀왔어요</button>'}<button onclick="cardOpen()">자세히 ▲</button></div>`;
+    }
+    $('card').innerHTML = h;
+  }
+  const bar = $('cBar');
+  if (bar) { bar.style.width = Math.round(st.fill * 100) + '%'; $('cPct').textContent = st.lock ? '🔒 직접 골라요' : `${Math.round(st.fill * 100)}% · 반 넘으면 자동`; }
+}
+window.cardBeen = () => {
+  const c = PEEK && PEEK.card; if (!c) return;
+  if (c.type === 'spot') { c.prevWish = !!S.wish[c.s.key]; S.lock[c.s.key] = 1; markBeen(c.s.key, false); burst(c.s.x, c.s.y, 16, ['#ffd84d', '#fff']); }
+  else { c.prev = c.rt.f.status; setFlagSt(c.rt.f.id, 'been'); }
+  SFX.stamp(); vib(20); CARD_SIG = ''; renderCard();
+};
+window.cardUndo = () => {
+  const c = PEEK && PEEK.card; if (!c) return;
+  if (c.type === 'spot') { const k = c.s.key; delete S.seen[k]; if (c.prevWish) S.wish[k] = Date.now(); S.lock[k] = 1; save(); }
+  else setFlagSt(c.rt.f.id, c.prev && c.prev !== 'been' ? c.prev : 'want');
+  toast('↩ 되돌렸어요'); CARD_SIG = ''; renderCard();
+};
+window.cardWish = () => {
+  const c = PEEK && PEEK.card; if (!c || c.type !== 'spot') return;
+  const k = c.s.key; if (S.wish[k]) delete S.wish[k]; else { S.wish[k] = Date.now(); SFX.pop(); burst(c.s.x, c.s.y, 10, ['#e05a8a', '#fff']); }
+  save(); CARD_SIG = ''; renderCard();
+};
+window.cardOpen = () => { if (PEEK) PEEK.open(); $('peek').hidden = true; P.remote = null; };
 $('peekBtn').onclick = () => { if (PEEK) PEEK.open(); $('peek').hidden = true; };
 function autoSheet(key, open) {
   if (P.pinned) return;
@@ -567,10 +631,12 @@ function step(dt) {
       if (f1 !== f0) { S.fill[spot.key] = f1; if (f0 < .5 && f1 >= .5) { S.lock[spot.key] = 1; if (!S.seen[spot.key]) markBeen(spot.key, true); } }
     }
     P.onSpot = spot ? spot.key : null;
-    // 명소·깃발·도시는 아래에 제목만 살짝(눌러야 자세히), 공항은 예전처럼 창
+    // 명소·깃발은 도착 카드, 도시는 제목만 살짝(눌러야 자세히), 공항은 예전처럼 창
+    if (!still && P.remote) P.remote = null;
     if (P.sheetKind === 'flagform') { /* 깃발 적는 중 */ }
-    else if (spot) peek('spot:' + spot.key, `${ICON[spot.t] || '📍'} ${spot.ko} ${spotBadge(spot.key)}`, () => sheetSpot(spot));
-    else if (fl) peek('flag:' + fl.f.id, `${CATS[fl.f.cat][0]} ${esc(fl.f.name)}`, () => sheetFlag(fl));
+    else if (P.remote && still) { /* 멀리서 누른 핀 카드: 움직이기 전까지 유지 */ }
+    else if (spot) peek('spot:' + spot.key, '', () => sheetSpot(spot), { type: 'spot', s: spot });
+    else if (fl) peek('flag:' + fl.f.id, '', () => sheetFlag(fl), { type: 'flag', rt: fl });
     else if (air) { peek(null); autoSheet('air:' + air.code, () => sheetAirport(air, P.lastFrom && P.quiet === air.code ? 'land' : undefined)); }
     else if (city) peek('city:' + city.id, `🏙️ ${city.ko}`, () => sheetCity(city));
     else { peek(null); autoSheet(null); }
@@ -635,6 +701,7 @@ function step(dt) {
 
   $('zoom').hidden = S.mode !== 'walk' && S.mode !== 'ground';
   $('bFlag').hidden = S.mode !== 'walk';
+  if (PEEK && PEEK.card && !$('peek').hidden) renderCard();
   stepFX(dt);
   pipLabel();
   locT -= dt; if (locT <= 0) { locT = .35; updLoc(); }
@@ -1169,7 +1236,8 @@ function sheetFlag(rt) {
 window.setFlagSt = (id, st) => {
   const rt = FLAGS.find(r => r.f.id === id), f = rt.f; f.status = st; f.lock = 1; f.updated = Date.now();
   if (st === 'been' && !f.paid) { f.paid = 1; addPts(3); coinsTo(W / 2 + (rt.x - CAM.x) * CAM.z, H * CY + (rt.y - CAM.y) * CAM.z, 3); }
-  SFX.pop(); save(); sheetFlag(rt);
+  SFX.pop(); save(); if (P.sheetFor === 'flag:' + id) sheetFlag(rt);
+  CARD_SIG = '';
 };
 // 지나가면: 동전 짤랑(층층이 돈 줍듯) + 팝업. 멀어졌다 다시 오면 또.
 // 올라가 있으면 깃발도 차오름 → 반 넘으면 '다녀왔어요'(+3, 한 번)
@@ -1234,7 +1302,7 @@ function openFind(q) {
   let h = `<div class="fsearch"><input id="qIn" class="fin" maxlength="400" placeholder="이름·주소·구글 지도 링크 붙여넣기" value="${esc(q || '')}" onkeydown="if(event.key==='Enter')doFind()"><button class="qgo" onclick="doFind()">찾기</button></div>`;
   h += `<div class="qbs"><button onclick="startPick()">🎯 지도에서 고르기</button><button onclick="hereFlag()">📍 지금 서 있는 곳</button></div>`;
   h += `<div id="qRes"></div>`;
-  h += HINT('예: 리쓰린 공원 · 타임즈렌트카 다카마쓰 · タイムズカー 高松 · 香川県高松市栗林町 · 구글 지도 공유 링크 · 34.3295, 134.0439<br>한국어는 일본어로 바꿔서 같이 찾아요. 가게는 일본어 이름이 가장 정확해요.<br>📞 전화번호 검색은 준비 중이에요(구글 키가 필요해요)');
+  h += HINT('예: 리쓰린 공원 · 타임즈렌트카 다카마쓰 · タイムズカー 高松 · 香川県高松市栗林町 · 구글 지도 공유 링크 · 34.3295, 134.0439<br>한국어는 일본어로 바꿔서 같이 찾아요. 유명한 곳·체인점은 영어(Takamatsu Station)도 잘 돼요. 작은 동네 가게는 지도 데이터에 없을 수 있어서 구글 지도 링크나 🎯 지도에서 고르기가 확실해요.<br>📞 전화번호 검색은 준비 중이에요(구글 키가 필요해요)');
   openSheet(head, h, 'find', 'flagform');
   setTimeout(() => $('qIn') && $('qIn').focus(), 50);
 }
@@ -1408,6 +1476,25 @@ function drawPick(g, cx, cy, t) {
   g.font = '22px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'bottom'; g.globalAlpha = .55; g.fillText('🚩', x + 9, y - 6); g.globalAlpha = 1;
 }
 
+
+// 지도를 톡 누르면: 근처 명소 핀(머리)·깃발이면 카드(멀리서도 '가고 싶어요' 표시)
+function tapMap(x, y) {
+  if (S.mode !== 'walk' || !$('sheet').hidden && P.sheetKind === 'flagform') return;
+  const cx = W / 2, cy = H * CY, span = Math.min(W, H) / CAM.z;
+  let best = null, bd = 26;
+  if (span <= CARV * 1.1) for (const s of SPOT) {
+    const sx = cx + (s.x - CAM.x) * CAM.z, sy = cy + (s.y - CAM.y) * CAM.z - 12 * 1.55, d = Math.hypot(sx - x, sy - y);
+    if (d < bd) { bd = d; best = { type: 'spot', s, key: 'spot:' + s.key }; }
+  }
+  for (const r of FLAGS) {
+    const sx = cx + (r.x - CAM.x) * CAM.z + 10, sy = cy + (r.y - CAM.y) * CAM.z - 22, d = Math.hypot(sx - x, sy - y);
+    if (d < bd) { bd = d; best = { type: 'flag', rt: r, key: 'flag:' + r.f.id }; }
+  }
+  if (!best) return;
+  joy = null; P.remote = best.key; SFX.pop();
+  if (best.type === 'spot') { best.s.hit = performance.now(); peek(best.key, '', () => sheetSpot(best.s), { type: 'spot', s: best.s, remote: true }); }
+  else peek(best.key, '', () => sheetFlag(best.rt), { type: 'flag', rt: best.rt, remote: true });
+}
 /* ---------- 🏅 나의 여행 기록 ---------- */
 let MTAB = 'spot';
 const dstr = t => t > 1 ? new Date(t).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }) : '';
@@ -1426,7 +1513,7 @@ function renderMedals() {
         h += `<div class="mc">🏙️ ${c.ko} <small>${g2}/${c.spots.length}</small>${g2 === c.spots.length ? ' 🏆' : ''}</div>`;
         const rank = x => S.seen[x.key] ? 2 : S.wish[x.key] ? 1 : 0;
         h += c.spots.slice().sort((a, b) => rank(b) - rank(a)).map(x => { const t = S.seen[x.key], w = S.wish[x.key], f = Math.round((S.fill[x.key] || 0) * 100);
-          return `<div class="mr ${t ? 'ok' : w ? '' : 'no'}" data-spot="${x.key}"><span class="ic">${t ? '✔' : w ? '💭' : ICON[x.t] || '📍'}</span><b>${x.ko}</b><i>${t ? '다녀옴 ' + dstr(t) : w ? '가고 싶어요' + (f ? ' · ' + f + '%' : '') : f ? f + '%' : x.ferry ? '⛴️ 페리' : '아직'}</i></div>`; }).join('');
+          return `<div class="mr ${t ? 'ok' : w ? '' : 'no'}" data-spot="${x.key}"><span class="ic">${t ? '✔' : w ? '💭' : ICON[x.t] || '📍'}</span><b>${x.ko}</b><i>${t ? '다녀옴 ' + dstr(t) : w ? '가고 싶어요' + (f ? ' · ' + f + '%' : '') : f ? f + '%' : x.ferry ? '⛴️ 페리' : '아직'}</i>${t ? '' : `<button class="hb${w ? ' on' : ''}" data-wish="${x.key}" aria-label="가고 싶어요">♥</button>`}</div>`; }).join('');
       }
     }
   } else if (MTAB === 'air') {
@@ -1465,6 +1552,8 @@ $('pts').onclick = () => { MTAB = 'spot'; renderMedals(); $('medals').hidden = f
 $('mClose').onclick = () => { $('medals').hidden = true; };
 document.querySelectorAll('.mtabs button').forEach(b => b.onclick = () => { MTAB = b.dataset.t; renderMedals(); $('mList').scrollTop = 0; });
 $('mList').onclick = e => {
+  const hb = e.target.closest('[data-wish]');
+  if (hb) { const k = hb.dataset.wish; if (S.wish[k]) delete S.wish[k]; else { S.wish[k] = Date.now(); SFX.pop(); } save(); const sc = $('mList').scrollTop; renderMedals(); $('mList').scrollTop = sc; return; }
   const r = e.target.closest('.mr'); if (!r) return;
   $('medals').hidden = true; P.closedFor = null;
   if (r.dataset.spot) sheetSpot(SPOT.find(x => x.key === r.dataset.spot));

@@ -64,10 +64,21 @@ def run(w, h, tag):
         at(pg, AIRJ('NGS')); time.sleep(.6)
         assert pg.evaluate('P.bad && P.bad.code') == 'NGS' and pg.evaluate('P.g') == 0
         at(pg, AIRJ('TAK'), -30); hold(pg, 'ArrowRight', .5); assert pg.evaluate('S.mode') == 'plane'
-        at(pg, AIRJ('TAK'), 8); wait(pg, 'S.mode === "landing"', 3); wait(pg, 'S.mode === "walk" && S.country === "JPN"', 4)
+        # 실제로 날아서: 다카마쓰 서쪽 250km에서 오른쪽으로 날다가 공항 가까이(화면 약 30px)에서 손 떼면 끌려가 착륙
+        pg.evaluate('S.span.plane = 1500'); time.sleep(.5)
+        at(pg, AIRJ('TAK'), -250); time.sleep(.3)
+        pg.keyboard.down('ArrowRight')
+        for _ in range(80):
+            if pg.evaluate('AIR.find(a => a.code === "TAK").x - P.x') < 70: break
+            time.sleep(.04)
+        pg.keyboard.up('ArrowRight')
+        wait(pg, 'S.mode === "landing"', 4); wait(pg, 'S.mode === "walk" && S.country === "JPN"', 4)
         # 착륙 취소 → 바로 비행 → 다시 착륙
         pg.click('#sheet .cbtn'); time.sleep(.15); assert pg.evaluate('S.mode') == 'plane' and '비행 중' in pg.inner_text('#loc')
         at(pg, AIRJ('TAK'), 150); time.sleep(.3); at(pg, AIRJ('TAK'), 8); wait(pg, 'S.mode === "walk" && S.country === "JPN"', 6)
+        # 최대 확대로 공항 2km 옆에서 멈춰 있어도 탑승 게이지 안 참(공항 아이콘 바로 앞에서만)
+        pg.evaluate('S.span.walk = 1.5'); time.sleep(1.2); at(pg, AIRJ('TAK'), 0, 2); pg.evaluate('P.quiet = null'); time.sleep(1.8)
+        assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('P.g') == 0, '확대 걷기인데 공항 근처에서 탐'
         # 휠로 확대 → 사람 그림·명소 핀
         pg.mouse.move(w / 2, h / 3)
         for _ in range(6): pg.mouse.wheel(0, -500); time.sleep(.05)
@@ -77,7 +88,8 @@ def run(w, h, tag):
         # 리쓰린 공원 도장 + 도시 창
         # 덜 확대하면 아이콘에 닿아도 반응 없음(안내만)
         pg.evaluate('S.span.walk = 30'); time.sleep(.6); at(pg, SPOTJ('리쓰린 공원')); time.sleep(.4)
-        assert not pg.evaluate('S.seen[SPOT.find(a=>a.ko==="리쓰린 공원").key]') and '더 확대' in pg.inner_text('#toast'), '최대 확대 아닌데 반응'
+        st = pg.evaluate('({seen: !!S.seen[SPOT.find(a=>a.ko==="리쓰린 공원").key], span: S.span.walk, toast: document.getElementById("toast").innerText, onT: P.onSpotT, far: far()})')
+        assert not st['seen'] and '더 확대' in st['toast'], ('최대 확대 아닌데 반응', st)
         # 최대 확대: 근처(아이콘 밖)에선 반응 없음 → 아이콘에 닿으면 도장 + 아래 제목 띠 → 눌러야 창
         at(pg, SPOTJ('리쓰린 공원'), 5); time.sleep(.3); pg.evaluate('S.span.walk = 2'); time.sleep(1.2)
         at(pg, SPOTJ('리쓰린 공원'), 'Math.max(.2, 60 / CAM.z)'); time.sleep(.3)

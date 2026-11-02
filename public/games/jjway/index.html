@@ -291,7 +291,10 @@ function input() {
 const P = { x: S.pos.x, y: S.pos.y, vx: 0, vy: 0, hd: 0, trail: [], warnAt: {}, sheetFor: null, alt: 0, anim: null, skip: null, quiet: null, g: 0, gFor: null, gKind: null, gAt: null, bad: null };
 const CAM = { x: P.x, y: P.y, z: 1 };
 const FX = [];
-const NEAR = { walkAir: 4, ask: 38, city: 9, spot: 1.6 };   // 공항은 시내와 가까워서(마쓰야마 6km) 좁게
+const NEAR = { city: 9, spot: 1.6 };
+// 공항 범위는 화면 크기 기준: 걸을 땐 공항 아이콘 주변 약 24px(0.8~15km), 비행기 착륙은 약 28px(25~120km)
+const airR = () => Math.max(.8, Math.min(15, 24 / CAM.z));
+const askR = () => Math.max(25, Math.min(120, 28 / CAM.z));
 const FLY = m => m === 'ground' || m === 'takeoff' || m === 'plane' || m === 'landing';
 const GAUGE = { board: 1.5, land: 1.2 };
 const GCOL = { board: '#e8594f', land: '#3fa66b' };
@@ -479,10 +482,11 @@ function step(dt) {
     const sp = S.span.walk * SPF.walk;
     moveOnLand(dt, ix, iy, sp, (x, y) => canStand(x, y, S.country) || bridge(x, y));
     P.alt = 0;
-    const air = nearestAirport(NEAR.walkAir, a => a.c === S.country);
+    const air = nearestAirport(airR(), a => a.c === S.country);
     if (P.quiet && (!air || air.code !== P.quiet)) { P.quiet = null; P.lastFrom = null; }
     // 명소·깃발은 사람이 아이콘에 직접 닿아야 반응(화면에서 약 20px — 확대 정도와 상관없이 '닿기')
-    const hitR = Math.max(.02, 20 / CAM.z), deep = S.span.walk <= DEEP;
+    // '최대 확대'는 목표값이 아니라 지금 화면에 실제로 보이는 거리로(확대되는 중엔 아직 아님)
+    const hitR = Math.max(.02, 20 / CAM.z), deep = Math.min(W, H) / CAM.z <= DEEP;
     const spotT = !far() ? nearest(SPOT, hitR) : null, spot = deep ? spotT : null;
     if (spotT && !deep && P.onSpotT !== spotT.key) toast(`🔍 ${spotT.ko} — 더 확대하면 들어갈 수 있어요`, 2000);
     P.onSpotT = spotT ? spotT.key : null;
@@ -533,10 +537,15 @@ function step(dt) {
     P.x = Math.max(-820, Math.min(1450, P.x + P.vx * dt)); P.y = Math.max(-960, Math.min(1290, P.y + P.vy * dt));
     if (Math.hypot(P.vx, P.vy) > 8) { const t = Math.atan2(P.vy, P.vx); let d = t - P.hd; d = Math.atan2(Math.sin(d), Math.cos(d)); P.hd += d * Math.min(1, dt * 6); }
     const dests = destsFrom(S.from);
-    if (P.skip) { const s = airport(P.skip); if (Math.hypot(s.x - P.x, s.y - P.y) > NEAR.ask * 1.6) P.skip = null; }
-    const a = nearestAirport(NEAR.ask);
+    const AR = askR();
+    if (P.skip) { const s = airport(P.skip); if (Math.hypot(s.x - P.x, s.y - P.y) > AR * 1.6) P.skip = null; }
+    const a = nearestAirport(AR);
     P.bad = null;
-    if (a && a.code !== P.skip && (dests[a.code] || a.code === S.from)) { if (gauge(dt, a.code, a, 'land', still)) startLanding(a); }
+    if (a && a.code !== P.skip && (dests[a.code] || a.code === S.from)) {
+      // 손 떼면 공항 위로 스르륵 끌려가 멈춤(그냥 두면 수십 km 미끄러져 지나침)
+      if (still) { const k2 = 1 - Math.exp(-dt * 4); P.vx += ((a.x - P.x) * 2.2 - P.vx) * k2; P.vy += ((a.y - P.y) * 2.2 - P.vy) * k2; }
+      if (gauge(dt, a.code, a, 'land', still)) startLanding(a);
+    }
     else {
       gaugeOff();
       if (a && a.code !== P.skip) {
@@ -579,11 +588,11 @@ function pipLabel() {
   else if (m === 'plane') {
     if (P.bad) h = `${cityName(P.bad.code)}<br>여기선 직항 없음`;
     else {
-      const dests = destsFrom(S.from), a = nearestAirport(NEAR.ask * 3);
+      const dests = destsFrom(S.from), a = nearestAirport(askR() * 3);
       if (a && (dests[a.code] || a.code === S.from) && a.code !== P.skip) h = `<b>${cityName(a.code)}</b>${a.code === S.from ? ' (출발지)' : ''}<br>위에 멈추면 착륙`;
       else h = `${cityName(S.from)}에서 갈 수 있는 곳<br><b>${Object.keys(dests).length}곳</b> (점선)`;
     }
-  } else if (m === 'walk' && P.quiet && nearestAirport(NEAR.walkAir)) h = `벗어났다 다시 오면<br>탑승 게이지`;
+  } else if (m === 'walk' && P.quiet && nearestAirport(airR())) h = `벗어났다 다시 오면<br>탑승 게이지`;
   if (h !== pipLast) { pipLast = h; $('pipTxt').innerHTML = h; $('pipTxt').hidden = !h; }
 }
 function updLoc() {
@@ -1049,7 +1058,7 @@ function sheetFlag(rt) {
 }
 // 지나가면: 동전 짤랑(층층이 돈 줍듯) + 팝업. 멀어졌다 다시 오면 또.
 function flagStep(hitR) {
-  if (S.mode !== 'walk' || S.span.walk > DEEP) return null;
+  if (S.mode !== 'walk' || Math.min(W, H) / CAM.z > DEEP) return null;
   let near = null, nd = hitR * 1.3;
   for (const r of FLAGS) {
     const d = Math.hypot(r.x - P.x, r.y - P.y);
@@ -1151,7 +1160,7 @@ $('pip').addEventListener('click', () => {
   if (S.mode === 'ground') return sheetGround(airport(S.from));
   if (S.mode !== 'walk') return;
   if (PEEK) { PEEK.open(); $('peek').hidden = true; return; }   // 아래 제목 띠에 떠 있는 것 먼저
-  const spot = !far() ? nearest(SPOT, NEAR.spot) : null, air = nearestAirport(NEAR.walkAir, a => a.c === S.country), city = nearest(CITY, NEAR.city * 1.3);
+  const spot = !far() ? nearest(SPOT, NEAR.spot) : null, air = nearestAirport(airR(), a => a.c === S.country), city = nearest(CITY, NEAR.city * 1.3);
   if (spot) sheetSpot(spot); else if (air) sheetAirport(air, P.lastFrom && P.quiet === air.code ? 'land' : undefined); else if (city) sheetCity(city);
   else { const c = nearest(CITY, 400); if (c) { sheetCity(c); } else toast('공항·도시 근처에서 누르면 정보가 열려요'); }
 });

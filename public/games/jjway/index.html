@@ -114,7 +114,8 @@ button,input,select{font-family:inherit;color:inherit}
 .cb{display:flex;align-items:center;gap:8px;margin:7px 0 2px}.cb .bar{position:relative;flex:1;height:10px}.cb .bar u{position:absolute;left:50%;top:-2px;bottom:-2px;border-left:2px solid #e8594f}.cb small{font-size:12px;color:#6b6876;white-space:nowrap}
 .cd{font-size:13px;color:#6b6876;margin:4px 0 0}
 .cbtns{display:flex;gap:8px;margin-top:8px}.cbtns button{flex:1;height:40px;border-radius:12px;border:2px solid var(--ink);background:#fff;font:16px Jua,sans-serif;cursor:pointer;box-shadow:0 2px 0 rgba(44,43,53,.25)}
-.cbtns button.go2{background:var(--pri);color:#fff;flex:1.4}.cbtns button.on{background:#ffe6ef;border-color:#b3305f;color:#b3305f}
+.cbtns button{font-size:15px}.cbtns button.dt{flex:.8}
+.cbtns button.wi.on{background:#ffe6ef;border-color:#b3305f;color:#b3305f}.cbtns button.ok.on{background:#fff3c4;border-color:#a8790f;color:#8a6a1d}
 .cbtns button:active{transform:translateY(2px);box-shadow:none}
 .hb{flex:none;width:32px;height:28px;border-radius:8px;border:1.5px solid #e2dcd0;background:#fff;color:#d8d3c8;font-size:16px;cursor:pointer;margin-left:4px}.hb.on{color:#e05a8a;border-color:#f3b6cb;background:#ffe6ef}
 .mfoot{display:flex;gap:8px;margin-top:8px}.mfoot button{flex:1;height:38px;border-radius:10px;border:2px solid #d8d3c8;background:#fff;font:14px Jua,sans-serif;color:#a33;cursor:pointer}
@@ -229,11 +230,10 @@ if (S.mode === 'car') S.mode = 'walk';
 if (S.boardFrom === 'car') S.boardFrom = 'walk';
 S.seen = S.seen || {};          // 명소 '다녀왔어요' 시각
 S.wish = S.wish || {};          // 명소 '가고 싶어요'
-S.fill = S.fill || {};          // 명소 아이콘 채움 0~1(서 있으면 차오름, 반 넘으면 다녀왔어요)
-if (!S.paid) { S.paid = {}; for (const k in S.seen) { S.paid[k] = 1; S.fill[k] = 1; } }
+delete S.fill;                  // (예전 자동 채움 — 이제 가고 싶어요·다녀왔어요 둘 다 손으로)
+if (!S.paid) { S.paid = {}; for (const k in S.seen) S.paid[k] = 1; }
 // 자동 '다녀왔어요'는 명소마다 딱 한 번. 한 번 자동으로 됐거나 손으로 바꾼 곳은 그 뒤 수동만(S.lock)
 S.lock = S.lock || {}; for (const k in S.seen) S.lock[k] = 1;   // '가고 싶어요'는 미리 표시라 잠그지 않음
-const FILL_T = 6;               // 아이콘이 다 차는 데 걸리는 시간(초) — 반(3초)이면 다녀왔어요
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
 /* ---------- 데이터 ---------- */
@@ -441,9 +441,8 @@ function sheetCity(c) {
   if (on.length) h += `<div class="soon">🔦 ${on.join(' · ')} 정보는 다음 단계에서 채워져요 (유튜브 현지인·한국인 영상 정리).</div>`;
   openSheet(head, h + PNOTE(), 'city:' + c.id, 'city');
 }
-function spotBadge(k) { const f = Math.round((S.fill[k] || 0) * 100); return S.seen[k] ? '<em>✔</em>' : S.wish[k] ? '<em style="color:#e05a8a">💭</em>' + (f ? ` <small>${f}%</small>` : '') : f ? `<small>${f}%</small>` : ''; }
+function spotBadge(k) { return S.seen[k] ? '<em>✔</em>' : S.wish[k] ? '<em style="color:#e05a8a">💭</em>' : ''; }
 function stSeg(on, fn) { return `<div class="seg st"><button class="${on === 'wish' ? 'on' : ''}" onclick="${fn}('wish')">💭 가고 싶어요</button><button class="${on === 'been' ? 'on' : ''}" onclick="${fn}('been')">✔ 다녀왔어요</button></div>`; }
-function fillBar(f, been, lock) { return `<div class="fb"><span class="bar"><i style="width:${Math.round(f * 100)}%"></i><u></u></span><small>${lock ? '🔒 이제 직접 골라요' : been ? '다녀왔어요' : f ? `채움 ${Math.round(f * 100)}% · 반을 넘기면 다녀왔어요(창 닫고 서 있어야 차요)` : '아이콘 위에 서 있으면 차올라요'}</small></div>`; }
 // 다녀왔어요 표시(자동 = 채움 반 넘김 / 수동 = 버튼). 포인트는 명소마다 한 번만
 function markBeen(k, auto) {
   const s = SPOT.find(x => x.key === k); S.seen[k] = Date.now(); delete S.wish[k];
@@ -462,7 +461,7 @@ function sheetSpot(s) {
   const c = CITY.find(x => x.id === s.city), seen = S.seen[s.key];
   const head = `<h2>${ICON[s.t] || '📍'} ${s.ko}</h2>`;
   let h = `<div class="sub">${s.ja} · ${c.ko}${seen ? ' · ✔ ' + new Date(seen).toLocaleDateString('ko-KR') : ''}</div>`;
-  h += stSeg(seen ? 'been' : S.wish[s.key] ? 'wish' : '', `setSpotSt.bind(null,'${s.key}')`) + fillBar(S.fill[s.key] || 0, seen, S.lock[s.key]);
+  h += stSeg(seen ? 'been' : S.wish[s.key] ? 'wish' : '', `setSpotSt.bind(null,'${s.key}')`);
   h += `<div class="intro">${s.d}</div>`;
   if (s.ferry) h += `<div class="sub">⛴️ 섬이라 지금은 페리 대신 지도에서만 볼 수 있어요.</div>`;
   h += `<div class="note"><a href="https://www.wikidata.org/wiki/${s.wd}" target="_blank" rel="noopener">위키데이터에서 보기</a> · ${PL.source}</div>`;
@@ -550,46 +549,34 @@ function peek(key, title, open, card) {
 // 도착 카드: 이름·상태 + 채움 막대 + [✔ 다녀왔어요]/[↩ 되돌리기] + [자세히]. 멀리서 핀을 누르면 [💭 가고 싶어요]
 let CARD_SIG = '';
 function cardState(c) {
-  if (c.type === 'spot') { const k = c.s.key; return { icon: ICON[c.s.t] || '📍', name: c.s.ko, been: !!S.seen[k], wish: !!S.wish[k], fill: S.fill[k] || 0, lock: !!S.lock[k], x: c.s.x, y: c.s.y }; }
-  const f = c.rt.f; return { icon: CATS[f.cat][0], name: f.name, been: f.status === 'been', wish: f.status !== 'been', fill: f.status === 'been' ? 1 : f.fill || 0, lock: !!f.lock, x: c.rt.x, y: c.rt.y };
+  if (c.type === 'spot') { const k = c.s.key; return { icon: ICON[c.s.t] || '📍', name: c.s.ko, been: !!S.seen[k], wish: !!S.wish[k], x: c.s.x, y: c.s.y }; }
+  const f = c.rt.f; return { icon: CATS[f.cat][0], name: f.name, been: f.status === 'been', wish: f.status === 'want', x: c.rt.x, y: c.rt.y };
 }
 function renderCard() {
   const c = PEEK && PEEK.card; if (!c) return;
-  const st = cardState(c), sig = [PEEK.key, st.been, st.wish, st.lock, !!c.remote].join('|');
-  if (sig !== CARD_SIG) {
-    CARD_SIG = sig;
-    const chip = st.been ? '<span class="cchip ok">✔ 다녀옴</span>' : st.wish && c.type === 'spot' ? '<span class="cchip wi">💭 가고 싶었던 곳</span>' : '';
-    let h = `<div class="ct"><span class="ci">${st.icon}</span><b>${esc(st.name)}</b>${chip}</div>`;
-    if (c.remote) {
-      const d = Math.hypot(st.x - P.x, st.y - P.y);
-      h += `<div class="cd">📍 여기서 ${d < 1 ? Math.round(d * 1000) + 'm' : d.toFixed(1) + 'km'}</div><div class="cbtns">`;
-      h += st.been ? '' : c.type === 'spot' ? `<button class="${st.wish ? 'on' : ''}" onclick="cardWish()">${st.wish ? '💭 가고 싶어요 ✓' : '💭 가고 싶어요'}</button>` : '';
-      h += `<button onclick="cardOpen()">자세히 ▲</button></div>`;
-    } else {
-      if (!st.been) h += `<div class="cb"><span class="bar"><i id="cBar"></i><u></u></span><small id="cPct"></small></div>`;
-      h += `<div class="cbtns">${st.been ? '<button onclick="cardUndo()">↩ 되돌리기</button>' : '<button class="go2" onclick="cardBeen()">✔ 다녀왔어요</button>'}<button onclick="cardOpen()">자세히 ▲</button></div>`;
-    }
-    $('card').innerHTML = h;
-  }
-  const bar = $('cBar');
-  if (bar) { bar.style.width = Math.round(st.fill * 100) + '%'; $('cPct').textContent = st.lock ? '🔒 직접 골라요' : `${Math.round(st.fill * 100)}% · 반 넘으면 자동`; }
+  const st = cardState(c), sig = [PEEK.key, st.been, st.wish, !!c.remote].join('|');
+  if (sig === CARD_SIG) return;
+  CARD_SIG = sig;
+  let h = `<div class="ct"><span class="ci">${st.icon}</span><b>${esc(st.name)}</b></div>`;
+  if (c.remote) { const d = Math.hypot(st.x - P.x, st.y - P.y); h += `<div class="cd">📍 여기서 ${d < 1 ? Math.round(d * 1000) + 'm' : d.toFixed(1) + 'km'}</div>`; }
+  // 가고 싶어요·다녀왔어요 둘 다 손으로. 누른 걸 다시 누르면 해제
+  h += `<div class="cbtns"><button class="wi${st.wish ? ' on' : ''}" onclick="cardSet('wish')">💭 가고 싶어요</button><button class="ok${st.been ? ' on' : ''}" onclick="cardSet('been')">✔ 다녀왔어요</button><button class="dt" onclick="cardOpen()">자세히 ▲</button></div>`;
+  $('card').innerHTML = h;
 }
-window.cardBeen = () => {
+window.cardSet = st => {
   const c = PEEK && PEEK.card; if (!c) return;
-  if (c.type === 'spot') { c.prevWish = !!S.wish[c.s.key]; S.lock[c.s.key] = 1; markBeen(c.s.key, false); burst(c.s.x, c.s.y, 16, ['#ffd84d', '#fff']); }
-  else { c.prev = c.rt.f.status; setFlagSt(c.rt.f.id, 'been'); }
-  SFX.stamp(); vib(20); CARD_SIG = ''; renderCard();
-};
-window.cardUndo = () => {
-  const c = PEEK && PEEK.card; if (!c) return;
-  if (c.type === 'spot') { const k = c.s.key; delete S.seen[k]; if (c.prevWish) S.wish[k] = Date.now(); S.lock[k] = 1; save(); }
-  else setFlagSt(c.rt.f.id, c.prev && c.prev !== 'been' ? c.prev : 'want');
-  toast('↩ 되돌렸어요'); CARD_SIG = ''; renderCard();
-};
-window.cardWish = () => {
-  const c = PEEK && PEEK.card; if (!c || c.type !== 'spot') return;
-  const k = c.s.key; if (S.wish[k]) delete S.wish[k]; else { S.wish[k] = Date.now(); SFX.pop(); burst(c.s.x, c.s.y, 10, ['#e05a8a', '#fff']); }
-  save(); CARD_SIG = ''; renderCard();
+  const x = c.type === 'spot' ? c.s.x : c.rt.x, y = c.type === 'spot' ? c.s.y : c.rt.y;
+  if (c.type === 'spot') {
+    const k = c.s.key;
+    if (st === 'been') { if (S.seen[k]) delete S.seen[k]; else markBeen(k, false); }
+    else { if (S.wish[k]) delete S.wish[k]; else { S.wish[k] = Date.now(); delete S.seen[k]; } }
+    save(); if (P.sheetFor === 'spot:' + k) sheetSpot(c.s);
+  } else {
+    const f = c.rt.f; setFlagSt(f.id, f.status === st ? (st === 'been' ? 'want' : '') : st);
+  }
+  const on = c.type === 'spot' ? (st === 'been' ? S.seen[c.s.key] : S.wish[c.s.key]) : c.rt.f.status === st;
+  if (on) { burst(x, y, 16, st === 'been' ? ['#ffd84d', '#fff', '#ff8a5c'] : ['#e05a8a', '#fff', '#ffc2d6']); st === 'been' ? SFX.stamp() : SFX.pop(); vib(15); }
+  CARD_SIG = ''; renderCard();
 };
 window.cardOpen = () => { if (PEEK) PEEK.open(); $('peek').hidden = true; P.remote = null; };
 $('peekBtn').onclick = () => { if (PEEK) PEEK.open(); $('peek').hidden = true; };
@@ -625,14 +612,10 @@ function step(dt) {
     P.onSpotT = spotT ? spotT.key : null;
     const city = nearest(CITY, NEAR.city * (far() ? 1.3 : 1));
     const fl = flagStep(hitR);
-    if (spot && P.onSpot !== spot.key) { spot.hit = performance.now(); SFX.pop(); burst(spot.x, spot.y, 8, ['#fff', '#ffd84d'], 40); vib(10); }   // 닿는 순간 통통
-    if (spot && !S.lock[spot.key] && P.sheetFor !== 'spot:' + spot.key) {   // 올라가 있으면 차오름(창 읽는 중엔 멈춤) → 반 넘으면 한 번만 자동 '다녀왔어요'
-      const f0 = S.fill[spot.key] || 0, f1 = Math.min(1, f0 + dt / FILL_T);
-      if (f1 !== f0) { S.fill[spot.key] = f1; if (f0 < .5 && f1 >= .5) { S.lock[spot.key] = 1; if (!S.seen[spot.key]) markBeen(spot.key, true); } }
-    }
+    if (spot && P.onSpot !== spot.key) { spot.hit = performance.now(); SFX.chime(); burst(spot.x, spot.y, 14, ['#fff', '#ffd84d', '#9fd8ff'], 50); vib(12); }   // 닿는 순간 뾰로롱
     P.onSpot = spot ? spot.key : null;
     // 명소·깃발은 도착 카드, 도시는 제목만 살짝(눌러야 자세히), 공항은 예전처럼 창
-    if (!still && P.remote) P.remote = null;
+    if (P.remote && (!still || !P.remoteAt || Math.hypot(P.x - P.remoteAt.x, P.y - P.remoteAt.y) > .05)) P.remote = null;   // 움직이거나 자리가 바뀌면 멀리서 연 카드 닫힘
     if (P.sheetKind === 'flagform') { /* 깃발 적는 중 */ }
     else if (P.remote && still) { /* 멀리서 누른 핀 카드: 움직이기 전까지 유지 */ }
     else if (spot) peek('spot:' + spot.key, '', () => sheetSpot(spot), { type: 'spot', s: spot });
@@ -876,16 +859,14 @@ function spotMarks(g, cam, cx, cy, span, small) {
     // 올라가 있는 동안 깜빡이는 빛(다녀온 곳이어도)
     if (P.onSpot === s.key) { const k = (Math.sin(performance.now() / 140) + 1) / 2; g.fillStyle = `rgba(255,216,77,${.25 + .45 * k})`; g.beginPath(); g.arc(sx, sy, r + 6 + 4 * k, 0, 6.29); g.fill(); }
     // 명소 = 지도 핀: 끝이 실제 위치, 머리(원)가 위. 머리가 아래부터 금색으로 차오름(채움)
-    const fl = S.fill[s.key] || 0, wish = S.wish[s.key], tipY = sy; sy = sy - r * 1.55;
+    const wish = S.wish[s.key], tipY = sy; sy = sy - r * 1.55;
     g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(sx, tipY + 1, r * .45, r * .18, 0, 0, 6.29); g.fill();
     g.fillStyle = seen ? '#a8790f' : wish ? '#e05a8a' : '#6b6876';
     g.beginPath(); g.moveTo(sx - r * .55, sy + r * .7); g.lineTo(sx, tipY); g.lineTo(sx + r * .55, sy + r * .7); g.closePath(); g.fill();
     g.fillStyle = '#ffffff'; g.beginPath(); g.arc(sx, sy, r, 0, 6.29); g.fill();
-    if (fl > 0) { g.save(); g.beginPath(); g.arc(sx, sy, r, 0, 6.29); g.clip(); const gg = g.createLinearGradient(0, sy + r, 0, sy - r); gg.addColorStop(0, '#f2b134'); gg.addColorStop(1, '#ffe79a'); g.fillStyle = gg;
-      const wv = Math.sin(performance.now() / 250 + s.x) * (fl < 1 ? 1.5 : 0); g.fillRect(sx - r, sy + r - 2 * r * fl + wv, 2 * r, 2 * r * fl + 2); g.restore(); }
+    if (seen) { g.fillStyle = '#ffe79a'; g.beginPath(); g.arc(sx, sy, r, 0, 6.29); g.fill(); }
     g.strokeStyle = seen ? '#a8790f' : wish ? '#e05a8a' : '#6b6876'; g.lineWidth = seen || wish ? 2.6 : 1.6;
     g.beginPath(); g.arc(sx, sy, r, 0, 6.29); g.stroke();
-    if (fl > 0 && fl < .5 && !seen) { g.strokeStyle = 'rgba(232,89,79,.6)'; g.lineWidth = 1; g.beginPath(); g.moveTo(sx - r * .87, sy); g.lineTo(sx + r * .87, sy); g.stroke(); }   // 반 선
     g.font = `${small ? 10 : 13}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ICON[s.t] || '📍', sx, sy + 1);
     if (seen || wish) { const bx = sx + r * .78, by = sy - r * .78, br = small ? 4.5 : 6.5; g.fillStyle = seen ? '#e8594f' : '#e05a8a'; g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.beginPath(); g.arc(bx, by, br, 0, 6.29); g.fill(); g.stroke(); g.fillStyle = '#fff'; g.font = `bold ${small ? 6 : 8}px sans-serif`; g.fillText(seen ? '✔' : '♥', bx, by + .5); }
     if (span < 110 && free(sx, sy - r - 9, s.ko.length * 12, 14)) text(g, s.ko, sx, sy - r - 9, small ? 10 : 12, '#2c2b35');
@@ -1015,25 +996,19 @@ function drawMe(g, cam, cx, cy, t, s) {
   else drawParty(g, cam, cx, cy, t);
 }
 // 명소·깃발 위에 서 있으면 머리 위에 큰 아이콘이 떠서 차오르는 게 보임(사람에 가려지지 않게)
+// 명소·깃발 위에 서 있으면 머리 위에 동그란 아이콘 + 아래 이름(테두리 = 상태: 다녀옴 금색·가고 싶어요 분홍)
 function overhead(g, cx, cy, t) {
   if (S.mode !== 'walk') return;
-  let ic, fl, been, col;
   const s = P.onSpot && SPOT.find(x => x.key === P.onSpot), rt = !s && PEEK && PEEK.key.startsWith('flag:') && FLAGS.find(r => 'flag:' + r.f.id === PEEK.key);
-  let lock = false;
-  if (s) { ic = ICON[s.t] || '📍'; fl = S.fill[s.key] || 0; been = !!S.seen[s.key]; col = '#f2b134'; lock = !!S.lock[s.key]; }
-  else if (rt) { ic = CATS[rt.f.cat][0]; been = rt.f.status === 'been'; fl = been ? 1 : rt.f.fill || 0; col = CATS[rt.f.cat][2]; lock = !!rt.f.lock; }
-  else return;
+  if (!s && !rt) return;
+  const ic = s ? ICON[s.t] || '📍' : CATS[rt.f.cat][0], name = s ? s.ko : rt.f.name;
+  const been = s ? !!S.seen[s.key] : rt.f.status === 'been', wish = s ? !!S.wish[s.key] : rt.f.status === 'want';
   const x = cx + (P.x - CAM.x) * CAM.z, y = cy + (P.y - CAM.y) * CAM.z - 58 + Math.sin(t * 3) * 2, r = 19;
   g.fillStyle = 'rgba(0,0,0,.15)'; g.beginPath(); g.arc(x + 2, y + 3, r, 0, 6.29); g.fill();
-  g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.fill();
-  g.save(); g.beginPath(); g.arc(x, y, r, 0, 6.29); g.clip();
-  const gg = g.createLinearGradient(0, y + r, 0, y - r); gg.addColorStop(0, col); gg.addColorStop(1, '#ffe79a'); g.fillStyle = gg;
-  g.fillRect(x - r, y + r - 2 * r * fl + (fl < 1 ? Math.sin(t * 6) * 1.5 : 0), 2 * r, 2 * r * fl + 2); g.restore();
-  if (!been) { g.strokeStyle = 'rgba(232,89,79,.7)'; g.lineWidth = 1.5; g.setLineDash([3, 2]); g.beginPath(); g.moveTo(x - r * .9, y); g.lineTo(x + r * .9, y); g.stroke(); g.setLineDash([]); }
-  g.strokeStyle = been ? '#a8790f' : '#2c2b35'; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.stroke();
+  g.fillStyle = been ? '#fff3c4' : '#fff'; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.fill();
+  g.strokeStyle = been ? '#a8790f' : wish ? '#e05a8a' : '#2c2b35'; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.stroke();
   g.font = '20px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ic, x, y + 1);
-  const paused = !lock && !been && P.sheetFor && (P.sheetFor === 'spot:' + (s && s.key) || (rt && P.sheetFor === 'flag:' + rt.f.id));
-  text(g, been ? '✔ 다녀왔어요' : lock ? '🔒 직접 골라요' : paused ? '⏸ ' + Math.round(fl * 100) + '%' : Math.round(fl * 100) + '%', x, y + r + 10, 12, been ? '#a8790f' : '#2c2b35');
+  text(g, name.length > 14 ? name.slice(0, 13) + '…' : name, x, y + r + 11, 13, '#2c2b35');
 }
 let CY = .55;
 function draw(t) {
@@ -1118,7 +1093,8 @@ const SFX = {
   coin() { tone(988, 0, .09, 'square', .06); tone(1319, .07, .22, 'square', .06); },                       // 짤랑
   stamp() { tone(523, 0, .1, 'triangle'); tone(659, .08, .1, 'triangle'); tone(784, .16, .25, 'triangle'); },
   plant() { tone(180, 0, .18, 'sine', .22, .5); [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, .14 + i * .07, .22, 'triangle', .1)); tone(1568, .55, .5, 'sine', .07); },
-  pop() { tone(660, 0, .08, 'sine', .1, 1.6); }
+  pop() { tone(660, 0, .08, 'sine', .1, 1.6); },
+  chime() { [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, i * .055, .28, 'sine', .07)); }   // 뾰로롱
 };
 
 /* ---------- 연출: 반짝이·충격파·화면 위 동전 ---------- */
@@ -1226,7 +1202,7 @@ function sheetFlag(rt) {
   const f = rt.f, c = CATS[f.cat];
   const head = `<h2>${c[0]} ${esc(f.name)}</h2><button class="cbtn" onclick="editFlag('${f.id}')">✏️ 고치기</button>`;
   let h = `<div class="sub">🚩 내 깃발 · ${c[1]}${f.star ? ' · ' + '★'.repeat(f.star) : ''}</div>`;
-  h += stSeg(f.status, `setFlagSt.bind(null,'${f.id}')`) + fillBar(f.fill || 0, f.status === 'been', f.lock);
+  h += stSeg(f.status, `setFlagSt.bind(null,'${f.id}')`);
   if (f.memo) h += `<div class="intro">${esc(f.memo)}</div>`;
   if (f.link) h += `<div class="sub"><a href="${esc(/^https?:\/\//.test(f.link) ? f.link : 'https://' + f.link)}" target="_blank" rel="noopener">🔗 링크 열기</a></div>`;
   h += `<a class="nav" href="https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lon}" target="_blank" rel="noopener">🧭 구글 지도에서 길 찾기</a>`;
@@ -1254,13 +1230,6 @@ function flagStep(hitR) {
     const sx = W / 2 + (near.x - CAM.x) * CAM.z, sy = H * CY + (near.y - CAM.y) * CAM.z;
     burst(near.x, near.y, 18, ['#ffd84d', '#fff3a0', CATS[near.f.cat][2]], 60); coinsTo(sx, sy, 3); addPts(1); SFX.coin(); vib(20);
   }
-  if (near && near.f.status !== 'been' && !near.f.lock && P.sheetFor !== 'flag:' + near.f.id) {
-    const f = near.f, f0 = f.fill || 0, f1 = Math.min(1, f0 + LASTDT / FILL_T);
-    f.fill = f1;
-    if (f0 < .5 && f1 >= .5) { f.lock = 1; f.status = 'been'; f.updated = Date.now(); burst(near.x, near.y, 22, ['#ffd84d', '#fff', CATS[f.cat][2]]); shock(near.x, near.y, CATS[f.cat][2]); SFX.stamp(); vib([15, 30, 15]);
-      if (!f.paid) { f.paid = 1; addPts(3); coinsTo(W / 2 + (near.x - CAM.x) * CAM.z, H * CY + (near.y - CAM.y) * CAM.z, 3); }
-      toast(`✔ ${f.name} — 다녀왔어요!`); save(); if (P.sheetFor === 'flag:' + f.id) sheetFlag(near); }
-  }
   return near;
 }
 function flagMarks(g, cam, cx, cy, span, small) {
@@ -1284,7 +1253,7 @@ function flagMarks(g, cam, cx, cy, span, small) {
     g.beginPath(); g.moveTo(0, -30); g.quadraticCurveTo(10, -30 + wave, 20, -26 + wave); g.lineTo(20, -14 + wave); g.quadraticCurveTo(10, -18 + wave, 0, -16); g.closePath(); g.fill(); g.stroke();
     g.font = '11px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(c[0], 10, -22 + wave);
     if (r.f.status === 'been') { g.fillStyle = '#ffd84d'; g.beginPath(); g.arc(0, -31, 3, 0, 6.29); g.fill(); }
-    else if (r.f.fill > 0) { g.strokeStyle = '#f2b134'; g.lineWidth = 3; g.beginPath(); g.arc(0, 0, 8, -Math.PI / 2, -Math.PI / 2 + r.f.fill * 2 * 6.283); g.stroke(); }
+
     g.restore();
     if (!small && span < 60 && free(sx + 10 * k, sy + 10, r.f.name.length * 12, 14)) text(g, r.f.name, sx + 10 * k, sy + 10, 12, '#2c2b35');
     LBL.push([sx + 8, sy - 18, 26, 34]);
@@ -1540,7 +1509,7 @@ function tapMap(x, y) {
     if (d < bd) { bd = d; best = { type: 'flag', rt: r, key: 'flag:' + r.f.id }; }
   }
   if (!best) return;
-  joy = null; P.remote = best.key; SFX.pop();
+  joy = null; P.remote = best.key; P.remoteAt = { x: P.x, y: P.y }; SFX.chime();
   if (best.type === 'spot') { best.s.hit = performance.now(); peek(best.key, '', () => sheetSpot(best.s), { type: 'spot', s: best.s, remote: true }); }
   else peek(best.key, '', () => sheetFlag(best.rt), { type: 'flag', rt: best.rt, remote: true });
 }
@@ -1561,8 +1530,8 @@ function renderMedals() {
         const g2 = c.spots.filter(x => S.seen[x.key]).length;
         h += `<div class="mc">🏙️ ${c.ko} <small>${g2}/${c.spots.length}</small>${g2 === c.spots.length ? ' 🏆' : ''}</div>`;
         const rank = x => S.seen[x.key] ? 2 : S.wish[x.key] ? 1 : 0;
-        h += c.spots.slice().sort((a, b) => rank(b) - rank(a)).map(x => { const t = S.seen[x.key], w = S.wish[x.key], f = Math.round((S.fill[x.key] || 0) * 100);
-          return `<div class="mr ${t ? 'ok' : w ? '' : 'no'}" data-spot="${x.key}"><span class="ic">${t ? '✔' : w ? '💭' : ICON[x.t] || '📍'}</span><b>${x.ko}</b><i>${t ? '다녀옴 ' + dstr(t) : w ? '가고 싶어요' + (f ? ' · ' + f + '%' : '') : f ? f + '%' : x.ferry ? '⛴️ 페리' : '아직'}</i>${t ? '' : `<button class="hb${w ? ' on' : ''}" data-wish="${x.key}" aria-label="가고 싶어요">♥</button>`}</div>`; }).join('');
+        h += c.spots.slice().sort((a, b) => rank(b) - rank(a)).map(x => { const t = S.seen[x.key], w = S.wish[x.key];
+          return `<div class="mr ${t ? 'ok' : w ? '' : 'no'}" data-spot="${x.key}"><span class="ic">${t ? '✔' : w ? '💭' : ICON[x.t] || '📍'}</span><b>${x.ko}</b><i>${t ? '다녀옴 ' + dstr(t) : w ? '가고 싶어요' : x.ferry ? '⛴️ 페리' : '아직'}</i>${t ? '' : `<button class="hb${w ? ' on' : ''}" data-wish="${x.key}" aria-label="가고 싶어요">♥</button>`}</div>`; }).join('');
       }
     }
   } else if (MTAB === 'air') {
@@ -1589,12 +1558,12 @@ function renderMedals() {
 $('mResetTab').onclick = () => {
   const nm = { spot: '명소 기록(다녀왔어요·가고 싶어요)', air: '공항 착륙 기록', flag: '내 깃발' }[MTAB];
   if (!confirm(`${nm}을(를) 모두 지울까요? 되돌릴 수 없어요. (포인트는 그대로)`)) return;
-  if (MTAB === 'spot') { S.seen = {}; S.wish = {}; S.fill = {}; S.lock = {}; } else if (MTAB === 'air') S.stamps = {}; else { S.flags = []; FLAGS.length = 0; }
+  if (MTAB === 'spot') { S.seen = {}; S.wish = {}; S.lock = {}; } else if (MTAB === 'air') S.stamps = {}; else { S.flags = []; FLAGS.length = 0; }
   save(); closeSheet(); renderMedals(); toast(`${nm}을(를) 지웠어요`);
 };
 $('mResetAll').onclick = () => {
   if (!confirm('명소 기록, 공항 착륙, 내 깃발, 포인트를 모두 처음으로 돌릴까요? 되돌릴 수 없어요.\n(가족 설정·지금 위치는 그대로)')) return;
-  S.seen = {}; S.wish = {}; S.fill = {}; S.paid = {}; S.lock = {}; S.stamps = {}; S.flags = []; FLAGS.length = 0; S.pts = 0; $('ptsN').textContent = 0;
+  S.seen = {}; S.wish = {}; S.paid = {}; S.lock = {}; S.stamps = {}; S.flags = []; FLAGS.length = 0; S.pts = 0; $('ptsN').textContent = 0;
   save(); closeSheet(); renderMedals(); toast('기록을 모두 처음으로 돌렸어요');
 };
 $('pts').onclick = () => { MTAB = 'spot'; renderMedals(); $('medals').hidden = false; };

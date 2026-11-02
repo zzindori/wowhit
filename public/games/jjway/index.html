@@ -1265,20 +1265,23 @@ function flagMarks(g, cam, cx, cy, span, small) {
     const age = (now - r.born) / 1000; let dy = 0, sc = 1;
     if (age < .45) dy = -260 * (1 - age / .45) ** 2; else if (age < .9) { const q = (age - .45) / .45; sc = 1 + Math.sin(q * Math.PI * 2) * .25 * (1 - q); }
     const glow = now - r.last < 600 ? 1 - (now - r.last) / 600 : 0;
+    // 명소와 같은 동그란 핀 — 꼬리만 깃발 종류 색(내가 찍은 마커 구별)
+    const st = r.f.status, been = st === 'been', wish = st === 'want', R = small ? 9 : 12, hy = -R * 1.55;
+    const edge = been ? '#a8790f' : wish ? '#e05a8a' : '#6b6876';
     g.save(); g.translate(sx, sy + dy); g.scale(k * sc, k * sc);
-    g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(0, 1, 7, 2.6, 0, 0, 6.29); g.fill();
-    if (glow) { g.fillStyle = `rgba(255,216,77,${glow * .6})`; g.beginPath(); g.arc(0, -16, 22, 0, 6.29); g.fill(); }
-    if (PEEK && PEEK.key === 'flag:' + r.f.id && !small) { const q = (Math.sin(now / 140) + 1) / 2; g.fillStyle = `rgba(255,216,77,${.25 + .45 * q})`; g.beginPath(); g.arc(0, -16, 20 + 5 * q, 0, 6.29); g.fill(); }
-    g.strokeStyle = '#4a3b2a'; g.lineWidth = 2.2; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -30); g.stroke();
-    const wave = Math.sin(now / 260 + r.x) * 2;
-    g.fillStyle = c[2]; g.strokeStyle = '#2c2b35'; g.lineWidth = 1.4;
-    g.beginPath(); g.moveTo(0, -30); g.quadraticCurveTo(10, -30 + wave, 20, -26 + wave); g.lineTo(20, -14 + wave); g.quadraticCurveTo(10, -18 + wave, 0, -16); g.closePath(); g.fill(); g.stroke();
-    g.font = '11px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(c[0], 10, -22 + wave);
-    if (r.f.status === 'been') { g.fillStyle = '#ffd84d'; g.beginPath(); g.arc(0, -31, 3, 0, 6.29); g.fill(); }
-
+    g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(0, 1, R * .45, R * .18, 0, 0, 6.29); g.fill();
+    if (glow) { g.fillStyle = `rgba(255,216,77,${glow * .6})`; g.beginPath(); g.arc(0, hy, R + 10, 0, 6.29); g.fill(); }
+    if (PEEK && PEEK.key === 'flag:' + r.f.id && !small) { const q = (Math.sin(now / 140) + 1) / 2; g.fillStyle = `rgba(255,216,77,${.25 + .45 * q})`; g.beginPath(); g.arc(0, hy, R + 6 + 4 * q, 0, 6.29); g.fill(); }
+    g.fillStyle = c[2]; g.strokeStyle = '#fff'; g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(-R * .55, hy + R * .7); g.lineTo(0, 0); g.lineTo(R * .55, hy + R * .7); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = been ? '#ffe79a' : '#fff'; g.beginPath(); g.arc(0, hy, R, 0, 6.29); g.fill();
+    g.strokeStyle = edge; g.lineWidth = been || wish ? 2.6 : 1.6; g.beginPath(); g.arc(0, hy, R, 0, 6.29); g.stroke();
+    g.font = `${small ? 10 : 13}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(c[0], 0, hy + 1);
+    if (been || wish) { const bx = R * .78, by = hy - R * .78, br = small ? 4.5 : 6.5; g.fillStyle = been ? '#e8594f' : '#e05a8a'; g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.beginPath(); g.arc(bx, by, br, 0, 6.29); g.fill(); g.stroke(); g.fillStyle = '#fff'; g.font = `bold ${small ? 6 : 8}px sans-serif`; g.fillText(been ? '✔' : '♥', bx, by + .5); }
     g.restore();
-    if (!small && span < 60 && free(sx + 10 * k, sy + 10, r.f.name.length * 12, 14)) text(g, r.f.name, sx + 10 * k, sy + 10, 12, '#2c2b35');
-    LBL.push([sx + 8, sy - 18, 26, 34]);
+    const ty = sy + dy + (hy - R - 9) * k * sc;
+    if (!small && span < 110 && free(sx, ty, r.f.name.length * 12, 14)) text(g, r.f.name, sx, ty, small ? 10 : 12, '#2c2b35');
+    LBL.push([sx, sy + hy * k, R * 2 * k, R * 2 * k]);
   }
 }
 $('bFlag').onclick = () => { if (S.mode === 'walk') openFind(); };
@@ -1527,7 +1530,7 @@ function tapMap(x, y) {
     if (d < bd) { bd = d; best = { type: 'spot', s, key: 'spot:' + s.key }; }
   }
   for (const r of FLAGS) {
-    const sx = cx + (r.x - CAM.x) * CAM.z + 10, sy = cy + (r.y - CAM.y) * CAM.z - 22, d = Math.hypot(sx - x, sy - y);
+    const fk = span > CARV ? .75 : 1, sx = cx + (r.x - CAM.x) * CAM.z, sy = cy + (r.y - CAM.y) * CAM.z - 12 * 1.55 * fk, d = Math.hypot(sx - x, sy - y);
     if (d < bd) { bd = d; best = { type: 'flag', rt: r, key: 'flag:' + r.f.id }; }
   }
   if (!best) return;

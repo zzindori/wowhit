@@ -110,7 +110,7 @@ button,input,select{font-family:inherit;color:inherit}
 #peek:has(#card:not([hidden])){max-width:none}
 #card{background:var(--card);border:2px solid var(--ink);border-radius:16px;box-shadow:0 4px 0 rgba(44,43,53,.3);padding:10px 12px;width:min(92vw,380px);font-family:system-ui,sans-serif}
 .ct{display:flex;align-items:center;gap:7px}.ct .ci{font-size:22px}.ct b{font:400 18px Jua,sans-serif;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cchip{flex:none;font:12px Jua,sans-serif;border-radius:999px;padding:2px 8px;white-space:nowrap}.cchip.ok{background:#fff3c4;color:#8a6a1d;border:1px solid #e2c25a}.cchip.wi{background:#ffe6ef;color:#b3305f;border:1px solid #f3b6cb}
+.cchip{flex:none;font:12px Jua,sans-serif;border-radius:999px;padding:2px 8px;white-space:nowrap}.cchip.ok{background:#fff3c4;color:#8a6a1d;border:1px solid #e2c25a}.cchip{color:#8a8794;border:1px solid #d8d3c8}.cchip.wi{background:#ffe6ef;color:#b3305f;border:1px solid #f3b6cb}
 .cb{display:flex;align-items:center;gap:8px;margin:7px 0 2px}.cb .bar{position:relative;flex:1;height:10px}.cb .bar u{position:absolute;left:50%;top:-2px;bottom:-2px;border-left:2px solid #e8594f}.cb small{font-size:12px;color:#6b6876;white-space:nowrap}
 .cd{font-size:13px;color:#6b6876;margin:4px 0 0}
 .cbtns{display:flex;gap:8px;margin-top:8px}.cbtns button{flex:1;height:40px;border-radius:12px;border:2px solid var(--ink);background:#fff;font:16px Jua,sans-serif;cursor:pointer;box-shadow:0 2px 0 rgba(44,43,53,.25)}
@@ -559,8 +559,10 @@ function renderCard() {
   CARD_SIG = sig;
   let h = `<div class="ct"><span class="ci">${st.icon}</span><b>${esc(st.name)}</b></div>`;
   if (c.remote) { const d = Math.hypot(st.x - P.x, st.y - P.y); h += `<div class="cd">📍 여기서 ${d < 1 ? Math.round(d * 1000) + 'm' : d.toFixed(1) + 'km'}</div>`; }
-  // 가고 싶어요·다녀왔어요 둘 다 손으로. 누른 걸 다시 누르면 해제
-  h += `<div class="cbtns"><button class="wi${st.wish ? ' on' : ''}" onclick="cardSet('wish')">💭 가고 싶어요</button><button class="ok${st.been ? ' on' : ''}" onclick="cardSet('been')">✔ 다녀왔어요</button><button class="dt" onclick="cardOpen()">자세히 ▲</button></div>`;
+  // 상태는 보여 주기만, 바꾸기는 상세에서(가고 싶어요는 올라가 있으면 자동)
+  const chip = st.been ? '<span class="cchip ok">✔ 다녀왔어요</span>' : st.wish ? '<span class="cchip wi">💭 가고 싶어요</span>' : '<span class="cchip">표시 없음</span>';
+  h = h.replace('</b></div>', `</b>${chip}</div>`);
+  h += `<div class="cbtns"><button class="dt" onclick="cardOpen()">자세히 · 바꾸기 ▲</button></div>`;
   $('card').innerHTML = h;
 }
 window.cardSet = st => {
@@ -578,7 +580,7 @@ window.cardSet = st => {
   if (on) { burst(x, y, 16, st === 'been' ? ['#ffd84d', '#fff', '#ff8a5c'] : ['#e05a8a', '#fff', '#ffc2d6']); st === 'been' ? SFX.stamp() : SFX.pop(); vib(15); }
   CARD_SIG = ''; renderCard();
 };
-window.cardOpen = () => { if (PEEK) PEEK.open(); $('peek').hidden = true; P.remote = null; };
+window.cardOpen = () => { if (PEEK) { const rem = PEEK.card && PEEK.card.remote; PEEK.open(); if (rem) P.pinned = true; } $('peek').hidden = true; P.remote = null; };   // 멀리서 연 상세는 움직이기 전까지 열림
 $('peekBtn').onclick = () => { if (PEEK) PEEK.open(); $('peek').hidden = true; };
 function autoSheet(key, open) {
   if (P.pinned) return;
@@ -612,7 +614,12 @@ function step(dt) {
     P.onSpotT = spotT ? spotT.key : null;
     const city = nearest(CITY, NEAR.city * (far() ? 1.3 : 1));
     const fl = flagStep(hitR);
-    if (spot && P.onSpot !== spot.key) { spot.hit = performance.now(); SFX.chime(); burst(spot.x, spot.y, 14, ['#fff', '#ffd84d', '#9fd8ff'], 50); vib(12); }   // 닿는 순간 뾰로롱
+    if (spot && P.onSpot !== spot.key) { spot.hit = performance.now(); P.ring = 0; SFX.pop(); vib(8); }   // 닿는 순간 통통
+    if (spot) {   // 올라가 있으면 머리 위 동그라미 테두리가 빙 둘러 차오름 → 꽉 차면 '가고 싶어요'(표시 없을 때만)
+      const k = spot.key, none = !S.seen[k] && !S.wish[k] && !S.paid['w:' + k];   // 자동은 처음 한 번만(손으로 '표시 없음'으로 되돌린 곳은 다시 안 채움)
+      P.ring = none ? Math.min(1, (P.ring || 0) + dt / RING_T) : 1;
+      if (none && P.ring >= 1) { S.wish[k] = Date.now(); wishFx(spot.x, spot.y, spot.ko); if (!S.paid['w:' + k]) { S.paid['w:' + k] = 1; addPts(2); } save(); CARD_SIG = ''; }
+    }
     P.onSpot = spot ? spot.key : null;
     // 명소·깃발은 도착 카드, 도시는 제목만 살짝(눌러야 자세히), 공항은 예전처럼 창
     if (P.remote && (!still || !P.remoteAt || Math.hypot(P.x - P.remoteAt.x, P.y - P.remoteAt.y) > .05)) P.remote = null;   // 움직이거나 자리가 바뀌면 멀리서 연 카드 닫힘
@@ -1007,6 +1014,9 @@ function overhead(g, cx, cy, t) {
   g.fillStyle = 'rgba(0,0,0,.15)'; g.beginPath(); g.arc(x + 2, y + 3, r, 0, 6.29); g.fill();
   g.fillStyle = been ? '#fff3c4' : '#fff'; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.fill();
   g.strokeStyle = been ? '#a8790f' : wish ? '#e05a8a' : '#2c2b35'; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.stroke();
+  // 비행기 착륙처럼 바깥 고리가 빙 둘러 차오름(표시 없을 때), 차면 분홍으로 꽉
+  const rg = been || wish ? 1 : P.ring || 0;
+  ring(g, x, y, r + 5, 4, rg, been ? '#f2b134' : '#e05a8a');
   g.font = '20px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ic, x, y + 1);
   text(g, name.length > 14 ? name.slice(0, 13) + '…' : name, x, y + r + 11, 13, '#2c2b35');
 }
@@ -1136,6 +1146,11 @@ function drawFX(g, cx, cy) {
   }
 }
 
+const RING_T = 1.3;   // 마커 위 고리가 다 차는 시간(초) → 가고 싶어요
+function wishFx(x, y, name) {   // 가고 싶어요 담김: 뾰로롱 + 분홍 반짝이 + 고리 퍼짐
+  SFX.chime(); vib([12, 30, 12]); burst(x, y, 20, ['#e05a8a', '#ffc2d6', '#fff']); shock(x, y, '#e05a8a');
+  toast(`💭 ${name} — 가고 싶어요에 담았어요`, 2000);
+}
 /* ---------- 🚩 내 깃발 ---------- */
 // 저장은 실제 위도·경도 + 고유 번호 + 공개 여부(지금은 늘 private). 나중에 서버(api.wowhit.org)로 공개 깃발을 붙일 수 있게.
 const CATS = { food: ['🍜', '맛집', '#e8594f'], shop: ['🛍️', '쇼핑', '#9b59b6'], stay: ['🏨', '숙박', '#2f6fd0'], cafe: ['☕', '카페', '#8d6e4c'], etc: ['📌', '기타', '#3fa66b'] };
@@ -1147,7 +1162,7 @@ const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 let FORM = null;   // 작성 중 {id?, lat, lon, cat, star, status}
 function openFlagForm(rt, pre) {
   const f = rt ? rt.f : null, here = pre || unproj(P.x, P.y);
-  FORM = f ? { id: f.id, lat: f.lat, lon: f.lon, cat: f.cat, star: f.star || 0, status: f.status || 'want' } : { lat: here.lat, lon: here.lon, cat: 'food', star: 0, status: 'want' };
+  FORM = f ? { id: f.id, lat: f.lat, lon: f.lon, cat: f.cat, star: f.star || 0, status: f.status || 'want' } : { lat: here.lat, lon: here.lon, cat: 'food', star: 0, status: '' };
   const fa = (() => { const p = proj(FORM.lon, FORM.lat); return admAt(p.x, p.y); })();
   const head = `<h2>🚩 ${f ? '깃발 고치기' : '여기에 깃발 꽂기'}</h2><button class="cbtn" onclick="cancelFlag()">취소</button>`;
   let h = `<div class="sub">${FORM.lat.toFixed(5)}, ${FORM.lon.toFixed(5)}${fa ? ' · ' + fa.ko : ''}</div>`;
@@ -1202,7 +1217,7 @@ function sheetFlag(rt) {
   const f = rt.f, c = CATS[f.cat];
   const head = `<h2>${c[0]} ${esc(f.name)}</h2><button class="cbtn" onclick="editFlag('${f.id}')">✏️ 고치기</button>`;
   let h = `<div class="sub">🚩 내 깃발 · ${c[1]}${f.star ? ' · ' + '★'.repeat(f.star) : ''}</div>`;
-  h += stSeg(f.status, `setFlagSt.bind(null,'${f.id}')`);
+  h += stSeg(f.status === 'want' ? 'wish' : f.status, `setFlagSt.bind(null,'${f.id}')`);
   if (f.memo) h += `<div class="intro">${esc(f.memo)}</div>`;
   if (f.link) h += `<div class="sub"><a href="${esc(/^https?:\/\//.test(f.link) ? f.link : 'https://' + f.link)}" target="_blank" rel="noopener">🔗 링크 열기</a></div>`;
   h += `<a class="nav" href="https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lon}" target="_blank" rel="noopener">🧭 구글 지도에서 길 찾기</a>`;
@@ -1210,7 +1225,8 @@ function sheetFlag(rt) {
   openSheet(head, h, 'flag:' + f.id, 'flag');
 }
 window.setFlagSt = (id, st) => {
-  const rt = FLAGS.find(r => r.f.id === id), f = rt.f; f.status = st; f.lock = 1; f.updated = Date.now();
+  const rt = FLAGS.find(r => r.f.id === id), f = rt.f, v = st === 'wish' ? 'want' : st;
+  f.status = f.status === v ? '' : v; st = f.status; f.updated = Date.now();   // 같은 걸 다시 누르면 표시 없음
   if (st === 'been' && !f.paid) { f.paid = 1; addPts(3); coinsTo(W / 2 + (rt.x - CAM.x) * CAM.z, H * CY + (rt.y - CAM.y) * CAM.z, 3); }
   SFX.pop(); save(); if (P.sheetFor === 'flag:' + id) sheetFlag(rt);
   CARD_SIG = '';
@@ -1226,9 +1242,15 @@ function flagStep(hitR) {
     if (d < nd) { nd = d; near = r; }
   }
   if (near && near.armed && performance.now() - near.born > 1500) {
-    near.armed = false; near.last = performance.now();
+    near.armed = false; near.last = performance.now(); P.ring = 0;
     const sx = W / 2 + (near.x - CAM.x) * CAM.z, sy = H * CY + (near.y - CAM.y) * CAM.z;
     burst(near.x, near.y, 18, ['#ffd84d', '#fff3a0', CATS[near.f.cat][2]], 60); coinsTo(sx, sy, 3); addPts(1); SFX.coin(); vib(20);
+  }
+  if ((near ? near.f.id : null) !== P.onFlag) { P.onFlag = near ? near.f.id : null; P.ring = 0; }
+  if (near && !P.onSpot) {
+    const f = near.f, none = !f.status && !f.autoW;
+    P.ring = none ? Math.min(1, (P.ring || 0) + LASTDT / RING_T) : 1;
+    if (none && P.ring >= 1) { f.status = 'want'; f.autoW = 1; f.updated = Date.now(); wishFx(near.x, near.y, f.name); save(); CARD_SIG = ''; }
   }
   return near;
 }

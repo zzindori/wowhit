@@ -94,16 +94,19 @@ def run(w, h, tag):
         at(pg, SPOTJ('리쓰린 공원'), 5); time.sleep(.3); pg.evaluate('S.span.walk = 2'); time.sleep(1.2)
         at(pg, SPOTJ('리쓰린 공원'), 'Math.max(.2, 60 / CAM.z)'); time.sleep(.3)
         assert not pg.evaluate('S.seen[SPOT.find(a=>a.ko==="리쓰린 공원").key]'), '아이콘 밖인데 반응'
-        # 아이콘에 닿으면 뾰로롱 + 도착 카드 [💭 가고 싶어요] [✔ 다녀왔어요] [자세히] — 자동으로는 안 바뀜
+        # 마커 위에 서면 머리 위 고리가 차오름 → 꽉 차면 자동 '가고 싶어요'(+2) → 다녀왔어요·해제는 상세에서 손으로
         k = 'SPOT.find(a=>a.ko==="리쓰린 공원").key'
-        at(pg, SPOTJ('리쓰린 공원')); time.sleep(4)
-        assert pg.is_visible('#card') and '리쓰린' in pg.inner_text('#card') and not pg.evaluate(f'S.seen[{k}]'), '서 있기만 했는데 바뀜/카드 없음'
-        p1 = pg.evaluate('S.pts||0')
-        pg.click('#card .cbtns button.ok'); time.sleep(.2); assert pg.evaluate(f'S.seen[{k}]') and pg.evaluate('S.pts') == p1 + 10, '다녀왔어요 버튼'
-        pg.click('#card .cbtns button.ok'); time.sleep(.2); assert not pg.evaluate(f'S.seen[{k}]'), '다시 누르면 해제'
-        pg.click('#card .cbtns button.wi'); time.sleep(.2); assert pg.evaluate(f'S.wish[{k}]')
-        pg.click('#card .cbtns button.ok'); time.sleep(.2); assert pg.evaluate(f'S.seen[{k}]') and not pg.evaluate(f'S.wish[{k}]') and pg.evaluate('S.pts') == p1 + 10, '포인트는 한 번만'
-        pg.click('#card .cbtns button.dt'); time.sleep(.2); assert '다녀왔어요' in pg.inner_text('#sheet'); pg.evaluate('xClose()')
+        at(pg, SPOTJ('리쓰린 공원')); time.sleep(.5)
+        assert pg.is_visible('#card') and '표시 없음' in pg.inner_text('#card') and 0 < pg.evaluate('P.ring') < 1, ('고리', pg.evaluate('P.ring'))
+        p0 = pg.evaluate('S.pts||0'); wait(pg, f'!!S.wish[{k}]', 3)
+        assert '가고 싶어요' in pg.inner_text('#card') and pg.evaluate('S.pts') == p0 + 2
+        pg.click('#card .cbtns button.dt'); time.sleep(.2)
+        pg.click('#sheet .seg.st button:nth-child(2)'); time.sleep(.2)
+        assert pg.evaluate(f'S.seen[{k}]') and not pg.evaluate(f'S.wish[{k}]') and pg.evaluate('S.pts') == p0 + 12, '상세에서 다녀왔어요'
+        pg.click('#sheet .seg.st button:nth-child(2)'); time.sleep(.2); assert not pg.evaluate(f'S.seen[{k}]'), '해제'
+        pg.evaluate('xClose()'); time.sleep(2.5)
+        assert not pg.evaluate(f'S.wish[{k}]') and not pg.evaluate(f'S.seen[{k}]'), '손으로 되돌린 곳이 다시 자동으로 바뀜'
+        pg.click('#card .cbtns button.dt'); time.sleep(.2); pg.click('#sheet .seg.st button:nth-child(2)'); pg.evaluate('xClose()')
         # 멀리서 핀 톡 → 카드 → 💭 가고 싶어요
         k3 = 'SPOT.find(a=>a.ko==="야시마지").key'
         at(pg, SPOTJ('야시마지'), 1); time.sleep(1)
@@ -111,7 +114,8 @@ def run(w, h, tag):
         if 0 < pos[0] < w and 60 < pos[1] < h - 60:
             pg.mouse.click(pos[0], pos[1]); time.sleep(.3)
             assert pg.is_visible('#card') and '야시마지' in pg.inner_text('#card') and '여기서' in pg.inner_text('#card'), '핀 톡 카드 없음'
-            pg.click('#card .cbtns button.wi'); assert pg.evaluate(f'S.wish[{k3}]'), '멀리서 가고 싶어요 안 됨'
+            pg.click('#card .cbtns button.dt'); time.sleep(.2); pg.click('#sheet .seg.st button:nth-child(1)'); assert pg.evaluate(f'S.wish[{k3}]'), '멀리서 가고 싶어요 안 됨'
+            pg.evaluate('xClose()')
         else: print(tag, '핀이 화면 밖이라 톡 건너뜀', pos)
         at(pg, CITYJ('takamatsu'), -4, 4); time.sleep(.5)
         assert '다카마쓰' in pg.inner_text('#peek'); pg.click('#peekBtn'); time.sleep(.2)
@@ -125,7 +129,7 @@ def run(w, h, tag):
         assert pg.evaluate('S.mode') == 'walk', '시내에서 저절로 탐'
         assert '마쓰야마' in pg.inner_text('#loc') and '🚗' in pg.inner_text('#loc')
         pg.evaluate('S.span.walk = 2'); time.sleep(1.2)
-        at(pg, SPOTJ('도고 온천')); time.sleep(.6); pg.click('#card .cbtns button.ok'); time.sleep(.2); assert pg.evaluate('S.seen[SPOT.find(a=>a.ko==="도고 온천").key]')
+        at(pg, SPOTJ('도고 온천')); time.sleep(.6); pg.click('#card .cbtns button.dt'); time.sleep(.2); pg.click('#sheet .seg.st button:nth-child(2)'); time.sleep(.2); assert pg.evaluate('S.seen[SPOT.find(a=>a.ko==="도고 온천").key]')
         # 🚩 깃발: 확대 상태에서만 버튼 → 이름 없으면 막힘 → 꽂기(+5) → 지나가면 +1 → 고치기
         assert pg.is_visible('#bFlag')
         pts0 = pg.evaluate('S.pts || 0')

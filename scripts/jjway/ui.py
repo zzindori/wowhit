@@ -24,6 +24,10 @@ def wait(pg, js, sec=6):
         time.sleep(.08)
     raise AssertionError(f'시간 초과: {js} / mode={pg.evaluate("S.mode")} g={pg.evaluate("P.g")} loc={pg.inner_text("#loc")}')
 
+def swipe_down(pg):
+    bx = pg.locator('#sheet .grab').bounding_box(); x, y = bx['x'] + bx['width'] / 2, bx['y'] + 2
+    pg.mouse.move(x, y); pg.mouse.down(); pg.mouse.move(x, y + 50, steps=4); pg.mouse.move(x, y + 110, steps=4); pg.mouse.up(); time.sleep(.4)
+
 def hold(pg, key, sec):
     pg.keyboard.down(key); time.sleep(sec); pg.keyboard.up(key)
 
@@ -47,7 +51,9 @@ def run(w, h, tag):
         hold(pg, 'ArrowUp', .25); at(pg, 'CJJ', 3)
         assert pg.evaluate('P.g') < g1 and pg.evaluate('S.mode') == 'walk', '움직여도 안 줄어듦'
         wait(pg, 'S.mode === "ground"', 3)
-        assert '탑승 완료' in pg.inner_text('#sheet')
+        assert '탑승 취소' in pg.inner_text('#sheet')
+        swipe_down(pg); assert not pg.is_visible('#sheet') and pg.evaluate('S.mode') == 'ground'
+        pg.click('#pip'); time.sleep(.2); assert pg.is_visible('#sheet .cbtn'), '탑승 창 다시 안 열림'
         # 탑승 취소 → 걷기, 바로 다시 안 참 → 벗어났다 와서 다시 탑승
         pg.click('#sheet .cbtn'); wait(pg, 'S.mode === "walk"', 1)
         time.sleep(2); assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('P.g') == 0, '취소 뒤 바로 다시 탐'
@@ -83,12 +89,13 @@ def run(w, h, tag):
         wait(pg, 'S.mode === "ground"', 3); hold(pg, 'ArrowRight', .3); wait(pg, 'S.mode === "plane"', 4)
         at(pg, 'PUS', 120); time.sleep(.3); at(pg, 'PUS', 6)
         wait(pg, 'S.mode === "walk" && S.country === "KOR"', 5)
-        pg.click('#sheet .x'); time.sleep(.6); assert not pg.is_visible('#sheet'), '✕ 뒤 다시 열림'
+        swipe_down(pg); time.sleep(.4); assert not pg.is_visible('#sheet'), '쓸어내려도 안 닫힘 / 다시 열림'
+        pg.click('#pip'); time.sleep(.2); assert pg.is_visible('#sheet') and '김해' in pg.inner_text('#sheet'), '돋보기로 다시 안 열림'
         pg.click('#bSet'); time.sleep(.2); pg.click('#ints .int:nth-child(4) .sw'); pg.click('#setClose')
         assert pg.evaluate('S.ints[3].on') is True
         at(pg, 'PUS', 30); time.sleep(.2); at(pg, 'PUS'); wait(pg, 'S.mode === "ground"', 3); pg.evaluate('save()')
         pg.reload(); pg.wait_for_function('typeof AIR !== "undefined" && AIR.length > 0'); time.sleep(.4)
-        assert pg.evaluate('S.mode') == 'ground' and '탑승 완료' in pg.inner_text('#sheet') and not pg.is_visible('#setup')
+        assert pg.evaluate('S.mode') == 'ground' and '탑승 취소' in pg.inner_text('#sheet') and not pg.is_visible('#setup')
         hold(pg, 'ArrowLeft', .3); wait(pg, 'S.mode === "plane"', 4)
         at(pg, 'CJU', 5); wait(pg, 'S.mode === "walk" && Math.hypot(P.x-AIR.find(a=>a.code==="CJU").x, P.y-AIR.find(a=>a.code==="CJU").y) < 1', 6)
         print(tag, 'OK · 오류', len(errs), errs[:3])

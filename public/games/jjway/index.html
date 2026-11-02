@@ -24,8 +24,11 @@ button,input,select{font-family:inherit;color:inherit}
 .ib{width:42px;height:42px;border-radius:50%;border:2px solid var(--ink);background:var(--card);font-size:20px;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer;display:grid;place-items:center;padding:0}
 .ib:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 #pipWrap{position:fixed;right:calc(10px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));z-index:20;pointer-events:none;text-align:center}
-#pip{border-radius:50%;border:3px solid var(--ink);box-shadow:0 4px 0 rgba(44,43,53,.25),0 0 0 5px rgba(255,255,255,.7);background:var(--sea);display:block}
-.cbtn{display:block;width:100%;height:44px;margin:4px 0 8px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-family:Jua,sans-serif;font-size:17px;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer}
+#pip{pointer-events:auto;cursor:pointer;border-radius:50%;border:3px solid var(--ink);box-shadow:0 4px 0 rgba(44,43,53,.25),0 0 0 5px rgba(255,255,255,.7);background:var(--sea);display:block}
+.top{touch-action:none;cursor:grab;margin:-12px -14px 0;padding:8px 14px 2px}
+.grab{width:42px;height:5px;border-radius:3px;background:#d3cec3;margin:0 auto 8px}
+.hd{display:flex;align-items:center;gap:8px}.hd h2{flex:1;min-width:0}
+.cbtn{flex:none;height:32px;padding:0 12px;border-radius:999px;border:2px solid var(--ink);background:#fff;font-family:Jua,sans-serif;font-size:14px;box-shadow:0 2px 0 rgba(44,43,53,.25);cursor:pointer;white-space:nowrap}
 .cbtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 .hint{background:#fff7e0;border:1px solid #f0d98c;border-radius:10px;padding:7px 10px;font-size:13px;line-height:1.45;margin:4px 0 8px}
 #pipTxt{margin-top:6px;font-size:13px;background:rgba(255,253,247,.94);border:2px solid var(--ink);border-radius:10px;padding:3px 8px;max-width:190px;line-height:1.3}
@@ -237,16 +240,20 @@ function chips(list, k, j) {
   return list.map(c => { if (c === '국내선') return `<span class="al">국내선</span>`; const s = k && j ? seasonal(k, j, c) : ''; const ex = c === 'OZ' || s; return `<span class="al${ex ? ' ex' : ''}">${AL(c)}${s ? ' · ' + s : c === 'OZ' ? ' · 12/17 종료' : ''}</span>`; }).join('');
 }
 const NOTE = () => `<div class="note">노선: ${R.source}, ${R.checked} 확인. 예약 전 항공사에서 다시 확인하세요.</div>`;
-function openSheet(h, code, kind) { locT = 0; const sh = $('sheet'); sh.innerHTML = `<button class="x" onclick="xClose()" aria-label="닫기">✕</button>` + h; sh.hidden = false; sh.scrollTop = 0; P.sheetFor = code; P.sheetKind = kind; }
+function openSheet(head, body, code, kind) {
+  locT = 0; const sh = $('sheet');
+  sh.innerHTML = `<div class="top"><div class="grab"></div><div class="hd">${head}</div></div>` + body;
+  sh.hidden = false; sh.scrollTop = 0; sh.style.transform = ''; P.sheetFor = code; P.sheetKind = kind; P.closedFor = null;
+}
 function closeSheet() { $('sheet').hidden = true; P.sheetFor = null; P.sheetKind = null; }
-window.xClose = () => { P.closedFor = P.sheetFor; closeSheet(); };   // ✕: 그 공항을 벗어날 때까지 다시 안 염
+window.xClose = () => { const c = P.sheetFor; closeSheet(); P.closedFor = c; $('sheet').style.transform = ''; };   // ✕: 그 공항을 벗어날 때까지 다시 안 염
 const HINT = t => `<div class="hint">${t}</div>`;
 function sheetAirport(a, how) {
   const meta = R.kr[a.code] || R.jp[a.code], fly = canFly(a);
-  let h = a.c === 'KOR' ? `<h2>✈️ ${meta.ko}</h2><div class="sub">${meta.pref || a.pref} · ${a.code}</div>` : `<h2>🛬 ${meta.ko}</h2><div class="sub">${meta.ja} · ${a.pref} · ${a.code}</div>`;
+  const head = `<h2>${a.c === 'KOR' ? '✈️' : '🛬'} ${meta.ko}</h2>` + (how === 'land' && P.lastFrom ? `<button class="cbtn" onclick="cancelLanding()">↩ 착륙 취소</button>` : '');
+  let h = a.c === 'KOR' ? `<div class="sub">${meta.pref || a.pref} · ${a.code}</div>` : `<div class="sub">${meta.ja} · ${a.pref} · ${a.code}</div>`;
   if (meta.closed) h += `<div class="warn">⛔ ${meta.closed}</div>`;
   if (how === 'land') {
-    if (P.lastFrom) h += `<button class="cbtn" onclick="cancelLanding()">↩ 착륙 취소 · 다시 이륙</button>`;
     h += HINT('🚶 걸어서 둘러보세요 · 공항을 벗어나면 도착 확정' + (fly ? ' · 다시 와서 서 있으면 탑승 게이지가 차요' : ''));
   }
   else if (fly) h += HINT('⭕ 가만히 서 있으면 돋보기 테두리가 차올라요 · 꽉 차면 탑승 · 움직이면 취소');
@@ -265,16 +272,15 @@ function sheetAirport(a, how) {
     const on = S.ints.filter(i => i.on).map(i => INTERESTS.find(x => x[0] === i.k)[1]);
     h += `<div class="soon">🔦 ${on.join(' · ')} 정보는 다음 단계에서 이 자리에 채워져요 (유튜브 현지인·한국인 영상 정리).</div>`;
   }
-  openSheet(h + NOTE(), a.code, 'air');
+  openSheet(head, h + NOTE(), a.code, how === 'land' ? 'land' : 'air');
 }
 function sheetGround(a) {
   const d = destsFrom(a.code), dom = k => d[k][0] === '국내선' ? 1 : 0, ks = Object.keys(d).sort((x, y) => dom(x) - dom(y) || d[y].length - d[x].length);
-  let h = `<h2>🎫 탑승 완료 · ${cityName(a.code)}</h2>`;
-  h += `<button class="cbtn" onclick="cancelBoard()">✕ 탑승 취소</button>`;
-  h += HINT('🛫 화면을 끄는 방향으로 이륙해요(이륙하면 취소 없음) · 점선 끝 공항 위에 머무르면 착륙 게이지가 차요');
+  const head = `<h2>🎫 탑승 · ${cityName(a.code)}</h2><button class="cbtn" onclick="cancelBoard()">✕ 탑승 취소</button>`;
+  let h = HINT('🛫 화면을 끄는 방향으로 이륙해요(이륙하면 취소 없음) · 점선 끝 공항 위에 머무르면 착륙 게이지가 차요');
   h += `<div class="sub">갈 수 있는 곳 ${ks.length}곳</div>`;
   h += ks.map(k => { const m = R.kr[k] || R.jp[k]; return `<div class="rt"><b>${m.city}</b><div>${chips(d[k], a.code, k)}</div></div>`; }).join('');
-  openSheet(h + NOTE(), a.code, 'ground');
+  openSheet(head, h + NOTE(), a.code, 'ground');
 }
 
 /* ---------- 탑승·이륙·착륙 (게이지) ---------- */
@@ -345,7 +351,7 @@ function step(dt) {
     if (a && P.sheetFor !== a.code && P.closedFor !== a.code) sheetAirport(a);
     if (a && canFly(a) && P.quiet !== a.code) { if (gauge(dt, a, 'board', still)) board(a); }
     else gaugeOff();
-    if (!a && P.sheetKind === 'air') { const o = airport(P.sheetFor); if (o && Math.hypot(o.x - P.x, o.y - P.y) > NEAR.walk * 2.5) closeSheet(); }
+    if (!a && (P.sheetKind === 'air' || P.sheetKind === 'land')) { const o = airport(P.sheetFor); if (o && Math.hypot(o.x - P.x, o.y - P.y) > NEAR.walk * 2.5) closeSheet(); }
   } else if (mode === 'ground') {
     P.vx = P.vy = 0; P.alt = 0;
     if (Math.hypot(ix, iy) > .35) takeoff(Math.atan2(iy, ix));
@@ -652,6 +658,22 @@ $('bSet').onclick = () => { renderInts(); $('settings').hidden = false; };
 $('setClose').onclick = () => { $('settings').hidden = true; if (P.sheetFor) { const a = AIR.find(x => x.code === P.sheetFor); a && sheetAirport(a); } };
 $('resetBtn').onclick = () => { if (confirm('가족 설정·도장·위치를 모두 지우고 처음부터 할까요?')) { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); } };
 $('bHome').onclick = () => location.href = '/';
+// 창 위쪽(손잡이·제목 줄)을 아래로 쓸어내리면 닫힘. 버튼 누른 건 제외
+(() => {
+  const sh = $('sheet'); let d = null;
+  sh.addEventListener('pointerdown', e => { if (!e.target.closest('.top') || e.target.closest('button')) return; d = { id: e.pointerId, y: e.clientY, dy: 0 }; sh.setPointerCapture(e.pointerId); sh.style.transition = 'none'; });
+  sh.addEventListener('pointermove', e => { if (!d || e.pointerId !== d.id) return; d.dy = Math.max(0, e.clientY - d.y); sh.style.transform = `translateX(-50%) translateY(${d.dy}px)`; });
+  const end = e => { if (!d || e.pointerId !== d.id) return; const close = d.dy > 60; d = null; sh.style.transition = 'transform .18s'; if (close) { sh.style.transform = 'translateX(-50%) translateY(110%)'; setTimeout(xClose, 170); } else sh.style.transform = ''; };
+  sh.addEventListener('pointerup', end); sh.addEventListener('pointercancel', end);
+})();
+// 돋보기 누르면 지금 상황 창 다시 열기
+$('pip').addEventListener('click', () => {
+  if (S.mode === 'ground') return sheetGround(airport(S.from));
+  if (S.mode !== 'walk') return;
+  const a = nearestAirport(NEAR.walk, a => a.c === S.country);
+  if (a) sheetAirport(a, P.lastFrom && P.quiet === a.code ? 'land' : undefined);
+  else toast('공항 근처에서 누르면 공항 정보가 열려요');
+});
 // 위쪽 상태 칸 = 새로 읽기(캐시 피하려고 주소 뒤에 시각을 붙임, 지금 위치는 저장)
 $('loc').onclick = () => { S.pos = { x: P.x, y: P.y }; save(); location.replace(location.pathname + '?r=' + Date.now()); };
 

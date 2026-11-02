@@ -48,6 +48,10 @@ def run(w, h, tag):
         assert pg.evaluate('P.g') < g1 and pg.evaluate('S.mode') == 'walk', '움직여도 안 줄어듦'
         wait(pg, 'S.mode === "ground"', 3)
         assert '탑승 완료' in pg.inner_text('#sheet')
+        # 탑승 취소 → 걷기, 바로 다시 안 참 → 벗어났다 와서 다시 탑승
+        pg.click('#sheet .cbtn'); wait(pg, 'S.mode === "walk"', 1)
+        time.sleep(2); assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('P.g') == 0, '취소 뒤 바로 다시 탐'
+        at(pg, 'CJJ', 40); time.sleep(.2); at(pg, 'CJJ', 3); wait(pg, 'S.mode === "ground"', 3)
         time.sleep(1.5); assert pg.evaluate('S.mode') == 'ground', '가만히 있는데 이륙함'
         hold(pg, 'ArrowRight', .3); wait(pg, 'S.mode === "takeoff"', 1)
         wait(pg, 'S.mode === "plane"', 4)
@@ -62,7 +66,15 @@ def run(w, h, tag):
         wait(pg, 'S.mode === "landing"', 2); wait(pg, 'S.mode === "walk" && S.country === "JPN"', 4)
         assert 'KIX' in pg.evaluate('Object.keys(S.stamps)')
         time.sleep(2.2); assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('P.g') == 0, '내린 공항에서 바로 탐'
+        # 착륙 취소 → 다시 이륙(도장도 되돌림, 출발지 청주 그대로) → 간사이 다시 물어보지 않다가 멀어졌다 오면 착륙
+        assert '착륙 취소' in pg.inner_text('#sheet')
+        pg.click('#sheet .cbtn'); wait(pg, 'S.mode === "plane"', 4)
+        assert pg.evaluate('S.from') == 'CJJ' and 'KIX' not in pg.evaluate('Object.keys(S.stamps)')
+        time.sleep(.3); assert pg.evaluate('P.g') == 0, '취소한 공항 게이지가 바로 참'
+        at(pg, 'KIX', 150); time.sleep(.3); at(pg, 'KIX', 8); wait(pg, 'S.mode === "walk" && S.country === "JPN"', 6)
+        # 걸어서 벗어나면 착륙 취소 사라짐
         hold(pg, 'ArrowUp', .8)
+        assert not pg.evaluate('P.lastFrom'), '벗어났는데 착륙 취소 남음'
         assert pg.evaluate('Math.hypot(P.x - AIR.find(a=>a.code==="KIX").x, P.y - AIR.find(a=>a.code==="KIX").y)') > 30
         at(pg, 'KIX'); wait(pg, 'S.mode === "ground"', 3)
         hold(pg, 'ArrowLeft', .3); wait(pg, 'S.mode === "plane"', 4)

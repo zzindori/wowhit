@@ -25,6 +25,8 @@ button,input,select{font-family:inherit;color:inherit}
 .ib:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 #pipWrap{position:fixed;right:calc(10px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));z-index:20;pointer-events:none;text-align:center}
 #pip{border-radius:50%;border:3px solid var(--ink);box-shadow:0 4px 0 rgba(44,43,53,.25),0 0 0 5px rgba(255,255,255,.7);background:var(--sea);display:block}
+.cbtn{display:block;width:100%;height:44px;margin:4px 0 8px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-family:Jua,sans-serif;font-size:17px;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer}
+.cbtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 .hint{background:#fff7e0;border:1px solid #f0d98c;border-radius:10px;padding:7px 10px;font-size:13px;line-height:1.45;margin:4px 0 8px}
 #pipTxt{margin-top:6px;font-size:13px;background:rgba(255,253,247,.94);border:2px solid var(--ink);border-radius:10px;padding:3px 8px;max-width:190px;line-height:1.3}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,440px)}
@@ -243,7 +245,10 @@ function sheetAirport(a, how) {
   const meta = R.kr[a.code] || R.jp[a.code], fly = canFly(a);
   let h = a.c === 'KOR' ? `<h2>✈️ ${meta.ko}</h2><div class="sub">${meta.pref || a.pref} · ${a.code}</div>` : `<h2>🛬 ${meta.ko}</h2><div class="sub">${meta.ja} · ${a.pref} · ${a.code}</div>`;
   if (meta.closed) h += `<div class="warn">⛔ ${meta.closed}</div>`;
-  if (how === 'land') h += HINT(fly ? '🚶 걸어서 둘러보세요 · 공항을 벗어났다 다시 와서 서 있으면 탑승 게이지가 차요' : '🚶 걸어서 둘러보세요');
+  if (how === 'land') {
+    if (P.lastFrom) h += `<button class="cbtn" onclick="cancelLanding()">↩ 착륙 취소 · 다시 이륙</button>`;
+    h += HINT('🚶 걸어서 둘러보세요 · 공항을 벗어나면 도착 확정' + (fly ? ' · 다시 와서 서 있으면 탑승 게이지가 차요' : ''));
+  }
   else if (fly) h += HINT('⭕ 가만히 서 있으면 돋보기 테두리가 차올라요 · 꽉 차면 탑승 · 움직이면 취소');
   if (a.c === 'KOR') {
     const r = R.routes[a.code] || {}, ks = Object.keys(r).sort((x, y) => r[y].length - r[x].length);
@@ -265,7 +270,8 @@ function sheetAirport(a, how) {
 function sheetGround(a) {
   const d = destsFrom(a.code), dom = k => d[k][0] === '국내선' ? 1 : 0, ks = Object.keys(d).sort((x, y) => dom(x) - dom(y) || d[y].length - d[x].length);
   let h = `<h2>🎫 탑승 완료 · ${cityName(a.code)}</h2>`;
-  h += HINT('🛫 화면을 끄는 방향으로 이륙해요 · 점선 끝 공항 위에 머무르면 착륙 게이지가 차요 · 취소하려면 이 공항에 다시 내리면 돼요');
+  h += `<button class="cbtn" onclick="cancelBoard()">✕ 탑승 취소</button>`;
+  h += HINT('🛫 화면을 끄는 방향으로 이륙해요(이륙하면 취소 없음) · 점선 끝 공항 위에 머무르면 착륙 게이지가 차요');
   h += `<div class="sub">갈 수 있는 곳 ${ks.length}곳</div>`;
   h += ks.map(k => { const m = R.kr[k] || R.jp[k]; return `<div class="rt"><b>${m.city}</b><div>${chips(d[k], a.code, k)}</div></div>`; }).join('');
   openSheet(h + NOTE(), a.code, 'ground');
@@ -300,8 +306,22 @@ function arrive(a) {
   S.mode = 'walk'; S.country = a.c; P.x = a.x; P.y = a.y; P.vx = P.vy = 0; P.trail = []; P.alt = 0; P.anim = null;
   const first = !S.stamps[a.code]; S.stamps[a.code] = S.stamps[a.code] || Date.now();
   puff(a.x, a.y, 24); toast(`📍 ${airName(a.code)} 도착!${first ? ' · 🏅 첫 도장' : ''}`);
+  P.lastFrom = S.from; P.lastFirst = first;
   S.from = null; P.quiet = a.code; sheetAirport(a, 'land'); vib([20, 40, 20]); save();
 }
+function cancelBoard() {
+  if (S.mode !== 'ground') return;
+  const a = airport(S.from); S.mode = 'walk'; S.country = a.c; S.from = null; P.quiet = a.code; gaugeOff();
+  puff(a.x, a.y); toast('✕ 탑승 취소 · 다시 걸어요'); sheetAirport(a); save();
+}
+function cancelLanding() {
+  const a = airport(P.quiet); if (S.mode !== 'walk' || !P.lastFrom || !a) return;
+  if (P.lastFirst) delete S.stamps[a.code];
+  S.from = P.lastFrom; P.lastFrom = null; P.quiet = null; P.x = a.x; P.y = a.y;
+  toast('↩ 착륙 취소 · 다시 이륙해요');   // 내려앉던 방향 그대로 다시 뜸
+  takeoff(P.hd); P.skip = a.code; save();
+}
+Object.assign(window, { cancelBoard, cancelLanding });
 
 /* ---------- 갱신 ---------- */
 let locT = 0;
@@ -320,7 +340,7 @@ function step(dt) {
     if (Math.hypot(P.vx, P.vy) > 8) P.hd = Math.atan2(P.vy, P.vx);
     P.alt = 0;
     const a = nearestAirport(NEAR.walk, a => a.c === S.country);
-    if (P.quiet && (!a || a.code !== P.quiet)) P.quiet = null;
+    if (P.quiet && (!a || a.code !== P.quiet)) { P.quiet = null; P.lastFrom = null; }
     if (P.closedFor && (!a || a.code !== P.closedFor)) P.closedFor = null;
     if (a && P.sheetFor !== a.code && P.closedFor !== a.code) sheetAirport(a);
     if (a && canFly(a) && P.quiet !== a.code) { if (gauge(dt, a, 'board', still)) board(a); }

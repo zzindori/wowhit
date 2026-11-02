@@ -77,7 +77,6 @@ button,input,select{font-family:inherit;color:inherit}
 .sp .ic{font-size:20px;line-height:1.2}.sp b{font-family:Jua,sans-serif;font-weight:400;font-size:16px}
 .sp .d{font-size:12px;color:#6b6876;line-height:1.4;margin-top:1px}.sp i{font-style:normal;font-size:12px;color:#8a8794;white-space:nowrap;margin-left:auto}
 .sp.seen b{color:#8a6a1d}.al.ok{background:#fff3c4;border-color:#e2c25a}
-.stamp{display:inline-block;background:#fff3c4;border:2px dashed #d4a017;color:#8a6a1d;border-radius:10px;padding:4px 10px;font-family:Jua,sans-serif;font-size:16px;margin:2px 0 8px;transform:rotate(-2deg)}
 #zoom{position:fixed;right:calc(10px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;z-index:20;transition:bottom .15s}
 #zoom button{width:46px;height:46px;font-size:26px!important;border-radius:12px;border:2px solid var(--ink);background:var(--card);font-size:22px;line-height:1;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer;padding:0}
 #zoom button.on{background:#ffcf5a;box-shadow:0 0 0 3px rgba(255,207,90,.5),0 3px 0 rgba(44,43,53,.25)}
@@ -408,13 +407,13 @@ function sheetGround(a) {
 function sheetCity(c) {
   const head = `<h2>🏙️ ${c.ko}</h2>`;
   let h = `<div class="sub">${c.ja} · ${c.pref}${c.ferry ? ' · ⛴️ 페리로 가는 섬' : ''}</div><div class="intro">${c.intro}</div>`;
-  h += HINT('🔍 두 손가락으로 확대하면 명소 핀이 보이고, 걸어가면 카드와 도장 · 축소하면 🚗 차로 빠르게 · ⌖ 버튼은 기본 비율');
+  h += HINT('🔍 두 손가락으로 확대하면 명소 핀이 보이고, 아이콘 위에 서 있으면 차올라 반을 넘기면 다녀왔어요 · 축소하면 🚗 차로 빠르게 · ⌖ 버튼은 기본 비율');
   const food = PL.foods[c.pref] || [];
   if (food.length) h += `<div class="rt"><b>🍽️ 먹거리</b><div>${food.map(f => `<span class="al ex">${f}</span>`).join('')}</div></div>`;
   h += `<div class="sub" style="margin-top:8px">명소 ${c.spots.length}곳</div>`;
   h += c.spots.map(s => {
     const seen = S.seen[s.key], d = Math.round(dist(s, P));
-    return `<div class="sp${seen ? ' seen' : ''}"><span class="ic">${ICON[s.t] || '📍'}</span><div><b>${s.ko}</b>${s.ferry ? ' <span class="al">⛴️ 페리</span>' : ''}${seen ? ' <span class="al ok">✔ 도장</span>' : ''}<div class="d">${s.d}</div></div><i>${d < 1 ? '여기' : d + 'km'}</i></div>`;
+    return `<div class="sp${seen ? ' seen' : ''}"><span class="ic">${ICON[s.t] || '📍'}</span><div><b>${s.ko}</b>${s.ferry ? ' <span class="al">⛴️ 페리</span>' : ''}${seen ? ' <span class="al ok">✔ 다녀왔어요</span>' : S.wish[s.key] ? ' <span class="al">💭 가고 싶어요</span>' : ''}<div class="d">${s.d}</div></div><i>${d < 1 ? '여기' : d + 'km'}</i></div>`;
   }).join('');
   const on = S.ints.filter(i => i.on).map(i => INTERESTS.find(x => x[0] === i.k)[1]).filter(x => !/관광|자연/.test(x));
   if (on.length) h += `<div class="soon">🔦 ${on.join(' · ')} 정보는 다음 단계에서 채워져요 (유튜브 현지인·한국인 영상 정리).</div>`;
@@ -477,7 +476,7 @@ function startLanding(a) {
 function arrive(a) {
   S.mode = 'walk'; S.boardFrom = null; S.country = a.c; P.x = a.x; P.y = a.y; P.vx = P.vy = 0; P.trail = []; P.alt = 0; P.anim = null;
   const first = !S.stamps[a.code]; S.stamps[a.code] = S.stamps[a.code] || Date.now();
-  puff(a.x, a.y, 24); toast(`📍 ${airName(a.code)} 도착!${first ? ' · 🏅 첫 도장 +10' : ''}`);
+  puff(a.x, a.y, 24); toast(`📍 ${airName(a.code)} 도착!${first ? ' · 첫 착륙 +10' : ''}`);
   if (first) { burst(a.x, a.y, 24, ['#ffd84d', '#fff', '#7fd1ff']); SFX.stamp(); coinsTo(W / 2, H * CY, 6); addPts(10); }
   P.lastFrom = S.from; P.lastFirst = first;
   S.from = null; P.quiet = a.code; sheetAirport(a, 'land'); vib([20, 40, 20]); save();
@@ -1234,15 +1233,15 @@ function renderMedals() {
   }
   $('mList').innerHTML = h;
 }
-// 기록 지우기: 탭별(포인트는 그대로) · 전체(도장·깃발·포인트, 가족 설정·위치는 그대로)
+// 기록 지우기: 탭별(포인트는 그대로) · 전체(명소·공항·깃발·포인트, 가족 설정·위치는 그대로)
 $('mResetTab').onclick = () => {
-  const nm = { spot: '명소 도장', air: '공항 도장', flag: '내 깃발' }[MTAB];
+  const nm = { spot: '명소 기록(다녀왔어요·가고 싶어요)', air: '공항 착륙 기록', flag: '내 깃발' }[MTAB];
   if (!confirm(`${nm}을(를) 모두 지울까요? 되돌릴 수 없어요. (포인트는 그대로)`)) return;
   if (MTAB === 'spot') { S.seen = {}; S.wish = {}; S.fill = {}; } else if (MTAB === 'air') S.stamps = {}; else { S.flags = []; FLAGS.length = 0; }
   save(); closeSheet(); renderMedals(); toast(`${nm}을(를) 지웠어요`);
 };
 $('mResetAll').onclick = () => {
-  if (!confirm('명소·공항 도장, 내 깃발, 포인트를 모두 처음으로 돌릴까요? 되돌릴 수 없어요.\n(가족 설정·지금 위치는 그대로)')) return;
+  if (!confirm('명소 기록, 공항 착륙, 내 깃발, 포인트를 모두 처음으로 돌릴까요? 되돌릴 수 없어요.\n(가족 설정·지금 위치는 그대로)')) return;
   S.seen = {}; S.wish = {}; S.fill = {}; S.paid = {}; S.stamps = {}; S.flags = []; FLAGS.length = 0; S.pts = 0; $('ptsN').textContent = 0;
   save(); closeSheet(); renderMedals(); toast('기록을 모두 처음으로 돌렸어요');
 };
@@ -1301,7 +1300,7 @@ const soundLbl = () => $('soundBtn').textContent = S.sound === false ? '🔇 소
 $('soundBtn').onclick = () => { S.sound = S.sound === false; save(); soundLbl(); if (S.sound) SFX.coin(); };
 $('bSet').onclick = () => { renderInts(); soundLbl(); $('settings').hidden = false; };
 $('setClose').onclick = () => { $('settings').hidden = true; const k = P.sheetFor; if (k) { closeSheet(); P.closedFor = null; } };
-$('resetBtn').onclick = () => { if (confirm('가족 설정·도장·위치를 모두 지우고 처음부터 할까요?')) { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); } };
+$('resetBtn').onclick = () => { if (confirm('가족 설정·여행 기록·위치를 모두 지우고 처음부터 할까요?')) { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); } };
 $('bHome').onclick = () => location.href = '/';
 // 창 위쪽(손잡이·제목 줄)을 아래로 쓸어내리면 닫힘
 (() => {

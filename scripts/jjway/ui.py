@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """jjWay 화면 확인: 출발 설정 → 🚗 서울에서 차(바다 막힘) → 김해공항 탑승 게이지(움직이면 줄어듦) → 탑승 취소(차로) → 다시 탑승 → 이륙
 → 직항 없는 곳 회색 → 다카마쓰 위 지나가기(안 내림) → 멈추면 착륙 → 걷기(도시 확대) · 착륙 취소 → 다시 착륙
-→ 리쓰린 공원 도장 → 다카마쓰 도시 창 → ⌖ 버튼(자동차 비율·공항 화살표) → 마쓰야마에서 확대 → 도고 온천 도장 → 휠 확대·축소
+→ 리쓰린 공원 다녀왔어요(채움) → 다카마쓰 도시 창 → ⌖ 버튼(자동차 비율·공항 화살표) → 마쓰야마에서 확대 → 도고 온천 다녀왔어요 → 휠 확대·축소
 → 쓸어내려 닫기·돋보기로 다시 열기 → 설정 → 새로고침 이어짐 → 탑승 대기 중 새로고침.
 python3 scripts/jjway/ui.py [캡처 폴더]"""
 import sys, os, time, threading, http.server, functools
@@ -85,12 +85,12 @@ def run(w, h, tag):
         time.sleep(1.2)
         assert not pg.evaluate('far()') and pg.evaluate('Math.min(innerWidth, innerHeight) / CAM.z') < 120, '확대 안 됨'
         pg.screenshot(path=f'{OUT}/jj_{tag}_2walk.png')
-        # 리쓰린 공원 도장 + 도시 창
+        # 리쓰린 공원 채움·다녀왔어요 + 도시 창
         # 덜 확대하면 아이콘에 닿아도 반응 없음(안내만)
         pg.evaluate('S.span.walk = 30'); time.sleep(.6); at(pg, SPOTJ('리쓰린 공원')); time.sleep(.4)
         st = pg.evaluate('({seen: !!S.seen[SPOT.find(a=>a.ko==="리쓰린 공원").key], span: S.span.walk, toast: document.getElementById("toast").innerText, onT: P.onSpotT, far: far()})')
         assert not st['seen'] and '더 확대' in st['toast'], ('최대 확대 아닌데 반응', st)
-        # 최대 확대: 근처(아이콘 밖)에선 반응 없음 → 아이콘에 닿으면 도장 + 아래 제목 띠 → 눌러야 창
+        # 최대 확대: 근처(아이콘 밖)에선 반응 없음 → 아이콘에 닿으면 채움 + 아래 제목 띠 → 눌러야 창
         at(pg, SPOTJ('리쓰린 공원'), 5); time.sleep(.3); pg.evaluate('S.span.walk = 2'); time.sleep(1.2)
         at(pg, SPOTJ('리쓰린 공원'), 'Math.max(.2, 60 / CAM.z)'); time.sleep(.3)
         assert not pg.evaluate('S.seen[SPOT.find(a=>a.ko==="리쓰린 공원").key]'), '아이콘 밖인데 반응'

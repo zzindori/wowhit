@@ -1299,10 +1299,10 @@ $('bFlag').onclick = () => { if (S.mode === 'walk') openFind(); };
 function openFind(q) {
   P.pick = null;
   const head = `<h2>🔍 장소 찾기</h2><button class="cbtn" onclick="closeSheet()">닫기</button>`;
-  let h = `<div class="fsearch"><input id="qIn" class="fin" maxlength="400" placeholder="이름·주소·구글 지도 링크 붙여넣기" value="${esc(q || '')}" onkeydown="if(event.key==='Enter')doFind()"><button class="qgo" onclick="doFind()">찾기</button></div>`;
+  let h = `<div class="fsearch"><textarea id="qIn" class="fin" rows="1" maxlength="600" placeholder="이름·주소·구글 지도 링크 붙여넣기" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();doFind()}" oninput="this.rows=this.value.includes('\\n')?3:1">${esc(q || '')}</textarea><button class="qgo" onclick="doFind()">찾기</button></div>`;
   h += `<div class="qbs"><button onclick="startPick()">🎯 지도에서 고르기</button><button onclick="hereFlag()">📍 지금 서 있는 곳</button></div>`;
   h += `<div id="qRes"></div>`;
-  h += HINT('예: 리쓰린 공원 · 타임즈렌트카 다카마쓰 · タイムズカー 高松 · 香川県高松市栗林町 · 구글 지도 공유 링크 · 34.3295, 134.0439<br>한국어는 일본어로 바꿔서 같이 찾아요. 유명한 곳·체인점은 영어(Takamatsu Station)도 잘 돼요. 작은 동네 가게는 지도 데이터에 없을 수 있어서 구글 지도 링크나 🎯 지도에서 고르기가 확실해요.<br>📞 전화번호 검색은 준비 중이에요(구글 키가 필요해요)');
+  h += HINT('<b>📍 구글 지도 → jjWay (가장 정확)</b>: 구글 지도 앱에서 장소 → 공유 → 링크 복사(또는 복사) → 여기 붙여넣고 찾기. 이름·주소가 같이 붙어도 괜찮아요. 가게의 정확한 좌표로 바로 가요.<br><br>예: 리쓰린 공원 · 마쓰야마 해변 · 타임즈렌트카 다카마쓰 · タイムズカー 高松 · 香川県高松市栗林町 · 34.3295, 134.0439<br>한국어는 일본어로 바꿔서 같이 찾아요. 유명한 곳·체인점은 영어(Takamatsu Station)도 잘 돼요. 작은 동네 가게는 지도 데이터에 없을 수 있어서 구글 지도 링크나 🎯 지도에서 고르기가 확실해요.<br>📞 전화번호 검색은 준비 중이에요(구글 키가 필요해요)');
   openSheet(head, h, 'find', 'flagform');
   setTimeout(() => $('qIn') && $('qIn').focus(), 50);
 }
@@ -1323,6 +1323,7 @@ const KO2JA = {
   '스타벅스': 'スターバックス', '맥도날드': 'マクドナルド', '모스버거': 'モスバーガー', '요시노야': '吉野家', '스키야': 'すき家', '마루가메제면': '丸亀製麺',
   '우동': 'うどん', '라멘': 'ラーメン', '라면': 'ラーメン', '스시': '寿司', '초밥': '寿司', '돈카츠': 'とんかつ', '야키니쿠': '焼肉', '이자카야': '居酒屋', '카페': 'カフェ',
   '공항': '空港', '역': '駅', '공원': '公園', '온천': '温泉', '신사': '神社', '절': '寺', '성': '城', '시장': '市場', '항구': '港', '항': '港', '다리': '橋', '미술관': '美術館', '박물관': '博物館', '수족관': '水族館',
+  '해수욕장': '海水浴場', '해변': '海岸', '바닷가': '海岸', '해안': '海岸', '비치': 'ビーチ', '전망대': '展望台', '폭포': '滝', '계곡': '渓谷', '산': '山', '섬': '島', '호수': '湖', '등대': '灯台',
   '호텔': 'ホテル', '료칸': '旅館', '주차장': '駐車場', '버스터미널': 'バスターミナル', '쇼핑몰': 'ショッピングモール', '백화점': '百貨店', '상점가': '商店街'
 };
 let KODICT = null;
@@ -1379,12 +1380,13 @@ function jaToKo(name) {
   if (!name || /^[\s가-힣0-9a-zA-Z,.'()-]+$/.test(name)) return '';
   if (!REV) { koToJa('가'); REV = {}; for (const [ko, ja] of Object.entries(KODICT)) if (ja && !REV[ja]) REV[ja] = ko; Object.assign(REV, { '店': '점', '市': '시', '県': '현', '前': ' 앞', '駅前': '역 앞', '本館': '본관', '本店': '본점', '支店': '지점', '手打ち': '수타 ', '手打': '수타 ',
     'セブン-イレブン': '세븐일레븐', 'セブンイレブン': '세븐일레븐', 'ミニストップ': '미니스톱', 'スターバックスコーヒー': '스타벅스', 'ドトールコーヒー': '도토루', 'コメダ珈琲店': '코메다 커피', '珈琲': '커피' }); }
-  const keys = Object.keys(REV).sort((a, b) => b.length - a.length), isKana = c => /[ぁ-ゖァ-ー]/.test(c);
+  // 한자 한 글자 바꾸기는 店·駅·市·県만('円明寺'→'円明절', '鹿島'→'鹿섬'처럼 어색해서)
+  const keys = Object.keys(REV).filter(k => k.length > 1 || /[店駅市県]/.test(k) || /[\u30A1-\u30FC]/.test(k)).sort((a, b) => b.length - a.length), isKana = c => /[ぁ-ゖァ-ー]/.test(c);
   let out = '', buf = '';
   for (let i = 0; i < name.length;) {
     const k = keys.find(k => name.startsWith(k, i));
     if (k) { out += kanaKo(buf) + (out && !/\s$/.test(out) ? '' : '') + REV[k]; buf = ''; i += k.length; continue; }
-    if (isKana(name[i])) buf += name[i]; else { out += kanaKo(buf) + name[i]; buf = ''; }
+    if (isKana(name[i])) buf += name[i]; else { out += (buf.length === 1 && /[\u3041-\u3096]/.test(buf) && out ? buf : kanaKo(buf)) + name[i]; buf = ''; }   // 한자 사이 'の' 한 글자는 그대로
     i++;
   }
   out += kanaKo(buf);
@@ -1399,7 +1401,10 @@ async function nomFetch(params) {
 }
 async function search(q) {
   const ja = koToJa(q), here = unproj(CAM.x, CAM.y), out = [], seen = new Set();
-  const add = rs => { for (const r of rs) { if (r.category === 'highway' || r.category === 'boundary') continue;   // 도로·경계는 빼고
+  // 종류 말(해변·해수욕장·전망대·폭포·역)이 있으면 그 종류만 — '松山 海岸'이 주소에 '海岸' 든 경찰서로 잡히던 것
+  const TYPEW = { '海岸': /beach|bay|coastline|cape|attraction/, '海水浴場': /beach/, 'ビーチ': /beach/, '展望台': /viewpoint|attraction/, '滝': /waterfall/, '駅': /station|halt|stop/ };
+  const tw = Object.keys(TYPEW).find(w => ja.includes(w)), typeOk = r => !tw || TYPEW[tw].test(r.type || '') || (r.name || '').includes(tw);
+  const add = rs => { for (const r of rs) { if (r.category === 'highway' || r.category === 'boundary' || !typeOk(r)) continue;   // 도로·경계·다른 종류는 빼고
     const k2 = (r.name || '') + '@' + (+r.lat).toFixed(4) + ',' + (+r.lon).toFixed(4); if (seen.has(r.place_id) || seen.has(k2)) continue; seen.add(r.place_id); seen.add(k2); out.push({ lat: +r.lat, lon: +r.lon, name: r.name || r.display_name.split(',')[0], sub: r.display_name, src: 'OSM' }); } };
   const box = (lon, lat, dx, dy) => `viewbox=${lon - dx},${lat + dy},${lon + dx},${lat - dy}&bounded=1`;
   const gsiP = fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(ja)}`).then(r => r.json(), () => []);
@@ -1416,7 +1421,7 @@ async function search(q) {
   if (hit) {
     const cb = box(hit.lon, hit.lat, hit.r, hit.r * .75), rest = ja.replace(hit.ja, ' ').replace(/\s+/g, ' ').trim();
     add(await nomFetch(`${cb}&q=${encodeURIComponent(ja)}`));                                            // '高松駅' 그대로 그 주변에서
-    const generic = /^(駅|公園|店|空港|城|港|温泉|寺|神社|市場|橋|ホテル|駐車場)$/;
+    const generic = /^(駅|公園|店|空港|城|港|温泉|寺|神社|市場|橋|ホテル|駐車場|山|島)$/;   // 이것만 남으면 아무 역·공원이 나옴(해변·해수욕장은 종류로 걸러서 괜찮음)
     if (out.length < 2 && rest && !generic.test(rest)) add(await nomFetch(`${cb}&q=${encodeURIComponent(rest)}`));   // 'タイムズカー'·'レンタカー'처럼 이름만
   }
   // 2) 지금 보는 곳 주변(약 150km)
@@ -1442,14 +1447,17 @@ window.doFind = async () => {
   box.innerHTML = `<div class="qmsg">📡 찾는 중…</div>`; SFX.pop();
   try {
     let ll = isLL(q), res = [];
+    // 구글 지도 '공유 → 복사'는 '가게 이름 + 주소 + 링크'가 함께 복사될 때가 많음 → 글 속 링크만 골라냄
+    const um = q.match(/https?:\/\/[^\s<>"']+/) || q.match(/(?:maps\.app\.goo\.gl|goo\.gl\/maps|google\.[a-z.]+\/maps)[^\s<>"']*/);
+    const lead = um ? (q.slice(0, um.index).split('\n').map(x => x.trim()).filter(Boolean)[0] || '').split(/〒|일본|日本|,|·/)[0].trim().slice(0, 40) : '';
     if (ll) res = [{ lat: +ll[1], lon: +ll[2], name: '', sub: '좌표' }];
-    else if (/^https?:\/\/|goo\.gl\/|google\.[a-z.]+\/maps/.test(q)) {
-      let u = /^https?:\/\//.test(q) ? q : 'https://' + q;
+    else if (um) {
+      let u = /^https?:\/\//.test(um[0]) ? um[0] : 'https://' + um[0];
       if (/(maps\.app\.goo\.gl|goo\.gl|g\.co)\//.test(u)) {
         const r = await fetch('/api/jjway/expand?url=' + encodeURIComponent(u)); if (!r.ok) throw new Error('짧은 링크를 못 풀었어요');
         u = (await r.json()).url;
       }
-      const g = parseG(u);
+      const g = parseG(u); if (!g.name && lead) g.name = lead;
       if (g.lat != null) res = [{ lat: g.lat, lon: g.lon, name: g.name, sub: '구글 지도 링크' }];
       else if (g.name) res = await search(g.name);
     } else res = await search(q);

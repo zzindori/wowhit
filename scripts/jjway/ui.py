@@ -174,6 +174,12 @@ def run(w, h, tag):
         pg.click('#sheet .qgo'); time.sleep(.4)
         assert pg.evaluate('!!P.pick') and 'Ritsurin Garden' in pg.inner_text('#pkInfo') and '34.3295' in pg.inner_text('#pkInfo'), pg.inner_text('#sheet')[:200]
         pg.click('#sheet .cbtn'); time.sleep(.2); assert not pg.evaluate('!!P.pick')
+        # 구글 지도 '공유 → 복사'처럼 이름·주소·링크가 함께 붙어도 링크만 골라 정확한 좌표로, 첫 줄은 이름
+        pg.click('#bFlag'); time.sleep(.2)
+        pg.fill('#qIn', '栗林公園\n日本、〒760-0073 香川県高松市栗林町1-20-16\nhttps://www.google.com/maps/place/@34.3299,134.0442,17z/data=!3m1!4b1!8m2!3d34.329497!4d134.043926')
+        pg.click('#sheet .qgo'); time.sleep(.4)
+        assert pg.evaluate('!!P.pick') and '栗林公園' in pg.inner_text('#pkInfo') and '34.3295' in pg.inner_text('#pkInfo'), pg.inner_text('#sheet')[:200]
+        pg.click('#sheet .cbtn'); time.sleep(.2)
         pg.click('#bFlag'); time.sleep(.2); pg.fill('#qIn', '리쓰린 공원'); pg.click('#sheet .qgo')
         try:
             pg.wait_for_selector('#qRes .mr', timeout=8000); print(tag, '이름 검색 결과', pg.locator('#qRes .mr').count(), '개:', pg.inner_text('#qRes .mr >> nth=0')[:40].replace('\n', ' '))

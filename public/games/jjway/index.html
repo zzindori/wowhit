@@ -83,6 +83,21 @@ button,input,select{font-family:inherit;color:inherit}
 #zoom button.on{background:#ffcf5a;box-shadow:0 0 0 3px rgba(255,207,90,.5),0 3px 0 rgba(44,43,53,.25)}
 #zoom button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 #sheet a{color:var(--blue)}
+#pts{left:calc(10px + env(safe-area-inset-left));top:calc(102px + env(safe-area-inset-top));padding:3px 11px;font-size:14px}
+#pts b{font-weight:400;font-size:16px}
+#pts.bump{animation:bump .35s ease-out}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.cats{display:flex;gap:6px;margin:4px 0 8px}
+.cats button{flex:1;border:2px solid #d8d3c8;background:#fff;border-radius:12px;padding:5px 0;font-size:20px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
+.cats button span{font:12px Jua,sans-serif;color:#6b6876}.cats button.on{border-color:var(--ink);background:#fff3c4;transform:translateY(-2px);box-shadow:0 2px 0 rgba(44,43,53,.25)}
+.fin{display:block;width:100%;border:2px solid #d8d3c8;border-radius:10px;padding:8px 10px;font-size:15px;margin:5px 0;background:#fff;font-family:system-ui,sans-serif;resize:none}
+.fin:focus{outline:none;border-color:var(--blue)}.fin.bad{border-color:var(--pri)}
+.frow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0}
+.stars button{border:none;background:none;font-size:24px;color:#d8d3c8;padding:0 1px;cursor:pointer}.stars button.on{color:#f2b134}
+.seg{display:flex;border:2px solid var(--ink);border-radius:999px;overflow:hidden}.seg button{border:none;background:#fff;padding:5px 10px;font:14px Jua,sans-serif;cursor:pointer}.seg button.on{background:var(--ink);color:#fff}
+.lock{font-size:13px;background:#eef3ff;border:1px solid #c9d6f5;border-radius:999px;padding:3px 10px}.lock.off{opacity:.45}
+.del{display:block;margin:10px auto 0;border:none;background:none;color:#a33;font-size:13px;text-decoration:underline;cursor:pointer}
+.nav{display:block;text-align:center;margin:8px 0;padding:10px;border:2px solid var(--ink);border-radius:12px;background:#eef3ff;font-family:Jua,sans-serif;font-size:16px;text-decoration:none;color:var(--ink)!important}
 #attr{position:fixed;left:calc(6px + env(safe-area-inset-left));bottom:calc(4px + env(safe-area-inset-bottom));z-index:15;font:10px system-ui,sans-serif;color:#555;background:rgba(255,255,255,.75);padding:1px 5px;border-radius:4px}
 #attr a{color:inherit}
 </style>
@@ -91,13 +106,14 @@ button,input,select{font-family:inherit;color:inherit}
 <div id="vp"></div>
 <canvas id="cv" aria-label="한국·일본 여행 지도"></canvas>
 <div id="loc" class="chip" role="button" title="새로 읽기">📍 불러오는 중…</div>
+<div id="pts" class="chip" title="여행 포인트">🏅 <b id="ptsN">0</b></div>
 <div id="btns">
   <button class="ib" id="bParty" title="가족 설정">👨‍👩‍👧‍👦</button>
   <button class="ib" id="bSet" title="관심 분야">⚙️</button>
   <button class="ib" id="bHome" title="wowhit 홈">⌂</button>
 </div>
 <div id="pipWrap"><canvas id="pip"></canvas><div id="pipTxt" hidden></div></div>
-<div id="zoom"><button id="bTarget" aria-label="내 위치 · 기본 비율">⌖</button></div>
+<div id="zoom"><button id="bFlag" aria-label="여기에 깃발 꽂기" hidden>🚩</button><button id="bTarget" aria-label="내 위치 · 기본 비율">⌖</button></div>
 <div id="sheet" hidden></div>
 
 <div id="toast"></div>
@@ -120,7 +136,7 @@ button,input,select{font-family:inherit;color:inherit}
     <h1 style="font-size:24px">⚙️ 관심 분야</h1>
     <div class="small" style="text-align:center">켠 분야만 보이고, 위에 있을수록 먼저 보여요.</div>
     <div id="ints"></div>
-    <div class="row2"><button id="resetBtn">처음부터</button><button id="setClose">닫기</button></div>
+    <div class="row2"><button id="soundBtn">🔊 소리</button><button id="resetBtn">처음부터</button><button id="setClose">닫기</button></div>
   </div>
 </div>
 
@@ -247,7 +263,7 @@ cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', e
 cv.addEventListener('wheel', e => { e.preventDefault(); zoomBy(Math.exp(e.deltaY * .0015)); }, { passive: false });
 $('bTarget').onclick = () => { S.span[spanKey()] = SPAN[spanKey()][0]; CAM.x = P.x; CAM.y = P.y; vib(10); save(); };
 addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
   keys.add(e.key.toLowerCase()); if (e.key.startsWith('Arrow')) e.preventDefault();
   if (e.key === '+' || e.key === '=') zoomBy(1 / 1.25); if (e.key === '-') zoomBy(1.25);
 });
@@ -398,7 +414,8 @@ function startLanding(a) {
 function arrive(a) {
   S.mode = 'walk'; S.boardFrom = null; S.country = a.c; P.x = a.x; P.y = a.y; P.vx = P.vy = 0; P.trail = []; P.alt = 0; P.anim = null;
   const first = !S.stamps[a.code]; S.stamps[a.code] = S.stamps[a.code] || Date.now();
-  puff(a.x, a.y, 24); toast(`📍 ${airName(a.code)} 도착!${first ? ' · 🏅 첫 도장' : ''}`);
+  puff(a.x, a.y, 24); toast(`📍 ${airName(a.code)} 도착!${first ? ' · 🏅 첫 도장 +10' : ''}`);
+  if (first) { burst(a.x, a.y, 24, ['#ffd84d', '#fff', '#7fd1ff']); SFX.stamp(); coinsTo(W / 2, H * CY, 6); addPts(10); }
   P.lastFrom = S.from; P.lastFirst = first;
   S.from = null; P.quiet = a.code; sheetAirport(a, 'land'); vib([20, 40, 20]); save();
 }
@@ -433,7 +450,7 @@ function moveOnLand(dt, ix, iy, sp, okFn) {
 // 지금 가까이 있는 것에 맞춰 창 자동으로 열기·닫기 (명소 > 공항 > 도시)
 function autoSheet(key, open) {
   if (P.closedFor && P.closedFor !== key) P.closedFor = null;
-  if (!key) { if (['air', 'land', 'city', 'spot'].includes(P.sheetKind)) closeSheet(); return; }
+  if (!key) { if (['air', 'land', 'city', 'spot', 'flag'].includes(P.sheetKind)) closeSheet(); return; }
   if (P.sheetFor !== key && P.closedFor !== key) open();
 }
 function step(dt) {
@@ -448,8 +465,15 @@ function step(dt) {
     const spot = !far() ? nearest(SPOT, NEAR.spot) : null;     // 명소 도장은 확대했을 때만
     const city = nearest(CITY, NEAR.city * (far() ? 1.3 : 1));
     // 명소 도착 = 도장
-    if (spot && !S.seen[spot.key]) { S.seen[spot.key] = Date.now(); vib([15, 30, 15]); puff(spot.x, spot.y, 14); toast(`📍 ${spot.ko} 도장!`); save(); sheetSpot(spot, true); P.closedFor = null; }
-    if (spot) autoSheet('spot:' + spot.key, () => sheetSpot(spot));
+    const fl = flagStep();
+    if (spot && !S.seen[spot.key]) {
+      S.seen[spot.key] = Date.now(); vib([15, 30, 15]); burst(spot.x, spot.y, 22, ['#ffd84d', '#fff', '#ff8a5c']); shock(spot.x, spot.y, '#ffd84d'); SFX.stamp();
+      coinsTo(W / 2 + (spot.x - CAM.x) * CAM.z, H * CY + (spot.y - CAM.y) * CAM.z, 6); addPts(10);
+      toast(`📍 ${spot.ko} 도장! +10`); save(); if (P.sheetKind !== 'flagform') { sheetSpot(spot, true); P.closedFor = null; }
+    }
+    if (P.sheetKind === 'flagform') { /* 깃발 적는 중 */ }
+    else if (spot) autoSheet('spot:' + spot.key, () => sheetSpot(spot));
+    else if (fl) autoSheet('flag:' + fl.f.id, () => sheetFlag(fl));
     else if (air) autoSheet('air:' + air.code, () => sheetAirport(air, P.lastFrom && P.quiet === air.code ? 'land' : undefined));
     else if (city) autoSheet('city:' + city.id, () => sheetCity(city));
     else autoSheet(null);
@@ -507,6 +531,8 @@ function step(dt) {
   CAM.x += (P.x - CAM.x) * (1 - Math.exp(-dt * 6)); CAM.y += (P.y - CAM.y) * (1 - Math.exp(-dt * 6));
 
   $('zoom').hidden = S.mode !== 'walk' && S.mode !== 'ground';
+  $('bFlag').hidden = !(S.mode === 'walk' && !far());
+  stepFX(dt);
   pipLabel();
   locT -= dt; if (locT <= 0) { locT = .35; updLoc(); }
   if ((S._st = (S._st || 0) + dt) > 2) { S._st = 0; S.pos = { x: P.x, y: P.y }; save(); }
@@ -817,11 +843,13 @@ function draw(t) {
   airportMarks(g, CAM, cx, cy, !FLY(S.mode));
   cityMarks(g, CAM, cx, cy, span);
   spotMarks(g, CAM, cx, cy, span, false);
+  flagMarks(g, CAM, cx, cy, span, false);
   cityLabels(g, CAM, cx, cy, P.alt > .5 ? 2e6 : span < 150 ? 0 : 2.5e5, 12);
   if (!FLY(S.mode) && span > 160) admLabels(g, CAM, cx, cy, 12);
   if (P.g > 0 && P.gAt) ring(g, cx + (P.gAt.x - CAM.x) * CAM.z, cy + (P.gAt.y - CAM.y) * CAM.z, 20, 4, P.g, GCOL[P.gKind]);
   drawMe(g, CAM, cx, cy, t, 1);
   airArrow(g, cx, cy);
+  drawFX(g, cx, cy);
   for (const f of FX) { const k = f.t / f.life; g.fillStyle = `rgba(255,255,255,${(1 - k) * .9})`; g.beginPath(); g.arc(cx + (f.x - CAM.x) * CAM.z, cy + (f.y - CAM.y) * CAM.z, f.r * (1 + k), 0, 6.29); g.fill(); }
   if (joy) {
     g.strokeStyle = 'rgba(44,43,53,.35)'; g.lineWidth = 3; g.beginPath(); g.arc(joy.ox, joy.oy, 55, 0, 6.29); g.stroke();
@@ -840,11 +868,182 @@ function drawPip(t) {
   airportMarks(g, cam, c, c, true);
   cityMarks(g, cam, c, c, span);
   spotMarks(g, cam, c, c, span, true);
+  flagMarks(g, cam, c, c, span, true);
   cityLabels(g, cam, c, c, 0, 11);
   drawMe(g, cam, c, c, t, .75);
   if (P.g > 0 && P.gFor) ring(g, c, c, c - 5, 8, P.g, GCOL[P.gKind]);
   else if (P.bad && Math.sin(t * 8) > 0) { g.strokeStyle = 'rgba(120,120,130,.8)'; g.lineWidth = 8; g.beginPath(); g.arc(c, c, c - 5, 0, 6.29); g.stroke(); }
 }
+
+/* ---------- 소리 (WebAudio 합성, 파일 없음) ---------- */
+let AC = null;
+function audio() { if (S.sound === false) return null; try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) { return null; } return AC; }
+addEventListener('pointerdown', () => audio(), { once: true });
+function tone(f, t0, dur, type = 'sine', vol = .13, slide = 0) {
+  const a = audio(); if (!a) return; const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + t0;
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(f * slide, t + dur);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+}
+const SFX = {
+  coin() { tone(988, 0, .09, 'square', .06); tone(1319, .07, .22, 'square', .06); },                       // 짤랑
+  stamp() { tone(523, 0, .1, 'triangle'); tone(659, .08, .1, 'triangle'); tone(784, .16, .25, 'triangle'); },
+  plant() { tone(180, 0, .18, 'sine', .22, .5); [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, .14 + i * .07, .22, 'triangle', .1)); tone(1568, .55, .5, 'sine', .07); },
+  pop() { tone(660, 0, .08, 'sine', .1, 1.6); }
+};
+
+/* ---------- 연출: 반짝이·충격파·화면 위 동전 ---------- */
+const SPARK = [];   // 월드 좌표 반짝이 {x,y,vx,vy,t,life,c,s}
+const RINGS = [];   // 충격파 {x,y,t,life,c}
+const COINS = [];   // 화면 좌표 → 점수 칸으로 날아감 {x,y,tx,ty,t,dur,e}
+function burst(x, y, n, cols, sp = 70) {
+  if (RM) n = Math.ceil(n / 3);
+  for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, s = sp * (.4 + Math.random()); SPARK.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - sp * .4, t: 0, life: .6 + Math.random() * .5, c: cols[i % cols.length], s: 2 + Math.random() * 3.5, conf: Math.random() < .5 }); }
+}
+function shock(x, y, c) { RINGS.push({ x, y, t: 0, life: .6, c }); }
+function coinsTo(sx, sy, n, e = '🪙') {
+  const b = $('pts').getBoundingClientRect(), tx = b.left + 18, ty = b.top + b.height / 2;
+  for (let i = 0; i < (RM ? 1 : n); i++) COINS.push({ x: sx + (Math.random() - .5) * 30, y: sy + (Math.random() - .5) * 20, tx, ty, t: -i * .06, dur: .6 + Math.random() * .15, e });
+}
+function addPts(n) {
+  S.pts = (S.pts || 0) + n; save();
+  const el = $('pts'); setTimeout(() => { $('ptsN').textContent = S.pts; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); SFX.coin(); }, 650);
+}
+function stepFX(dt) {
+  for (let i = SPARK.length - 1; i >= 0; i--) { const p = SPARK[i]; p.t += dt; p.x += p.vx * dt / CAM.z; p.y += p.vy * dt / CAM.z; p.vy += 160 * dt; p.vx *= .97; if (p.t > p.life) SPARK.splice(i, 1); }
+  for (let i = RINGS.length - 1; i >= 0; i--) { RINGS[i].t += dt; if (RINGS[i].t > RINGS[i].life) RINGS.splice(i, 1); }
+  for (let i = COINS.length - 1; i >= 0; i--) { COINS[i].t += dt; if (COINS[i].t > COINS[i].dur) COINS.splice(i, 1); }
+}
+function drawFX(g, cx, cy) {
+  for (const r of RINGS) { const k = r.t / r.life, sx = cx + (r.x - CAM.x) * CAM.z, sy = cy + (r.y - CAM.y) * CAM.z; g.strokeStyle = r.c; g.globalAlpha = 1 - k; g.lineWidth = 5 * (1 - k) + 1; g.beginPath(); g.ellipse(sx, sy, 10 + 70 * k, (10 + 70 * k) * .45, 0, 0, 6.29); g.stroke(); }
+  g.globalAlpha = 1;
+  for (const p of SPARK) {
+    const k = p.t / p.life, sx = cx + (p.x - CAM.x) * CAM.z, sy = cy + (p.y - CAM.y) * CAM.z;
+    g.globalAlpha = 1 - k * k; g.fillStyle = p.c;
+    if (p.conf) { g.save(); g.translate(sx, sy); g.rotate(p.t * 9); g.fillRect(-p.s, -p.s / 2, p.s * 2, p.s); g.restore(); }
+    else { g.beginPath(); for (let j = 0; j < 8; j++) { const r = j % 2 ? p.s * .45 : p.s * 1.4, a = j * Math.PI / 4; g.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r); } g.fill(); }
+  }
+  g.globalAlpha = 1;
+  for (const c of COINS) {
+    if (c.t < 0) continue; const k = Math.min(1, c.t / c.dur), e = k * k * (3 - 2 * k);
+    const x = c.x + (c.tx - c.x) * e, y = c.y + (c.ty - c.y) * e - Math.sin(k * Math.PI) * 60;
+    g.font = `${18 - 6 * k}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(c.e, x, y);
+  }
+}
+
+/* ---------- 🚩 내 깃발 ---------- */
+// 저장은 실제 위도·경도 + 고유 번호 + 공개 여부(지금은 늘 private). 나중에 서버(api.wowhit.org)로 공개 깃발을 붙일 수 있게.
+const CATS = { food: ['🍜', '맛집', '#e8594f'], shop: ['🛍️', '쇼핑', '#9b59b6'], stay: ['🏨', '숙박', '#2f6fd0'], cafe: ['☕', '카페', '#8d6e4c'], etc: ['📌', '기타', '#3fa66b'] };
+S.flags = S.flags || [];
+const FLAGS = [];   // 그리기용 {f, x, y, born, armed, last}
+function flagRT(f, born) { const p = proj(f.lon, f.lat); return { f, x: p.x, y: p.y, born: born || 0, armed: false, last: 0 }; }
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let FORM = null;   // 작성 중 {id?, lat, lon, cat, star, status}
+function openFlagForm(rt) {
+  const f = rt ? rt.f : null, here = unproj(P.x, P.y);
+  FORM = f ? { id: f.id, lat: f.lat, lon: f.lon, cat: f.cat, star: f.star || 0, status: f.status || 'want' } : { lat: here.lat, lon: here.lon, cat: 'food', star: 0, status: 'want' };
+  const head = `<h2>🚩 ${f ? '깃발 고치기' : '여기에 깃발 꽂기'}</h2><button class="cbtn" onclick="cancelFlag()">취소</button>`;
+  let h = `<div class="sub">${FORM.lat.toFixed(5)}, ${FORM.lon.toFixed(5)}${P.adm ? ' · ' + P.adm.ko : ''}</div>`;
+  h += `<div class="cats">${Object.entries(CATS).map(([k, c]) => `<button data-c="${k}" class="${k === FORM.cat ? 'on' : ''}" onclick="pickCat('${k}')">${c[0]}<span>${c[1]}</span></button>`).join('')}</div>`;
+  h += `<input id="fName" class="fin" maxlength="40" placeholder="이름 (예: 우동 바카이치)" value="${esc(f && f.name)}">`;
+  h += `<textarea id="fMemo" class="fin" maxlength="200" rows="2" placeholder="한 줄 메모 (선택)">${esc(f && f.memo)}</textarea>`;
+  h += `<input id="fLink" class="fin" maxlength="300" placeholder="링크 (선택) — 구글 지도·타베로그·유튜브" value="${esc(f && f.link)}">`;
+  h += `<div class="frow"><div class="stars">${[1, 2, 3, 4, 5].map(i => `<button data-s="${i}" onclick="pickStar(${i})">★</button>`).join('')}</div>`;
+  h += `<div class="seg"><button data-v="want" onclick="pickStatus('want')">가고 싶어요</button><button data-v="been" onclick="pickStatus('been')">다녀왔어요</button></div></div>`;
+  h += `<div class="frow"><span class="lock">🔒 나만 보기</span><span class="lock off" title="나중에">🌏 공개 (준비 중)</span></div>`;
+  h += `<button class="go" style="margin-top:10px;height:48px" onclick="saveFlag()">${f ? '💾 고친 내용 저장' : '✨ 깃발 꽂기'}</button>`;
+  if (f) h += `<button class="del" onclick="deleteFlag('${f.id}')">깃발 뽑기(삭제)</button>`;
+  openSheet(head, h, 'flagform', 'flagform');
+  paintForm(); if (!f) setTimeout(() => $('fName') && $('fName').focus(), 50);
+}
+function paintForm() {
+  const sh = $('sheet'); if (!FORM) return;
+  sh.querySelectorAll('.cats button').forEach(b => b.classList.toggle('on', b.dataset.c === FORM.cat));
+  sh.querySelectorAll('.stars button').forEach(b => b.classList.toggle('on', +b.dataset.s <= FORM.star));
+  sh.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b.dataset.v === FORM.status));
+}
+window.pickCat = k => { FORM.cat = k; SFX.pop(); paintForm(); };
+window.pickStar = i => { FORM.star = FORM.star === i ? 0 : i; paintForm(); };
+window.pickStatus = v => { FORM.status = v; paintForm(); };
+window.cancelFlag = () => { FORM = null; closeSheet(); };
+window.saveFlag = () => {
+  const name = ($('fName').value || '').trim();
+  if (!name) { $('fName').classList.add('bad'); $('fName').focus(); toast('이름을 적어 주세요'); return; }
+  const now = Date.now(), data = { name, memo: $('fMemo').value.trim(), link: $('fLink').value.trim(), cat: FORM.cat, star: FORM.star, status: FORM.status };
+  if (FORM.id) {
+    const f = S.flags.find(x => x.id === FORM.id); Object.assign(f, data, { updated: now });
+    const rt = FLAGS.find(r => r.f === f); FORM = null; save(); sheetFlag(rt); burst(rt.x, rt.y, 12, ['#ffd84d', '#fff']); SFX.pop(); toast('💾 저장했어요'); return;
+  }
+  const f = { id: uid(), lat: FORM.lat, lon: FORM.lon, ...data, vis: 'private', created: now, updated: now };
+  S.flags.push(f); const rt = flagRT(f, performance.now()); FLAGS.push(rt); FORM = null; save();
+  closeSheet(); P.closedFor = 'flag:' + f.id;
+  // 생성 연출: 하늘에서 깃발이 떨어져 꽂힘 → 충격파 · 색종이 · 아이콘 뿅 · 동전
+  const col = CATS[f.cat][2];
+  setTimeout(() => { shock(rt.x, rt.y, col); shock(rt.x, rt.y, '#ffd84d'); burst(rt.x, rt.y, 36, [col, '#ffd84d', '#ffffff', '#7fd1ff']); vib([30, 40, 60]);
+    const sx = W / 2 + (rt.x - CAM.x) * CAM.z, sy = H * CY + (rt.y - CAM.y) * CAM.z; coinsTo(sx, sy, 5); addPts(5); }, 420);
+  SFX.plant(); toast(`🚩 ${CATS[f.cat][0]} ${name} — 깃발을 꽂았어요! +5`, 3000);
+};
+window.deleteFlag = id => {
+  if (!confirm('이 깃발을 뽑을까요?')) return;
+  S.flags = S.flags.filter(x => x.id !== id); const i = FLAGS.findIndex(r => r.f.id === id), rt = FLAGS[i];
+  if (rt) { burst(rt.x, rt.y, 14, ['#bbb', '#888']); FLAGS.splice(i, 1); }
+  FORM = null; save(); closeSheet(); toast('깃발을 뽑았어요');
+};
+window.editFlag = id => openFlagForm(FLAGS.find(r => r.f.id === id));
+function sheetFlag(rt) {
+  const f = rt.f, c = CATS[f.cat];
+  const head = `<h2>${c[0]} ${esc(f.name)}</h2><button class="cbtn" onclick="editFlag('${f.id}')">✏️ 고치기</button>`;
+  let h = `<div class="sub">🚩 내 깃발 · ${c[1]} · ${f.status === 'been' ? '✔ 다녀왔어요' : '💭 가고 싶어요'}${f.star ? ' · ' + '★'.repeat(f.star) : ''}</div>`;
+  if (f.memo) h += `<div class="intro">${esc(f.memo)}</div>`;
+  if (f.link) h += `<div class="sub"><a href="${esc(/^https?:\/\//.test(f.link) ? f.link : 'https://' + f.link)}" target="_blank" rel="noopener">🔗 링크 열기</a></div>`;
+  h += `<a class="nav" href="https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lon}" target="_blank" rel="noopener">🧭 구글 지도에서 길 찾기</a>`;
+  h += `<div class="note">🔒 나만 보기 · ${new Date(f.created).toLocaleDateString('ko-KR')} 꽂음</div>`;
+  openSheet(head, h, 'flag:' + f.id, 'flag');
+}
+// 지나가면: 동전 짤랑(층층이 돈 줍듯) + 팝업. 멀어졌다 다시 오면 또.
+function flagStep() {
+  if (S.mode !== 'walk' || far()) return null;
+  let near = null, nd = .7;
+  for (const r of FLAGS) {
+    const d = Math.hypot(r.x - P.x, r.y - P.y);
+    if (d > 1.6) r.armed = true;
+    if (d < nd) { nd = d; near = r; }
+  }
+  if (near && near.armed && performance.now() - near.born > 1500) {
+    near.armed = false; near.last = performance.now();
+    const sx = W / 2 + (near.x - CAM.x) * CAM.z, sy = H * CY + (near.y - CAM.y) * CAM.z;
+    burst(near.x, near.y, 18, ['#ffd84d', '#fff3a0', CATS[near.f.cat][2]], 60); coinsTo(sx, sy, 3); addPts(1); SFX.coin(); vib(20);
+    if (P.closedFor === 'flag:' + near.f.id) P.closedFor = null;
+  }
+  return near;
+}
+function flagMarks(g, cam, cx, cy, span, small) {
+  if (FLY(S.mode) || span > CARV * 3) return;
+  const now = performance.now();
+  for (const r of FLAGS) {
+    const sx = cx + (r.x - cam.x) * cam.z, sy = cy + (r.y - cam.y) * cam.z;
+    if (!onScr(g, sx, sy)) continue;
+    const c = CATS[r.f.cat], k = small ? .7 : span > CARV ? .75 : 1;
+    // 꽂히는 연출: 0.45초 떨어짐 → 통통
+    const age = (now - r.born) / 1000; let dy = 0, sc = 1;
+    if (age < .45) dy = -260 * (1 - age / .45) ** 2; else if (age < .9) { const q = (age - .45) / .45; sc = 1 + Math.sin(q * Math.PI * 2) * .25 * (1 - q); }
+    const glow = now - r.last < 600 ? 1 - (now - r.last) / 600 : 0;
+    g.save(); g.translate(sx, sy + dy); g.scale(k * sc, k * sc);
+    g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(0, 1, 7, 2.6, 0, 0, 6.29); g.fill();
+    if (glow) { g.fillStyle = `rgba(255,216,77,${glow * .6})`; g.beginPath(); g.arc(0, -16, 22, 0, 6.29); g.fill(); }
+    g.strokeStyle = '#4a3b2a'; g.lineWidth = 2.2; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -30); g.stroke();
+    const wave = Math.sin(now / 260 + r.x) * 2;
+    g.fillStyle = c[2]; g.strokeStyle = '#2c2b35'; g.lineWidth = 1.4;
+    g.beginPath(); g.moveTo(0, -30); g.quadraticCurveTo(10, -30 + wave, 20, -26 + wave); g.lineTo(20, -14 + wave); g.quadraticCurveTo(10, -18 + wave, 0, -16); g.closePath(); g.fill(); g.stroke();
+    g.font = '11px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(c[0], 10, -22 + wave);
+    if (r.f.status === 'been') { g.fillStyle = '#ffd84d'; g.beginPath(); g.arc(0, -31, 3, 0, 6.29); g.fill(); }
+    g.restore();
+    if (!small && span < 60 && free(sx + 10 * k, sy + 10, r.f.name.length * 12, 14)) text(g, r.f.name, sx + 10 * k, sy + 10, 12, '#2c2b35');
+    LBL.push([sx + 8, sy - 18, 26, 34]);
+  }
+}
+$('bFlag').onclick = () => { if (S.mode === 'walk' && !far()) openFlagForm(null); };
 
 /* ---------- 설정 화면 ---------- */
 let draftN = S.party.length, draft = S.party.map(m => ({ ...m }));
@@ -886,7 +1085,9 @@ function renderInts() {
     box.appendChild(row);
   });
 }
-$('bSet').onclick = () => { renderInts(); $('settings').hidden = false; };
+const soundLbl = () => $('soundBtn').textContent = S.sound === false ? '🔇 소리 꺼짐' : '🔊 소리 켜짐';
+$('soundBtn').onclick = () => { S.sound = S.sound === false; save(); soundLbl(); if (S.sound) SFX.coin(); };
+$('bSet').onclick = () => { renderInts(); soundLbl(); $('settings').hidden = false; };
 $('setClose').onclick = () => { $('settings').hidden = true; const k = P.sheetFor; if (k) { closeSheet(); P.closedFor = null; } };
 $('resetBtn').onclick = () => { if (confirm('가족 설정·도장·위치를 모두 지우고 처음부터 할까요?')) { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); } };
 $('bHome').onclick = () => location.href = '/';
@@ -927,6 +1128,8 @@ function frame(ts) {
   buildMask();
   CITY = PL.cities.map(c => ({ ...c, ...proj(c.lon, c.lat), c: 'JPN' }));
   for (const c of CITY) { c.spots = c.spots.map((s, i) => ({ ...s, ...proj(s.lon, s.lat), city: c.id, key: c.id + ':' + i })); SPOT.push(...c.spots); }
+  FLAGS.push(...S.flags.map(f => flagRT(f)));
+  $('ptsN').textContent = S.pts || 0;
   if (FLY(S.mode) && !S.from) S.mode = 'walk';
   if (S.mode === 'takeoff') S.mode = 'ground';
   if (S.mode === 'landing') S.mode = 'plane';

@@ -90,6 +90,21 @@ def run(w, h, tag):
         assert '마쓰야마' in pg.inner_text('#loc') and '🚗' in pg.inner_text('#loc')
         pg.evaluate('S.span.walk = 40'); time.sleep(.3)
         at(pg, SPOTJ('도고 온천'), .2); wait(pg, 'S.seen[SPOT.find(a=>a.ko==="도고 온천").key]', 2)
+        # 🚩 깃발: 확대 상태에서만 버튼 → 이름 없으면 막힘 → 꽂기(+5) → 지나가면 +1 → 고치기
+        assert pg.is_visible('#bFlag')
+        pts0 = pg.evaluate('S.pts || 0')
+        pg.evaluate('(() => { P.x += 3; P.y += 2; })()'); time.sleep(.3)
+        pg.click('#bFlag'); time.sleep(.2); assert '깃발 꽂기' in pg.inner_text('#sheet')
+        pg.click('#sheet .go'); time.sleep(.2); assert pg.evaluate('S.flags.length') == 0, '이름 없이 저장됨'
+        pg.fill('#fName', '테스트 우동집'); pg.click('#sheet .cats button[data-c="cafe"]'); pg.click('#sheet .stars button[data-s="4"]'); pg.click('#sheet .seg button[data-v="been"]')
+        pg.click('#sheet .go'); time.sleep(1.4)
+        f = pg.evaluate('S.flags[0]'); assert f['name'] == '테스트 우동집' and f['cat'] == 'cafe' and f['star'] == 4 and f['status'] == 'been' and f['vis'] == 'private' and abs(f['lat'] - 33.8) < 1
+        assert pg.evaluate('S.pts') == pts0 + 5, ('포인트', pg.evaluate('S.pts'), pts0)
+        pg.screenshot(path=f'{OUT}/jj_{tag}_6flag.png')
+        pg.evaluate('(() => { P.x += 4; })()'); time.sleep(.4); pg.evaluate('(() => { P.x -= 4; })()'); time.sleep(.6)
+        assert pg.evaluate('S.pts') == pts0 + 6 and '테스트 우동집' in pg.inner_text('#sheet'), '지나가도 동전·팝업 없음'
+        pg.click('#sheet .cbtn'); time.sleep(.2); pg.fill('#fName', '고친 우동집'); pg.click('#sheet .go'); time.sleep(.3)
+        assert pg.evaluate('S.flags[0].name') == '고친 우동집' and pg.evaluate('S.flags.length') == 1
         # 확대·축소
         s0 = pg.evaluate('S.span.walk'); pg.mouse.move(w / 2, h / 3); pg.mouse.wheel(0, 400); time.sleep(.1); assert pg.evaluate('S.span.walk') > s0, '휠 축소 안 됨'
         pg.mouse.wheel(0, -400); time.sleep(.1)
@@ -101,6 +116,8 @@ def run(w, h, tag):
         assert pg.evaluate('S.ints[3].on') is True
         pg.evaluate('save()'); pg.reload(); pg.wait_for_function('typeof AIR !== "undefined" && SPOT.length > 0'); time.sleep(.4)
         assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('S.party.length') == 4 and len(pg.evaluate('Object.keys(S.seen)')) >= 2
+        assert pg.evaluate('FLAGS.length') == 1 and pg.evaluate('S.pts') >= 26, '새로고침 뒤 깃발·포인트 없음'
+        pg.once('dialog', lambda d: d.accept()); pg.evaluate('deleteFlag(S.flags[0].id)'); time.sleep(.2); assert pg.evaluate('S.flags.length') == 0
         # 마쓰야마공항에서 탑승 대기 중 새로고침
         pg.click('#bTarget')
         at(pg, AIRJ('MYJ'), 3); wait(pg, 'S.mode === "ground"', 3); pg.evaluate('save()')

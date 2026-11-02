@@ -17,9 +17,11 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--sea);color:var(-
 #cv{position:fixed;left:0;top:0;touch-action:none}
 button,input,select{font-family:inherit;color:inherit}
 .chip{position:fixed;background:rgba(255,253,247,.94);border:2px solid var(--ink);border-radius:999px;padding:5px 12px;font-size:15px;box-shadow:0 3px 0 rgba(44,43,53,.25);z-index:20}
-#loc{left:calc(10px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));max-width:calc(100vw - 200px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+#loc{left:calc(10px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));max-width:calc(100vw - var(--pipw, 150px) - 34px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 #loc:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
-#loc::after{content:' ↻';color:#8a8794}
+#loc::after{content:' ↻';color:#8a8794;font-size:13px}
+#loc .cty{font-size:11px;color:#8a8794;margin-right:6px;vertical-align:1px}
+#loc b{font-weight:400;font-size:18px}
 #btns{position:fixed;left:calc(10px + env(safe-area-inset-left));top:calc(50px + env(safe-area-inset-top));display:flex;gap:8px;z-index:20}
 .ib{width:42px;height:42px;border-radius:50%;border:2px solid var(--ink);background:var(--card);font-size:20px;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer;display:grid;place-items:center;padding:0}
 .ib:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
@@ -191,6 +193,7 @@ function resize() {
   PIPS = Math.round(Math.max(120, Math.min(190, Math.min(W, H) * .34)));
   pip.style.width = pip.style.height = PIPS + 'px'; pip.width = pip.height = Math.round(PIPS * DPR);
   $('pipTxt').style.maxWidth = Math.max(PIPS + 30, 170) + 'px';
+  document.documentElement.style.setProperty('--pipw', PIPS + 'px');
 }
 addEventListener('resize', resize); window.visualViewport && visualViewport.addEventListener('resize', resize);
 
@@ -430,7 +433,8 @@ function pipLabel() {
 }
 function updLoc() {
   const m = S.mode; let t;
-  if (m === 'walk') { const a = admAt(P.x, P.y); t = `🚶 ${S.country === 'KOR' ? '대한민국' : '일본'}${a ? ' · ' + a.ko : ''}`; }
+  P.adm = m === 'walk' ? admAt(P.x, P.y) : null;
+  if (m === 'walk') { const c = S.country === 'KOR' ? '대한민국' : '일본'; $('loc').innerHTML = P.adm ? `<span class="cty">${c}</span><b>${P.adm.ko}</b>` : `<b>${c}</b>`; return; }
   else if (m === 'ground') t = `🎫 탑승 완료 · ${airName(S.from)}`;
   else if (m === 'takeoff') t = `🛫 이륙 중 · ${cityName(S.from)}`;
   else if (m === 'landing') t = `🛬 착륙 중 · ${P.anim ? airName(P.anim.a.code) : ''}`;
@@ -447,10 +451,12 @@ function drawLand(g, z, detail) {
   for (const k of ['CHN', 'RUS', 'PRK', 'TWN']) (LAND[k] || []).forEach(p => { g.fill(p); g.stroke(p); });
   g.fillStyle = '#f4ecd2'; LAND.KOR.forEach(p => g.fill(p));
   g.fillStyle = '#f7e9d6'; LAND.JPN.forEach(p => g.fill(p));
+  if (P.adm) { g.fillStyle = 'rgba(255,196,64,.38)'; P.adm.p.forEach(p => g.fill(p)); }
   // 해안선 두 겹(물가 느낌)
   g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 4 / z; LAND.KOR.forEach(p => g.stroke(p)); LAND.JPN.forEach(p => g.stroke(p));
   g.strokeStyle = '#5c6f7e'; g.lineWidth = 1.2 / z; LAND.KOR.forEach(p => g.stroke(p)); LAND.JPN.forEach(p => g.stroke(p));
   if (detail) { g.strokeStyle = 'rgba(92,111,126,.45)'; g.lineWidth = 1 / z; g.setLineDash([4 / z, 3 / z]); ADM.forEach(a => a.p.forEach(p => g.stroke(p))); g.setLineDash([]); }
+  if (P.adm) { g.strokeStyle = '#e39a12'; g.lineWidth = 2.4 / z; P.adm.p.forEach(p => g.stroke(p)); }
 }
 let LBL = [];                     // 이번 그림에서 이미 쓴 글자 자리
 function free(x, y, w, h) { if (LBL.some(b => Math.abs(b[0] - x) < (b[2] + w) / 2 && Math.abs(b[1] - y) < (b[3] + h) / 2)) return false; LBL.push([x, y, w, h]); return true; }

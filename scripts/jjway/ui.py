@@ -213,6 +213,15 @@ def run(w, h, tag):
         pg.once('dialog', lambda d: d.accept()); pg.click('#mResetAll'); time.sleep(.2)
         assert pg.evaluate('S.flags.length + Object.keys(S.seen).length + S.pts') == 0 and pg.inner_text('#ptsN') == '0' and pg.evaluate('S.party.length') == 4
         pg.click('#mClose')
+        # 확대하면 지리원 물 면적(1:25,000)으로 바다 막힘 — 다카마쓰역에서 북쪽(항구 → 바다)으로 3초(막히지 않으면 약 3km 감)
+        pg.evaluate('S.country = "JPN"; S.span.walk = 4'); at(pg, 'proj(134.0465, 34.3505)'); time.sleep(.3); at(pg, 'proj(134.0465, 34.3505)')
+        wait(pg, 'fineWater(P.x, P.y) === 0', 8)
+        hold(pg, 'ArrowUp', 3)
+        st = pg.evaluate('({lat: unproj(P.x, P.y).lat, w: fineWater(P.x, P.y)})')
+        assert st['lat'] < 34.36 and st['w'] == 0, f'바다로 걸어감 {st}'
+        # 멀리 볼 땐(260km) 예전처럼 넉넉하게(해협 건너기)
+        pg.evaluate('S.span.walk = 260'); time.sleep(1.2); hold(pg, 'ArrowUp', .6)
+        assert pg.evaluate('unproj(P.x, P.y).lat') > 34.37, '멀리 볼 때도 막힘'
         # 마쓰야마공항에서 탑승 대기 중 새로고침
         pg.click('#bTarget'); time.sleep(.3)
         at(pg, AIRJ('MYJ'), 1); time.sleep(.6); assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('P.g') == 0, '⌖(260km)에서 탑승됨'

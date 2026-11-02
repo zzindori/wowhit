@@ -268,6 +268,79 @@ function canStand(x, y, c) {      // 땅이거나 땅에서 5km 안(좁은 해�
   return false;
 }
 
+
+/* ---------- 정밀 바다 판정(일본, 확대했을 때) ---------- */
+// 국토지리원 벡터 타일 z12(물 면적 waterarea = 1:25,000 원본, 바다·호수·넓은 강·해자) — 물은 못 걷고, 그 위 도로·철도·방파제(다리·제방)는 걸을 수 있게 지움.
+// 타일 하나 약 8km·20~35KB → 1024px(약 8m 칸)로 칠해 둠. 먼 바다는 타일이 없어 404 = 전부 물. 아직 못 받았거나 실패하면 예전 거친 판정(canStand).
+// 보이는 거리 WSPAN km 이하일 때만(멀리 볼 땐 예전처럼 넉넉하게 — 해협·섬 건너기)
+const WZ = 12, WPX = 1024, WSPAN = 60, WROAD = 3.5;   // WROAD: 다리로 칠 도로 굵기(px, 약 28m)
+const WT = new Map();
+function pbf(b, s, e, cb) {
+  let i = s;
+  const vi = () => { let r = 0, m = 1, c; do { c = b[i++]; r += (c & 127) * m; m *= 128; } while (c & 128); return r; };
+  while (i < e) {
+    const k = vi(), f = Math.floor(k / 8), t = k & 7;
+    if (t === 0) cb(f, 0, vi());
+    else if (t === 2) { const n = vi(); cb(f, 2, i, i + n); i += n; }
+    else if (t === 5) i += 4; else if (t === 1) i += 8; else return;
+  }
+}
+function mvtRings(b, s, e, ext) {
+  let i = s, x = 0, y = 0, cur = null; const rings = [], k = WPX / ext;
+  const vi = () => { let r = 0, m = 1, c; do { c = b[i++]; r += (c & 127) * m; m *= 128; } while (c & 128); return r; };
+  const zz = n => n % 2 ? -(n + 1) / 2 : n / 2;
+  while (i < e) {
+    const c = vi(), cmd = c & 7, n = c >> 3;
+    if (cmd === 7) continue;
+    for (let j = 0; j < n; j++) { x += zz(vi()); y += zz(vi()); if (cmd === 1) { cur = [x * k, y * k]; rings.push(cur); } else cur.push(x * k, y * k); }
+  }
+  return rings;
+}
+function mvtLayers(buf, want) {
+  const b = new Uint8Array(buf), out = {}, td = new TextDecoder();
+  pbf(b, 0, b.length, (f, t, s, e) => {
+    if (f !== 3 || t !== 2) return;
+    let name = '', ext = 4096; const feats = [];
+    pbf(b, s, e, (f2, t2, s2, e2) => { if (f2 === 1) name = td.decode(b.subarray(s2, e2)); else if (f2 === 5) ext = s2; else if (f2 === 2) feats.push([s2, e2]); });
+    if (!want.includes(name)) return;
+    out[name] = feats.map(([s2, e2]) => { let gs = 0, ge = 0; pbf(b, s2, e2, (f3, t3, a, c) => { if (f3 === 4) { gs = a; ge = c; } }); return mvtRings(b, gs, ge, ext); });
+  });
+  return out;
+}
+function wtLoad(tx, ty) {
+  const key = tx + '/' + ty; let T = WT.get(key); if (T) return T;
+  T = { st: 0, m: null }; WT.set(key, T);
+  if (WT.size > 40) WT.delete(WT.keys().next().value);
+  fetch(`https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/${WZ}/${tx}/${ty}.pbf`).then(r => {
+    if (r.status === 404) { T.st = 2; return; }   // 먼 바다
+    if (!r.ok) throw r.status;
+    return r.arrayBuffer().then(buf => {
+      const L = mvtLayers(buf, ['waterarea', 'road', 'railway', 'wstructurea']);
+      const c = document.createElement('canvas'); c.width = c.height = WPX; const g = c.getContext('2d');
+      const path = rings => { g.beginPath(); for (const r of rings) { g.moveTo(r[0], r[1]); for (let j = 2; j < r.length; j += 2) g.lineTo(r[j], r[j + 1]); } };
+      g.fillStyle = '#000';
+      for (const f of L.waterarea || []) { path(f); g.closePath(); g.fill(); }   // 바깥·구멍(섬) 감김 방향이 반대라 nonzero로 섬이 빠짐
+      g.globalCompositeOperation = 'destination-out'; g.lineCap = g.lineJoin = 'round'; g.lineWidth = WROAD;
+      for (const n of ['road', 'railway']) for (const f of L[n] || []) { path(f); g.stroke(); }
+      for (const f of L.wstructurea || []) { path(f); g.fill(); }
+      const d = g.getImageData(0, 0, WPX, WPX).data, m = new Uint8Array(WPX * WPX);
+      for (let i = 0; i < m.length; i++) m[i] = d[i * 4 + 3] > 127 ? 1 : 0;
+      T.m = m; T.st = 1;
+    });
+  }).catch(() => { T.st = -1; });
+  return T;
+}
+function fineWater(x, y) {   // 1 물 · 0 땅 · null 모름(아직·실패)
+  const p = unproj(x, y), n = 2 ** WZ, fx = lon2t(p.lon, n), fy = lat2t(p.lat, n), tx = Math.floor(fx), ty = Math.floor(fy);
+  const T = wtLoad(tx, ty);
+  if (T.st === 2) return 1;
+  if (T.st !== 1) return null;
+  return T.m[Math.min(WPX - 1, Math.floor((fy - ty) * WPX)) * WPX + Math.min(WPX - 1, Math.floor((fx - tx) * WPX))];
+}
+function wtPrefetch(x, y) {   // 내 주변 3×3 미리
+  const p = unproj(x, y), n = 2 ** WZ, tx = Math.floor(lon2t(p.lon, n)), ty = Math.floor(lat2t(p.lat, n));
+  for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) wtLoad(tx + i, ty + j);
+}
 /* ---------- 노선 ---------- */
 const AL = c => R.airlines[c] || c;
 function destsFrom(code) {
@@ -595,7 +668,13 @@ function step(dt) {
   const bridge = (x, y) => AIR.some(a => a.c === S.country && Math.hypot(a.x - x, a.y - y) < 22);
   if (mode === 'walk') {
     const sp = S.span.walk * SPF.walk;
-    moveOnLand(dt, ix, iy, sp, (x, y) => canStand(x, y, S.country) || bridge(x, y));
+    // 확대했을 땐 지리원 물 면적으로 정밀하게(서 있는 곳이 이미 물이면 — 멀리 볼 때 넉넉한 판정으로 들어온 경우 — 빠져나올 수 있게 허용)
+    const fine = S.country === 'JPN' && Math.min(W, H) / CAM.z <= WSPAN, here = fine ? fineWater(P.x, P.y) : null;
+    if (fine) wtPrefetch(P.x, P.y);
+    moveOnLand(dt, ix, iy, sp, (x, y) => {
+      if (fine) { const w = fineWater(x, y); if (w !== null) return !w || here === 1; }
+      return canStand(x, y, S.country) || bridge(x, y);
+    });
     P.alt = 0;
     const air = nearestAirport(airR(), a => a.c === S.country), airDeep = Math.min(W, H) / CAM.z <= AIR_DEEP;
     if (air && !airDeep && canFly(air) && P.quiet !== air.code && P.onAirT !== air.code) toast(`🔍 ${cityName(air.code)} 공항 — 더 확대하면 탈 수 있어요`, 2000);

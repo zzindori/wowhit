@@ -79,7 +79,7 @@ button,input,select{font-family:inherit;color:inherit}
 .sp.seen b{color:#8a6a1d}.al.ok{background:#fff3c4;border-color:#e2c25a}
 .stamp{display:inline-block;background:#fff3c4;border:2px dashed #d4a017;color:#8a6a1d;border-radius:10px;padding:4px 10px;font-family:Jua,sans-serif;font-size:16px;margin:2px 0 8px;transform:rotate(-2deg)}
 #zoom{position:fixed;right:calc(10px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;z-index:20;transition:bottom .15s}
-#zoom button{width:40px;height:40px;border-radius:12px;border:2px solid var(--ink);background:var(--card);font-size:22px;line-height:1;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer;padding:0}
+#zoom button{width:46px;height:46px;font-size:26px!important;border-radius:12px;border:2px solid var(--ink);background:var(--card);font-size:22px;line-height:1;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer;padding:0}
 #zoom button.on{background:#ffcf5a;box-shadow:0 0 0 3px rgba(255,207,90,.5),0 3px 0 rgba(44,43,53,.25)}
 #zoom button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 #sheet a{color:var(--blue)}
@@ -97,7 +97,7 @@ button,input,select{font-family:inherit;color:inherit}
   <button class="ib" id="bHome" title="wowhit 홈">⌂</button>
 </div>
 <div id="pipWrap"><canvas id="pip"></canvas><div id="pipTxt" hidden></div></div>
-<div id="zoom"><button id="mWalk" aria-label="걷기(확대)">🚶</button><button id="mCar" aria-label="자동차(축소)">🚗</button></div>
+<div id="zoom"><button id="bTarget" aria-label="내 위치 · 기본 비율">⌖</button></div>
 <div id="sheet" hidden></div>
 
 <div id="toast"></div>
@@ -141,8 +141,10 @@ const INTERESTS = [
   ['nature', '🌿 자연·풍경', 0], ['cafe', '🍰 카페·디저트', 0], ['izakaya', '🍶 이자카야·술집', 0], ['fest', '🎎 축제·행사', 0], ['move', '🚃 이동·교통', 0]];
 const SEOUL = { x: -457.8, y: -284.2 };
 // 모드마다 화면 짧은 쪽에 보이는 거리(km): [기본, 최소, 최대] — 두 손가락·휠로 바꾸면 모드별로 기억
-const SPAN = { walk: [70, 1.2, 200], car: [260, 60, 700], plane: [1500, 700, 2600] };
-const SPF = { walk: .22, car: .32, plane: .18 };   // 속도 = 보이는 거리 × 이 값(km/초) → 화면에서 늘 비슷한 빠르기
+// 땅 위는 모드 하나(walk) — 확대하면 🚶 가족, 축소하면 🚗 자동차로 그림. ⌖ 버튼 = 자동차 비율(260km)로
+const SPAN = { walk: [260, 1.2, 700], plane: [1500, 700, 2600] };
+const SPF = { walk: .26, plane: .18 };   // 속도 = 보이는 거리 × 이 값(km/초) → 화면에서 늘 비슷한 빠르기
+const CARV = 120;                         // 이보다 멀리 보면 자동차 그림·명소 숨김·공항 화살표
 function defParty(n) {
   const base = [['아빠', '아빠'], ['엄마', '엄마'], ['', '아들'], ['', '딸']];
   return Array.from({ length: n }, (_, i) => ({ name: base[i] ? base[i][0] : '', rel: base[i] ? base[i][1] : '기타', age: '성인', col: COLORS[i % COLORS.length] }));
@@ -151,8 +153,10 @@ function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.party) return s; } catch (e) {}
   return null;
 }
-let S = load() || { party: defParty(4), ints: INTERESTS.map(([k, , on]) => ({ k, on: !!on })), pos: { ...SEOUL }, mode: 'car', country: 'KOR', from: null, stamps: {}, started: false };
-S.span = Object.assign({ walk: SPAN.walk[0], car: SPAN.car[0], plane: SPAN.plane[0] }, S.span || {});
+let S = load() || { party: defParty(4), ints: INTERESTS.map(([k, , on]) => ({ k, on: !!on })), pos: { ...SEOUL }, mode: 'walk', country: 'KOR', from: null, stamps: {}, started: false };
+S.span = Object.assign({ walk: SPAN.walk[0], plane: SPAN.plane[0] }, S.span || {}); delete S.span.car;
+if (S.mode === 'car') S.mode = 'walk';
+if (S.boardFrom === 'car') S.boardFrom = 'walk';
 S.seen = S.seen || {};
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
@@ -224,7 +228,8 @@ addEventListener('resize', resize); window.visualViewport && visualViewport.addE
 
 /* ---------- 입력: 한 손가락 = 조이스틱, 두 손가락 = 확대·축소, 휠 = 확대·축소 ---------- */
 let joy = null, pinch = null; const keys = new Set(), PTR = new Map();
-const spanKey = () => S.mode === 'walk' || S.mode === 'car' ? S.mode : S.mode === 'ground' ? (S.boardFrom || 'walk') : 'plane';
+const spanKey = () => S.mode === 'walk' || S.mode === 'ground' ? 'walk' : 'plane';
+const far = () => S.span.walk >= CARV;
 function setSpan(k, v) { S.span[k] = Math.max(SPAN[k][1], Math.min(SPAN[k][2], v)); }
 function zoomBy(f) { const k = spanKey(); setSpan(k, S.span[k] * f); }
 cv.addEventListener('pointerdown', e => {
@@ -240,12 +245,7 @@ cv.addEventListener('pointermove', e => {
 const endPtr = e => { PTR.delete(e.pointerId); if (joy && e.pointerId === joy.id) joy = null; if (PTR.size < 2) pinch = null; };
 cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
 cv.addEventListener('wheel', e => { e.preventDefault(); zoomBy(Math.exp(e.deltaY * .0015)); }, { passive: false });
-function setMode(m) {
-  if ((S.mode !== 'walk' && S.mode !== 'car') || S.mode === m) return;
-  S.mode = m; P.vx = P.vy = 0; P.trail = []; gaugeOff(); puff(P.x, P.y, 12);
-  toast(m === 'walk' ? '🚶 걸어서 둘러봐요 (지도 확대)' : '🚗 차로 이동해요 (지도 축소)', 1800); vib(15); locT = 0; save();
-}
-$('mWalk').onclick = () => setMode('walk'); $('mCar').onclick = () => setMode('car');
+$('bTarget').onclick = () => { S.span[spanKey()] = SPAN[spanKey()][0]; CAM.x = P.x; CAM.y = P.y; vib(10); save(); };
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   keys.add(e.key.toLowerCase()); if (e.key.startsWith('Arrow')) e.preventDefault();
@@ -267,7 +267,7 @@ function input() {
 const P = { x: S.pos.x, y: S.pos.y, vx: 0, vy: 0, hd: 0, trail: [], warnAt: {}, sheetFor: null, alt: 0, anim: null, skip: null, quiet: null, g: 0, gFor: null, gKind: null, gAt: null, bad: null };
 const CAM = { x: P.x, y: P.y, z: 1 };
 const FX = [];
-const NEAR = { walkAir: 4, carAir: 4, ask: 38, city: 9, spot: 1.6 };   // 공항은 시내와 가까워서(마쓰야마 6km) 좁게
+const NEAR = { walkAir: 4, ask: 38, city: 9, spot: 1.6 };   // 공항은 시내와 가까워서(마쓰야마 6km) 좁게
 const FLY = m => m === 'ground' || m === 'takeoff' || m === 'plane' || m === 'landing';
 const GAUGE = { board: 1.5, land: 1.2 };
 const GCOL = { board: '#e8594f', land: '#3fa66b' };
@@ -344,7 +344,7 @@ function sheetGround(a) {
 function sheetCity(c) {
   const head = `<h2>🏙️ ${c.ko}</h2>`;
   let h = `<div class="sub">${c.ja} · ${c.pref}${c.ferry ? ' · ⛴️ 페리로 가는 섬' : ''}</div><div class="intro">${c.intro}</div>`;
-  h += HINT('🚶 걷기 버튼 = 지도 확대, 명소 핀까지 걸어가면 카드와 도장 · 🚗 자동차 버튼 = 지도 축소, 다른 도시로 빠르게');
+  h += HINT('🔍 두 손가락으로 확대하면 명소 핀이 보이고, 걸어가면 카드와 도장 · 축소하면 🚗 차로 빠르게 · ⌖ 버튼은 기본 비율');
   const food = PL.foods[c.pref] || [];
   if (food.length) h += `<div class="rt"><b>🍽️ 먹거리</b><div>${food.map(f => `<span class="al ex">${f}</span>`).join('')}</div></div>`;
   h += `<div class="sub" style="margin-top:8px">명소 ${c.spots.length}곳</div>`;
@@ -404,8 +404,8 @@ function arrive(a) {
 }
 function cancelBoard() {
   if (S.mode !== 'ground') return;
-  const a = airport(S.from); S.mode = S.boardFrom === 'car' ? 'car' : 'walk'; S.boardFrom = null; S.country = a.c; S.from = null; P.quiet = a.code; gaugeOff();
-  puff(a.x, a.y); toast(S.mode === 'car' ? '✕ 탑승 취소 · 다시 차로' : '✕ 탑승 취소 · 다시 걸어요'); sheetAirport(a, 'cancel'); save();
+  const a = airport(S.from); S.mode = 'walk'; S.boardFrom = null; S.country = a.c; S.from = null; P.quiet = a.code; gaugeOff();
+  puff(a.x, a.y); toast('✕ 탑승 취소'); sheetAirport(a, 'cancel'); save();
 }
 function cancelLanding() {
   const a = airport(P.quiet); if (S.mode !== 'walk' || !P.lastFrom || !a) return;
@@ -439,14 +439,14 @@ function autoSheet(key, open) {
 function step(dt) {
   const [ix, iy] = input(), mode = S.mode, still = Math.hypot(ix, iy) < .05;
   const bridge = (x, y) => AIR.some(a => a.c === S.country && Math.hypot(a.x - x, a.y - y) < 22);
-  if (mode === 'walk' || mode === 'car') {
-    const sp = S.span[mode] * SPF[mode];
+  if (mode === 'walk') {
+    const sp = S.span.walk * SPF.walk;
     moveOnLand(dt, ix, iy, sp, (x, y) => canStand(x, y, S.country) || bridge(x, y));
     P.alt = 0;
-    const air = nearestAirport(mode === 'walk' ? NEAR.walkAir : NEAR.carAir, a => a.c === S.country);
+    const air = nearestAirport(NEAR.walkAir, a => a.c === S.country);
     if (P.quiet && (!air || air.code !== P.quiet)) { P.quiet = null; P.lastFrom = null; }
-    const spot = mode === 'walk' ? nearest(SPOT, NEAR.spot) : null;
-    const city = nearest(CITY, NEAR.city * (mode === 'car' ? 1.3 : 1));
+    const spot = !far() ? nearest(SPOT, NEAR.spot) : null;     // 명소 도장은 확대했을 때만
+    const city = nearest(CITY, NEAR.city * (far() ? 1.3 : 1));
     // 명소 도착 = 도장
     if (spot && !S.seen[spot.key]) { S.seen[spot.key] = Date.now(); vib([15, 30, 15]); puff(spot.x, spot.y, 14); toast(`📍 ${spot.ko} 도장!`); save(); sheetSpot(spot, true); P.closedFor = null; }
     if (spot) autoSheet('spot:' + spot.key, () => sheetSpot(spot));
@@ -501,14 +501,12 @@ function step(dt) {
   for (let i = FX.length - 1; i >= 0; i--) { const f = FX[i]; f.t += dt; f.x += f.vx * dt / CAM.z; f.y += f.vy * dt / CAM.z; f.vx *= .92; f.vy *= .92; if (f.t > f.life) FX.splice(i, 1); }
 
   // 카메라: 모드별 보이는 거리, 하늘에선 높이만큼 섞음
-  const gk = S.mode === 'landing' ? 'walk' : (S.boardFrom || 'walk');
-  const span = FLY(S.mode) ? S.span[gk] + (S.span.plane - S.span[gk]) * P.alt : S.span[S.mode];
+  const span = FLY(S.mode) ? S.span.walk + (S.span.plane - S.span.walk) * P.alt : S.span.walk;
   const tz = Math.min(W, H) / span;
   CAM.z *= Math.exp((Math.log(tz) - Math.log(CAM.z)) * (1 - Math.exp(-dt * 3)));
   CAM.x += (P.x - CAM.x) * (1 - Math.exp(-dt * 6)); CAM.y += (P.y - CAM.y) * (1 - Math.exp(-dt * 6));
 
-  const ground = S.mode === 'walk' || S.mode === 'car';
-  $('zoom').hidden = !ground; $('mWalk').classList.toggle('on', S.mode === 'walk'); $('mCar').classList.toggle('on', S.mode === 'car');
+  $('zoom').hidden = S.mode !== 'walk' && S.mode !== 'ground';
   pipLabel();
   locT -= dt; if (locT <= 0) { locT = .35; updLoc(); }
   if ((S._st = (S._st || 0) + dt) > 2) { S._st = 0; S.pos = { x: P.x, y: P.y }; save(); }
@@ -536,11 +534,12 @@ function pipLabel() {
 }
 function updLoc() {
   const m = S.mode; let t;
-  P.adm = m === 'walk' || m === 'car' ? admAt(P.x, P.y) : null;
-  if (m === 'walk' || m === 'car') {
+  P.adm = m === 'walk' ? admAt(P.x, P.y) : null;
+  if (m === 'walk') {
     const c = S.country === 'KOR' ? '대한민국' : '일본', city = nearest(CITY, NEAR.city * 1.3);
-    const ic = m === 'car' ? '🚗 ' : '';
-    $('loc').innerHTML = `${ic}<span class="cty">${c}${P.adm ? ' · ' + P.adm.ko : ''}</span><b>${city ? city.ko : P.adm ? P.adm.ko : c}</b>`;
+    const ic = far() ? '🚗 ' : '';
+    // 도시 안이면 '나라 · 도·현' 작게 + 도시 크게, 아니면 '나라' 작게 + 도·현 크게(같은 이름 두 번 안 쓰게)
+    $('loc').innerHTML = city ? `${ic}<span class="cty">${c}${P.adm ? ' · ' + P.adm.ko : ''}</span><b>${city.ko}</b>` : `${ic}<span class="cty">${c}</span><b>${P.adm ? P.adm.ko : c}</b>`;
     return;
   }
   else if (m === 'ground') t = `🎫 탑승 완료 · ${airName(S.from)}`;
@@ -662,7 +661,7 @@ function cityMarks(g, cam, cx, cy, span) {
   }
 }
 function spotMarks(g, cam, cx, cy, span, small) {
-  if (span > 220 || FLY(S.mode)) return;
+  if (span > CARV * 1.1 || FLY(S.mode)) return;
   for (const s of SPOT) {
     const sx = cx + (s.x - cam.x) * cam.z, sy = cy + (s.y - cam.y) * cam.z;
     if (!onScr(g, sx, sy)) continue;
@@ -771,7 +770,7 @@ function ring(g, x, y, r, w, f, col) {
 }
 // 차를 타면: 가장 가까운 공항 쪽 화살표(화면 밖이면 가장자리에)
 function airArrow(g, cx, cy) {
-  if (S.mode !== 'car') return;
+  if (S.mode !== 'walk' || !far()) return;
   const a = nearestAirport(1e9, a => a.c === S.country && canFly(a)); if (!a) return;
   const sx = cx + (a.x - CAM.x) * CAM.z, sy = cy + (a.y - CAM.y) * CAM.z, d = Math.round(dist(a, P));
   const lb = `✈ ${airName(a.code)} ${d}km`;
@@ -792,7 +791,7 @@ function airArrow(g, cx, cy) {
 function drawMe(g, cam, cx, cy, t, s) {
   const sx = cx + (P.x - cam.x) * cam.z, sy = cy + (P.y - cam.y) * cam.z;
   if (FLY(S.mode)) plane(g, sx, sy - P.alt * (6 + Math.sin(t * 3) * 2) * s, P.hd, 1.15 * s, P.alt);
-  else if (S.mode === 'car') car(g, sx, sy, P.hd, 1.05 * s, t, Math.hypot(P.vx, P.vy) > S.span.car * .02);
+  else if (far()) car(g, sx, sy, P.hd, 1.05 * s, t, Math.hypot(P.vx, P.vy) > S.span.walk * .02);
   else if (s < 1) person(g, sx, sy + 8, 1, S.party[0].col, 0, true);
   else drawParty(g, cam, cx, cy, t);
 }
@@ -834,7 +833,7 @@ function draw(t) {
 function drawPip(t) {
   const g = pctx, s = PIPS, c = s / 2;
   // 걷기 = 넓은 지역 미니맵(지도가 이미 확대돼 있어서), 차·비행기 = 주변 확대 돋보기
-  const cam = { x: P.x, y: P.y, z: S.mode === 'walk' ? s / 320 : Math.max(CAM.z * 4, s / 120) }, span = s / cam.z;
+  const cam = { x: P.x, y: P.y, z: S.mode === 'walk' && !far() ? s / 320 : Math.max(CAM.z * 4, s / 120) }, span = s / cam.z;
   g.setTransform(DPR, 0, 0, DPR, 0, 0); g.fillStyle = SEA; g.fillRect(0, 0, s, s);
   worldTo(g, cam, c, c); drawLand(g, cam.z, true); drawRoutes(g, cam.z, t);
   g.setTransform(DPR, 0, 0, DPR, 0, 0); LBL = [[c, c - 8, 30, 36]];
@@ -870,7 +869,7 @@ $('nPlus').onclick = () => { draftN = Math.min(8, draftN + 1); renderSetup(); };
 $('goBtn').onclick = () => {
   S.party = draft.slice(0, draftN).map(m => ({ ...m, name: m.name || m.rel }));
   const first = !S.started; S.started = true; save(); $('setup').hidden = true;
-  if (first) toast('🚗 차로 공항까지 가요 · 화면을 끌어서 움직이고, 오른쪽 🚶/🚗 버튼으로 걷기·자동차(확대·축소)', 4600);
+  if (first) toast('🚗 차로 공항까지 가요 · 화면을 끌어서 움직이고, 두 손가락으로 확대·축소(⌖ = 기본 비율)', 4600);
   else toast(`${S.party.length}명 출발 준비 완료`);
 };
 $('bParty').onclick = () => { draftN = S.party.length; draft = S.party.map(m => ({ ...m })); renderSetup(); $('setup').hidden = false; };
@@ -903,8 +902,8 @@ $('bHome').onclick = () => location.href = '/';
 $('pip').addEventListener('click', () => {
   P.closedFor = null;
   if (S.mode === 'ground') return sheetGround(airport(S.from));
-  if (S.mode !== 'walk' && S.mode !== 'car') return;
-  const spot = S.mode === 'walk' ? nearest(SPOT, NEAR.spot) : null, air = nearestAirport(S.mode === 'walk' ? NEAR.walkAir : NEAR.carAir, a => a.c === S.country), city = nearest(CITY, NEAR.city * 1.3);
+  if (S.mode !== 'walk') return;
+  const spot = !far() ? nearest(SPOT, NEAR.spot) : null, air = nearestAirport(NEAR.walkAir, a => a.c === S.country), city = nearest(CITY, NEAR.city * 1.3);
   if (spot) sheetSpot(spot); else if (air) sheetAirport(air, P.lastFrom && P.quiet === air.code ? 'land' : undefined); else if (city) sheetCity(city);
   else { const c = nearest(CITY, 400); if (c) { sheetCity(c); } else toast('공항·도시 근처에서 누르면 정보가 열려요'); }
 });
@@ -932,8 +931,8 @@ function frame(ts) {
   if (S.mode === 'takeoff') S.mode = 'ground';
   if (S.mode === 'landing') S.mode = 'plane';
   P.alt = S.mode === 'plane' ? 1 : 0;
-  if ((S.mode === 'walk' || S.mode === 'car') && !canStand(P.x, P.y, S.country) && !AIR.some(a => dist(a, P) < 22)) { P.x = SEOUL.x; P.y = SEOUL.y; S.country = 'KOR'; S.mode = 'car'; }
-  const gk = S.boardFrom || 'walk', span0 = FLY(S.mode) ? S.span[gk] + (S.span.plane - S.span[gk]) * P.alt : S.span[S.mode];
+  if (S.mode === 'walk' && !canStand(P.x, P.y, S.country) && !AIR.some(a => dist(a, P) < 22)) { P.x = SEOUL.x; P.y = SEOUL.y; S.country = 'KOR'; }
+  const span0 = FLY(S.mode) ? S.span.walk + (S.span.plane - S.span.walk) * P.alt : S.span.walk;
   CAM.x = P.x; CAM.y = P.y; CAM.z = Math.min(W, H) / span0;
   if (S.mode === 'ground') { const a = airport(S.from); P.x = a.x; P.y = a.y; sheetGround(a); }
   if (!S.started) { renderSetup(); $('setup').hidden = false; }

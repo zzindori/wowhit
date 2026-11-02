@@ -94,9 +94,16 @@ def run(w, h, tag):
         at(pg, SPOTJ('리쓰린 공원'), 5); time.sleep(.3); pg.evaluate('S.span.walk = 2'); time.sleep(1.2)
         at(pg, SPOTJ('리쓰린 공원'), 'Math.max(.2, 60 / CAM.z)'); time.sleep(.3)
         assert not pg.evaluate('S.seen[SPOT.find(a=>a.ko==="리쓰린 공원").key]'), '아이콘 밖인데 반응'
-        at(pg, SPOTJ('리쓰린 공원')); wait(pg, 'S.seen[SPOT.find(a=>a.ko==="리쓰린 공원").key]', 2)
-        assert pg.is_visible('#peek') and '리쓰린' in pg.inner_text('#peek') and not pg.is_visible('#sheet'), '제목 띠 대신 창이 뜸'
-        pg.click('#peekBtn'); time.sleep(.2); assert '도장' in pg.inner_text('#sheet')
+        at(pg, SPOTJ('리쓰린 공원')); time.sleep(1.5)
+        k = 'SPOT.find(a=>a.ko==="리쓰린 공원").key'
+        assert 0 < pg.evaluate(f'S.fill[{k}]') < .5 and not pg.evaluate(f'S.seen[{k}]'), '채움이 안 되거나 너무 빨리 다녀옴'
+        assert pg.is_visible('#peek') and '리쓰린' in pg.inner_text('#peek') and '%' in pg.inner_text('#peek') and not pg.is_visible('#sheet'), '제목 띠(채움 %)'
+        wait(pg, f'S.seen[{k}]', 4)   # 반(3초) 넘으면 자동 다녀왔어요
+        pg.click('#peekBtn'); time.sleep(.2); assert '다녀왔어요' in pg.inner_text('#sheet')
+        # 수동: 다녀왔어요 끄기 → 가고 싶어요 → 다시 다녀왔어요(포인트는 한 번만)
+        p1 = pg.evaluate('S.pts'); pg.click('#sheet .seg.st button:nth-child(2)'); assert not pg.evaluate(f'S.seen[{k}]')
+        pg.click('#sheet .seg.st button:nth-child(1)'); assert pg.evaluate(f'S.wish[{k}]')
+        pg.click('#sheet .seg.st button:nth-child(2)'); assert pg.evaluate(f'S.seen[{k}]') and not pg.evaluate(f'S.wish[{k}]') and pg.evaluate('S.pts') == p1, '수동 상태/포인트'
         pg.screenshot(path=f'{OUT}/jj_{tag}_3spot.png')
         at(pg, CITYJ('takamatsu'), -4, 4); time.sleep(.5)
         assert '다카마쓰' in pg.inner_text('#peek'); pg.click('#peekBtn'); time.sleep(.2)
@@ -110,7 +117,7 @@ def run(w, h, tag):
         assert pg.evaluate('S.mode') == 'walk', '시내에서 저절로 탐'
         assert '마쓰야마' in pg.inner_text('#loc') and '🚗' in pg.inner_text('#loc')
         pg.evaluate('S.span.walk = 2'); time.sleep(1.2)
-        at(pg, SPOTJ('도고 온천')); wait(pg, 'S.seen[SPOT.find(a=>a.ko==="도고 온천").key]', 2)
+        at(pg, SPOTJ('도고 온천')); wait(pg, 'S.seen[SPOT.find(a=>a.ko==="도고 온천").key]', 5)
         # 🚩 깃발: 확대 상태에서만 버튼 → 이름 없으면 막힘 → 꽂기(+5) → 지나가면 +1 → 고치기
         assert pg.is_visible('#bFlag')
         pts0 = pg.evaluate('S.pts || 0')

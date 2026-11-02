@@ -29,8 +29,9 @@ button,input,select{font-family:inherit;color:inherit}
 #pip{pointer-events:auto;cursor:pointer;border-radius:50%;border:3px solid var(--ink);box-shadow:0 4px 0 rgba(44,43,53,.25),0 0 0 5px rgba(255,255,255,.7);background:var(--sea);display:block}
 .top{touch-action:none;cursor:grab;margin:-12px -14px 0;padding:8px 14px 2px}
 .grab{width:42px;height:5px;border-radius:3px;background:#d3cec3;margin:0 auto 8px}
-.hd{display:flex;align-items:center;gap:8px}.hd h2{flex:0 1 auto;min-width:0}.hd .cbtn{margin-left:auto}
-.info{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid #8a8794;background:#fff;color:#8a8794;font:700 13px/1 Georgia,serif;font-style:italic;padding:0;cursor:pointer;margin-right:auto}
+.hd{display:flex;align-items:flex-start;gap:8px}.hd h2{flex:1;min-width:0}
+.side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.info{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid #8a8794;background:#fff;color:#8a8794;font:700 13px/1 Georgia,serif;font-style:italic;padding:0;cursor:pointer}
 .info.on{background:#f0d98c;border-color:#c9a632;color:#6b5410}
 .cbtn{flex:none;height:32px;padding:0 12px;border-radius:999px;border:2px solid var(--ink);background:#fff;font-family:Jua,sans-serif;font-size:14px;box-shadow:0 2px 0 rgba(44,43,53,.25);cursor:pointer;white-space:nowrap}
 .cbtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
@@ -248,7 +249,9 @@ const NOTE = () => `<div class="note">노선: ${R.source}, ${R.checked} 확인. 
 function openSheet(head, body, code, kind) {
   locT = 0; const sh = $('sheet');
   const info = body.includes('class="hint"') ? `<button class="info" onclick="toggleHint()" aria-label="사용법">i</button>` : '';
-  sh.innerHTML = `<div class="top"><div class="grab"></div><div class="hd">${head.replace('</h2>', '</h2>' + info)}</div></div>` + body;
+  // 오른쪽 칸: 취소 버튼 → 그 밑에 ⓘ (제목 글자는 왼쪽에 그대로)
+  const i = head.indexOf('<button class="cbtn"'), title = i < 0 ? head : head.slice(0, i), cb = i < 0 ? '' : head.slice(i);
+  sh.innerHTML = `<div class="top"><div class="grab"></div><div class="hd">${title}${cb || info ? `<div class="side">${cb}${info}</div>` : ''}</div></div>` + body;
   sh.hidden = false; sh.scrollTop = 0; sh.style.transform = ''; P.sheetFor = code; P.sheetKind = kind; P.closedFor = null;
 }
 function closeSheet() { $('sheet').hidden = true; P.sheetFor = null; P.sheetKind = null; }

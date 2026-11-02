@@ -860,10 +860,12 @@ function draw(t) {
 }
 function drawPip(t) {
   const g = pctx, s = PIPS, c = s / 2;
-  // 걷기 = 넓은 지역 미니맵(지도가 이미 확대돼 있어서), 차·비행기 = 주변 확대 돋보기
-  const cam = { x: P.x, y: P.y, z: S.mode === 'walk' && !far() ? s / 320 : Math.max(CAM.z * 4, s / 120) }, span = s / cam.z;
+  // 돋보기 = 늘 큰 화면보다 4배 더 확대(최대 화면에 0.35km), 일본은 지리원 실제 지도까지
+  const cam = { x: P.x, y: P.y, z: Math.min(s / .35, Math.max(CAM.z * 4, s / 120)) }, span = s / cam.z;
   g.setTransform(DPR, 0, 0, DPR, 0, 0); g.fillStyle = SEA; g.fillRect(0, 0, s, s);
-  worldTo(g, cam, c, c); drawLand(g, cam.z, true); drawRoutes(g, cam.z, t);
+  worldTo(g, cam, c, c); drawLand(g, cam.z, true);
+  drawTiles(g, cam, c, c, s, s, tileAlpha(span));
+  drawRoutes(g, cam.z, t);
   g.setTransform(DPR, 0, 0, DPR, 0, 0); LBL = [[c, c - 8, 30, 36]];
   airportMarks(g, cam, c, c, true);
   cityMarks(g, cam, c, c, span);

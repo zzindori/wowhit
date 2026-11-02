@@ -29,7 +29,9 @@ button,input,select{font-family:inherit;color:inherit}
 #pip{pointer-events:auto;cursor:pointer;border-radius:50%;border:3px solid var(--ink);box-shadow:0 4px 0 rgba(44,43,53,.25),0 0 0 5px rgba(255,255,255,.7);background:var(--sea);display:block}
 .top{touch-action:none;cursor:grab;margin:-12px -14px 0;padding:8px 14px 2px}
 .grab{width:42px;height:5px;border-radius:3px;background:#d3cec3;margin:0 auto 8px}
-.hd{display:flex;align-items:center;gap:8px}.hd h2{flex:1;min-width:0}
+.hd{display:flex;align-items:center;gap:8px}.hd h2{flex:0 1 auto;min-width:0}.hd .cbtn{margin-left:auto}
+.info{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid #8a8794;background:#fff;color:#8a8794;font:700 13px/1 Georgia,serif;font-style:italic;padding:0;cursor:pointer;margin-right:auto}
+.info.on{background:#f0d98c;border-color:#c9a632;color:#6b5410}
 .cbtn{flex:none;height:32px;padding:0 12px;border-radius:999px;border:2px solid var(--ink);background:#fff;font-family:Jua,sans-serif;font-size:14px;box-shadow:0 2px 0 rgba(44,43,53,.25);cursor:pointer;white-space:nowrap}
 .cbtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 .hint{background:#fff7e0;border:1px solid #f0d98c;border-radius:10px;padding:7px 10px;font-size:13px;line-height:1.45;margin:4px 0 8px}
@@ -245,12 +247,14 @@ function chips(list, k, j) {
 const NOTE = () => `<div class="note">노선: ${R.source}, ${R.checked} 확인. 예약 전 항공사에서 다시 확인하세요.</div>`;
 function openSheet(head, body, code, kind) {
   locT = 0; const sh = $('sheet');
-  sh.innerHTML = `<div class="top"><div class="grab"></div><div class="hd">${head}</div></div>` + body;
+  const info = body.includes('class="hint"') ? `<button class="info" onclick="toggleHint()" aria-label="사용법">i</button>` : '';
+  sh.innerHTML = `<div class="top"><div class="grab"></div><div class="hd">${head.replace('</h2>', '</h2>' + info)}</div></div>` + body;
   sh.hidden = false; sh.scrollTop = 0; sh.style.transform = ''; P.sheetFor = code; P.sheetKind = kind; P.closedFor = null;
 }
 function closeSheet() { $('sheet').hidden = true; P.sheetFor = null; P.sheetKind = null; }
 window.xClose = () => { const c = P.sheetFor; closeSheet(); P.closedFor = c; $('sheet').style.transform = ''; };   // ✕: 그 공항을 벗어날 때까지 다시 안 염
-const HINT = t => `<div class="hint">${t}</div>`;
+const HINT = t => `<div class="hint" hidden>${t}</div>`;   // 사용법은 숨겨 두고 제목 옆 ⓘ로 펼침
+window.toggleHint = () => { const h = $('sheet').querySelector('.hint'), b = $('sheet').querySelector('.info'); if (h) { h.hidden = !h.hidden; b.classList.toggle('on', !h.hidden); } };
 function sheetAirport(a, how) {
   const meta = R.kr[a.code] || R.jp[a.code], fly = canFly(a);
   const head = `<h2>${a.c === 'KOR' ? '✈️' : '🛬'} ${meta.ko}</h2>` + (how === 'land' && P.lastFrom ? `<button class="cbtn" onclick="cancelLanding()">↩ 착륙 취소</button>` : '');

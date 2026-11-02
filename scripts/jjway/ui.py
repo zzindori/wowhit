@@ -56,7 +56,9 @@ def run(w, h, tag):
         pg.click('#pip'); time.sleep(.2); assert pg.is_visible('#sheet .cbtn'), '탑승 창 다시 안 열림'
         # 탑승 취소 → 걷기, 바로 다시 안 참 → 벗어났다 와서 다시 탑승
         pg.click('#sheet .cbtn'); wait(pg, 'S.mode === "walk"', 1)
-        assert '탑승을 취소했어요' in pg.inner_text('#sheet')
+        assert not pg.is_visible('#sheet .hint'), '사용법이 처음부터 보임'
+        pg.click('#sheet .info'); assert pg.is_visible('#sheet .hint') and '탑승을 취소했어요' in pg.inner_text('#sheet .hint')
+        pg.click('#sheet .info'); assert not pg.is_visible('#sheet .hint')
         time.sleep(2); assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('P.g') == 0, '취소 뒤 바로 다시 탐'
         at(pg, 'CJJ', 40); time.sleep(.2); at(pg, 'CJJ', 3); wait(pg, 'S.mode === "ground"', 3)
         time.sleep(1.5); assert pg.evaluate('S.mode') == 'ground', '가만히 있는데 이륙함'

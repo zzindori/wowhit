@@ -17,7 +17,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--sea);color:var(-
 #cv{position:fixed;left:0;top:0;touch-action:none}
 button,input,select{font-family:inherit;color:inherit}
 .chip{position:fixed;background:rgba(255,253,247,.94);border:2px solid var(--ink);border-radius:999px;padding:5px 12px;font-size:15px;box-shadow:0 3px 0 rgba(44,43,53,.25);z-index:20}
-#loc{left:calc(10px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));max-width:calc(100vw - 200px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#loc{left:calc(10px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));max-width:calc(100vw - 200px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+#loc:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
+#loc::after{content:' ↻';color:#8a8794}
 #btns{position:fixed;left:calc(10px + env(safe-area-inset-left));top:calc(50px + env(safe-area-inset-top));display:flex;gap:8px;z-index:20}
 .ib{width:42px;height:42px;border-radius:50%;border:2px solid var(--ink);background:var(--card);font-size:20px;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer;display:grid;place-items:center;padding:0}
 .ib:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
@@ -65,7 +67,7 @@ button,input,select{font-family:inherit;color:inherit}
 <body>
 <div id="vp"></div>
 <canvas id="cv" aria-label="한국·일본 여행 지도"></canvas>
-<div id="loc" class="chip">📍 불러오는 중…</div>
+<div id="loc" class="chip" role="button" title="새로 읽기">📍 불러오는 중…</div>
 <div id="btns">
   <button class="ib" id="bParty" title="가족 설정">👨‍👩‍👧‍👦</button>
   <button class="ib" id="bSet" title="관심 분야">⚙️</button>
@@ -630,6 +632,8 @@ $('bSet').onclick = () => { renderInts(); $('settings').hidden = false; };
 $('setClose').onclick = () => { $('settings').hidden = true; if (P.sheetFor) { const a = AIR.find(x => x.code === P.sheetFor); a && sheetAirport(a); } };
 $('resetBtn').onclick = () => { if (confirm('가족 설정·도장·위치를 모두 지우고 처음부터 할까요?')) { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); } };
 $('bHome').onclick = () => location.href = '/';
+// 위쪽 상태 칸 = 새로 읽기(캐시 피하려고 주소 뒤에 시각을 붙임, 지금 위치는 저장)
+$('loc').onclick = () => { S.pos = { x: P.x, y: P.y }; save(); location.replace(location.pathname + '?r=' + Date.now()); };
 
 /* ---------- 시작 ---------- */
 let last = 0;

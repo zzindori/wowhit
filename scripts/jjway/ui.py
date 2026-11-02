@@ -50,13 +50,17 @@ def run(w, h, tag):
         pg.evaluate('(() => { P.x = -250; P.y = -110; })()'); hold(pg, 'ArrowRight', 2)
         assert pg.evaluate('canStand(P.x,P.y,"KOR")'), '차가 바다로'
         # 김해: 탑승 게이지 → 움직이면 줄어듦 → 탑승 → 취소하면 차로
-        at(pg, AIRJ('PUS'), 3); time.sleep(.8)
+        # 멀리 볼 땐(260km) 공항 아이콘에 닿아도 안 탐 → '더 확대하면' 안내, 확대(40km)하면 게이지
+        at(pg, AIRJ('PUS')); time.sleep(.8)
+        assert pg.evaluate('P.g') == 0 and pg.evaluate('P.onAirT') == 'PUS' and '확대' in pg.inner_text('#toast'), '멀리서 탑승됨'
+        at(pg, AIRJ('PUS'), 40); pg.evaluate('S.span.walk = 40'); time.sleep(1.2)
+        at(pg, AIRJ('PUS'), 1); time.sleep(.8)
         g1 = pg.evaluate('P.g'); assert .3 < g1 < 1 and pg.evaluate('P.gKind') == 'board', g1
-        hold(pg, 'ArrowUp', .2); at(pg, AIRJ('PUS'), 3)
+        hold(pg, 'ArrowUp', .2); at(pg, AIRJ('PUS'), 1)
         assert pg.evaluate('P.g') < g1
         wait(pg, 'S.mode === "ground"', 3)
         pg.click('#sheet .cbtn'); wait(pg, 'S.mode === "walk" && !S.from', 1)
-        at(pg, AIRJ('PUS'), 40); time.sleep(.2); at(pg, AIRJ('PUS'), 3); wait(pg, 'S.mode === "ground"', 3)
+        at(pg, AIRJ('PUS'), 40); time.sleep(.2); at(pg, AIRJ('PUS'), 1); wait(pg, 'S.mode === "ground"', 3)
         pg.screenshot(path=f'{OUT}/jj_{tag}_1ground.png')
         hold(pg, 'ArrowRight', .3); wait(pg, 'S.mode === "plane"', 4)
         # 직항 없는 곳(김해→고치 없음) 회색
@@ -201,8 +205,10 @@ def run(w, h, tag):
         assert pg.evaluate('S.flags.length + Object.keys(S.seen).length + S.pts') == 0 and pg.inner_text('#ptsN') == '0' and pg.evaluate('S.party.length') == 4
         pg.click('#mClose')
         # 마쓰야마공항에서 탑승 대기 중 새로고침
-        pg.click('#bTarget')
-        at(pg, AIRJ('MYJ'), 3); wait(pg, 'S.mode === "ground"', 3); pg.evaluate('save()')
+        pg.click('#bTarget'); time.sleep(.3)
+        at(pg, AIRJ('MYJ'), 1); time.sleep(.6); assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('P.g') == 0, '⌖(260km)에서 탑승됨'
+        pg.evaluate('S.span.walk = 40'); time.sleep(.2)
+        at(pg, AIRJ('MYJ'), 1); wait(pg, 'S.mode === "ground"', 3); pg.evaluate('save()')
         pg.reload(); pg.wait_for_function('typeof AIR !== "undefined" && SPOT.length > 0'); time.sleep(.4)
         assert pg.evaluate('S.mode') == 'ground' and '탑승 취소' in pg.inner_text('#sheet')
         print(tag, 'OK · 오류', len(errs), errs[:3])

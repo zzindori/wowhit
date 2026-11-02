@@ -350,9 +350,11 @@ const P = { x: S.pos.x, y: S.pos.y, vx: 0, vy: 0, hd: 0, trail: [], warnAt: {}, 
 const CAM = { x: P.x, y: P.y, z: 1 };
 const FX = [];
 const NEAR = { city: 9, spot: 1.6 };
-// 공항 범위는 화면 크기 기준: 걸을 땐 공항 아이콘 주변 약 24px(0.8~5km — 넓으면 마쓰야마 6km·다카마쓰 14km 시내에 멈추기만 해도 탑승됨), 비행기 착륙은 약 28px(25~120km)
-const airR = () => Math.max(.8, Math.min(5, 24 / CAM.z));
-const askR = () => Math.max(25, Math.min(120, 28 / CAM.z));
+// 닿기 규칙 하나: 화면에서 아이콘 반경 TOUCH px 안이면 닿음 — 명소·깃발·공항 탑승·비행기 착륙 모두 같음.
+// 멀리 볼 때 22px가 수십 km라 시내에서 탑승되던 것 → 공항 탑승은 보이는 거리 AIR_DEEP km 이하로 확대했을 때만(명소·깃발은 DEEP)
+const TOUCH = 22, AIR_DEEP = 60;
+const touchR = () => TOUCH / CAM.z;
+const airR = touchR, askR = touchR;
 const FLY = m => m === 'ground' || m === 'takeoff' || m === 'plane' || m === 'landing';
 const GAUGE = { board: 1.5, land: 1.2 };
 const GCOL = { board: '#e8594f', land: '#3fa66b' };
@@ -604,11 +606,13 @@ function step(dt) {
     const sp = S.span.walk * SPF.walk;
     moveOnLand(dt, ix, iy, sp, (x, y) => canStand(x, y, S.country) || bridge(x, y));
     P.alt = 0;
-    const air = nearestAirport(airR(), a => a.c === S.country);
+    const air = nearestAirport(airR(), a => a.c === S.country), airDeep = Math.min(W, H) / CAM.z <= AIR_DEEP;
+    if (air && !airDeep && canFly(air) && P.quiet !== air.code && P.onAirT !== air.code) toast(`🔍 ${cityName(air.code)} 공항 — 더 확대하면 탈 수 있어요`, 2000);
+    P.onAirT = air && !airDeep ? air.code : null;
     if (P.quiet && (!air || air.code !== P.quiet)) { P.quiet = null; P.lastFrom = null; }
-    // 명소·깃발은 사람이 아이콘에 직접 닿아야 반응(화면에서 약 20px — 확대 정도와 상관없이 '닿기')
+    // 명소·깃발은 사람이 아이콘에 직접 닿아야 반응(TOUCH px — 확대 정도와 상관없이 '닿기')
     // '최대 확대'는 목표값이 아니라 지금 화면에 실제로 보이는 거리로(확대되는 중엔 아직 아님)
-    const hitR = Math.max(.02, 20 / CAM.z), deep = Math.min(W, H) / CAM.z <= DEEP;
+    const hitR = touchR(), deep = Math.min(W, H) / CAM.z <= DEEP;
     const spotT = !far() ? nearest(SPOT, hitR) : null, spot = deep ? spotT : null;
     if (spotT && !deep && P.onSpotT !== spotT.key) toast(`🔍 ${spotT.ko} — 더 확대하면 들어갈 수 있어요`, 2000);
     P.onSpotT = spotT ? spotT.key : null;
@@ -631,7 +635,7 @@ function step(dt) {
     else if (city) peek('city:' + city.id, `🏙️ ${city.ko}`, () => sheetCity(city));
     else { peek(null); autoSheet(null); }
     // 게이지: 공항에 서 있으면 탑승
-    if (air && canFly(air) && P.quiet !== air.code) { if (gauge(dt, air.code, air, 'board', still)) board(air); }
+    if (air && airDeep && canFly(air) && P.quiet !== air.code) { if (gauge(dt, air.code, air, 'board', still)) board(air); }
     else gaugeOff();
   } else if (mode === 'ground') {
     P.vx = P.vy = 0; P.alt = 0;
@@ -716,6 +720,7 @@ function pipLabel() {
       else h = `${cityName(S.from)}에서 갈 수 있는 곳<br><b>${Object.keys(dests).length}곳</b> (점선)`;
     }
   } else if (m === 'walk' && P.quiet && nearestAirport(airR())) h = `벗어났다 다시 오면<br>탑승 게이지`;
+  else if (m === 'walk' && P.onAirT) h = `🔍 더 확대하면<br>탑승 게이지`;
   if (h !== pipLast) { pipLast = h; $('pipTxt').innerHTML = h; $('pipTxt').hidden = !h; }
 }
 function updLoc() {
@@ -1235,7 +1240,7 @@ window.setFlagSt = (id, st) => {
 // 올라가 있으면 깃발도 차오름 → 반 넘으면 '다녀왔어요'(+3, 한 번)
 function flagStep(hitR) {
   if (S.mode !== 'walk' || Math.min(W, H) / CAM.z > DEEP) return null;
-  let near = null, nd = hitR * 1.3;
+  let near = null, nd = hitR;
   for (const r of FLAGS) {
     const d = Math.hypot(r.x - P.x, r.y - P.y);
     if (d > Math.max(hitR * 3, .05)) r.armed = true;

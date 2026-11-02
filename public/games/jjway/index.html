@@ -100,7 +100,6 @@ button,input,select{font-family:inherit;color:inherit}
 .mr{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:10px;cursor:pointer;font-size:14px}
 .mr:active{background:#fff3c4}.mr .ic{font-size:18px;width:26px;text-align:center}.mr b{font-weight:600;flex:1}.mr i{font-style:normal;font-size:12px;color:#8a8794;white-space:nowrap}
 .mr.no{opacity:.45}.mr.ok b{color:#8a6a1d}
-.seg.st{display:flex;margin:6px 0 4px}.seg.st button{flex:1;padding:7px 4px}
 .fb{display:flex;align-items:center;gap:8px;margin:4px 0 8px}.fb .bar{position:relative;max-width:120px;height:10px}.fb .bar u{position:absolute;left:50%;top:-2px;bottom:-2px;border-left:2px solid #e8594f}.fb small{font-size:12px;color:#6b6876}
 #peekBtn small{font:12px system-ui,sans-serif;color:#d4a017}
 .fsearch{display:flex;gap:6px}.fsearch .fin{flex:1;margin:0}.qgo{flex:none;width:64px;border-radius:10px;border:2px solid var(--ink);background:var(--pri);color:#fff;font:16px Jua,sans-serif;cursor:pointer}
@@ -110,12 +109,12 @@ button,input,select{font-family:inherit;color:inherit}
 #peek:has(#card:not([hidden])){max-width:none}
 #card{background:var(--card);border:2px solid var(--ink);border-radius:16px;box-shadow:0 4px 0 rgba(44,43,53,.3);padding:10px 12px;width:min(92vw,380px);font-family:system-ui,sans-serif}
 .ct{display:flex;align-items:center;gap:7px}.ct .ci{font-size:22px}.ct b{font:400 18px Jua,sans-serif;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cchip{flex:none;font:12px Jua,sans-serif;border-radius:999px;padding:2px 8px;white-space:nowrap}.cchip.ok{background:#fff3c4;color:#8a6a1d;border:1px solid #e2c25a}.cchip{color:#8a8794;border:1px solid #d8d3c8}.cchip.wi{background:#ffe6ef;color:#b3305f;border:1px solid #f3b6cb}
 .cb{display:flex;align-items:center;gap:8px;margin:7px 0 2px}.cb .bar{position:relative;flex:1;height:10px}.cb .bar u{position:absolute;left:50%;top:-2px;bottom:-2px;border-left:2px solid #e8594f}.cb small{font-size:12px;color:#6b6876;white-space:nowrap}
 .cd{font-size:13px;color:#6b6876;margin:4px 0 0}
 .cbtns{display:flex;gap:8px;margin-top:8px}.cbtns button{flex:1;height:40px;border-radius:12px;border:2px solid var(--ink);background:#fff;font:16px Jua,sans-serif;cursor:pointer;box-shadow:0 2px 0 rgba(44,43,53,.25)}
-.cbtns button{font-size:15px}.cbtns button.dt{flex:.8}
+.cbtns button{font-size:15px}
 .cbtns button.wi.on{background:#ffe6ef;border-color:#b3305f;color:#b3305f}.cbtns button.ok.on{background:#fff3c4;border-color:#a8790f;color:#8a6a1d}
+.ct .cdt{flex:none;height:32px;padding:0 12px;border-radius:999px;border:2px solid var(--ink);background:#fff;font:14px Jua,sans-serif;cursor:pointer;box-shadow:0 2px 0 rgba(44,43,53,.25)}.ct .cdt:active{transform:translateY(2px);box-shadow:none}
 .cbtns button:active{transform:translateY(2px);box-shadow:none}
 .hb{flex:none;width:32px;height:28px;border-radius:8px;border:1.5px solid #e2dcd0;background:#fff;color:#d8d3c8;font-size:16px;cursor:pointer;margin-left:4px}.hb.on{color:#e05a8a;border-color:#f3b6cb;background:#ffe6ef}
 .mfoot{display:flex;gap:8px;margin-top:8px}.mfoot button{flex:1;height:38px;border-radius:10px;border:2px solid #d8d3c8;background:#fff;font:14px Jua,sans-serif;color:#a33;cursor:pointer}
@@ -444,7 +443,6 @@ function sheetCity(c) {
   openSheet(head, h + PNOTE(), 'city:' + c.id, 'city');
 }
 function spotBadge(k) { return S.seen[k] ? '<em>✔</em>' : S.wish[k] ? '<em style="color:#e05a8a">💭</em>' : ''; }
-function stSeg(on, fn) { return `<div class="seg st"><button class="${on === 'wish' ? 'on' : ''}" onclick="${fn}('wish')">💭 가고 싶어요</button><button class="${on === 'been' ? 'on' : ''}" onclick="${fn}('been')">✔ 다녀왔어요</button></div>`; }
 // 다녀왔어요 표시(자동 = 채움 반 넘김 / 수동 = 버튼). 포인트는 명소마다 한 번만
 function markBeen(k, auto) {
   const s = SPOT.find(x => x.key === k); S.seen[k] = Date.now(); delete S.wish[k];
@@ -453,17 +451,10 @@ function markBeen(k, auto) {
   toast(`✔ ${s.ko} — 다녀왔어요!${S.paid[k] === 1 && auto ? ' +10' : ''}`); save();
   if (P.sheetFor === 'spot:' + k) sheetSpot(s);
 }
-window.setSpotSt = (k, st) => {
-  if (st === 'been') S.lock[k] = 1;   // 다녀왔어요를 손으로 바꾼 곳은 이제 자동 안 됨
-  if (st === 'been') { if (S.seen[k]) { delete S.seen[k]; save(); } else markBeen(k, false); }
-  else { if (S.wish[k]) delete S.wish[k]; else { S.wish[k] = Date.now(); delete S.seen[k]; SFX.pop(); } save(); }
-  const s = SPOT.find(x => x.key === k); if (P.sheetFor === 'spot:' + k) sheetSpot(s);
-};
 function sheetSpot(s) {
   const c = CITY.find(x => x.id === s.city), seen = S.seen[s.key];
   const head = `<h2>${ICON[s.t] || '📍'} ${s.ko}</h2>`;
   let h = `<div class="sub">${s.ja} · ${c.ko}${seen ? ' · ✔ ' + new Date(seen).toLocaleDateString('ko-KR') : ''}</div>`;
-  h += stSeg(seen ? 'been' : S.wish[s.key] ? 'wish' : '', `setSpotSt.bind(null,'${s.key}')`);
   h += `<div class="intro">${s.d}</div>`;
   if (s.ferry) h += `<div class="sub">⛴️ 섬이라 지금은 페리 대신 지도에서만 볼 수 있어요.</div>`;
   h += `<div class="note"><a href="https://www.wikidata.org/wiki/${s.wd}" target="_blank" rel="noopener">위키데이터에서 보기</a> · ${PL.source}</div>`;
@@ -561,10 +552,9 @@ function renderCard() {
   CARD_SIG = sig;
   let h = `<div class="ct"><span class="ci">${st.icon}</span><b>${esc(st.name)}</b></div>`;
   if (c.remote) { const d = Math.hypot(st.x - P.x, st.y - P.y); h += `<div class="cd">📍 여기서 ${d < 1 ? Math.round(d * 1000) + 'm' : d.toFixed(1) + 'km'}</div>`; }
-  // 상태는 보여 주기만, 바꾸기는 상세에서(가고 싶어요는 올라가 있으면 자동)
-  const chip = st.been ? '<span class="cchip ok">✔ 다녀왔어요</span>' : st.wish ? '<span class="cchip wi">💭 가고 싶어요</span>' : '<span class="cchip">표시 없음</span>';
-  h = h.replace('</b></div>', `</b>${chip}</div>`);
-  h += `<div class="cbtns"><button class="dt" onclick="cardOpen()">자세히 · 바꾸기 ▲</button></div>`;
+  // 윗줄 오른쪽 = 자세히, 아랫줄 = 상태 버튼 둘(켜진 쪽 색, 다시 누르면 표시 없음). 상세 창엔 상태 버튼 없음
+  h = h.replace('</b></div>', `</b><button class="cdt" onclick="cardOpen()">자세히 ▲</button></div>`);
+  h += `<div class="cbtns"><button class="wi${st.wish ? ' on' : ''}" onclick="cardSet('wish')">💭 가고 싶어요</button><button class="ok${st.been ? ' on' : ''}" onclick="cardSet('been')">✔ 다녀왔어요</button></div>`;
   $('card').innerHTML = h;
 }
 window.cardSet = st => {
@@ -572,11 +562,12 @@ window.cardSet = st => {
   const x = c.type === 'spot' ? c.s.x : c.rt.x, y = c.type === 'spot' ? c.s.y : c.rt.y;
   if (c.type === 'spot') {
     const k = c.s.key;
+    if (!S.paid['w:' + k]) { S.paid['w:' + k] = 1; if (st === 'wish' && !S.wish[k]) addPts(2); }   // 손으로 고른 곳은 고리가 다시 안 채움
     if (st === 'been') { if (S.seen[k]) delete S.seen[k]; else markBeen(k, false); }
     else { if (S.wish[k]) delete S.wish[k]; else { S.wish[k] = Date.now(); delete S.seen[k]; } }
     save(); if (P.sheetFor === 'spot:' + k) sheetSpot(c.s);
   } else {
-    const f = c.rt.f; setFlagSt(f.id, f.status === st ? (st === 'been' ? 'want' : '') : st);
+    const f = c.rt.f; f.autoW = 1; setFlagSt(f.id, st);   // 같은 걸 다시 누르면 표시 없음(setFlagSt)
   }
   const on = c.type === 'spot' ? (st === 'been' ? S.seen[c.s.key] : S.wish[c.s.key]) : c.rt.f.status === st;
   if (on) { burst(x, y, 16, st === 'been' ? ['#ffd84d', '#fff', '#ff8a5c'] : ['#e05a8a', '#fff', '#ffc2d6']); st === 'been' ? SFX.stamp() : SFX.pop(); vib(15); }
@@ -1222,7 +1213,6 @@ function sheetFlag(rt) {
   const f = rt.f, c = CATS[f.cat];
   const head = `<h2>${c[0]} ${esc(f.name)}</h2><button class="cbtn" onclick="editFlag('${f.id}')">✏️ 고치기</button>`;
   let h = `<div class="sub">🚩 내 깃발 · ${c[1]}${f.star ? ' · ' + '★'.repeat(f.star) : ''}</div>`;
-  h += stSeg(f.status === 'want' ? 'wish' : f.status, `setFlagSt.bind(null,'${f.id}')`);
   if (f.memo) h += `<div class="intro">${esc(f.memo)}</div>`;
   if (f.link) h += `<div class="sub"><a href="${esc(/^https?:\/\//.test(f.link) ? f.link : 'https://' + f.link)}" target="_blank" rel="noopener">🔗 링크 열기</a></div>`;
   h += `<a class="nav" href="https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lon}" target="_blank" rel="noopener">🧭 구글 지도에서 길 찾기</a>`;

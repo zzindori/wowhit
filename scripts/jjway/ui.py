@@ -98,19 +98,23 @@ def run(w, h, tag):
         at(pg, SPOTJ('리쓰린 공원'), 5); time.sleep(.3); pg.evaluate('S.span.walk = 2'); time.sleep(1.2)
         at(pg, SPOTJ('리쓰린 공원'), 'Math.max(.2, 60 / CAM.z)'); time.sleep(.3)
         assert not pg.evaluate('S.seen[SPOT.find(a=>a.ko==="리쓰린 공원").key]'), '아이콘 밖인데 반응'
-        # 마커 위에 서면 머리 위 고리가 차오름 → 꽉 차면 자동 '가고 싶어요'(+2) → 다녀왔어요·해제는 상세에서 손으로
+        # 마커 위에 서면 머리 위 고리가 차오름 → 꽉 차면 자동 '가고 싶어요'(+2) → 카드 아래 버튼 둘로 손으로 바꿈(상세엔 상태 버튼 없음)
         k = 'SPOT.find(a=>a.ko==="리쓰린 공원").key'
+        on = lambda: pg.evaluate("[...document.querySelectorAll('#card .cbtns .on')].map(b=>b.className)")
         at(pg, SPOTJ('리쓰린 공원')); time.sleep(.5)
-        assert pg.is_visible('#card') and '표시 없음' in pg.inner_text('#card') and 0 < pg.evaluate('P.ring') < 1, ('고리', pg.evaluate('P.ring'))
-        p0 = pg.evaluate('S.pts||0'); wait(pg, f'!!S.wish[{k}]', 3)
-        assert '가고 싶어요' in pg.inner_text('#card') and pg.evaluate('S.pts') == p0 + 2
-        pg.click('#card .cbtns button.dt'); time.sleep(.2)
-        pg.click('#sheet .seg.st button:nth-child(2)'); time.sleep(.2)
-        assert pg.evaluate(f'S.seen[{k}]') and not pg.evaluate(f'S.wish[{k}]') and pg.evaluate('S.pts') == p0 + 12, '상세에서 다녀왔어요'
-        pg.click('#sheet .seg.st button:nth-child(2)'); time.sleep(.2); assert not pg.evaluate(f'S.seen[{k}]'), '해제'
-        pg.evaluate('xClose()'); time.sleep(2.5)
+        assert pg.is_visible('#card .cdt') and on() == [] and 0 < pg.evaluate('P.ring') < 1, ('고리', pg.evaluate('P.ring'), on())
+        p0 = pg.evaluate('S.pts||0'); wait(pg, f'!!S.wish[{k}]', 3); time.sleep(.1)
+        assert on() == ['wi on'] and pg.evaluate('S.pts') == p0 + 2, on()
+        pg.click('#card .cbtns button.ok'); time.sleep(.2)
+        assert pg.evaluate(f'S.seen[{k}]') and not pg.evaluate(f'S.wish[{k}]') and pg.evaluate('S.pts') == p0 + 12 and on() == ['ok on'], '카드에서 다녀왔어요'
+        pg.click('#card .cbtns button.wi'); time.sleep(.2); assert pg.evaluate(f'S.wish[{k}]') and not pg.evaluate(f'S.seen[{k}]') and on() == ['wi on'], '가고 싶어요로 바꾸기'
+        pg.click('#card .cbtns button.wi'); time.sleep(.2); assert not pg.evaluate(f'S.wish[{k}]') and on() == [], '해제'
+        time.sleep(2.5)
         assert not pg.evaluate(f'S.wish[{k}]') and not pg.evaluate(f'S.seen[{k}]'), '손으로 되돌린 곳이 다시 자동으로 바뀜'
-        pg.click('#card .cbtns button.dt'); time.sleep(.2); pg.click('#sheet .seg.st button:nth-child(2)'); pg.evaluate('xClose()')
+        pg.click('#card .cbtns button.ok'); time.sleep(.2); assert pg.evaluate(f'S.seen[{k}]') and pg.evaluate('S.pts') == p0 + 12, '포인트 두 번'
+        pg.click('#card .cdt'); time.sleep(.2)
+        assert pg.is_visible('#sheet') and '리쓰린' in pg.inner_text('#sheet') and pg.locator('#sheet .seg, #sheet .cbtns').count() == 0, '상세에 상태 버튼이 남음'
+        pg.evaluate('xClose()')
         # 멀리서 핀 톡 → 카드 → 💭 가고 싶어요
         k3 = 'SPOT.find(a=>a.ko==="야시마지").key'
         at(pg, SPOTJ('야시마지'), 1); time.sleep(1)
@@ -118,7 +122,7 @@ def run(w, h, tag):
         if 0 < pos[0] < w and 60 < pos[1] < h - 60:
             pg.mouse.click(pos[0], pos[1]); time.sleep(.3)
             assert pg.is_visible('#card') and '야시마지' in pg.inner_text('#card') and '여기서' in pg.inner_text('#card'), '핀 톡 카드 없음'
-            pg.click('#card .cbtns button.dt'); time.sleep(.2); pg.click('#sheet .seg.st button:nth-child(1)'); assert pg.evaluate(f'S.wish[{k3}]'), '멀리서 가고 싶어요 안 됨'
+            pg.click('#card .cbtns button.wi'); time.sleep(.2); assert pg.evaluate(f'S.wish[{k3}]'), '멀리서 가고 싶어요 안 됨'
             pg.evaluate('xClose()')
         else: print(tag, '핀이 화면 밖이라 톡 건너뜀', pos)
         at(pg, CITYJ('takamatsu'), -4, 4); time.sleep(.5)
@@ -133,7 +137,7 @@ def run(w, h, tag):
         assert pg.evaluate('S.mode') == 'walk', '시내에서 저절로 탐'
         assert '마쓰야마' in pg.inner_text('#loc') and '🚗' in pg.inner_text('#loc')
         pg.evaluate('S.span.walk = 2'); time.sleep(1.2)
-        at(pg, SPOTJ('도고 온천')); time.sleep(.6); pg.click('#card .cbtns button.dt'); time.sleep(.2); pg.click('#sheet .seg.st button:nth-child(2)'); time.sleep(.2); assert pg.evaluate('S.seen[SPOT.find(a=>a.ko==="도고 온천").key]')
+        at(pg, SPOTJ('도고 온천')); time.sleep(.6); pg.click('#card .cbtns button.ok'); time.sleep(.2); assert pg.evaluate('S.seen[SPOT.find(a=>a.ko==="도고 온천").key]')
         # 🚩 깃발: 확대 상태에서만 버튼 → 이름 없으면 막힘 → 꽂기(+5) → 지나가면 +1 → 고치기
         assert pg.is_visible('#bFlag')
         pts0 = pg.evaluate('S.pts || 0')
@@ -147,7 +151,12 @@ def run(w, h, tag):
         pg.screenshot(path=f'{OUT}/jj_{tag}_6flag.png')
         pg.evaluate('(() => { P.x += 4; })()'); time.sleep(.4); pg.evaluate('(() => { P.x -= 4; })()'); time.sleep(.6)
         assert pg.evaluate('S.pts') == pts0 + 6 and '테스트 우동집' in pg.inner_text('#peek'), '지나가도 동전·제목 띠 없음'
-        pg.click('#card .cbtns button.dt'); time.sleep(.2); pg.click('#sheet .cbtn'); time.sleep(.2); pg.fill('#fName', '고친 우동집'); pg.click('#sheet .go'); time.sleep(.3)
+        assert pg.locator('#card .cbtns button.ok.on').count() == 1, '깃발 카드 다녀왔어요 표시'
+        pg.click('#card .cbtns button.ok'); time.sleep(.2); assert pg.evaluate('S.flags[0].status') == '', '깃발 해제'
+        pg.click('#card .cbtns button.wi'); time.sleep(.2); assert pg.evaluate('S.flags[0].status') == 'want', '깃발 가고 싶어요'
+        pg.click('#card .cbtns button.ok'); time.sleep(.2); assert pg.evaluate('S.flags[0].status') == 'been' and pg.evaluate('S.pts') == pts0 + 9, '깃발 다녀왔어요 +3'
+        pg.click('#card .cbtns button.ok'); pg.click('#card .cbtns button.ok'); time.sleep(.2); assert pg.evaluate('S.flags[0].status') == 'been' and pg.evaluate('S.pts') == pts0 + 9, '깃발 포인트 두 번'
+        pg.click('#card .cdt'); time.sleep(.2); pg.click('#sheet .cbtn'); time.sleep(.2); pg.fill('#fName', '고친 우동집'); pg.click('#sheet .go'); time.sleep(.3)
         assert pg.evaluate('S.flags[0].name') == '고친 우동집' and pg.evaluate('S.flags.length') == 1
         # 🔎 장소 찾기: 좌표 → 십자선 → 지도 끌어 조정 → 꽂기 / 구글 지도 긴 링크 → 이름까지 / 이름 검색(네트워크)
         pg.click('#bFlag'); time.sleep(.2); assert '장소 찾기' in pg.inner_text('#sheet')
@@ -178,7 +187,7 @@ def run(w, h, tag):
         s0 = pg.evaluate('S.span.walk'); pg.mouse.move(w / 2, h / 3); pg.mouse.wheel(0, 400); time.sleep(.1); assert pg.evaluate('S.span.walk') > s0, '휠 축소 안 됨'
         pg.mouse.wheel(0, -400); time.sleep(.1)
         # 쓸어내려 닫기 → 돋보기로 다시
-        if not pg.is_visible('#sheet'): pg.click('#card .cbtns button.dt') if pg.is_visible('#card') else pg.click('#peekBtn'); time.sleep(.2)
+        if not pg.is_visible('#sheet'): pg.click('#card .cdt') if pg.is_visible('#card') else pg.click('#peekBtn'); time.sleep(.2)
         swipe_down(pg); assert not pg.is_visible('#sheet')
         pg.click('#pip'); time.sleep(.2); assert pg.is_visible('#sheet')
         # 설정·새로고침

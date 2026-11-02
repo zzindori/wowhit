@@ -893,8 +893,11 @@ function draw(t) {
 }
 function drawPip(t) {
   const g = pctx, s = PIPS, c = s / 2;
-  // 돋보기 = 늘 큰 화면보다 4배 더 확대(최대 화면에 0.35km), 일본은 지리원 실제 지도까지
-  const cam = { x: P.x, y: P.y, z: Math.min(s / .35, Math.max(CAM.z * 4, s / 120)) }, span = s / cam.z;
+  // 큰 화면이 확대돼 있으면(20km 이하) 원 안은 5배 넓은 길잡이 지도(6~25km, 공원·명소·깃발이 보이게, 나는 파란 점),
+  // 멀리 볼 땐(차·비행기) 원 안이 주변 확대. 일본은 지리원 실제 지도까지
+  const ms = Math.min(W, H) / CAM.z, guide = !FLY(S.mode) && ms <= 20;
+  const pspan = guide ? Math.max(6, Math.min(25, ms * 5)) : Math.max(.35, Math.min(120, ms / 4));
+  const cam = { x: P.x, y: P.y, z: s / pspan }, span = pspan;
   g.setTransform(DPR, 0, 0, DPR, 0, 0); g.fillStyle = SEA; g.fillRect(0, 0, s, s);
   worldTo(g, cam, c, c); drawLand(g, cam.z, true);
   drawTiles(g, cam, c, c, s, s, tileAlpha(span));
@@ -905,7 +908,15 @@ function drawPip(t) {
   spotMarks(g, cam, c, c, span, true);
   flagMarks(g, cam, c, c, span, true);
   cityLabels(g, cam, c, c, 0, 11);
-  drawMe(g, cam, c, c, t, .75);
+  if (guide) {   // 나 = 가는 방향 화살 달린 파란 점 + 큰 화면이 보는 범위 네모
+    const vw = W / CAM.z * cam.z, vh = H / CAM.z * cam.z;
+    g.strokeStyle = 'rgba(47,111,208,.55)'; g.lineWidth = 1.5; g.setLineDash([4, 3]); g.strokeRect(c - vw / 2, c - vh * CY, vw, vh); g.setLineDash([]);
+    g.save(); g.translate(c, c); g.rotate(P.hd);
+    g.fillStyle = 'rgba(47,111,208,.25)'; g.beginPath(); g.arc(0, 0, 11, 0, 6.29); g.fill();
+    g.fillStyle = '#2f6fd0'; g.beginPath(); g.moveTo(11, 0); g.lineTo(4, -4.5); g.lineTo(4, 4.5); g.closePath(); g.fill();
+    g.strokeStyle = '#fff'; g.lineWidth = 2.5; g.beginPath(); g.arc(0, 0, 5, 0, 6.29); g.fill(); g.stroke();
+    g.restore();
+  } else drawMe(g, cam, c, c, t, .75);
   if (P.g > 0 && P.gFor) ring(g, c, c, c - 5, 8, P.g, GCOL[P.gKind]);
   else if (P.bad && Math.sin(t * 8) > 0) { g.strokeStyle = 'rgba(120,120,130,.8)'; g.lineWidth = 8; g.beginPath(); g.arc(c, c, c - 5, 0, 6.29); g.stroke(); }
 }

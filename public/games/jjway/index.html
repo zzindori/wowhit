@@ -1454,7 +1454,9 @@ window.doFind = async () => {
     else if (um) {
       let u = /^https?:\/\//.test(um[0]) ? um[0] : 'https://' + um[0];
       if (/(maps\.app\.goo\.gl|goo\.gl|g\.co)\//.test(u)) {
-        const r = await fetch('/api/jjway/expand?url=' + encodeURIComponent(u)); if (!r.ok) throw new Error('짧은 링크를 못 풀었어요');
+        const ex = () => fetch('/api/jjway/expand?url=' + encodeURIComponent(u)).then(r => r.ok ? r : Promise.reject(r), e => Promise.reject(e));
+        const r = await ex().catch(() => new Promise(ok => setTimeout(ok, 900)).then(ex)).catch(() => null);   // 서버가 막 깨어날 땐 한 번 더
+        if (!r) throw new Error('짧은 링크를 못 풀었어요');
         u = (await r.json()).url;
       }
       const g = parseG(u); if (!g.name && lead) g.name = lead;

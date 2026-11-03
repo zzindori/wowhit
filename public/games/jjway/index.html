@@ -119,6 +119,7 @@ button,input,select{font-family:inherit;color:inherit}
 .cbtns{display:flex;gap:8px;margin-top:8px}.cbtns button{flex:1;height:40px;border-radius:12px;border:2px solid var(--ink);background:#fff;font:16px Jua,sans-serif;cursor:pointer;box-shadow:0 2px 0 rgba(44,43,53,.25)}
 .cbtns button{font-size:15px}
 .cbtns button.wi.on{background:#ffe6ef;border-color:#b3305f;color:#b3305f}.cbtns button.ok.on{background:#fff3c4;border-color:#a8790f;color:#8a6a1d}
+@keyframes nudge{0%,100%{transform:none}30%{transform:translateY(-4px) scale(1.04)}60%{transform:translateY(1px)}}.cbtns.nudge button{animation:nudge .6s ease 2}.cbtns.nudge button+button{animation-delay:.15s}
 .cg{font-size:13px;color:#5d6b7a;margin:2px 0 0 31px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ct b small{font:12px system-ui,sans-serif;color:#7a8794}
 .gph{display:flex;gap:6px;overflow-x:auto;margin:6px 0 2px}.gph img{height:120px;border-radius:10px;flex:none;background:#eee}.gpa{font-size:11px;color:#7a8794;margin-bottom:6px}
 .grv{border-top:1px solid #e6e1d6;padding:7px 0;font-size:13px}.grv b{font-size:12px}.grv p{margin:3px 0 0;color:#3d3c48;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
@@ -690,7 +691,7 @@ function cardState(c) {
 }
 function renderCard() {
   const c = PEEK && PEEK.card; if (!c) return;
-  const st = cardState(c), sig = [PEEK.key, st.been, st.wish, !!c.remote, st.name].join('|');
+  const st = cardState(c), sig = [PEEK.key, st.been, st.wish, !!c.remote, st.name, !!(c.p && c.p.found)].join('|');
   if (sig === CARD_SIG) return;
   CARD_SIG = sig;
   let h = `<div class="ct"><span class="ci">${st.icon}</span><b>${esc(st.name)}${st.orig ? ` <small>${esc(st.orig)}</small>` : ''}</b></div>`;
@@ -698,7 +699,7 @@ function renderCard() {
   if (c.remote) { const d = Math.hypot(st.x - P.x, st.y - P.y); h += `<div class="cd">📍 여기서 ${d < 1 ? Math.round(d * 1000) + 'm' : d.toFixed(1) + 'km'}</div>`; }
   // 윗줄 오른쪽 = 자세히, 아랫줄 = 상태 버튼 둘(켜진 쪽 색, 다시 누르면 표시 없음). 상세 창엔 상태 버튼 없음
   h = h.replace('</b></div>', `</b><button class="cdt" onclick="cardOpen()">자세히 ▲</button></div>`);
-  h += `<div class="cbtns"><button class="wi${st.wish ? ' on' : ''}" onclick="cardSet('wish')">💭 가고 싶어요</button><button class="ok${st.been ? ' on' : ''}" onclick="cardSet('been')">✔ 다녀왔어요</button></div>`;
+  h += `<div class="cbtns${st.g && c.p.found ? ' nudge' : ''}"><button class="wi${st.wish ? ' on' : ''}" onclick="cardSet('wish')">💭 가고 싶어요</button><button class="ok${st.been ? ' on' : ''}" onclick="cardSet('been')">✔ 다녀왔어요</button></div>`;
   $('card').innerHTML = h;
 }
 window.cardSet = st => {
@@ -1245,7 +1246,7 @@ function overhead(g, cx, cy, t) {
   g.strokeStyle = been ? '#a8790f' : wish ? '#e05a8a' : '#2c2b35'; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.stroke();
   // 비행기 착륙처럼 바깥 고리가 빙 둘러 차오름(표시 없을 때), 차면 분홍으로 꽉
   const rg = been || wish ? 1 : P.ring || 0;
-  ring(g, x, y, r + 5, 4, rg, been ? '#f2b134' : '#e05a8a');
+  ring(g, x, y, r + 5, 4, rg, been ? '#f2b134' : gp ? '#2f6fd0' : '#e05a8a');   // 구글 가게는 파란 고리(발견)
   g.font = '20px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ic, x, y + 1);
   text(g, name.length > 14 ? name.slice(0, 13) + '…' : name, x, y + r + 11, 13, '#2c2b35');
 }
@@ -1420,7 +1421,19 @@ function gStep(hitR, still, dt) {
   for (const p of GP.list) { const d = Math.hypot(p.x - P.x, p.y - P.y); if (d < nd) { nd = d; near = p; } }
   if ((near ? near.id : null) !== P.onG) { P.onG = near ? near.id : null; P.gStill = 0; P.ring = 0; if (near) { near.hit = performance.now(); burst(near.x, near.y, 6, ['#7fb3ff', '#fff'], 30); } }
   if (!near) return null;
-  P.ring = 0;   // 닿으면 바로 아래 한 줄 카드 + 머리 위 고리(차지 않음). 자세히·가고 싶어요·다녀왔어요 중 하나를 눌러야 내 마커로 저장, 아니면 지나가면 사라짐
+  // 닿으면 바로 아래 카드 + 머리 위 고리. 멈춰 서면 고리가 차고(지나가면 안 참) 꽉 차면 '👀 발견!' +1(같은 가게는 하루 한 번) + 버튼 통통 — 저장은 버튼을 눌러야만
+  if (!still) P.ring = 0;
+  else if (!near.found) {
+    P.ring = Math.min(1, (P.ring || 0) + dt / RING_T);
+    if (P.ring >= 1) {
+      near.found = 1; CARD_SIG = '';
+      burst(near.x, near.y, 14, ['#7fb3ff', '#fff', '#ffd84d']); SFX.chime(); vib(12);
+      const d = new Date().toISOString().slice(0, 10); let o = {}; try { o = JSON.parse(localStorage.getItem('jjway-gfound') || '{}'); } catch (e) {}
+      if (o.d !== d) o = { d, ids: [] };
+      if (!o.ids.includes(near.id)) { o.ids.push(near.id); try { localStorage.setItem('jjway-gfound', JSON.stringify(o)); } catch (e) {} addPts(1); toast(`👀 발견! ${koName(near.name) || near.name} +1`, 1500); }
+      else toast(`👀 ${koName(near.name) || near.name}`, 1200);
+    }
+  } else P.ring = 1;
   return { p: near, show: true };
 }
 function gToFlag(p, st) {   // 구글 가게 → 내 깃발(이름·위치는 지금 보이는 것, 장소 ID는 구글 정보 다시 볼 때)

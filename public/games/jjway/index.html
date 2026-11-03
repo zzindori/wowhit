@@ -207,6 +207,7 @@ button,input,select{font-family:inherit;color:inherit}
     <div class="fsearch" style="margin-top:6px"><input id="gkIn" class="fin" type="password" autocomplete="off" placeholder="구글 지도 API 키 붙여넣기"><button class="qgo" id="gkGo">확인</button></div>
     <div id="gkMsg" class="small" style="text-align:left"></div>
     <div id="gUse" class="small" style="text-align:left;color:#5d6b7a"></div>
+    <div id="gBtns" class="row2" style="margin-top:6px;flex-wrap:wrap"><button id="gOnBtn"></button><button id="gOverBtn"></button></div>
     <h3 style="margin-top:10px">✨ Gemini 키 (가게 이름 한글로)</h3>
     <div class="small">구글 가게 이름이 일본어·영어일 때 한글 읽기로 바꿔요(예: Toritei → 토리테이). 이 폰에만 저장.</div>
     <div class="fsearch" style="margin-top:6px"><input id="gmIn" class="fin" type="password" autocomplete="off" placeholder="Gemini API 키 붙여넣기"><button class="qgo" id="gmGo">확인</button></div>
@@ -733,7 +734,15 @@ function lpFire(t) {
 }
 document.addEventListener('pointerdown', e => { const t = e.target.closest && e.target.closest('[data-lp]'); if (!t) return; LP = { t, x: e.clientX, y: e.clientY, tm: setTimeout(() => { if (LP) { lpFire(LP.t); LP.done = true; } }, 550) }; });
 document.addEventListener('pointermove', e => { if (LP && Math.hypot(e.clientX - LP.x, e.clientY - LP.y) > 10) { clearTimeout(LP.tm); LP = null; } });
-document.addEventListener('pointerup', () => { if (LP) clearTimeout(LP.tm); LP = null; });
+document.addEventListener('pointerup', () => { if (LP) { clearTimeout(LP.tm); if (!LP.done && LP.t.dataset.lp === 'names') nameShow(LP.t); } LP = null; });   // 짧게 톡 = 전체 이름 보기, 길게 = 복사
+function nameShow(t) {   // 잘린 이름을 작은 팝업으로 전부(2.5초 또는 다른 곳 누르면 닫힘)
+  const names = [...new Set((t.dataset.names ? JSON.parse(t.dataset.names) : CARD_NAMES).filter(Boolean))]; if (!names.length) return;
+  const old = $('cpick'); if (old) old.remove();
+  const el = document.createElement('div'); el.id = 'cpick'; el.className = 'nshow';
+  el.innerHTML = names.map((n, i) => `<div style="font:${i ? '14px system-ui' : '18px Jua'},sans-serif;word-break:break-all">${esc(n)}</div>`).join('') + `<small>길게 누르면 복사</small>`;
+  el.style.bottom = `calc(${($('peek').hidden ? 0 : $('peek').offsetHeight) + ($('sheet').hidden ? 0 : $('sheet').offsetHeight) + 24}px + env(safe-area-inset-bottom))`;
+  document.body.appendChild(el); el.onclick = () => el.remove(); setTimeout(() => el.isConnected && el.remove(), 2500);
+}
 document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp]')) e.preventDefault(); });
 window.cardSet = st => {
   const c = PEEK && PEEK.card; if (!c) return;
@@ -1421,17 +1430,20 @@ const FLAGS = [];   // 그리기용 {f, x, y, born, armed, last}
 // 📍 가까이에서 걸을 때 내 주변 150m 가게(식당·카페·가게·관광지)를 받아 둠(80m 움직일 때마다, 2.5초에 한 번까지 — Nearby Search Pro, 월 5,000번 무료).
 // 지도 그림에 아이콘이 이미 있어 핀은 안 그림. 닿으면 살짝 반짝, 멈춰 서면 카드 → [가고 싶어요]·[다녀왔어요]를 직접 눌러야 내 깃발(자동 없음, 장소 ID gid만 구글 것). 받은 가게 목록은 저장 안 함(메모리에만)
 const GP = { list: [], done: [], t: 0, busy: false, calls: 0 };
-const G_SPAN = 1.5, G_R = .15, G_DAY = 150;   // 화면 1.5km 이하에서만(가게 아이콘이 보이는 확대), 반경 150m, 하루 150번(월 무료 5,000번 ÷ 30)
+const G_SPAN = 1.5, G_R = .15, G_MON = 4500;   // 화면 1.5km 이하에서만(가게 아이콘이 보이는 확대), 반경 150m, 한 달 4,500번(무료 5,000번에서 여유 500 — 하루에 몰아 써도 됨)
 const today = () => new Date().toLocaleDateString('sv');   // 이 폰 시간대의 날짜(YYYY-MM-DD) — UTC면 한국·일본은 아침 9시에 넘어갔음
-const gDay = () => { const d = today(); try { const o = JSON.parse(localStorage.getItem('jjway-gcnt') || '{}'); return o.d === d ? o : { d, n: 0 }; } catch (e) { return { d, n: 0 }; } };
+// 이 폰에서 센 이번 달 사용량 { d: 'YYYY-MM', n } — 예전 하루 기록('YYYY-MM-DD')이 이번 달이면 그 수부터 이어 셈
+const gUse = k => { const m = today().slice(0, 7); try { const o = JSON.parse(localStorage.getItem(k) || '{}'); return o.d && o.d.slice(0, 7) === m ? { d: m, n: o.n || 0 } : { d: m, n: 0 }; } catch (e) { return { d: m, n: 0 }; } };
+const gUseAdd = (k, o) => { o.n++; try { localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} };
 const G_TYPES = ['restaurant', 'cafe', 'bakery', 'bar', 'meal_takeaway', 'store', 'shopping_mall', 'tourist_attraction', 'museum', 'art_gallery', 'lodging'];
 const gCat = t => /cafe|bakery|coffee/.test(t || '') ? 'cafe' : /restaurant|food|bar|meal|ramen|sushi|udon/.test(t || '') ? 'food' : /lodging|hotel|inn/.test(t || '') ? 'stay' : /store|shop|mall|market/.test(t || '') ? 'shop' : 'etc';
 function gNearby() {
   const key = GK.get(); if (!key || GP.busy || S.mode !== 'walk' || Math.min(W, H) / CAM.z > G_SPAN) return;
   if (GP.done.some(c => Math.hypot(P.x - c.x, P.y - c.y) < G_R * .6)) return;   // 이미 찾아본 동네(이번에 켠 동안)
   const now = performance.now(); if (now - GP.t < 3000) return;
-  const day = gDay(); if (day.n >= G_DAY) { if (!GP.capT) { GP.capT = 1; toast(`🔵 오늘 구글 가게 찾기 ${G_DAY}번을 다 썼어요 (무료 한도 지키기) · 내일 다시`, 3000); } return; }
-  day.n++; try { localStorage.setItem('jjway-gcnt', JSON.stringify(day)); } catch (e) {}
+  if (S.gOn === false) return;   // ⚙️ 구글 가게 찾기 꺼짐
+  const use = gUse('jjway-gcnt'); if (use.n >= G_MON && !S.gOver) { if (!GP.capT) { GP.capT = 1; toast(`🔵 이번 달 구글 가게 찾기 ${G_MON}번을 다 썼어요(무료 한도 지키기) · ⚙️ 설정에서 계속 쓰기를 켤 수 있어요(요금 발생)`, 3500); } return; }
+  gUseAdd('jjway-gcnt', use);
   GP.busy = true; GP.t = now; const at = { x: P.x, y: P.y }, c = unproj(P.x, P.y); GP.calls++;
   fetch('https://places.googleapis.com/v1/places:searchNearby', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.primaryType,places.primaryTypeDisplayName,places.shortFormattedAddress,places.businessStatus' },   // 같은 Pro 단계라 추가 비용 없음
     body: JSON.stringify({ includedTypes: G_TYPES, maxResultCount: 20, rankPreference: 'DISTANCE', languageCode: 'ko', locationRestriction: { circle: { center: { latitude: c.lat, longitude: c.lon }, radius: G_R * 1000 } } }) })
@@ -1476,7 +1488,7 @@ function gMarks(g, cam, cx, cy) {   // 닿아 있는 구글 가게만 파란 고
   const x = cx + (p.x - cam.x) * cam.z, y = cy + (p.y - cam.y) * cam.z, k = (Math.sin(performance.now() / 160) + 1) / 2;
   g.strokeStyle = `rgba(47,111,208,${.5 + .4 * k})`; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 13 + 3 * k, 0, 6.29); g.stroke();
 }
-const GD = new Map(), G_DDAY = 30;   // 자세히: 켜 둔 동안 같은 가게는 한 번만 받음(메모리에만 — 약관상 오래 저장 안 함) · 하루 30번(월 무료 1,000번 ÷ 30), 넘으면 구글 지도 링크(무료)
+const GD = new Map(), G_DMON = 900;   // 자세히: 켜 둔 동안 같은 가게는 한 번만 받음(메모리에만 — 약관상 오래 저장 안 함) · 한 달 900번(무료 1,000번에서 여유), 넘으면 구글 지도 링크(무료)
 const G_PHOTOS = 3;   // 자세히 사진 장수(장마다 요금 — 월 1,000장 무료, 많다 싶으면 1로). 더 보기는 구글 지도에서
 const PRICE = { PRICE_LEVEL_FREE: '무료', PRICE_LEVEL_INEXPENSIVE: '¥', PRICE_LEVEL_MODERATE: '¥¥', PRICE_LEVEL_EXPENSIVE: '¥¥¥', PRICE_LEVEL_VERY_EXPENSIVE: '¥¥¥¥' };
 async function gDetail(p) {   // 자세히(Place Details — 사진·평점·가격대·영업시간·리뷰·연락처). 저장 안 함, 열 때마다 받음
@@ -1486,9 +1498,9 @@ async function gDetail(p) {   // 자세히(Place Details — 사진·평점·가
   const gmap = `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}&query_place_id=${p.id}`;
   let d = GD.get(p.id);
   if (!d) {
-    const day = (() => { const dd = today(); try { const o = JSON.parse(localStorage.getItem('jjway-gdcnt') || '{}'); return o.d === dd ? o : { d: dd, n: 0 }; } catch (e) { return { d: dd, n: 0 }; } })();
-    if (day.n >= G_DDAY) { openSheet(head(), `<div class="qmsg">🔵 오늘 자세히 ${G_DDAY}번을 다 봤어요(구글 무료 한도 지키기) · 내일 다시</div><a class="nav" href="${gmap}" target="_blank" rel="noopener">🧭 구글 지도에서 무료로 보기(사진·리뷰·영업시간)</a>`, 'g:' + p.id, 'gplace'); return; }
-    day.n++; try { localStorage.setItem('jjway-gdcnt', JSON.stringify(day)); } catch (e) {}
+    const use = gUse('jjway-gdcnt');
+    if (use.n >= G_DMON && !S.gOver) { openSheet(head(), `<div class="qmsg">🔵 이번 달 자세히 ${G_DMON}번을 다 봤어요(구글 무료 한도 지키기) · ⚙️ 설정에서 계속 쓰기를 켤 수 있어요(요금 발생)</div><a class="nav" href="${gmap}" target="_blank" rel="noopener">🧭 구글 지도에서 무료로 보기(사진·리뷰·영업시간)</a>`, 'g:' + p.id, 'gplace'); return; }
+    gUseAdd('jjway-gdcnt', use);
   }
   if (!d) openSheet(head(), `<div class="qmsg">📡 구글에서 정보 받는 중…</div>`, 'g:' + p.id, 'gplace');
   try {
@@ -1916,9 +1928,18 @@ function renderInts() {
 const soundLbl = () => $('soundBtn').textContent = S.sound === false ? '🔇 소리 꺼짐' : '🔊 소리 켜짐';
 $('soundBtn').onclick = () => { S.sound = S.sound === false; save(); soundLbl(); if (S.sound) SFX.coin(); };
 $('bSet').onclick = () => { renderInts(); soundLbl(); gUseLbl(); $('settings').hidden = false; };
+$('gOnBtn').onclick = () => { S.gOn = S.gOn === false; save(); gUseLbl(); toast(S.gOn ? '🔵 구글 가게 찾기를 켰어요' : '구글 가게 찾기를 껐어요 — 구글을 안 불러요', 1600); };
+$('gOverBtn').onclick = () => {
+  if (!S.gOver && !confirm(`무료 한도(가게 찾기 월 ${G_MON}번 · 자세히 월 ${G_DMON}번)를 넘어도 계속 쓸까요?\n넘는 만큼은 구글 요금이 나와요(가게 찾기 1,000번에 약 $32 · 자세히 1,000번에 약 $20 이상).\n구글 콘솔에 하루 상한을 걸어 두는 걸 권해요.`)) return;
+  S.gOver = !S.gOver; GP.capT = 0; save(); gUseLbl();
+};
 function gUseLbl() {   // 이 폰에서 센 오늘 사용량(구글 실제 사용량은 콘솔에서 — 진짜 상한은 콘솔 할당량)
   const rd = k => { try { const o = JSON.parse(localStorage.getItem(k) || '{}'); return o.d === today() ? o.n || 0 : 0; } catch (e) { return 0; } };
-  $('gUse').textContent = GK.get() ? `📊 오늘(이 폰): 가게 찾기 ${rd('jjway-gcnt')}/${G_DAY} · 자세히 ${rd('jjway-gdcnt')}/${G_DDAY} — 확실한 상한은 구글 콘솔 할당량에서` : '';
+  const a = gUse('jjway-gcnt').n, b = gUse('jjway-gdcnt').n;
+  $('gUse').textContent = GK.get() ? `📊 이번 달(이 폰): 가게 찾기 ${a}/${G_MON} · 자세히 ${b}/${G_DMON} — 확실한 상한은 구글 콘솔 할당량에서` : '';
+  $('gOnBtn').textContent = `🔵 구글 가게 찾기: ${S.gOn === false ? '꺼짐' : '켜짐'}`;
+  $('gOverBtn').textContent = `⚠️ 무료 한도 넘어도 계속: ${S.gOver ? '켜짐(요금 발생)' : '꺼짐'}`;
+  $('gBtns').hidden = !GK.get();
 }
 $('setClose').onclick = () => { $('settings').hidden = true; const k = P.sheetFor; if (k) { closeSheet(); P.closedFor = null; } };
 $('resetBtn').onclick = () => { if (confirm('가족 설정·여행 기록·위치를 모두 지우고 처음부터 할까요?')) { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); } };

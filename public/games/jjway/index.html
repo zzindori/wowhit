@@ -576,7 +576,7 @@ function sheetAirport(a, how) {
     else { const ne = M.places.filter(p => p.c === 'JPN' && Math.hypot(p.x - a.x, p.y - a.y) < 90).slice(0, 6); if (ne.length) h += `<div class="rt"><b>주변 도시</b><div>${ne.map(p => `<span class="al">${p.ko.replace(/시$/, '')}</span>`).join('')}</div></div>`; }
     if (!near.length) h += `<div class="soon">🔦 이 지역 도시·명소는 아직 준비 중이에요 (지금은 시코쿠부터).</div>`;
   }
-  openSheet(head, h + NOTE(), 'air:' + a.code, how === 'land' ? 'land' : 'air');
+  openSheet(head, h + goBox(a.x + .8, a.y, 20) + NOTE(), 'air:' + a.code, how === 'land' ? 'land' : 'air');
 }
 function sheetGround(a) {
   const d = destsFrom(a.code), dom = k => d[k][0] === '국내선' ? 1 : 0, ks = Object.keys(d).sort((x, y) => dom(x) - dom(y) || d[y].length - d[x].length);
@@ -616,9 +616,28 @@ function sheetSpot(s) {
   let h = `<div class="sub">${s.ja} · ${c.ko}${seen ? ' · ✔ ' + new Date(seen).toLocaleDateString('ko-KR') : ''}</div>`;
   h += `<div class="intro">${s.d}</div>`;
   if (s.ferry) h += `<div class="sub">⛴️ 섬이라 지금은 페리 대신 지도에서만 볼 수 있어요.</div>`;
+  h += goBox(s.x, s.y, 2);
   h += `<div class="note"><a href="https://www.wikidata.org/wiki/${s.wd}" target="_blank" rel="noopener">위키데이터에서 보기</a> · ${PL.source}</div>`;
   openSheet(head, h, 'spot:' + s.key, 'spot');
 }
+
+/* ---------- 👀 지도에서 보기 · 🚀 여기로 가기(사용자: 기록 목록에서 이동 — 같은 나라 안에서만, 다른 나라면 비행기로) ---------- */
+const countryAt = (x, y) => { const a = admAt(x, y); return a ? a.c : unproj(x, y).lon > 129.6 || unproj(x, y).lat < 33.9 ? 'JPN' : 'KOR'; };
+function goBox(x, y, span) {   // 창 아래 버튼 두 개(지금 서 있는 곳에서 0.3km 넘게 떨어졌을 때만)
+  if (S.mode !== 'walk' || Math.hypot(x - P.x, y - P.y) < .3) return '';
+  const same = countryAt(x, y) === S.country;
+  return `<div class="cbtns"><button onclick="lookAt(${x},${y})">👀 지도에서 보기</button>` + (same ? `<button class="ok" onclick="goTo(${x},${y},${span})">🚀 여기로 가기</button>` : `<button onclick="goAir()">✈️ 가까운 공항으로</button>`) + `</div>` + (same ? '' : `<div class="note">다른 나라라 바로는 못 가요 — 공항에서 비행기로</div>`);
+}
+window.lookAt = (x, y) => { P.look = { x, y, until: 1e15, manual: 1 }; P.pinned = true; toast('👀 지도로 보는 중 — 움직이면 내 위치로 돌아와요', 1800); };
+window.goTo = (x, y, span) => {
+  closeSheet(); P.look = null; P.x = x; P.y = y; P.vx = P.vy = 0; P.trail = []; P.onSpot = P.onFlag = P.onG = null; GP.done = [];
+  setSpan('walk', span); CAM.x = x; CAM.y = y; burst(x, y, 24, ['#7fd1ff', '#fff', '#ffd84d']); SFX.chime(); vib(20); save(); toast('🚀 도착!', 1200);
+};
+window.goAir = () => {   // 지금 나라에서 직항이 있는 가장 가까운 공항으로
+  const a = AIR.filter(x => x.c === S.country && canFly(x)).sort((p, q) => Math.hypot(p.x - P.x, p.y - P.y) - Math.hypot(q.x - P.x, q.y - P.y))[0];
+  if (!a) return toast('가까운 공항을 못 찾았어요');
+  goTo(a.x + .8, a.y, 20); toast(`✈️ ${airName(a.code)} 근처예요 — 공항에 서 있으면 탑승 게이지`, 2600);
+};
 
 /* ---------- 게이지 ---------- */
 function vib(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
@@ -800,6 +819,7 @@ function step(dt) {
   LASTDT = dt;
   const [ix, iy] = input(), mode = S.mode, still = Math.hypot(ix, iy) < .05;
   if (!still && P.pinned) P.pinned = false;
+  if (!still && P.look && P.look.manual) P.look = null;   // 👀 지도에서 보기는 움직이면 내 위치로
   if (P.pick && mode === 'walk') {
     pickStep(dt, ix, iy); stepFX(dt);
     CAM.z *= Math.exp((Math.log(Math.min(W, H) / S.span.walk) - Math.log(CAM.z)) * (1 - Math.exp(-dt * 3)));
@@ -1640,6 +1660,7 @@ function sheetFlag(rt) {
   if (f.gid && GK.get()) h += `<button class="nav" style="border:0;width:100%" onclick="gInfo('${f.gid}')">⭐ 구글 정보(평점·영업시간)</button>`;
   // 구글 지도 앱으로(실제 길 안내·사진·리뷰는 거기서): 장소 ID가 있으면 그 가게 페이지, 없으면 좌표
   const gUrl = f.gid ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.name)}&query_place_id=${f.gid}` : `https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}`;
+  h += goBox(rt.x, rt.y, 1);
   h += `<div class="note">🔒 나만 보기 · ${new Date(f.created).toLocaleDateString('ko-KR')} 꽂음 · <a href="${gUrl}" target="_blank" rel="noopener">🧭 구글 지도에서 열기</a></div>`;
   openSheet(head, h, 'flag:' + f.id, 'flag');
 }

@@ -424,7 +424,9 @@ addEventListener('resize', resize); window.visualViewport && visualViewport.addE
 let joy = null, pinch = null; const keys = new Set(), PTR = new Map();
 const spanKey = () => S.mode === 'walk' || S.mode === 'ground' ? 'walk' : 'plane';
 const far = () => S.span.walk >= CARV;
-function setSpan(k, v) { S.span[k] = Math.max(SPAN[k][1], Math.min(SPAN[k][2], v)); }
+// 구글 지도일 땐 구글처럼 깊게(화면 0.25km — 건물·골목 가게), 지리원은 1.2km(더 확대해도 글자가 안 자세해짐)
+const SPAN_G = .25, spanMin = k => k === 'walk' && gReady() ? SPAN_G : SPAN[k][1];
+function setSpan(k, v) { S.span[k] = Math.max(spanMin(k), Math.min(SPAN[k][2], v)); }
 function zoomBy(f) { const k = spanKey(); setSpan(k, S.span[k] * f); }
 cv.addEventListener('pointerdown', e => {
   PTR.set(e.pointerId, { x: e.clientX, y: e.clientY }); cv.setPointerCapture(e.pointerId);
@@ -837,6 +839,7 @@ function step(dt) {
   CAM.x += (look.x - CAM.x) * (1 - Math.exp(-dt * 6)); CAM.y += (look.y - CAM.y) * (1 - Math.exp(-dt * 6));
 
   $('zoom').hidden = S.mode !== 'walk' && S.mode !== 'ground';
+  if (S.span.walk < spanMin('walk')) S.span.walk = spanMin('walk');   // 키를 지웠거나 구글 지도가 안 될 때 지리원 한계로
   $('bFlag').hidden = S.mode !== 'walk';
   { const b = bandOf(Math.min(W, H) / CAM.z); if (b !== BAND) { BAND = b; document.querySelectorAll('#bands .band').forEach(e => e.classList.toggle('on', +e.dataset.b === b)); } }
   if (PEEK && PEEK.card && !$('peek').hidden) renderCard();
@@ -955,7 +958,7 @@ function tileAlpha(span) {
 function drawTiles(g, cam, cx, cy, w, h, alpha) {
   if (alpha <= 0) return 0;
   const gs = gReady(), lat = unproj(cam.x, cam.y).lat, mpp = 1000 / (cam.z * (gs ? 1 : Math.min(DPR, 2)));   // 구글은 512px 고해상도라 한 단계 낮은 줌으로 같은 선명도
-  const z = Math.max(TILE.min, Math.min(TILE.max, Math.round(Math.log2(156543.03 * Math.cos(lat * Math.PI / 180) / mpp))));
+  const z = Math.max(TILE.min, Math.min(gs ? 20 : TILE.max, Math.round(Math.log2(156543.03 * Math.cos(lat * Math.PI / 180) / mpp))));
   const n = 2 ** z;
   const tl = unproj(cam.x - cx / cam.z, cam.y - cy / cam.z), br = unproj(cam.x + (w - cx) / cam.z, cam.y + (h - cy) / cam.z);
   const x0 = Math.floor(lon2t(tl.lon, n)), x1 = Math.floor(lon2t(br.lon, n)), y0 = Math.floor(lat2t(tl.lat, n)), y1 = Math.floor(lat2t(br.lat, n));
@@ -971,7 +974,7 @@ function drawTiles(g, cam, cx, cy, w, h, alpha) {
       const p = tileImg(z - up, tx >> up, ty >> up, false);
       if (p) { const f = 2 ** up; sw = p.naturalWidth / f; sx = (tx % f) * sw; sy = (ty % f) * sw; img = p; }
     }
-    if (img) { g.drawImage(img, sx, sy, sw, sw, a.x, a.y, b.x - a.x + .02, b.y - a.y + .02); drawn++; }
+    if (img) { const pd = .6 / cam.z; g.drawImage(img, sx, sy, sw, sw, a.x, a.y, b.x - a.x + pd, b.y - a.y + pd); drawn++; }   // 틈 안 보이게 화면 0.6px만 겹침(예전 20m 고정은 확대하면 30px 겹쳐 글자가 어긋남)
   }
   g.restore();
   return drawn;

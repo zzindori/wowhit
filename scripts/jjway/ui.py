@@ -191,7 +191,7 @@ def run(w, h, tag):
             def gfwd(r):   # 테스트는 127.0.0.1에서 돌아서: 구글엔 wowhit.org에서 온 것처럼, 브라우저엔 CORS 허용으로
                 resp = r.fetch(headers={**r.request.headers, 'referer': 'https://wowhit.org/games/jjway/', 'origin': 'https://wowhit.org'})
                 r.fulfill(response=resp, headers={**resp.headers, 'access-control-allow-origin': '*'})
-            pg.route('https://places.googleapis.com/**', gfwd)
+            pg.route('https://places.googleapis.com/**', gfwd); pg.route('https://tile.googleapis.com/**', gfwd)   # 키를 넣으면 배경도 구글 지도
             pg.click('#bSet'); time.sleep(.2); pg.fill('#gkIn', GKEY); pg.click('#gkGo')
             pg.wait_for_function('document.getElementById("gkMsg").innerText.includes("✅") || document.getElementById("gkMsg").innerText.includes("⚠️")', timeout=10000)
             assert '✅' in pg.inner_text('#gkMsg'), pg.inner_text('#gkMsg')

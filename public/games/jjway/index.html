@@ -148,6 +148,7 @@ button,input,select{font-family:inherit;color:inherit}
 .nav{display:block;text-align:center;margin:8px 0;padding:10px;border:2px solid var(--ink);border-radius:12px;background:#eef3ff;font-family:Jua,sans-serif;font-size:16px;text-decoration:none;color:var(--ink)!important}
 #attr{position:fixed;left:calc(6px + env(safe-area-inset-left));bottom:calc(4px + env(safe-area-inset-bottom));z-index:15;font:10px system-ui,sans-serif;color:#555;background:rgba(255,255,255,.75);padding:1px 5px;border-radius:4px}
 #attr a{color:inherit}
+#attr .glogo{font:600 12px Roboto,Arial,sans-serif;color:#5f6368;letter-spacing:.1px}
 </style>
 </head>
 <body>
@@ -166,7 +167,7 @@ button,input,select{font-family:inherit;color:inherit}
 
 <div id="peek" hidden><button id="peekBtn"></button><div id="card" hidden></div></div>
 <div id="toast"></div>
-<div id="attr" hidden>出典：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院 地理院タイル(淡色地図)</a></div>
+<div id="attr" hidden><span id="attrG" hidden><b class="glogo">Google Maps</b> <span id="attrC"></span></span><span id="attrJ">出典：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院 地理院タイル(淡色地図)</a></span></div>
 
 <div class="ov" id="setup" hidden>
   <div class="box">
@@ -336,7 +337,7 @@ function wtLoad(tx, ty) {
       T.br = [];
       for (const nm of ['road', 'railway']) for (const f of L[nm] || []) for (const r of f) {
         let run = [], len = 0;
-        const end = () => { if (len >= BR_MIN) { const a = []; for (let q = 0; q < run.length; q += 2) { const p = toW(run[q], run[q + 1]); a.push(p.x, p.y); } T.br.push(a); } run = []; len = 0; };
+        const end = () => { if (len >= BR_MIN) { const a = []; for (let q = 0; q < run.length; q += 2) { const p = toW(run[q], run[q + 1]); a.push(p.x, p.y); } a.len = 0; for (let q = 2; q < a.length; q += 2) a.len += Math.hypot(a[q] - a[q - 2], a[q + 1] - a[q - 1]); T.br.push(a); } run = []; len = 0; };
         for (let q = 2; q < r.length; q += 2) {
           const x0 = r[q - 2], y0 = r[q - 1], x1 = r[q], y1 = r[q + 1], sl = Math.hypot(x1 - x0, y1 - y0), ns = Math.max(1, Math.ceil(sl / 2));
           for (let k = q === 2 ? 0 : 1; k <= ns; k++) { const px = x0 + (x1 - x0) * k / ns, py = y0 + (y1 - y0) * k / ns;
@@ -379,7 +380,8 @@ function drawBridges(g, span) {   // 걸을 수 있는 다리: 나무색 굵은 
   const w = BR_PX / CAM.z; g.lineCap = g.lineJoin = 'round';
   for (const [col, lw] of [['rgba(92,62,32,.85)', w + 2.5 / CAM.z], ['#efc88a', w]]) {
     g.strokeStyle = col; g.lineWidth = lw; g.beginPath();
-    eachBridge(a => { g.moveTo(a[0], a[1]); for (let q = 2; q < a.length; q += 2) g.lineTo(a[q], a[q + 1]); });
+    eachBridge(a => { if (a.len * CAM.z < BR_PX * 2.5) return;   // 화면에서 점처럼 짧은 다리(강 위 작은 다리)는 안 그림
+      g.moveTo(a[0], a[1]); for (let q = 2; q < a.length; q += 2) g.lineTo(a[q], a[q + 1]); });
     g.stroke();
   }
 }
@@ -900,18 +902,46 @@ function drawLand(g, z, detail) {
 
 /* ---------- 지리원 타일(일본, 걷기로 확대할 때) ---------- */
 // 出典：国土地理院 地理院タイル(淡色地図). 타일은 메르카토르라 네 귀퉁이를 우리 좌표로 바꿔 늘려 붙임(도시 크기에선 오차 거의 없음)
-const TILE = { url: (z, x, y) => `https://cyberjapandata.gsi.go.jp/xyz/pale/${z}/${x}/${y}.png`, min: 5, max: 18, cache: new Map(), loading: 0 };
+const TILE = { url: (z, x, y) => `https://cyberjapandata.gsi.go.jp/xyz/pale/${z}/${x}/${y}.png`, min: 5, max: 18,   // 구글도 같은 단계(18까지)
+  cache: new Map(), loading: 0 };
 const unproj = (x, y) => ({ lon: x / M.proj.kx + M.proj.lon0, lat: M.proj.lat0 - y / M.proj.ky });
 const t2lon = (x, n) => x / n * 360 - 180, t2lat = (y, n) => Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI;
 const lon2t = (lon, n) => (lon + 180) / 360 * n, lat2t = (lat, n) => { const r = lat * Math.PI / 180; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n; };
+const GK = { get() { try { return localStorage.getItem('jjway-gkey') || ''; } catch (e) { return ''; } }, set(v) { try { v ? localStorage.setItem('jjway-gkey', v) : localStorage.removeItem('jjway-gkey'); } catch (e) {} } };
+// 구글 지도 키가 있으면 배경을 구글 지도(Map Tiles API 2D, 한국어 지명·가게 이름)로. 세션은 2주쯤 가서 이 폰에 저장(jjway-gsess), 실패하면 지리원 그대로
+// 약관: 구글 로고(글자 'Google Maps')·데이터 출처(viewport의 copyright) 표시, 미리 받기·저장 금지(브라우저 캐시만)
+const GT = { sess: null, exp: 0, key: '', busy: false, bad: '', copy: '', copyAt: 0, copyK: '' };
+try { const o = JSON.parse(localStorage.getItem('jjway-gsess') || 'null'); if (o) Object.assign(GT, o); } catch (e) {}
+async function gSession(key = GK.get(), force) {
+  if (!key) return null;
+  if (!force && GT.sess && GT.key === key && Date.now() / 1000 < GT.exp - 3600) return GT.sess;
+  const r = await fetch(`https://tile.googleapis.com/v1/createSession?key=${encodeURIComponent(key)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mapType: 'roadmap', language: 'ko-KR', region: 'KR', scale: 'scaleFactor2x', highDpi: true }) });   // 512px 고해상도 한 장 = 256px 네 장 → 같은 선명도에 조각 수 1/4
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.session) throw new Error(j.error && j.error.status === 'PERMISSION_DENIED' ? '키가 Map Tiles API를 못 써요' : (j.error && j.error.message || '지도 세션 실패').slice(0, 80));
+  Object.assign(GT, { sess: j.session, exp: +j.expiry, key, bad: '' });
+  try { localStorage.setItem('jjway-gsess', JSON.stringify({ sess: GT.sess, exp: GT.exp, key })); } catch (e) {}
+  return GT.sess;
+}
+function gReady() {   // 구글 타일을 쓸 수 있으면 세션, 아니면 null(한 번 시도해서 실패하면 지리원)
+  const key = GK.get(); if (!key || GT.bad === key) return null;
+  if (GT.sess && GT.key === key && Date.now() / 1000 < GT.exp - 3600) return GT.sess;
+  if (!GT.busy) { GT.busy = true; gSession(key).catch(() => { GT.bad = key; }).finally(() => { GT.busy = false; }); }
+  return null;
+}
+function gCopyright(z, tl, br) {   // 지금 화면의 데이터 출처(3초에 한 번, 화면이 바뀌었을 때만)
+  const k = `${z}/${tl.lat.toFixed(2)}/${tl.lon.toFixed(2)}`, now = performance.now();
+  if (k === GT.copyK || now - GT.copyAt < 3000) return; GT.copyK = k; GT.copyAt = now;
+  fetch(`https://tile.googleapis.com/tile/v1/viewport?session=${GT.sess}&key=${encodeURIComponent(GT.key)}&zoom=${z}&north=${tl.lat}&south=${br.lat}&east=${br.lon}&west=${tl.lon}`)
+    .then(r => r.json()).then(j => { GT.copy = j.copyright || ''; }).catch(() => {});
+}
 function tileImg(z, x, y, want) {
-  const k = z + '/' + x + '/' + y; let t = TILE.cache.get(k);
+  const gs = gReady(), k = (gs ? 'g' : '') + z + '/' + x + '/' + y; let t = TILE.cache.get(k);
   if (t) { t.used = performance.now(); return t.ok ? t.img : null; }
   if (!want || TILE.loading > 8) return null;
   const img = new Image(); t = { img, ok: false, used: performance.now() }; TILE.cache.set(k, t); TILE.loading++;
   img.onload = () => { t.ok = true; TILE.loading--; };
   img.onerror = () => { t.bad = true; TILE.loading--; };
-  img.src = TILE.url(z, x, y);
+  img.src = gs ? `https://tile.googleapis.com/v1/2dtiles/${z}/${x}/${y}?session=${gs}&key=${encodeURIComponent(GT.key)}` : TILE.url(z, x, y);
   if (TILE.cache.size > 500) {           // 오래 안 쓴 것부터 버림
     const old = [...TILE.cache.entries()].filter(([, v]) => v.ok || v.bad).sort((a, b) => a[1].used - b[1].used).slice(0, 120);
     old.forEach(([kk]) => TILE.cache.delete(kk));
@@ -924,21 +954,22 @@ function tileAlpha(span) {
 }
 function drawTiles(g, cam, cx, cy, w, h, alpha) {
   if (alpha <= 0) return 0;
-  const lat = unproj(cam.x, cam.y).lat, mpp = 1000 / (cam.z * Math.min(DPR, 2));
+  const gs = gReady(), lat = unproj(cam.x, cam.y).lat, mpp = 1000 / (cam.z * (gs ? 1 : Math.min(DPR, 2)));   // 구글은 512px 고해상도라 한 단계 낮은 줌으로 같은 선명도
   const z = Math.max(TILE.min, Math.min(TILE.max, Math.round(Math.log2(156543.03 * Math.cos(lat * Math.PI / 180) / mpp))));
   const n = 2 ** z;
   const tl = unproj(cam.x - cx / cam.z, cam.y - cy / cam.z), br = unproj(cam.x + (w - cx) / cam.z, cam.y + (h - cy) / cam.z);
   const x0 = Math.floor(lon2t(tl.lon, n)), x1 = Math.floor(lon2t(br.lon, n)), y0 = Math.floor(lat2t(tl.lat, n)), y1 = Math.floor(lat2t(br.lat, n));
   if ((x1 - x0 + 1) * (y1 - y0 + 1) > 120) return 0;
+  if (gs && cam === CAM) gCopyright(z, tl, br);
   g.save(); g.globalAlpha = alpha; g.imageSmoothingEnabled = true;
   let drawn = 0;
   for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
     const a = proj(t2lon(tx, n), t2lat(ty, n)), b = proj(t2lon(tx + 1, n), t2lat(ty + 1, n));
-    let img = tileImg(z, tx, ty, true), sx = 0, sy = 0, sw = 256;
+    let img = tileImg(z, tx, ty, true), sx = 0, sy = 0, sw = img ? img.naturalWidth : 256;
     // 아직 없으면 위 단계 타일 일부를 늘려서 대신
     for (let up = 1; !img && up <= 4 && z - up >= TILE.min; up++) {
       const p = tileImg(z - up, tx >> up, ty >> up, false);
-      if (p) { const f = 2 ** up; sw = 256 / f; sx = (tx % f) * sw; sy = (ty % f) * sw; img = p; }
+      if (p) { const f = 2 ** up; sw = p.naturalWidth / f; sx = (tx % f) * sw; sy = (ty % f) * sw; img = p; }
     }
     if (img) { g.drawImage(img, sx, sy, sw, sw, a.x, a.y, b.x - a.x + .02, b.y - a.y + .02); drawn++; }
   }
@@ -1183,6 +1214,7 @@ function draw(t) {
   // 우리 도·현 경계는 거칠어서 타일이 진할 땐 숨김(항구 바다를 가로지르던 것)
   if (ta > 0 && ta < .6 && P.adm) { g.strokeStyle = `rgba(227,154,18,${.75 * (1 - ta / .6)})`; g.lineWidth = 3 / CAM.z; P.adm.p.forEach(p => g.stroke(p)); }
   $('attr').hidden = !(ta > .05 && tn);
+  { const gg = !!gReady(); $('attrG').hidden = !gg; $('attrJ').hidden = gg; if (gg) $('attrC').textContent = GT.copy; }
   drawBridges(g, span);
   drawRoutes(g, CAM.z, t);
   g.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -1457,7 +1489,6 @@ function parseG(u) {
   return { lat: m ? +m[1] : null, lon: m ? +m[2] : null, name };
 }
 // 구글 장소 검색(Places API New, 각자 키 — ⚙️ 설정, 이 폰에만 저장). 지금 보는 곳 50km를 먼저(locationBias)
-const GK = { get() { try { return localStorage.getItem('jjway-gkey') || ''; } catch (e) { return ''; } }, set(v) { try { v ? localStorage.setItem('jjway-gkey', v) : localStorage.removeItem('jjway-gkey'); } catch (e) {} } };
 async function gPlaces(q, max = 10, key = GK.get()) {
   const c = unproj(CAM.x, CAM.y);
   const r = await fetch('https://places.googleapis.com/v1/places:searchText', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location' },
@@ -1475,9 +1506,13 @@ async function search(q) {
 $('gkIn').value = GK.get();
 $('gkGo').onclick = async () => {
   const v = $('gkIn').value.trim(), m = $('gkMsg');
-  if (!v) { GK.set(''); m.textContent = '키를 지웠어요 · 장소 찾기는 좌표·구글 링크만'; return; }
+  if (!v) { GK.set(''); TILE.cache.clear(); m.textContent = '키를 지웠어요 · 장소 찾기는 좌표·구글 링크만 · 지도는 지리원'; return; }
   m.textContent = '📡 확인 중…';
-  try { await gPlaces('高松駅', 1, v); GK.set(v); m.textContent = '✅ 키가 돼요 · 🔍 장소 찾기가 구글 검색이 됐어요'; SFX.coin(); }
+  try {
+    await gPlaces('高松駅', 1, v); GK.set(v);
+    let mapOk = true; try { await gSession(v, true); } catch (e) { mapOk = false; }
+    TILE.cache.clear(); m.textContent = '✅ 키가 돼요 · 🔍 장소 찾기 = 구글 검색' + (mapOk ? ' · 🗺️ 확대하면 구글 지도' : ' · (지도는 Map Tiles API를 켜면 구글 지도)'); SFX.coin();
+  }
   catch (e) { m.textContent = '⚠️ ' + e.message + ' — 키에 Places API (New)를 켰는지, 웹사이트 제한에 wowhit.org가 있는지 봐 주세요'; }
 };
 let QRES = [];

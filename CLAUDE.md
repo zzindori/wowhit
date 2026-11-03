@@ -78,6 +78,9 @@ version: 'x.y.z+build'
 ## 작업 히스토리
 
 ### 2026-11-03
+- jjWay 배경 지도 구글로(사용자: '다음 지도 넣어봐'): 키가 있으면 확대 때 깔리는 타일을 Map Tiles API 2D(`GT`, `gSession` — roadmap·ko-KR·region KR·**scaleFactor2x + highDpi 512px**: 한 단계 낮은 줌으로 같은 선명도 = 조각 수 1/4, 세션은 이 폰에 `jjway-gsess` 저장·만료 1시간 전 새로)로, 실패·키 없음이면 지리원 그대로(`gReady`, 한 번 실패한 키는 지리원).
+  출처: 왼쪽 아래 'Google Maps'(글자 로고) + viewport API copyright('지도 데이터 ©2026 Google', 3초에 한 번·화면 바뀔 때만 `gCopyright`), 지리원 출처는 숨김. 설정 [확인]이 검색 + 지도 세션 둘 다 시험. 다리 그림은 화면에서 20px보다 짧으면 안 그림(동네 단계에서 강 위 작은 다리가 주황 점처럼 흩어지던 것, `a.len`).
+  확인(헤드리스 route로 Referer·CORS): 가까이(2km) 다카마쓰역 주변 조각 50·동네(20km) 41(처음 받을 때), 한국어 역·가게·섬 이름, 오류 0. ui.py는 키 넣은 뒤 tile·places 둘 다 route, 두 화면 오류 0. apps.ts 지도 설명
 - jjWay 구글 장소 검색 + 다리 그리기(사용자: '국토지리원은 검색이 제일 그렇잖아' → 구글로, '키는 다른 앱처럼 각자', 예전 검색은 삭제·지리원 배경·판정은 남김):
   ⚙️ 설정 '구글 지도 키'(`GK`, localStorage `jjway-gkey`, 이 폰에만·서버로 안 보냄, [확인] = 高松駅 시험 검색) → 🔍 이름·주소 = Places API (New) Text Search(`gPlaces`, 한국어, 지금 보는 곳 50km locationBias, 필드 id·displayName·formattedAddress·location = Text Search Pro).
   키 없으면 '설정에 키' 안내, 좌표·구글 링크·🎯 고르기는 그대로. 좌표 없는 폰 공유 링크도 그 글로 구글 검색. 꽂은 깃발에 구글 장소 ID `gid`만 저장(약관상 계속 저장 가능 — 평점·영업시간은 저장 안 함).

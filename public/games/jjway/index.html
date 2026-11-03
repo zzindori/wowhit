@@ -37,7 +37,7 @@ button,input,select{font-family:inherit;color:inherit}
 .cbtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 .hint{background:#fff7e0;border:1px solid #f0d98c;border-radius:10px;padding:7px 10px;font-size:13px;line-height:1.45;margin:4px 0 8px}
 #pipTxt{margin-top:6px;font-size:13px;background:rgba(255,253,247,.94);border:2px solid var(--ink);border-radius:10px;padding:3px 8px;max-width:190px;line-height:1.3}
-#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,440px)}
+#toast{position:fixed;left:calc(50% - 32px);transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(calc(100vw - 92px),440px)}
 .t{background:var(--ink);color:#fff;border-radius:12px;padding:8px 14px;font-size:15px;line-height:1.35;text-align:center;animation:tin .25s ease-out}
 @keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 #sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));width:min(96vw,460px);max-height:46vh;overflow:auto;background:var(--card);border:2px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 rgba(44,43,53,.25);z-index:30;padding:12px 14px 14px;touch-action:pan-y;font-family:system-ui,sans-serif}
@@ -194,6 +194,10 @@ button,input,select{font-family:inherit;color:inherit}
     <h1 style="font-size:24px">⚙️ 관심 분야</h1>
     <div class="small" style="text-align:center">켠 분야만 보이고, 위에 있을수록 먼저 보여요.</div>
     <div id="ints"></div>
+    <h3 style="margin-top:14px">🗺️ 구글 지도 키</h3>
+    <div class="small">넣으면 🔍 장소 찾기가 구글 검색이 돼요(한국어 그대로·작은 가게까지). 키는 <b>이 폰(브라우저)에만</b> 저장되고 우리 서버로 보내지 않아요. 만드는 법은 <a href="/guide#gmaps" target="_blank">이용 안내</a>.</div>
+    <div class="fsearch" style="margin-top:6px"><input id="gkIn" class="fin" type="password" autocomplete="off" placeholder="구글 지도 API 키 붙여넣기"><button class="qgo" id="gkGo">확인</button></div>
+    <div id="gkMsg" class="small" style="text-align:left"></div>
     <div class="row2"><button id="soundBtn">🔊 소리</button><button id="resetBtn">처음부터</button><button id="setClose">닫기</button></div>
   </div>
 </div>
@@ -278,7 +282,8 @@ function canStand(x, y, c) {      // 땅이거나 땅에서 5km 안(좁은 해�
 // 국토지리원 벡터 타일 z12(물 면적 waterarea = 1:25,000 원본, 바다·호수·넓은 강·해자) — 물은 못 걷고, 그 위 도로·철도·방파제(다리·제방)는 걸을 수 있게 지움.
 // 타일 하나 약 8km·20~35KB → 1024px(약 8m 칸)로 칠해 둠. 먼 바다는 타일이 없어 404 = 전부 물. 아직 못 받았거나 실패하면 예전 거친 판정(canStand).
 // 보이는 거리 WSPAN km 이하일 때만(멀리 볼 땐 예전처럼 넉넉하게 — 해협·섬 건너기)
-const WZ = 12, WPX = 1024, WSPAN = CARV, WROAD = 3.5, SHORE_PX = 4;   // WROAD: 다리로 칠 도로 굵기(px, 약 28m) · SHORE_PX: 물이어도 화면 이만큼 안에 땅이 있으면 걸음
+const WZ = 12, WPX = 1024, WSPAN = CARV, WROAD = 3.5, SHORE_PX = 4, BR_PX = 8, BR_MIN = 10;   // BR_PX: 다리 그리는 굵기(화면 px, 판정 SHORE_PX의 두 배 = 보이는 다리 위면 걸어짐) · BR_MIN: 다리로 볼 물 위 구간(타일 px, 약 80m)
+//   // WROAD: 다리로 칠 도로 굵기(px, 약 28m) · SHORE_PX: 물이어도 화면 이만큼 안에 땅이 있으면 걸음
 const WT = new Map();
 function pbf(b, s, e, cb) {
   let i = s;
@@ -315,7 +320,7 @@ function mvtLayers(buf, want) {
 function wtLoad(tx, ty) {
   const key = tx + '/' + ty; let T = WT.get(key); if (T) return T;
   T = { st: 0, m: null }; WT.set(key, T);
-  if (WT.size > 40) WT.delete(WT.keys().next().value);
+  if (WT.size > 48) WT.delete(WT.keys().next().value);
   fetch(`https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/${WZ}/${tx}/${ty}.pbf`).then(r => {
     if (r.status === 404) { T.st = 2; return; }   // 먼 바다
     if (!r.ok) throw r.status;
@@ -325,6 +330,20 @@ function wtLoad(tx, ty) {
       const path = rings => { g.beginPath(); for (const r of rings) { g.moveTo(r[0], r[1]); for (let j = 2; j < r.length; j += 2) g.lineTo(r[j], r[j + 1]); } };
       g.fillStyle = '#000';
       for (const f of L.waterarea || []) { path(f); g.closePath(); g.fill(); }   // 바깥·구멍(섬) 감김 방향이 반대라 nonzero로 섬이 빠짐
+      // 다리 = 물 위를 지나는 도로·철도 구간(2px마다 물인지 봐서 이어진 물 위 구간, 80m 이상) → 화면에 굵게 그리고 '가까운 다리' 안내(T.br, 우리 좌표 km)
+      const wd = g.getImageData(0, 0, WPX, WPX).data, isW = (px, py) => { const i = Math.floor(py), j = Math.floor(px); return i >= 0 && j >= 0 && i < WPX && j < WPX && wd[(i * WPX + j) * 4 + 3] > 127; };
+      const toW = (px, py) => { const n = 2 ** WZ, fx = tx + px / WPX, fy = ty + py / WPX; return proj(fx / n * 360 - 180, Math.atan(Math.sinh(Math.PI * (1 - 2 * fy / n))) * 180 / Math.PI); };
+      T.br = [];
+      for (const nm of ['road', 'railway']) for (const f of L[nm] || []) for (const r of f) {
+        let run = [], len = 0;
+        const end = () => { if (len >= BR_MIN) { const a = []; for (let q = 0; q < run.length; q += 2) { const p = toW(run[q], run[q + 1]); a.push(p.x, p.y); } T.br.push(a); } run = []; len = 0; };
+        for (let q = 2; q < r.length; q += 2) {
+          const x0 = r[q - 2], y0 = r[q - 1], x1 = r[q], y1 = r[q + 1], sl = Math.hypot(x1 - x0, y1 - y0), ns = Math.max(1, Math.ceil(sl / 2));
+          for (let k = q === 2 ? 0 : 1; k <= ns; k++) { const px = x0 + (x1 - x0) * k / ns, py = y0 + (y1 - y0) * k / ns;
+            if (isW(px, py)) { if (run.length) len += Math.hypot(px - run[run.length - 2], py - run[run.length - 1]); run.push(px, py); } else end(); }
+        }
+        end();
+      }
       g.globalCompositeOperation = 'destination-out'; g.lineCap = g.lineJoin = 'round'; g.lineWidth = WROAD;
       for (const n of ['road', 'railway']) for (const f of L[n] || []) { path(f); g.stroke(); }
       for (const f of L.wstructurea || []) { path(f); g.fill(); }
@@ -342,10 +361,30 @@ function fineWater(x, y) {   // 1 물 · 0 땅 · null 모름(아직·실패)
   if (T.st !== 1) return null;
   return T.m[Math.min(WPX - 1, Math.floor((fy - ty) * WPX)) * WPX + Math.min(WPX - 1, Math.floor((fx - tx) * WPX))];
 }
-function wtPrefetch(x, y) {   // 내 주변 3×3 미리
+function wtPrefetch(x, y) {   // 내 주변 3×3 + 화면에 보이는 타일(최대 30장 — 다리가 화면에 그려지게)
   const p = unproj(x, y), n = 2 ** WZ, tx = Math.floor(lon2t(p.lon, n)), ty = Math.floor(lat2t(p.lat, n));
   for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) wtLoad(tx + i, ty + j);
+  const a = unproj(CAM.x - W / 2 / CAM.z, CAM.y - H / 2 / CAM.z), b = unproj(CAM.x + W / 2 / CAM.z, CAM.y + H / 2 / CAM.z);
+  const x0 = Math.floor(lon2t(a.lon, n)), x1 = Math.floor(lon2t(b.lon, n)), y0 = Math.floor(lat2t(a.lat, n)), y1 = Math.floor(lat2t(b.lat, n));
+  if ((x1 - x0 + 1) * (y1 - y0 + 1) <= 30) for (let j = y0; j <= y1; j++) for (let i = x0; i <= x1; i++) wtLoad(i, j);
 }
+function eachBridge(fn) { for (const T of WT.values()) if (T.st === 1 && T.br) for (const a of T.br) fn(a); }
+function nearBridge(x, y, maxD) {   // 가장 가까운 다리 점 {x, y, d}
+  let best = null, bd = maxD;
+  eachBridge(a => { for (let q = 0; q < a.length; q += 2) { const d = Math.hypot(a[q] - x, a[q + 1] - y); if (d < bd) { bd = d; best = { x: a[q], y: a[q + 1], d }; } } });
+  return best;
+}
+function drawBridges(g, span) {   // 걸을 수 있는 다리: 나무색 굵은 길(화면 BR_PX)
+  if (S.country !== 'JPN' || span > WSPAN || FLY(S.mode)) return;
+  const w = BR_PX / CAM.z; g.lineCap = g.lineJoin = 'round';
+  for (const [col, lw] of [['rgba(92,62,32,.85)', w + 2.5 / CAM.z], ['#efc88a', w]]) {
+    g.strokeStyle = col; g.lineWidth = lw; g.beginPath();
+    eachBridge(a => { g.moveTo(a[0], a[1]); for (let q = 2; q < a.length; q += 2) g.lineTo(a[q], a[q + 1]); });
+    g.stroke();
+  }
+}
+const DIR8 = ['동', '북동', '북', '북서', '서', '남서', '남', '남동'];
+const dir8 = (dx, dy) => DIR8[(Math.round(Math.atan2(-dy, dx) / (Math.PI / 4)) + 8) % 8];
 /* ---------- 노선 ---------- */
 const AL = c => R.airlines[c] || c;
 function destsFrom(code) {
@@ -693,10 +732,20 @@ function step(dt) {
     // 화면에서 땅으로 보이는 만큼: 물이어도 화면 SHORE_PX 안에 땅(다리·해안)이 있으면 걸음 — 확대하면 해안선 그대로, 축소할수록 가는 다리가 화면 굵기만큼 넓어져 따라가기 쉬움
     const tol = Math.max(.012, SHORE_PX / CAM.z), nearLand = (x, y) => { for (const f of [1, .5]) for (let a = 0; a < 8; a++) if (fineWater(x + Math.cos(a * .785) * tol * f, y + Math.sin(a * .785) * tol * f) === 0) return true; return false; };
     const lost = here === 1 && !nearLand(P.x, P.y);   // 땅이 보이지 않는 바다 한가운데(멀리 볼 때 넉넉한 판정으로 들어온 경우)만 빠져나오게 자유 이동
-    moveOnLand(dt, ix, iy, sp, (x, y) => {
+    const span = Math.min(W, H) / CAM.z, mv = moveOnLand(dt, ix, iy, sp, (x, y) => {
       if (fine) { const w = fineWater(x, y); if (w !== null) return !w || lost || nearLand(x, y); }
       return canStand(x, y, S.country) || bridge(x, y);
     }, fine ? .006 : .5);   // 정밀 판정 칸(약 8m)보다 작은 걸음
+    if (fine) {
+      const tryMv = Math.hypot(ix, iy) > .3, stuck = tryMv && mv < sp * dt * .15, nb = nearBridge(P.x, P.y, Math.max(5, span));
+      const onBr = !!nb && nb.d < tol * 2;
+      if (onBr && !P.onBr) toast('🌉 다리 위 — 길 따라 쭉 가요', 1500);
+      P.onBr = onBr;
+      if (stuck && !onBr && performance.now() > (P.brHintT || 0)) {
+        P.brHintT = performance.now() + 4000;
+        toast(nb ? `🌊 바다예요 — 🌉 ${dir8(nb.x - P.x, nb.y - P.y)}쪽 ${nb.d < 1 ? Math.round(nb.d * 1000) + 'm' : nb.d.toFixed(1) + 'km'}에 다리가 있어요` : '🌊 바다예요 — 가까운 다리가 없어요 (🚗 멀리로 축소하면 건너요)', 2600);
+      }
+    } else P.onBr = false;
     P.alt = 0;
     const air = nearestAirport(airR(), a => a.c === S.country), airDeep = Math.min(W, H) / CAM.z <= AIR_DEEP;
     if (air && !airDeep && canFly(air) && P.quiet !== air.code && P.onAirT !== air.code) toast(`🔍 ${cityName(air.code)} 공항 — 더 확대하면 탈 수 있어요`, 2000);
@@ -1134,6 +1183,7 @@ function draw(t) {
   // 우리 도·현 경계는 거칠어서 타일이 진할 땐 숨김(항구 바다를 가로지르던 것)
   if (ta > 0 && ta < .6 && P.adm) { g.strokeStyle = `rgba(227,154,18,${.75 * (1 - ta / .6)})`; g.lineWidth = 3 / CAM.z; P.adm.p.forEach(p => g.stroke(p)); }
   $('attr').hidden = !(ta > .05 && tn);
+  drawBridges(g, span);
   drawRoutes(g, CAM.z, t);
   g.setTransform(DPR, 0, 0, DPR, 0, 0);
   LBL.push([cx + (P.x - CAM.x) * CAM.z, cy + (P.y - CAM.y) * CAM.z - 14, 40, 40]);
@@ -1260,7 +1310,7 @@ const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 let FORM = null;   // 작성 중 {id?, lat, lon, cat, star, status}
 function openFlagForm(rt, pre) {
   const f = rt ? rt.f : null, here = pre || unproj(P.x, P.y);
-  FORM = f ? { id: f.id, lat: f.lat, lon: f.lon, cat: f.cat, star: f.star || 0, status: f.status || 'want' } : { lat: here.lat, lon: here.lon, cat: 'food', star: 0, status: '' };
+  FORM = f ? { id: f.id, lat: f.lat, lon: f.lon, cat: f.cat, star: f.star || 0, status: f.status || 'want' } : { lat: here.lat, lon: here.lon, cat: 'food', star: 0, status: '', gid: here.gid || '' };
   const fa = (() => { const p = proj(FORM.lon, FORM.lat); return admAt(p.x, p.y); })();
   const head = `<h2>🚩 ${f ? '깃발 고치기' : '여기에 깃발 꽂기'}</h2><button class="cbtn" onclick="cancelFlag()">취소</button>`;
   let h = `<div class="sub">${FORM.lat.toFixed(5)}, ${FORM.lon.toFixed(5)}${fa ? ' · ' + fa.ko : ''}</div>`;
@@ -1294,7 +1344,7 @@ window.saveFlag = () => {
     const f = S.flags.find(x => x.id === FORM.id); Object.assign(f, data, { updated: now });
     const rt = FLAGS.find(r => r.f === f); FORM = null; save(); sheetFlag(rt); burst(rt.x, rt.y, 12, ['#ffd84d', '#fff']); SFX.pop(); toast('💾 저장했어요'); return;
   }
-  const f = { id: uid(), lat: FORM.lat, lon: FORM.lon, ...data, vis: 'private', created: now, updated: now };
+  const f = { id: uid(), lat: FORM.lat, lon: FORM.lon, ...(FORM.gid ? { gid: FORM.gid } : {}), ...data, vis: 'private', created: now, updated: now };   // gid: 구글 장소 ID(약관상 계속 저장해도 되는 것 — 평점·영업시간은 저장 안 하고 볼 때 받음)
   S.flags.push(f); const rt = flagRT(f, performance.now()); FLAGS.push(rt); FORM = null; save();
   if (P.look) P.look.until = performance.now() + 2200;   // 꽂히는 연출을 보고 내 위치로
   closeSheet(); P.closedFor = 'flag:' + f.id;
@@ -1386,14 +1436,15 @@ $('bFlag').onclick = () => { if (S.mode === 'walk') openFind(); };
 
 
 /* ---------- 🔎 장소 찾기 → 🎯 십자선으로 자리 확인 → 🚩 꽂기 ---------- */
-// 이름·주소(오픈스트리트맵 Nominatim + 국토지리원 주소 검색, 둘 다 키 없음) · 좌표 · 구글 지도 링크(짧은 링크는 /api/jjway/expand로 풂)
+// 이름·주소 = 구글 장소 검색(각자 키) · 좌표 · 구글 지도 링크(짧은 링크는 /api/jjway/expand로 풂, 키 없이도 됨)
 function openFind(q) {
   P.pick = null;
   const head = `<h2>🔍 장소 찾기</h2><button class="cbtn" onclick="closeSheet()">닫기</button>`;
   let h = `<div class="fsearch"><textarea id="qIn" class="fin" rows="1" maxlength="600" placeholder="이름·주소·구글 지도 링크 붙여넣기" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();doFind()}" oninput="this.rows=this.value.includes('\\n')?3:1">${esc(q || '')}</textarea><button class="qgo" onclick="doFind()">찾기</button></div>`;
   h += `<div class="qbs"><button onclick="startPick()">🎯 지도에서 고르기</button><button onclick="hereFlag()">📍 지금 서 있는 곳</button></div>`;
   h += `<div id="qRes"></div>`;
-  h += HINT('<b>📍 구글 지도 → jjWay (가장 정확)</b>: 구글 지도 앱에서 장소 → 공유 → 링크 복사(또는 복사) → 여기 붙여넣고 찾기. 이름·주소가 같이 붙어도 괜찮아요. 가게의 정확한 좌표로 바로 가요.<br><br>예: 리쓰린 공원 · 마쓰야마 해변 · 타임즈렌트카 다카마쓰 · タイムズカー 高松 · 香川県高松市栗林町 · 34.3295, 134.0439<br>한국어는 일본어로 바꿔서 같이 찾아요. 유명한 곳·체인점은 영어(Takamatsu Station)도 잘 돼요. 작은 동네 가게는 지도 데이터에 없을 수 있어서 구글 지도 링크나 🎯 지도에서 고르기가 확실해요.<br>📞 전화번호 검색은 준비 중이에요(구글 키가 필요해요)');
+  if (!GK.get()) h += `<div class="qmsg" style="text-align:left">🔑 이름·주소 검색은 ⚙️ 설정에 구글 지도 키를 넣으면 돼요. 지금은 좌표·구글 지도 링크·🎯 지도에서 고르기만 돼요.</div>`;
+  h += HINT('예: 다카마쓰 우동 · 리쓰린 공원 · 타임즈렌트카 다카마쓰 · 香川県高松市栗林町 · 34.3295, 134.0439<br>한국어 그대로 찾아요(구글 검색). 지금 보는 곳 근처가 먼저 나와요.<br><b>📍 구글 지도 → jjWay</b>: 구글 지도 앱에서 장소 → 공유 → 링크 복사 → 여기 붙여넣고 찾기(키 없이도 돼요).');
   openSheet(head, h, 'find', 'flagform');
   setTimeout(() => $('qIn') && $('qIn').focus(), 50);
 }
@@ -1405,155 +1456,30 @@ function parseG(u) {
   try { const qq = new URL(u).searchParams.get('q') || new URL(u).searchParams.get('query') || ''; if (!m) m = isLL(qq); if (!name && qq && !isLL(qq)) name = qq; } catch (e) {}
   return { lat: m ? +m[1] : null, lon: m ? +m[2] : null, name };
 }
-// 한국어 검색어 → 일본어(일본 가게·역 이름은 지도 데이터에 일본어로만 있는 경우가 대부분)
-const KO2JA = {
-  '타임즈렌트카': 'タイムズカー', '타임즈렌터카': 'タイムズカー', '타임즈카': 'タイムズカー', '토요타렌트카': 'トヨタレンタカー', '토요타렌터카': 'トヨタレンタカー',
-  '닛폰렌트카': 'ニッポンレンタカー', '닛폰렌터카': 'ニッポンレンタカー', '오릭스렌트카': 'オリックスレンタカー', '닛산렌트카': '日産レンタカー', '버짓렌트카': 'バジェットレンタカー',
-  '렌트카': 'レンタカー', '렌터카': 'レンタカー', '타임즈': 'タイムズ', '토요타': 'トヨタ',
-  '세븐일레븐': 'セブンイレブン', '로손': 'ローソン', '패밀리마트': 'ファミリーマート', '편의점': 'コンビニ', '돈키호테': 'ドン・キホーテ', '다이소': 'ダイソー', '유니클로': 'ユニクロ', '이온몰': 'イオンモール', '이온': 'イオン',
-  '스타벅스': 'スターバックス', '맥도날드': 'マクドナルド', '모스버거': 'モスバーガー', '요시노야': '吉野家', '스키야': 'すき家', '마루가메제면': '丸亀製麺',
-  '우동': 'うどん', '라멘': 'ラーメン', '라면': 'ラーメン', '스시': '寿司', '초밥': '寿司', '돈카츠': 'とんかつ', '야키니쿠': '焼肉', '이자카야': '居酒屋', '카페': 'カフェ',
-  '공항': '空港', '역': '駅', '공원': '公園', '온천': '温泉', '신사': '神社', '절': '寺', '성': '城', '시장': '市場', '항구': '港', '항': '港', '다리': '橋', '미술관': '美術館', '박물관': '博物館', '수족관': '水族館',
-  '해수욕장': '海水浴場', '해변': '海岸', '바닷가': '海岸', '해안': '海岸', '비치': 'ビーチ', '전망대': '展望台', '폭포': '滝', '계곡': '渓谷', '산': '山', '섬': '島', '호수': '湖', '등대': '灯台',
-  '호텔': 'ホテル', '료칸': '旅館', '주차장': '駐車場', '버스터미널': 'バスターミナル', '쇼핑몰': 'ショッピングモール', '백화점': '百貨店', '상점가': '商店街'
-};
-let KODICT = null;
-function koToJa(q) {
-  if (!/[가-힣]/.test(q)) return q;
-  if (!KODICT) {   // 지명은 지도 데이터의 한국어·일본어 짝(…시 빼고) + 우리 도시
-    KODICT = { ...KO2JA };
-    for (const p of M.places) if (p.c === 'JPN' && p.ja) { const ko = p.ko.replace(/시$/, ''), ja = p.ja.replace(/市$/, ''); if (ko.length > 1 && !KODICT[ko]) KODICT[ko] = ja; }
-    for (const c of CITY) { const ko = c.ko.replace(/\s*\(.*\)/, ''), ja = c.ja.replace(/[市町]$/, ''); KODICT[ko] = KODICT[ko] || ja; }
-    for (const sp of SPOT) { const ko = sp.ko.replace(/\s*\(.*\)/, ''), ja = sp.ja.replace(/\(.*\)/, ''); KODICT[ko] = ja; KODICT[ko.replace(/\s+/g, '')] = ja; }
-    for (const a of M.adm) if (a.c === 'JPN' && a.ja) { KODICT[a.ko] = a.ja; KODICT[a.ko.replace(/[현부도]$/, '')] = KODICT[a.ko.replace(/[현부도]$/, '')] || a.ja.replace(/[県府都道]$/, ''); }
-  }
-  const keys = Object.keys(KODICT).sort((x, y) => y.length - x.length);
-  const whole = KODICT[q.trim()] || KODICT[q.replace(/\s+/g, '')]; if (whole) return whole;   // 명소 이름 통째로
-  return q.split(/\s+/).map(tok => {
-    let out = '', i = 0;
-    while (i < tok.length) {
-      const k = keys.find(k => tok.startsWith(k, i));
-      if (k) { out += KODICT[k]; i += k.length; }
-      else if (tok[i] === '점' && i === tok.length - 1) i++;   // '다카마쓰점' → 高松 (지점명은 빼고)
-      else { out += tok[i]; i++; }
-    }
-    return out;
-  }).filter(Boolean).join(' ');
-}
-
-// 일본어 이름 → 한글 함께 보기: 아는 말은 뜻(사전 반대로), 가나는 소리대로, 모르는 한자는 그대로
-const KANA = (() => {
-  const m = {}, rows = [['アイウエオ', '아이우에오'], ['カキクケコ', '카키쿠케코'], ['サシスセソ', '사시스세소'], ['タチツテト', '타치쓰테토'], ['ナニヌネノ', '나니누네노'], ['ハヒフヘホ', '하히후헤호'],
-    ['マミムメモ', '마미무메모'], ['ヤユヨ', '야유요'], ['ラリルレロ', '라리루레로'], ['ワヲ', '와오'], ['ガギグゲゴ', '가기구게고'], ['ザジズゼゾ', '자지즈제조'], ['ダヂヅデド', '다지즈데도'],
-    ['バビブベボ', '바비부베보'], ['パピプペポ', '파피푸페포'], ['ァィゥェォ', '아이우에오'], ['ャュョ', '야유요']];
-  for (const [k, h] of rows) [...k].forEach((c, i) => m[c] = h[i]);
-  ('キャ캬キュ큐キョ쿄シャ샤シュ슈ショ쇼チャ차チュ추チョ초ニャ냐ニュ뉴ニョ뇨ヒャ햐ヒュ휴ヒョ효ミャ먀ミュ뮤ミョ묘リャ랴リュ류リョ료ギャ갸ギュ규ギョ교ジャ자ジュ주ジョ조'
-    + 'ビャ뱌ビュ뷰ビョ뵤ピャ퍄ピュ퓨ピョ표ティ티ディ디ファ파フィ피フェ페フォ포ウィ위ウェ웨ウォ워ヴ부').match(/[^가-힣]+[가-힣]/g).forEach(t => m[t.slice(0, -1)] = t.slice(-1));
-  return m;
-})();
-function kanaKo(run) {
-  run = run.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));   // 히라가나 → 가타카나
-  let out = '';
-  for (let i = 0; i < run.length;) {
-    const two = run.slice(i, i + 2);
-    if (KANA[two] && two.length === 2) { out += KANA[two]; i += 2; continue; }
-    const c = run[i++], last = out.charCodeAt(out.length - 1), open = last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28 === 0;
-    if (c === 'ン') out = open ? out.slice(0, -1) + String.fromCharCode(last + 4) : out + 'ㄴ';        // 받침 ㄴ
-    else if (c === 'ッ') { if (open) out = out.slice(0, -1) + String.fromCharCode(last + 19); }    // 받침 ㅅ
-    else if (c === 'ー') { /* 장음은 생략 */ }
-    else if (c === '・') out += ' ';
-    else out += KANA[c] || c;
-  }
-  return out;
-}
-let REV = null;
-function jaToKo(name) {
-  if (!name || /^[\s가-힣0-9a-zA-Z,.'()-]+$/.test(name)) return '';
-  if (!REV) { koToJa('가'); REV = {}; for (const [ko, ja] of Object.entries(KODICT)) if (ja && !REV[ja]) REV[ja] = ko; Object.assign(REV, { '店': '점', '市': '시', '県': '현', '前': ' 앞', '駅前': '역 앞', '本館': '본관', '本店': '본점', '支店': '지점', '手打ち': '수타 ', '手打': '수타 ',
-    'セブン-イレブン': '세븐일레븐', 'セブンイレブン': '세븐일레븐', 'ミニストップ': '미니스톱', 'スターバックスコーヒー': '스타벅스', 'ドトールコーヒー': '도토루', 'コメダ珈琲店': '코메다 커피', '珈琲': '커피' }); }
-  // 한자 한 글자 바꾸기는 店·駅·市·県만('円明寺'→'円明절', '鹿島'→'鹿섬'처럼 어색해서)
-  const keys = Object.keys(REV).filter(k => k.length > 1 || /[店駅市県]/.test(k) || /[\u30A1-\u30FC]/.test(k)).sort((a, b) => b.length - a.length), isKana = c => /[ぁ-ゖァ-ー]/.test(c);
-  let out = '', buf = '';
-  for (let i = 0; i < name.length;) {
-    const k = keys.find(k => name.startsWith(k, i));
-    if (k) { out += kanaKo(buf) + (out && !/\s$/.test(out) ? '' : '') + REV[k]; buf = ''; i += k.length; continue; }
-    if (isKana(name[i])) buf += name[i]; else { out += (buf.length === 1 && /[\u3041-\u3096]/.test(buf) && out ? buf : kanaKo(buf)) + name[i]; buf = ''; }   // 한자 사이 'の' 한 글자는 그대로
-    i++;
-  }
-  out += kanaKo(buf);
-  return /[가-힣]/.test(out) && out !== name ? out : '';
-}
-// 오픈스트리트맵 검색은 1초에 한 번만 허용 → 동시에 보내지 않고 차례로, 충분하면 멈춤
-let NOM_AT = 0, LANDMARKS = null;
-async function nomFetch(params, lang = 'ko') {
-  const wait = NOM_AT + 1100 - Date.now(); if (wait > 0) await new Promise(r => setTimeout(r, wait));
-  NOM_AT = Date.now();
-  return fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&countrycodes=jp,kr&accept-language=${lang}&${params}`).then(r => r.ok ? r.json() : [], () => []);
-}
-// 구글 공유 링크 중엔 좌표 없이 '일본 〒794-0803 Ehime, Imabari, Kitatoriucho, 5 Chome−1−40 가게이름'만 든 것이 있음(폰 앱 공유)
-// → 영어 동네 이름을 오픈스트리트맵으로 일본어(北鳥生町五丁目·今治市)로 바꾼 뒤 국토지리원 주소 검색으로 번지까지
-const gsiAddr = q => fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(q)}`).then(r => r.json(), () => []);
-async function addrGeocode(text) {
-  text = text.replace(/^\s*(일본|日本|Japan)\s*/, '').replace(/〒?\s*\d{3}-\d{4}\s*/, '').replace(/[−‐–]/g, '-').trim();
-  // 일본어 주소가 그대로 온 경우: 県·市·町 + 番地
-  const jm = text.match(/^(.*?[都道府県].*?[市区町村].*?[0-9０-９]+(?:\s*(?:丁目|番地?|号|[-の－])\s*[0-9０-９]+)*(?:\s*号)?)\s*(.*)$/);
-  if (jm) { const g = await gsiAddr(jm[1]); if (g.length) return { lat: g[0].geometry.coordinates[1], lon: g[0].geometry.coordinates[0], name: jm[2] || '', addr: g[0].properties.title }; }
-  const parts = text.split(/,\s*/); if (parts.length < 4) return null;
-  const [pref, city, town] = parts, rest = parts.slice(3).join(', ');
-  const cm = rest.match(/^(\d+)\s*Chome-(\d+)(?:-(\d+))?\s*(.*)$/i) || rest.match(/^()(\d+)(?:-(\d+))?\s*(.*)$/);
-  if (!cm) return null;
-  const [, chome, a, b, shop] = cm;
-  const hits = await nomFetch(`q=${encodeURIComponent(`${town}${chome ? ' ' + chome + ' Chome' : ''}, ${city}, ${pref}`)}`, 'ja');
-  const h = hits.find(x => /町|丁目|村|大字/.test(x.name || '')) || hits[0]; if (!h) return null;
-  // 현 + 시(○○市 먼저, 없으면 町·村) — '横田町' 같은 작은 동네를 시로 잘못 잡던 것
-  const dn = h.display_name.split(/,\s*/).filter(x => x !== h.name);
-  const prefJa = dn.find(x => /[都道府県]$/.test(x)) || '', cityJa = dn.find(x => /市$/.test(x)) || dn.find(x => /郡$/.test(x)) || '';
-  const g = await gsiAddr(`${prefJa}${cityJa}${h.name}${a}${b ? '-' + b : ''}`);
-  if (g.length) return { lat: g[0].geometry.coordinates[1], lon: g[0].geometry.coordinates[0], name: shop, addr: g[0].properties.title };
-  return { lat: +h.lat, lon: +h.lon, name: shop, addr: h.name + ' (동네 가운데)' };
+// 구글 장소 검색(Places API New, 각자 키 — ⚙️ 설정, 이 폰에만 저장). 지금 보는 곳 50km를 먼저(locationBias)
+const GK = { get() { try { return localStorage.getItem('jjway-gkey') || ''; } catch (e) { return ''; } }, set(v) { try { v ? localStorage.setItem('jjway-gkey', v) : localStorage.removeItem('jjway-gkey'); } catch (e) {} } };
+async function gPlaces(q, max = 10, key = GK.get()) {
+  const c = unproj(CAM.x, CAM.y);
+  const r = await fetch('https://places.googleapis.com/v1/places:searchText', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location' },
+    body: JSON.stringify({ textQuery: q, languageCode: 'ko', maxResultCount: max, locationBias: { circle: { center: { latitude: c.lat, longitude: c.lon }, radius: 50000 } } }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error && j.error.status === 'PERMISSION_DENIED' ? '키가 이 API를 못 써요(설정 확인)' : (j.error && j.error.message || '구글 검색 실패').slice(0, 80));
+  return (j.places || []).map(p => ({ lat: p.location.latitude, lon: p.location.longitude, name: p.displayName ? p.displayName.text : '', sub: (p.formattedAddress || '').replace(/^\s*(일본|Japan)\s*/, '').replace(/\s*(일본|Japan)$/, '').replace(/〒?\s*\d{3}-\d{4}\s*/, ''), gid: p.id, src: 'G' }));
 }
 async function search(q) {
-  const ja = koToJa(q), here = unproj(CAM.x, CAM.y), out = [], seen = new Set();
-  // 종류 말(해변·해수욕장·전망대·폭포·역)이 있으면 그 종류만 — '松山 海岸'이 주소에 '海岸' 든 경찰서로 잡히던 것
-  const TYPEW = { '海岸': /beach|bay|coastline|cape|attraction/, '海水浴場': /beach/, 'ビーチ': /beach/, '展望台': /viewpoint|attraction/, '滝': /waterfall/, '駅': /station|halt|stop/ };
-  const tw = Object.keys(TYPEW).find(w => ja.includes(w)), typeOk = r => !tw || TYPEW[tw].test(r.type || '') || (r.name || '').includes(tw);
-  const add = rs => { for (const r of rs) { if (r.category === 'highway' || r.category === 'boundary' || !typeOk(r)) continue;   // 도로·경계·다른 종류는 빼고
-    const k2 = (r.name || '') + '@' + (+r.lat).toFixed(4) + ',' + (+r.lon).toFixed(4); if (seen.has(r.place_id) || seen.has(k2)) continue; seen.add(r.place_id); seen.add(k2); out.push({ lat: +r.lat, lon: +r.lon, name: r.name || r.display_name.split(',')[0], sub: r.display_name, src: 'OSM' }); } };
-  const box = (lon, lat, dx, dy) => `viewbox=${lon - dx},${lat + dy},${lon + dx},${lat - dy}&bounded=1`;
-  const gsiP = fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(ja)}`).then(r => r.json(), () => []);
-  // 1) 검색어에 공항·명소·도시 이름이 있으면 그 주변에서 — 공항·명소는 약 12km, 도시는 약 25km
-  //    ('高松'이 고베 '高松町'·미야기 '高松' 같은 동네로 잡히던 것, '다카마쓰공항 렌트카'가 엉뚱한 곳 나오던 것)
-  if (!LANDMARKS) {
-    LANDMARKS = [];
-    for (const [code, a] of Object.entries(R.jp)) { const ap = airport(code); if (ap) { const u = unproj(ap.x, ap.y); LANDMARKS.push({ ja: a.ja.replace(/国際空港$/, '空港'), lat: u.lat, lon: u.lon, r: .12 }); LANDMARKS.push({ ja: a.ja, lat: u.lat, lon: u.lon, r: .12 }); } }
-    for (const sp of SPOT) LANDMARKS.push({ ja: sp.ja.replace(/\(.*\)/, ''), lat: sp.lat, lon: sp.lon, r: .1 });
-    for (const c of CITY) LANDMARKS.push({ ja: c.ja.replace(/[市町]$/, ''), lat: c.lat, lon: c.lon, r: .3 });
-    for (const p of M.places) if (p.c === 'JPN' && p.ja) { const u = unproj(p.x, p.y); LANDMARKS.push({ ja: p.ja.replace(/市$/, ''), lat: u.lat, lon: u.lon, r: .3 }); }
-  }
-  const hit = LANDMARKS.filter(c => c.ja.length > 1 && ja.includes(c.ja)).sort((a, b) => b.ja.length - a.ja.length)[0];
-  if (hit) {
-    const cb = box(hit.lon, hit.lat, hit.r, hit.r * .75), rest = ja.replace(hit.ja, ' ').replace(/\s+/g, ' ').trim();
-    add(await nomFetch(`${cb}&q=${encodeURIComponent(ja)}`));                                            // '高松駅' 그대로 그 주변에서
-    const generic = /^(駅|公園|店|空港|城|港|温泉|寺|神社|市場|橋|ホテル|駐車場|山|島)$/;   // 이것만 남으면 아무 역·공원이 나옴(해변·해수욕장은 종류로 걸러서 괜찮음)
-    if (out.length < 2 && rest && !generic.test(rest)) add(await nomFetch(`${cb}&q=${encodeURIComponent(rest)}`));   // 'タイムズカー'·'レンタカー'처럼 이름만
-  }
-  // 2) 지금 보는 곳 주변(약 150km)
-  if (out.length < 3) add(await nomFetch(`${box(here.lon, here.lat, 1.6, 1.3)}&q=${encodeURIComponent(ja)}`));
-  // 3) 그래도 부족하면 전국(한국어 원래 말도)
-  if (out.length < 3) add(await nomFetch(`q=${encodeURIComponent(ja)}`));
-  if (out.length < 3 && ja !== q) add(await nomFetch(`q=${encodeURIComponent(q)}`));
-  // 이름으로 충분히 찾았으면 주소 결과(엉뚱한 동명 지명)는 뺌
-  // 정렬 기준: 검색어에 장소가 있으면 그 장소, 없으면 내 위치. 거리 표시는 늘 내 위치에서
-  const ref = hit ? proj(hit.lon, hit.lat) : { x: P.x, y: P.y };
-  if (out.length < 3) for (const r of (await gsiP).slice(0, 8)) {   // 주소 결과는 기준에서 200km 안만(동명 지명 섞임)
-    const p = proj(r.geometry.coordinates[0], r.geometry.coordinates[1]);
-    if (Math.hypot(p.x - ref.x, p.y - ref.y) < 200) out.push({ lat: r.geometry.coordinates[1], lon: r.geometry.coordinates[0], name: r.properties.title, sub: '주소 (국토지리원)', src: 'GSI' });
-  }
-  for (const r of out) { const p = proj(r.lon, r.lat); r.km = Math.hypot(p.x - P.x, p.y - P.y); r.rk = Math.hypot(p.x - ref.x, p.y - ref.y); }
-  out.sort((a, b) => a.rk - b.rk);
-  search.last = ja !== q ? ja : '';
-  return out.slice(0, 12);
+  if (!GK.get()) throw new Error('🔑 ⚙️ 설정에 구글 지도 키를 넣으면 이름·주소로 찾아요 · 좌표·구글 지도 링크는 키 없이도 돼요');
+  const out = await gPlaces(q);
+  for (const r of out) { const p = proj(r.lon, r.lat); r.km = Math.hypot(p.x - P.x, p.y - P.y); }
+  return out;
 }
+$('gkIn').value = GK.get();
+$('gkGo').onclick = async () => {
+  const v = $('gkIn').value.trim(), m = $('gkMsg');
+  if (!v) { GK.set(''); m.textContent = '키를 지웠어요 · 장소 찾기는 좌표·구글 링크만'; return; }
+  m.textContent = '📡 확인 중…';
+  try { await gPlaces('高松駅', 1, v); GK.set(v); m.textContent = '✅ 키가 돼요 · 🔍 장소 찾기가 구글 검색이 됐어요'; SFX.coin(); }
+  catch (e) { m.textContent = '⚠️ ' + e.message + ' — 키에 Places API (New)를 켰는지, 웹사이트 제한에 wowhit.org가 있는지 봐 주세요'; }
+};
 let QRES = [];
 window.doFind = async () => {
   const q = ($('qIn').value || '').trim(), box = $('qRes'); if (!q) return;
@@ -1574,25 +1500,23 @@ window.doFind = async () => {
       }
       const g = parseG(u); if (!g.name && lead) g.name = lead;
       if (g.lat != null) res = [{ lat: g.lat, lon: g.lon, name: g.name, sub: '구글 지도 링크' }];
-      else if (g.name) {
-        box.innerHTML = `<div class="qmsg">📡 링크에 좌표가 없어서 주소로 찾는 중…</div>`;
-        const ad = await addrGeocode(g.name);
-        res = ad ? [{ lat: ad.lat, lon: ad.lon, name: ad.name || lead || g.name, sub: '구글 지도 링크 · ' + ad.addr }] : await search(g.name);
+      else if (g.name) {   // 폰 앱 공유 링크엔 좌표 없이 주소+가게 이름만 있는 경우 → 그 글로 구글 검색
+        box.innerHTML = `<div class="qmsg">📡 링크에 좌표가 없어서 이름·주소로 찾는 중…</div>`;
+        res = await search(g.name);
+        if (res.length) res = [{ ...res[0], name: res[0].name || lead, sub: '구글 지도 링크 · ' + res[0].sub }];
       }
     } else res = await search(q);
     QRES = res;
-    const tr = search.last ? `<div class="qmsg" style="padding:4px">🇯🇵 「${esc(search.last)}」로도 찾았어요</div>` : '';
-    if (!res.length) { box.innerHTML = tr + `<div class="qmsg">못 찾았어요 · 가게는 일본어 이름이 잘 찾아져요 (예: タイムズカー 高松)</div>`; return; }
-    if (res.length === 1 && (/^구글 지도 링크/.test(res[0].sub) || res[0].sub === '좌표')) return beginPick(res[0].lat, res[0].lon, res[0].name);
-    res.forEach(r => { r.ko = jaToKo(r.name); });
-    box.innerHTML = tr + res.map((r, i) => `<div class="mr" onclick="pickRes(${i})"><span class="ic">${r.src === 'GSI' ? '🏠' : '📍'}</span><b>${esc(r.name)}${r.ko ? ` <span class="ko">${esc(r.ko)}</span>` : ''}<small>${esc(r.sub)}</small></b><i>${r.km == null ? '›' : r.km < 1 ? Math.round(r.km * 1000) + 'm' : r.km < 100 ? r.km.toFixed(1) + 'km' : Math.round(r.km) + 'km'}</i></div>`).join('');
+    if (!res.length) { box.innerHTML = `<div class="qmsg">못 찾았어요 · 가게 이름 + 도시(예: 다카마쓰 우동)로 해 보세요</div>`; return; }
+    if (res.length === 1 && (/^구글 지도 링크/.test(res[0].sub) || res[0].sub === '좌표')) return beginPick(res[0].lat, res[0].lon, res[0].name, res[0].gid);
+    box.innerHTML = res.map((r, i) => `<div class="mr" onclick="pickRes(${i})"><span class="ic">📍</span><b>${esc(r.name)}<small>${esc(r.sub)}</small></b><i>${r.km == null ? '›' : r.km < 1 ? Math.round(r.km * 1000) + 'm' : r.km < 100 ? r.km.toFixed(1) + 'km' : Math.round(r.km) + 'km'}</i></div>`).join('');
   } catch (e) { box.innerHTML = `<div class="qmsg">⚠️ ${esc(e.message || '검색 실패')} · 잠시 뒤 다시 해 보세요</div>`; }
 };
-window.pickRes = i => { const r = QRES[i]; beginPick(r.lat, r.lon, r.ko ? `${r.ko} (${r.name})` : r.name); };
+window.pickRes = i => { const r = QRES[i]; beginPick(r.lat, r.lon, r.name, r.gid); };
 // 십자선 모드: 화면을 끌면 지도가 움직이고 가운데 ＋에 꽂음. 사람은 제자리
-function beginPick(lat, lon, name) {
+function beginPick(lat, lon, name, gid) {
   const p = lat != null ? proj(lon, lat) : { x: CAM.x, y: CAM.y };
-  P.pick = { x: p.x, y: p.y, name: name || '' };
+  P.pick = { x: p.x, y: p.y, name: name || '', gid: gid || '' };
   if (Math.min(W, H) / CAM.z > 6) S.span.walk = 3;
   const head = `<h2>🎯 자리 고르기</h2><button class="cbtn" onclick="cancelPick()">취소</button>`;
   const h = `<div class="sub" id="pkInfo">${esc(name || '')}</div><button class="go" style="margin-top:6px;height:48px" onclick="pickHere()">✨ 여기에 꽂기</button>` + HINT('화면을 끌면 지도가 움직여요 · 가운데 ＋를 가게·장소에 맞추세요 · 두 손가락으로 확대');
@@ -1600,7 +1524,7 @@ function beginPick(lat, lon, name) {
 }
 window.startPick = () => beginPick();   // 버튼용(같은 이름으로 덮으면 자기 자신을 부름)
 window.cancelPick = () => { P.pick = null; closeSheet(); };
-window.pickHere = () => { const pk = P.pick, ll = unproj(pk.x, pk.y); P.pick = null; P.look = { x: pk.x, y: pk.y, until: 1e15 }; /* 깃발 창 쓰는 동안 그 자리를 계속 보여 줌 */ openFlagForm(null, { lat: ll.lat, lon: ll.lon, name: pk.name }); };
+window.pickHere = () => { const pk = P.pick, ll = unproj(pk.x, pk.y); P.pick = null; P.look = { x: pk.x, y: pk.y, until: 1e15 }; /* 깃발 창 쓰는 동안 그 자리를 계속 보여 줌 */ openFlagForm(null, { lat: ll.lat, lon: ll.lon, name: pk.name, gid: pk.gid }); };
 function pickStep(dt, ix, iy) {
   const span = Math.min(W, H) / CAM.z;
   P.pick.x -= ix * span * .55 * dt; P.pick.y -= iy * span * .55 * dt;   // 지도를 손가락 쪽으로 끄는 느낌

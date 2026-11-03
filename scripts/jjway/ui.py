@@ -10,6 +10,11 @@ from playwright.sync_api import sync_playwright
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../public')
 OUT = sys.argv[1] if len(sys.argv) > 1 else '/tmp'
 PORT = 8771
+GKEY = ''
+try:
+    GKEY = [l.split('=',1)[1].strip() for l in open(os.path.expanduser('~/.secrets/jjway.env')) if l.startswith('GMAPS_KEY=')][0]
+except Exception: pass
+GK_OK = []
 class Q(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
 srv = http.server.ThreadingHTTPServer(('127.0.0.1', PORT), functools.partial(Q, directory=ROOT))
@@ -178,10 +183,26 @@ def run(w, h, tag):
         pg.click('#sheet .qgo'); time.sleep(.4)
         assert pg.evaluate('!!P.pick') and '栗林公園' in pg.inner_text('#pkInfo') and '34.3295' in pg.inner_text('#pkInfo'), pg.inner_text('#sheet')[:200]
         pg.click('#sheet .cbtn'); time.sleep(.2)
-        pg.click('#bFlag'); time.sleep(.2); pg.fill('#qIn', '리쓰린 공원'); pg.click('#sheet .qgo')
-        try:
-            pg.wait_for_selector('#qRes .mr', timeout=8000); print(tag, '이름 검색 결과', pg.locator('#qRes .mr').count(), '개:', pg.inner_text('#qRes .mr >> nth=0')[:40].replace('\n', ' '))
-        except Exception: print(tag, '이름 검색: 네트워크 응답 없음(건너뜀)', pg.inner_text('#qRes')[:60])
+        # 이름 검색: 키 없으면 안내만 → ⚙️ 설정에 키(~/.secrets/jjway.env GMAPS_KEY, wowhit.org 제한이라 Referer를 붙여 보냄) → 구글 검색 → 고르면 십자선 → 꽂으면 장소 ID(gid) 저장
+        pg.click('#bFlag'); time.sleep(.2); pg.fill('#qIn', '다카마쓰 우동'); pg.click('#sheet .qgo'); time.sleep(.3)
+        assert '설정에 구글 지도 키' in pg.inner_text('#qRes'), pg.inner_text('#qRes')
+        pg.evaluate('closeSheet()')
+        if GKEY:
+            def gfwd(r):   # 테스트는 127.0.0.1에서 돌아서: 구글엔 wowhit.org에서 온 것처럼, 브라우저엔 CORS 허용으로
+                resp = r.fetch(headers={**r.request.headers, 'referer': 'https://wowhit.org/games/jjway/', 'origin': 'https://wowhit.org'})
+                r.fulfill(response=resp, headers={**resp.headers, 'access-control-allow-origin': '*'})
+            pg.route('https://places.googleapis.com/**', gfwd)
+            pg.click('#bSet'); time.sleep(.2); pg.fill('#gkIn', GKEY); pg.click('#gkGo')
+            pg.wait_for_function('document.getElementById("gkMsg").innerText.includes("✅") || document.getElementById("gkMsg").innerText.includes("⚠️")', timeout=10000)
+            assert '✅' in pg.inner_text('#gkMsg'), pg.inner_text('#gkMsg')
+            pg.click('#setClose'); time.sleep(.2)
+            pg.click('#bFlag'); time.sleep(.2); pg.fill('#qIn', '다카마쓰 우동'); pg.click('#sheet .qgo')
+            pg.wait_for_selector('#qRes .mr', timeout=10000); n = pg.locator('#qRes .mr').count()
+            print(tag, '구글 검색 다카마쓰 우동', n, '개:', ' / '.join(pg.locator('#qRes .mr b').all_inner_texts()[:3]).replace('\n', ' '))
+            assert n >= 3
+            pg.click('#qRes .mr >> nth=0'); time.sleep(.3); assert pg.evaluate('!!(P.pick && P.pick.gid)')
+            pg.click('#sheet button.go'); time.sleep(.3); assert pg.evaluate('!!FORM.gid'), '장소 ID 안 넘어감'
+            pg.evaluate('cancelFlag()'); GK_OK.append(tag)
         pg.evaluate('closeSheet()')
         # 확대·축소
         s0 = pg.evaluate('S.span.walk'); pg.mouse.move(w / 2, h / 3); pg.mouse.wheel(0, 400); time.sleep(.1); assert pg.evaluate('S.span.walk') > s0, '휠 축소 안 됨'

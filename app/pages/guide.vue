@@ -512,6 +512,41 @@ const faqs = [
         </div>
       </section>
 
+      <!-- 5-1. jjWay 구글 지도 키 -->
+      <section id="gmaps">
+        <h2 class="text-xl font-bold mb-1 flex items-center gap-2">
+          <UIcon
+            name="i-lucide-map"
+            class="size-5 text-primary"
+          />
+          jjWay 구글 지도 키 만들기
+        </h2>
+        <p class="text-sm text-muted mb-4">
+          jjWay의 🔍 장소 찾기를 구글 검색(한국어 그대로·작은 가게까지)으로 쓰려면 내 구글 지도 키가 필요해요.
+          무료 사용량 안이면 돈은 나가지 않지만, 구글 정책상 결제 계정(카드) 등록은 꼭 해야 해요.
+          키는 jjWay ⚙️ 설정에 넣으면 그 폰(브라우저)에만 저장돼요.
+        </p>
+        <ol class="list-decimal pl-5 space-y-2 text-sm">
+          <li>
+            <a
+              href="https://console.cloud.google.com/"
+              target="_blank"
+              rel="noopener"
+              class="text-primary underline"
+            >console.cloud.google.com</a> 접속 → 위쪽에서 <b>새 프로젝트</b> 만들기 (이름 예: jjway)
+          </li>
+          <li>왼쪽 메뉴 <b>결제</b> → 결제 계정 연결 (카드 등록)</li>
+          <li><b>API 및 서비스 → 라이브러리</b>에서 <b>Places API (New)</b> 검색 → <b>사용</b>. (이름이 비슷한 그냥 "Places API"는 옛날 것이라 안 돼요) · 배경 지도용으로 <b>Map Tiles API</b>도 켜 두면 좋아요</li>
+          <li><b>API 및 서비스 → 사용자 인증 정보 → 사용자 인증 정보 만들기 → API 키</b></li>
+          <li>만든 키 <b>수정</b>: 애플리케이션 제한 <b>웹사이트</b>에 <code>https://wowhit.org/*</code>, <code>https://wowhit.vercel.app/*</code> · API 제한에 <b>Places API (New)</b>, <b>Map Tiles API</b>만 체크 → <b>저장</b></li>
+          <li>(권장) <b>할당량</b>에서 API마다 하루 요청 수 상한(예: 장소 검색 하루 50번) — 요금이 크게 나올 일이 없어져요</li>
+          <li>키를 복사해 jjWay <b>⚙️ 설정 → 구글 지도 키</b>에 붙여넣고 <b>확인</b> → "✅ 키가 돼요"가 나오면 끝</li>
+        </ol>
+        <p class="text-xs text-muted mt-3">
+          무료 사용량(매달): 장소 검색 5,000번 · 지도 조각 10만 개. 넘으면 장소 검색 1,000번당 약 $32라서 하루 상한을 걸어 두는 게 안전해요.
+        </p>
+      </section>
+
       <!-- 6. FAQ -->
       <section>
         <h2 class="text-xl font-bold mb-4 flex items-center gap-2">

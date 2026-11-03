@@ -338,9 +338,9 @@ function mvtLayers(buf, want) {
   return out;
 }
 function wtLoad(tx, ty) {
-  const key = tx + '/' + ty; let T = WT.get(key); if (T) return T;
-  T = { st: 0, m: null }; WT.set(key, T);
-  if (WT.size > 48) WT.delete(WT.keys().next().value);
+  const key = tx + '/' + ty, now = performance.now(); let T = WT.get(key); if (T) { T.used = now; return T; }
+  T = { st: 0, m: null, used: now }; WT.set(key, T);
+  if (WT.size > 48) { let ok = null, ou = Infinity; for (const [k, v] of WT) if (v.used < ou && v !== T) { ou = v.used; ok = k; } WT.delete(ok); }   // 가장 오래 안 쓴 것부터(예전엔 먼저 받은 것부터라 내가 서 있는 조각이 지워져 바다로 걸어 나갔음)
   fetch(`https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/${WZ}/${tx}/${ty}.pbf`).then(r => {
     if (r.status === 404) { T.st = 2; return; }   // 먼 바다
     if (!r.ok) throw r.status;
@@ -617,6 +617,7 @@ function sheetSpot(s) {
   h += `<div class="intro">${s.d}</div>`;
   if (s.ferry) h += `<div class="sub">⛴️ 섬이라 지금은 페리 대신 지도에서만 볼 수 있어요.</div>`;
   h += goBox(s.x, s.y, 2);
+  if (s.g && GK.get()) { gDetail({ id: s.g, name: s.ja, lat: s.lat, lon: s.lon }, { head, top: h, key: 'spot:' + s.key, kind: 'spot', noWish: 1 }); return; }   // 목록은 위키데이터, 사진·평점·영업시간은 구글(장소 ID만 저장)
   h += `<div class="note"><a href="https://www.wikidata.org/wiki/${s.wd}" target="_blank" rel="noopener">위키데이터에서 보기</a> · ${PL.source}</div>`;
   openSheet(head, h, 'spot:' + s.key, 'spot');
 }
@@ -731,7 +732,7 @@ function peek(key, title, open, card) {
 let CARD_SIG = '';
 function cardState(c) {
   const gq = (lat, lon, gid, nm) => gid ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nm || `${lat},${lon}`)}&query_place_id=${gid}` : `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
-  if (c.type === 'spot') { const k = c.s.key, ci = CITY.find(x => x.id === c.s.city); return { icon: ICON[c.s.t] || '📍', name: c.s.ko, orig: c.s.ja || '', sub: `명소${ci ? ' · ' + ci.ko : ''}`, been: !!S.seen[k], wish: !!S.wish[k], x: c.s.x, y: c.s.y, url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.s.ja || c.s.ko)}&ll=${c.s.lat},${c.s.lon}` }; }
+  if (c.type === 'spot') { const k = c.s.key, ci = CITY.find(x => x.id === c.s.city); return { icon: ICON[c.s.t] || '📍', name: c.s.ko, orig: c.s.ja || '', sub: `명소${ci ? ' · ' + ci.ko : ''}`, been: !!S.seen[k], wish: !!S.wish[k], x: c.s.x, y: c.s.y, url: c.s.g ? gq(c.s.lat, c.s.lon, c.s.g, c.s.ja) : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.s.ja || c.s.ko)}&ll=${c.s.lat},${c.s.lon}` }; }
   if (c.type === 'g') { const p = c.p; return { icon: CATS[gCat(p.type)][0], name: koName(p.name) || p.name, orig: koName(p.name) ? p.name : '', sub: p.tl || '', addr: p.addr || '', warn: p.biz === 'CLOSED_TEMPORARILY' ? '⚠️ 임시 휴업' : '', been: false, wish: false, x: p.x, y: p.y, g: 1, url: gq(p.lat, p.lon, p.id, p.name) }; }
   const f = c.rt.f, m = f.name.match(/^(.*\S)\s+\((.+)\)$/);   // '토리테이 (Toritei)' → 이름 / 원래 이름 두 줄
   return { icon: CATS[f.cat][0], name: m ? m[1] : f.name, orig: m ? m[2] : '', sub: `내 마커 · ${CATS[f.cat][1]}${f.star ? ' · ' + '★'.repeat(f.star) : ''}`, been: f.status === 'been', wish: f.status === 'want', x: c.rt.x, y: c.rt.y, url: gq(f.lat, f.lon, f.gid, m ? m[2] : f.name) };
@@ -1491,7 +1492,7 @@ function gNearby() {
   fetch('https://places.googleapis.com/v1/places:searchNearby', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.primaryType,places.primaryTypeDisplayName,places.shortFormattedAddress,places.businessStatus' },   // 같은 Pro 단계라 추가 비용 없음
     body: JSON.stringify({ includedTypes: G_TYPES, maxResultCount: 20, rankPreference: 'DISTANCE', languageCode: 'ko', locationRestriction: { circle: { center: { latitude: c.lat, longitude: c.lon }, radius: G_R * 1000 } } }) })
     .then(r => r.json()).then(j => {
-      GP.done.push(at); if (GP.done.length > 400) GP.done.shift(); const have = new Set(GP.list.map(p => p.id)), mine = new Set(S.flags.map(f => f.gid).filter(Boolean));
+      GP.done.push(at); if (GP.done.length > 400) GP.done.shift(); const have = new Set(GP.list.map(p => p.id)), mine = new Set([...S.flags.map(f => f.gid), ...SPOT.map(s => s.g)].filter(Boolean));   // 내 마커·우리 명소와 같은 곳은 구글 마커로 또 안 띄움
       for (const p of j.places || []) { if (have.has(p.id) || mine.has(p.id) || !p.location || p.businessStatus === 'CLOSED_PERMANENTLY') continue; const q = proj(p.location.longitude, p.location.latitude);   // 폐업은 뺌
         const addr = (p.shortFormattedAddress || '').replace(/^\s*(일본|Japan)\s*/, '').replace(/〒?\s*\d{3}-\d{4}\s*/, '').trim();   // 주소는 구글이 준 그대로(번역 안 함), 전체
         GP.list.push({ id: p.id, name: p.displayName ? p.displayName.text : '', type: p.primaryType || '', tl: p.primaryTypeDisplayName ? p.primaryTypeDisplayName.text : '', addr, biz: p.businessStatus || '', x: q.x, y: q.y, lat: p.location.latitude, lon: p.location.longitude }); }
@@ -1534,18 +1535,19 @@ function gMarks(g, cam, cx, cy) {   // 닿아 있는 구글 가게만 파란 고
 const GD = new Map(), G_DMON = 900;   // 자세히: 켜 둔 동안 같은 가게는 한 번만 받음(메모리에만 — 약관상 오래 저장 안 함) · 한 달 900번(무료 1,000번에서 여유), 넘으면 구글 지도 링크(무료)
 const G_PHOTOS = 3;   // 자세히 사진 장수(장마다 요금 — 월 1,000장 무료, 많다 싶으면 1로). 더 보기는 구글 지도에서
 const PRICE = { PRICE_LEVEL_FREE: '무료', PRICE_LEVEL_INEXPENSIVE: '¥', PRICE_LEVEL_MODERATE: '¥¥', PRICE_LEVEL_EXPENSIVE: '¥¥¥', PRICE_LEVEL_VERY_EXPENSIVE: '¥¥¥¥' };
-async function gDetail(p) {   // 자세히(Place Details — 사진·평점·가격대·영업시간·리뷰·연락처). 저장 안 함, 열 때마다 받음
+async function gDetail(p, o = {}) {   // o: { head, top, key, kind, noWish } — 명소 창에 구글 정보 붙일 때   // 자세히(Place Details — 사진·평점·가격대·영업시간·리뷰·연락처). 저장 안 함, 열 때마다 받음
   const key = GK.get(), nm = () => { const f = S.flags.find(x => x.gid === p.id); return f ? f.name : showName(p.name || ''); };
-  const head = () => { const f = S.flags.find(x => x.gid === p.id), n = nm(), mm = n.match(/^(.*\S)\s+\((.+)\)$/), names = mm ? [mm[1], mm[2]] : [n, p.name].filter(Boolean);
+  const SK = o.key || 'g:' + p.id, SKIND = o.kind || 'gplace';
+  const head = () => { if (o.head) return o.head; const f = S.flags.find(x => x.gid === p.id), n = nm(), mm = n.match(/^(.*\S)\s+\((.+)\)$/), names = mm ? [mm[1], mm[2]] : [n, p.name].filter(Boolean);
     return `<h2 data-lp="names" data-names="${esc(JSON.stringify([...new Set(names)]))}">📍 ${esc(n)}</h2>` + (f ? `<button class="cbtn" onclick="editFlag('${f.id}')">✏️ 고치기</button>` : `<button class="cbtn" onclick="closeSheet()">닫기</button>`); };
   const gmap = `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}&query_place_id=${p.id}`;
   let d = GD.get(p.id);
   if (!d) {
     const use = gUse('jjway-gdcnt');
-    if (use.n >= G_DMON && !S.gOver) { openSheet(head(), `<div class="qmsg">🔵 이번 달 자세히 ${G_DMON}번을 다 봤어요(구글 무료 한도 지키기) · ⚙️ 설정에서 계속 쓰기를 켤 수 있어요(요금 발생)</div><a class="nav" href="${gmap}" target="_blank" rel="noopener">🧭 구글 지도에서 무료로 보기(사진·리뷰·영업시간)</a>`, 'g:' + p.id, 'gplace'); return; }
+    if (use.n >= G_DMON && !S.gOver) { openSheet(head(), `<div class="qmsg">🔵 이번 달 자세히 ${G_DMON}번을 다 봤어요(구글 무료 한도 지키기) · ⚙️ 설정에서 계속 쓰기를 켤 수 있어요(요금 발생)</div><a class="nav" href="${gmap}" target="_blank" rel="noopener">🧭 구글 지도에서 무료로 보기(사진·리뷰·영업시간)</a>`, SK, SKIND); return; }
     gUseAdd('jjway-gdcnt', use);
   }
-  if (!d) openSheet(head(), `<div class="qmsg">📡 구글에서 정보 받는 중…</div>`, 'g:' + p.id, 'gplace');
+  if (!d) openSheet(head(), (o.top || '') + `<div class="qmsg">📡 구글 사진·평점 받는 중…</div>`, SK, SKIND);
   try {
     if (!d) {
       const r = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(p.id)}?languageCode=ko`, { headers: { 'X-Goog-Api-Key': key,
@@ -1553,12 +1555,12 @@ async function gDetail(p) {   // 자세히(Place Details — 사진·평점·가
       d = await r.json(); if (!r.ok) throw new Error((d.error && d.error.message || '실패').slice(0, 60));
       GD.set(p.id, d); if (GD.size > 60) GD.delete(GD.keys().next().value);
     }
-    if (P.sheetFor !== 'g:' + p.id) return;
+    if (P.sheetFor !== SK) return;
     if (d.displayName && !p.name) p.name = d.displayName.text;
     const render = () => {
-      if (P.sheetFor !== 'g:' + p.id) return;
+      if (P.sheetFor !== SK) return;
       const oh = d.currentOpeningHours || d.regularOpeningHours, wk = (d.regularOpeningHours || oh || {}).weekdayDescriptions || [], di = (new Date().getDay() + 6) % 7;
-      let h = '';
+      let h = o.top || '';
       const ph = (d.photos || []).slice(0, G_PHOTOS);
       if (ph.length) {
         h += `<div class="gph">${ph.map(x => `<img loading="lazy" alt="" src="https://places.googleapis.com/v1/${x.name}/media?maxHeightPx=360&key=${encodeURIComponent(key)}">`).join('')}</div>`;
@@ -1574,16 +1576,16 @@ async function gDetail(p) {   // 자세히(Place Details — 사진·평점·가
       if (d.nationalPhoneNumber) h += `<div class="sub">📞 <a href="tel:${esc(d.nationalPhoneNumber)}">${esc(d.nationalPhoneNumber)}</a></div>`;
       if (d.websiteUri) h += `<div class="sub"><a href="${esc(d.websiteUri)}" target="_blank" rel="noopener">🔗 홈페이지</a></div>`;
       const mine = S.flags.find(f => f.gid === p.id);
-      h += `<div class="cbtns"><button class="wi${mine && mine.status === 'want' ? ' on' : ''}" onclick="gWish('${p.id}','want')">💭 가고 싶어요</button><button class="ok${mine && mine.status === 'been' ? ' on' : ''}" onclick="gWish('${p.id}','been')">✔ 다녀왔어요</button></div>`;
+      if (!o.noWish) h += `<div class="cbtns"><button class="wi${mine && mine.status === 'want' ? ' on' : ''}" onclick="gWish('${p.id}','want')">💭 가고 싶어요</button><button class="ok${mine && mine.status === 'been' ? ' on' : ''}" onclick="gWish('${p.id}','been')">✔ 다녀왔어요</button></div>`;
       for (const rv of (d.reviews || []).slice(0, 3)) {
         const t = rv.text || rv.originalText; if (!t || !t.text) continue;
         h += `<div class="grv"><b>${'★'.repeat(Math.round(rv.rating || 0))} ${esc(rv.authorAttribution ? rv.authorAttribution.displayName : '')}</b> <small>${esc(rv.relativePublishTimeDescription || '')}</small><p>${esc(t.text)}</p></div>`;
       }
       h += `<div class="note">정보·사진·리뷰: Google Maps · 열 때마다 새로 받아요 · <a href="${esc(d.googleMapsUri || `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}&query_place_id=${p.id}`)}" target="_blank" rel="noopener">🧭 구글 지도에서 열기(사진 더 보기·길 찾기)</a></div>`;
-      openSheet(head(), h, 'g:' + p.id, 'gplace');
+      openSheet(head(), h, SK, SKIND);
     };
     render(); G_RENDER = render;
-  } catch (e) { if (P.sheetFor === 'g:' + p.id) openSheet(head(), `<div class="qmsg">⚠️ ${esc(e.message)}</div>`, 'g:' + p.id, 'gplace'); }
+  } catch (e) { if (P.sheetFor === SK) openSheet(head(), `<div class="qmsg">⚠️ ${esc(e.message)}</div>`, SK, SKIND); }
 }
 let G_RENDER = null;
 window.gWish = (id, st) => {

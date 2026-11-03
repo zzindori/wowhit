@@ -411,7 +411,7 @@ function resize() {
   const vv = window.visualViewport;
   W = Math.min(innerWidth, document.documentElement.clientWidth || innerWidth);
   H = Math.min(...[innerHeight, document.documentElement.clientHeight, vv && Math.abs(vv.scale - 1) < .01 ? vv.height : 1e9].filter(v => v > 100));
-  DPR = Math.min(3, devicePixelRatio || 1);
+  DPR = Math.min(2, devicePixelRatio || 1);   // 3배 화면(S24 등)도 2배로 — 칠할 픽셀 2.25배 줄임(지도 조각·글자 차이는 거의 안 보임)
   cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
   PIPS = Math.round(Math.max(120, Math.min(190, Math.min(W, H) * .34)));
   pip.style.width = pip.style.height = PIPS + 'px'; pip.width = pip.height = Math.round(PIPS * DPR);
@@ -945,8 +945,8 @@ function tileImg(z, x, y, want) {
   img.onload = () => { t.ok = true; TILE.loading--; };
   img.onerror = () => { t.bad = true; TILE.loading--; };
   img.src = gs ? `https://tile.googleapis.com/v1/2dtiles/${z}/${x}/${y}?session=${gs}&key=${encodeURIComponent(GT.key)}` : TILE.url(z, x, y);
-  if (TILE.cache.size > 500) {           // 오래 안 쓴 것부터 버림
-    const old = [...TILE.cache.entries()].filter(([, v]) => v.ok || v.bad).sort((a, b) => a[1].used - b[1].used).slice(0, 120);
+  if (TILE.cache.size > (gs ? 140 : 400)) {           // 오래 안 쓴 것부터 버림 — 구글 512px 조각은 한 장이 지리원 4장 메모리(풀면 1MB)라 140장(약 140MB)까지
+    const old = [...TILE.cache.entries()].filter(([, v]) => v.ok || v.bad).sort((a, b) => a[1].used - b[1].used).slice(0, 40);
     old.forEach(([kk]) => TILE.cache.delete(kk));
   }
   return null;
@@ -1212,8 +1212,10 @@ function draw(t) {
   g.setTransform(DPR, 0, 0, DPR, 0, 0);
   const grd = g.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, SEA); grd.addColorStop(1, SEA2); g.fillStyle = grd; g.fillRect(0, 0, W, H);
   worldTo(g, CAM, cx, cy);
-  drawLand(g, CAM.z, span < 700);
-  const ta = tileAlpha(span), tn = drawTiles(g, CAM, cx, cy, W, H, ta);
+  // 지도 조각이 화면을 다 덮을 땐 우리 해안·도·현 경계를 안 그림 — 확대하면 경계 점선이 화면 기준 수백만 px라 폰이 멈출 만큼 무거웠음(보이지도 않음)
+  const ta = tileAlpha(span);
+  if (ta < 1) drawLand(g, CAM.z, span < 700);
+  const tn = drawTiles(g, CAM, cx, cy, W, H, ta);
   // 우리 도·현 경계는 거칠어서 타일이 진할 땐 숨김(항구 바다를 가로지르던 것)
   if (ta > 0 && ta < .6 && P.adm) { g.strokeStyle = `rgba(227,154,18,${.75 * (1 - ta / .6)})`; g.lineWidth = 3 / CAM.z; P.adm.p.forEach(p => g.stroke(p)); }
   $('attr').hidden = !(ta > .05 && tn);
@@ -1250,8 +1252,8 @@ function drawPip(t) {
   const pspan = guide ? Math.max(6, Math.min(25, ms * 5)) : Math.max(.35, Math.min(120, ms / 4));
   const cam = { x: P.x, y: P.y, z: s / pspan }, span = pspan;
   g.setTransform(DPR, 0, 0, DPR, 0, 0); g.fillStyle = SEA; g.fillRect(0, 0, s, s);
-  worldTo(g, cam, c, c); drawLand(g, cam.z, true);
-  drawTiles(g, cam, c, c, s, s, tileAlpha(span));
+  worldTo(g, cam, c, c); const pa = tileAlpha(span); if (pa < 1) drawLand(g, cam.z, true);
+  drawTiles(g, cam, c, c, s, s, pa);
   drawRoutes(g, cam.z, t);
   g.setTransform(DPR, 0, 0, DPR, 0, 0); LBL = [[c, c - 8, 30, 36]];
   airportMarks(g, cam, c, c, true);

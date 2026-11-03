@@ -663,7 +663,7 @@ function moveOnLand(dt, ix, iy, sp, okFn, res = .5) {
 let PEEK = null;
 function peek(key, title, open, card) {
   // 다른 것의 창이 열려 있으면 닫음(멀어졌으니)
-  const kinds = key ? ['spot', 'flag', 'city', 'air', 'land'] : ['spot', 'flag', 'city'];   // 공항 창은 autoSheet가 맡음
+  const kinds = key ? ['spot', 'flag', 'city', 'air', 'land', 'gplace'] : ['spot', 'flag', 'city', 'gplace'];   // 공항 창은 autoSheet가 맡음
   if (!P.pinned && kinds.includes(P.sheetKind) && P.sheetFor !== key) closeSheet();
   const el = $('peek');
   if (!key || P.sheetFor === key) { el.hidden = true; PEEK = key ? { key, open, card } : null; return; }
@@ -678,6 +678,7 @@ function peek(key, title, open, card) {
 let CARD_SIG = '';
 function cardState(c) {
   if (c.type === 'spot') { const k = c.s.key; return { icon: ICON[c.s.t] || '📍', name: c.s.ko, been: !!S.seen[k], wish: !!S.wish[k], x: c.s.x, y: c.s.y }; }
+  if (c.type === 'g') return { icon: CATS[gCat(c.p.type)][0], name: c.p.name, sub: c.p.tl, been: false, wish: false, x: c.p.x, y: c.p.y, g: 1 };
   const f = c.rt.f; return { icon: CATS[f.cat][0], name: f.name, been: f.status === 'been', wish: f.status === 'want', x: c.rt.x, y: c.rt.y };
 }
 function renderCard() {
@@ -685,7 +686,7 @@ function renderCard() {
   const st = cardState(c), sig = [PEEK.key, st.been, st.wish, !!c.remote].join('|');
   if (sig === CARD_SIG) return;
   CARD_SIG = sig;
-  let h = `<div class="ct"><span class="ci">${st.icon}</span><b>${esc(st.name)}</b></div>`;
+  let h = `<div class="ct"><span class="ci">${st.icon}</span><b>${esc(st.name)}${st.g ? ` <small style="color:#2f6fd0">구글${st.sub ? ' · ' + esc(st.sub) : ''}</small>` : ''}</b></div>`;
   if (c.remote) { const d = Math.hypot(st.x - P.x, st.y - P.y); h += `<div class="cd">📍 여기서 ${d < 1 ? Math.round(d * 1000) + 'm' : d.toFixed(1) + 'km'}</div>`; }
   // 윗줄 오른쪽 = 자세히, 아랫줄 = 상태 버튼 둘(켜진 쪽 색, 다시 누르면 표시 없음). 상세 창엔 상태 버튼 없음
   h = h.replace('</b></div>', `</b><button class="cdt" onclick="cardOpen()">자세히 ▲</button></div>`);
@@ -694,6 +695,7 @@ function renderCard() {
 }
 window.cardSet = st => {
   const c = PEEK && PEEK.card; if (!c) return;
+  if (c.type === 'g') { gToFlag(c.p, st === 'wish' ? 'want' : 'been'); return; }   // 구글 가게 → 내 깃발(다음 화면부터 깃발 카드)
   const x = c.type === 'spot' ? c.s.x : c.rt.x, y = c.type === 'spot' ? c.s.y : c.rt.y;
   if (c.type === 'spot') {
     const k = c.s.key;
@@ -713,7 +715,7 @@ $('peekBtn').onclick = () => { if (PEEK) PEEK.open(); $('peek').hidden = true; }
 function autoSheet(key, open) {
   if (P.pinned) return;
   if (P.closedFor && P.closedFor !== key) P.closedFor = null;
-  if (!key) { if (['air', 'land', 'city', 'spot', 'flag'].includes(P.sheetKind)) closeSheet(); return; }
+  if (!key) { if (['air', 'land', 'city', 'spot', 'flag', 'gplace'].includes(P.sheetKind)) closeSheet(); return; }
   if (P.sheetFor !== key && P.closedFor !== key) open();
 }
 let LASTDT = .016;
@@ -763,6 +765,9 @@ function step(dt) {
     P.onSpotT = spotT ? spotT.key : null;
     const city = nearest(CITY, NEAR.city * (far() ? 1.3 : 1));
     const fl = flagStep(hitR);
+    const gDeep = Math.min(W, H) / CAM.z <= G_SPAN;
+    if (gDeep) gNearby();
+    const gp = gDeep && !spot && !fl ? gStep(hitR, still, dt) : (P.onG = null, null);
     if (spot && P.onSpot !== spot.key) { spot.hit = performance.now(); P.ring = 0; SFX.pop(); vib(8); }   // 닿는 순간 통통
     if (spot) {   // 올라가 있으면 머리 위 동그라미 테두리가 빙 둘러 차오름 → 꽉 차면 '가고 싶어요'(표시 없을 때만)
       const k = spot.key, none = !S.seen[k] && !S.wish[k] && !S.paid['w:' + k];   // 자동은 처음 한 번만(손으로 '표시 없음'으로 되돌린 곳은 다시 안 채움)
@@ -776,6 +781,7 @@ function step(dt) {
     else if (P.remote && still) { /* 멀리서 누른 핀 카드: 움직이기 전까지 유지 */ }
     else if (spot) peek('spot:' + spot.key, '', () => sheetSpot(spot), { type: 'spot', s: spot });
     else if (fl) peek('flag:' + fl.f.id, '', () => sheetFlag(fl), { type: 'flag', rt: fl });
+    else if (gp && gp.show) { G_OPEN = gp.p; peek('g:' + gp.p.id, '', () => gDetail(gp.p), { type: 'g', p: gp.p }); }
     else if (air) { peek(null); autoSheet('air:' + air.code, () => sheetAirport(air, P.lastFrom && P.quiet === air.code ? 'land' : undefined)); }
     else if (city) peek('city:' + city.id, `🏙️ ${city.ko}`, () => sheetCity(city));
     else { peek(null); autoSheet(null); }
@@ -1188,9 +1194,10 @@ function drawMe(g, cam, cx, cy, t, s) {
 function overhead(g, cx, cy, t) {
   if (S.mode !== 'walk') return;
   const s = P.onSpot && SPOT.find(x => x.key === P.onSpot), rt = !s && PEEK && PEEK.key.startsWith('flag:') && FLAGS.find(r => 'flag:' + r.f.id === PEEK.key);
-  if (!s && !rt) return;
-  const ic = s ? ICON[s.t] || '📍' : CATS[rt.f.cat][0], name = s ? s.ko : rt.f.name;
-  const been = s ? !!S.seen[s.key] : rt.f.status === 'been', wish = s ? !!S.wish[s.key] : rt.f.status === 'want';
+  const gp = !s && !rt && PEEK && PEEK.key.startsWith('g:') && PEEK.card && PEEK.card.p;
+  if (!s && !rt && !gp) return;
+  const ic = s ? ICON[s.t] || '📍' : gp ? CATS[gCat(gp.type)][0] : CATS[rt.f.cat][0], name = s ? s.ko : gp ? gp.name : rt.f.name;
+  const been = s ? !!S.seen[s.key] : !gp && rt.f.status === 'been', wish = s ? !!S.wish[s.key] : !gp && rt.f.status === 'want';
   const x = cx + (P.x - CAM.x) * CAM.z, y = cy + (P.y - CAM.y) * CAM.z - 58 + Math.sin(t * 3) * 2, r = 19;
   g.fillStyle = 'rgba(0,0,0,.15)'; g.beginPath(); g.arc(x + 2, y + 3, r, 0, 6.29); g.fill();
   g.fillStyle = been ? '#fff3c4' : '#fff'; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.fill();
@@ -1228,6 +1235,7 @@ function draw(t) {
   cityMarks(g, CAM, cx, cy, span);
   spotMarks(g, CAM, cx, cy, span, false);
   flagMarks(g, CAM, cx, cy, span, false);
+  gMarks(g, CAM, cx, cy);
   cityLabels(g, CAM, cx, cy, P.alt > .5 ? 2e6 : span < 150 ? 0 : 2.5e5, 12);
   if (!FLY(S.mode) && span > 160) admLabels(g, CAM, cx, cy, 12);
   if (P.g > 0 && P.gAt) ring(g, cx + (P.gAt.x - CAM.x) * CAM.z, cy + (P.gAt.y - CAM.y) * CAM.z, 20, 4, P.g, GCOL[P.gKind]);
@@ -1341,6 +1349,76 @@ function wishFx(x, y, name) {   // 가고 싶어요 담김: 뾰로롱 + 분홍 �
 const CATS = { food: ['🍜', '맛집', '#e8594f'], shop: ['🛍️', '쇼핑', '#9b59b6'], stay: ['🏨', '숙박', '#2f6fd0'], cafe: ['☕', '카페', '#8d6e4c'], etc: ['📌', '기타', '#3fa66b'] };
 S.flags = S.flags || [];
 const FLAGS = [];   // 그리기용 {f, x, y, born, armed, last}
+/* ---------- 🔵 구글 가게 = 걸어가다 닿는 마커(각자 키) ---------- */
+// 📍 가까이에서 걸을 때 내 주변 150m 가게(식당·카페·가게·관광지)를 받아 둠(80m 움직일 때마다, 2.5초에 한 번까지 — Nearby Search Pro, 월 5,000번 무료).
+// 지도 그림에 아이콘이 이미 있어 핀은 안 그림. 닿으면 살짝 반짝, 멈춰 서면 카드 + 고리 → 꽉 차면 💭 가고 싶어요 = 내 깃발(장소 ID gid만 구글 것, 나머진 우리 것). 받은 가게 목록은 저장 안 함(메모리에만)
+const GP = { list: [], done: [], t: 0, busy: false, calls: 0 };
+const G_SPAN = 1.5, G_R = .15, G_DAY = 150;   // 화면 1.5km 이하에서만(가게 아이콘이 보이는 확대), 반경 150m, 하루 150번(월 무료 5,000번 ÷ 30)
+const gDay = () => { const d = new Date().toISOString().slice(0, 10); try { const o = JSON.parse(localStorage.getItem('jjway-gcnt') || '{}'); return o.d === d ? o : { d, n: 0 }; } catch (e) { return { d, n: 0 }; } };
+const G_TYPES = ['restaurant', 'cafe', 'bakery', 'bar', 'meal_takeaway', 'store', 'shopping_mall', 'tourist_attraction', 'museum', 'art_gallery', 'lodging'];
+const gCat = t => /cafe|bakery|coffee/.test(t || '') ? 'cafe' : /restaurant|food|bar|meal|ramen|sushi|udon/.test(t || '') ? 'food' : /lodging|hotel|inn/.test(t || '') ? 'stay' : /store|shop|mall|market/.test(t || '') ? 'shop' : 'etc';
+function gNearby() {
+  const key = GK.get(); if (!key || GP.busy || S.mode !== 'walk' || Math.min(W, H) / CAM.z > G_SPAN) return;
+  if (GP.done.some(c => Math.hypot(P.x - c.x, P.y - c.y) < G_R * .6)) return;   // 이미 찾아본 동네(이번에 켠 동안)
+  const now = performance.now(); if (now - GP.t < 3000) return;
+  const day = gDay(); if (day.n >= G_DAY) { if (!GP.capT) { GP.capT = 1; toast(`🔵 오늘 구글 가게 찾기 ${G_DAY}번을 다 썼어요 (무료 한도 지키기) · 내일 다시`, 3000); } return; }
+  day.n++; try { localStorage.setItem('jjway-gcnt', JSON.stringify(day)); } catch (e) {}
+  GP.busy = true; GP.t = now; const at = { x: P.x, y: P.y }, c = unproj(P.x, P.y); GP.calls++;
+  fetch('https://places.googleapis.com/v1/places:searchNearby', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.primaryType,places.primaryTypeDisplayName' },
+    body: JSON.stringify({ includedTypes: G_TYPES, maxResultCount: 20, rankPreference: 'DISTANCE', languageCode: 'ko', locationRestriction: { circle: { center: { latitude: c.lat, longitude: c.lon }, radius: G_R * 1000 } } }) })
+    .then(r => r.json()).then(j => {
+      GP.done.push(at); if (GP.done.length > 400) GP.done.shift(); const have = new Set(GP.list.map(p => p.id)), mine = new Set(S.flags.map(f => f.gid).filter(Boolean));
+      for (const p of j.places || []) { if (have.has(p.id) || mine.has(p.id) || !p.location) continue; const q = proj(p.location.longitude, p.location.latitude);
+        GP.list.push({ id: p.id, name: p.displayName ? p.displayName.text : '', type: p.primaryType || '', tl: p.primaryTypeDisplayName ? p.primaryTypeDisplayName.text : '', x: q.x, y: q.y, lat: p.location.latitude, lon: p.location.longitude }); }
+      GP.list = GP.list.filter(p => Math.hypot(p.x - P.x, p.y - P.y) < 1).slice(-300);
+    }).catch(() => {}).finally(() => { GP.busy = false; });
+}
+function gStep(hitR, still, dt) {
+  let near = null, nd = hitR;
+  for (const p of GP.list) { const d = Math.hypot(p.x - P.x, p.y - P.y); if (d < nd) { nd = d; near = p; } }
+  if ((near ? near.id : null) !== P.onG) { P.onG = near ? near.id : null; P.gStill = 0; P.ring = 0; if (near) { near.hit = performance.now(); burst(near.x, near.y, 6, ['#7fb3ff', '#fff'], 30); } }
+  if (!near) return null;
+  if (!still) { P.gStill = 0; P.ring = 0; return { p: near, show: false }; }   // 지나가면 반짝만, 멈춰 서야 카드
+  P.gStill = (P.gStill || 0) + dt;
+  const show = P.gStill > .5;
+  if (show) { P.ring = Math.min(1, (P.ring || 0) + dt / RING_T); if (P.ring >= 1) gToFlag(near, 'want'); }
+  return { p: near, show };
+}
+function gToFlag(p, st) {   // 구글 가게 → 내 깃발(이름·위치는 지금 보이는 것, 장소 ID는 구글 정보 다시 볼 때)
+  const now = Date.now(), f = { id: uid(), lat: p.lat, lon: p.lon, gid: p.id, name: p.name, memo: '', link: '', cat: gCat(p.type), star: 0, status: st, autoW: 1, vis: 'private', created: now, updated: now };
+  S.flags.push(f); const rt = flagRT(f, 0); rt.armed = false; FLAGS.push(rt);
+  GP.list = GP.list.filter(q => q.id !== p.id); P.onG = null; save();
+  if (st === 'want') { wishFx(rt.x, rt.y, f.name); addPts(2); } else { burst(rt.x, rt.y, 16, ['#ffd84d', '#fff', '#ff8a5c']); SFX.stamp(); f.paid = 1; addPts(3); }
+  CARD_SIG = ''; return rt;
+}
+function gMarks(g, cam, cx, cy) {   // 닿아 있는 구글 가게만 파란 고리로 살짝(아이콘은 지도 그림에)
+  const p = P.onG && GP.list.find(q => q.id === P.onG); if (!p) return;
+  const x = cx + (p.x - cam.x) * cam.z, y = cy + (p.y - cam.y) * cam.z, k = (Math.sin(performance.now() / 160) + 1) / 2;
+  g.strokeStyle = `rgba(47,111,208,${.5 + .4 * k})`; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 13 + 3 * k, 0, 6.29); g.stroke();
+}
+async function gDetail(p) {   // 자세히(Place Details — 평점·영업시간·전화, 월 1,000번 무료). 저장 안 함, 열 때마다 받음
+  const head = `<h2>📍 ${esc(p.name || '')}</h2><button class="cbtn" onclick="closeSheet()">닫기</button>`;
+  openSheet(head, `<div class="qmsg">📡 구글에서 정보 받는 중…</div>`, 'g:' + p.id, 'gplace');
+  try {
+    const r = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(p.id)}?languageCode=ko`, { headers: { 'X-Goog-Api-Key': GK.get(), 'X-Goog-FieldMask': 'displayName,primaryTypeDisplayName,formattedAddress,rating,userRatingCount,currentOpeningHours,nationalPhoneNumber,websiteUri,googleMapsUri' } });
+    const d = await r.json(); if (!r.ok) throw new Error((d.error && d.error.message || '실패').slice(0, 60));
+    if (P.sheetFor !== 'g:' + p.id) return;
+    const oh = d.currentOpeningHours, today = oh && oh.weekdayDescriptions ? oh.weekdayDescriptions[(new Date().getDay() + 6) % 7] : '';
+    let h = `<div class="sub">${esc(d.primaryTypeDisplayName ? d.primaryTypeDisplayName.text : p.tl || '')}${d.rating ? ` · ⭐ ${d.rating} (${d.userRatingCount || 0})` : ''}${oh ? ` · ${oh.openNow ? '🟢 영업 중' : '🔴 영업 전·끝'}` : ''}</div>`;
+    if (today) h += `<div class="intro">🕒 ${esc(today)}</div>`;
+    if (d.formattedAddress) h += `<div class="sub">📍 ${esc(d.formattedAddress.replace(/^\s*(일본|Japan)\s*/, '').replace(/\s*(일본|Japan)$/, '').replace(/〒?\s*\d{3}-\d{4}\s*/, ''))}</div>`;
+    if (d.nationalPhoneNumber) h += `<div class="sub">📞 <a href="tel:${esc(d.nationalPhoneNumber)}">${esc(d.nationalPhoneNumber)}</a></div>`;
+    if (d.websiteUri) h += `<div class="sub"><a href="${esc(d.websiteUri)}" target="_blank" rel="noopener">🔗 홈페이지</a></div>`;
+    const mine = S.flags.find(f => f.gid === p.id);
+    if (!mine) h += `<div class="cbtns"><button class="wi" onclick="gWish('${p.id}','want')">💭 가고 싶어요</button><button class="ok" onclick="gWish('${p.id}','been')">✔ 다녀왔어요</button></div>`;
+    h += `<a class="nav" href="${esc(d.googleMapsUri || `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}&query_place_id=${p.id}`)}" target="_blank" rel="noopener">🧭 구글 지도에서 열기 · 길 찾기</a>`;
+    h += `<div class="note">정보: Google Maps · 열 때마다 새로 받아요</div>`;
+    openSheet(head, h, 'g:' + p.id, 'gplace');
+  } catch (e) { if (P.sheetFor === 'g:' + p.id) openSheet(head, `<div class="qmsg">⚠️ ${esc(e.message)}</div>`, 'g:' + p.id, 'gplace'); }
+}
+window.gWish = (id, st) => { const p = GP.list.find(q => q.id === id) || G_OPEN; if (!p) return; const rt = gToFlag(p, st); closeSheet(); P.closedFor = null; sheetFlag(rt); };
+let G_OPEN = null;
+window.gInfo = id => { const f = S.flags.find(x => x.gid === id); if (f) { G_OPEN = { id, name: f.name, lat: f.lat, lon: f.lon }; gDetail(G_OPEN); P.pinned = true; } };   // 깃발 위에 서 있어도 안 닫히게(움직이면 닫힘)
 function flagRT(f, born) { const p = proj(f.lon, f.lat); return { f, x: p.x, y: p.y, born: born || 0, armed: false, last: 0 }; }
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1404,6 +1482,7 @@ function sheetFlag(rt) {
   let h = `<div class="sub">🚩 내 깃발 · ${c[1]}${f.star ? ' · ' + '★'.repeat(f.star) : ''}</div>`;
   if (f.memo) h += `<div class="intro">${esc(f.memo)}</div>`;
   if (f.link) h += `<div class="sub"><a href="${esc(/^https?:\/\//.test(f.link) ? f.link : 'https://' + f.link)}" target="_blank" rel="noopener">🔗 링크 열기</a></div>`;
+  if (f.gid && GK.get()) h += `<button class="nav" style="border:0;width:100%" onclick="gInfo('${f.gid}')">⭐ 구글 정보(평점·영업시간)</button>`;
   h += `<a class="nav" href="https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lon}" target="_blank" rel="noopener">🧭 구글 지도에서 길 찾기</a>`;
   h += `<div class="note">🔒 나만 보기 · ${new Date(f.created).toLocaleDateString('ko-KR')} 꽂음</div>`;
   openSheet(head, h, 'flag:' + f.id, 'flag');

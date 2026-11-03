@@ -120,7 +120,8 @@ button,input,select{font-family:inherit;color:inherit}
 .cbtns button{font-size:15px}
 .cbtns button.wi.on{background:#ffe6ef;border-color:#b3305f;color:#b3305f}.cbtns button.ok.on{background:#fff3c4;border-color:#a8790f;color:#8a6a1d}
 @keyframes nudge{0%,100%{transform:none}30%{transform:translateY(-4px) scale(1.04)}60%{transform:translateY(1px)}}.cbtns.nudge button{animation:nudge .6s ease 2}.cbtns.nudge button+button{animation-delay:.15s}
-.cg{font-size:13px;color:#5d6b7a;margin:2px 0 0 31px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ct b small{font:12px system-ui,sans-serif;color:#7a8794}
+.cg{font-size:13px;color:#5d6b7a;margin:2px 0 0 31px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.co{font-size:13px;color:#7a8794;margin:1px 0 0 31px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cbtns.cic{flex:none;margin:0;gap:5px}.cbtns.cic button{flex:none;width:34px;height:34px;padding:0;border-radius:50%;font:700 16px system-ui,sans-serif;line-height:1}.cbtns.cic button.wi{color:#c9c4cf}.cbtns.cic button.ok{color:#c9c4cf}.cbtns.cic button.wi.on{color:#d1336f}.cbtns.cic button.ok.on{color:#a8790f}.cbtns.cic .cdt{color:#2c2b35;box-shadow:0 2px 0 rgba(44,43,53,.25);border:2px solid var(--ink);background:#fff;cursor:pointer}.ct b small{font:12px system-ui,sans-serif;color:#7a8794}
 .gph{display:flex;gap:6px;overflow-x:auto;margin:6px 0 2px}.gph img{height:120px;border-radius:10px;flex:none;background:#eee}.gpa{font-size:11px;color:#7a8794;margin-bottom:6px}
 .grv{border-top:1px solid #e6e1d6;padding:7px 0;font-size:13px}.grv b{font-size:12px}.grv p{margin:3px 0 0;color:#3d3c48;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .ct .cdt{flex:none;height:32px;padding:0 12px;border-radius:999px;border:2px solid var(--ink);background:#fff;font:14px Jua,sans-serif;cursor:pointer;box-shadow:0 2px 0 rgba(44,43,53,.25)}.ct .cdt:active{transform:translateY(2px);box-shadow:none}
@@ -685,25 +686,27 @@ function peek(key, title, open, card) {
 // 도착 카드: 이름·상태 + 채움 막대 + [✔ 다녀왔어요]/[↩ 되돌리기] + [자세히]. 멀리서 핀을 누르면 [💭 가고 싶어요]
 let CARD_SIG = '';
 function cardState(c) {
-  if (c.type === 'spot') { const k = c.s.key; return { icon: ICON[c.s.t] || '📍', name: c.s.ko, been: !!S.seen[k], wish: !!S.wish[k], x: c.s.x, y: c.s.y }; }
-  if (c.type === 'g') return { icon: CATS[gCat(c.p.type)][0], name: koName(c.p.name) || c.p.name, orig: koName(c.p.name) ? c.p.name : '', sub: c.p.tl, been: false, wish: false, x: c.p.x, y: c.p.y, g: 1 };
-  const f = c.rt.f; return { icon: CATS[f.cat][0], name: f.name, been: f.status === 'been', wish: f.status === 'want', x: c.rt.x, y: c.rt.y };
+  if (c.type === 'spot') { const k = c.s.key, ci = CITY.find(x => x.id === c.s.city); return { icon: ICON[c.s.t] || '📍', name: c.s.ko, orig: c.s.ja || '', sub: `명소${ci ? ' · ' + ci.ko : ''}`, been: !!S.seen[k], wish: !!S.wish[k], x: c.s.x, y: c.s.y }; }
+  if (c.type === 'g') { const p = c.p; return { icon: CATS[gCat(p.type)][0], name: koName(p.name) || p.name, orig: koName(p.name) ? p.name : '', sub: [p.tl, koName(p.town) || p.town].filter(Boolean).join(' · '), warn: p.biz === 'CLOSED_TEMPORARILY' ? '⚠️ 임시 휴업' : '', been: false, wish: false, x: p.x, y: p.y, g: 1 }; }
+  const f = c.rt.f, m = f.name.match(/^(.*\S)\s+\((.+)\)$/);   // '토리테이 (Toritei)' → 이름 / 원래 이름 두 줄
+  return { icon: CATS[f.cat][0], name: m ? m[1] : f.name, orig: m ? m[2] : '', sub: `내 마커 · ${CATS[f.cat][1]}${f.star ? ' · ' + '★'.repeat(f.star) : ''}`, been: f.status === 'been', wish: f.status === 'want', x: c.rt.x, y: c.rt.y };
 }
 function renderCard() {
   const c = PEEK && PEEK.card; if (!c) return;
-  const st = cardState(c), sig = [PEEK.key, st.been, st.wish, !!c.remote, st.name, !!(c.p && c.p.found)].join('|');
+  const st = cardState(c), sig = [PEEK.key, st.been, st.wish, !!c.remote, st.name, st.orig, st.sub, !!(c.p && c.p.found)].join('|');
   if (sig === CARD_SIG) return;
   CARD_SIG = sig;
-  let h = `<div class="ct"><span class="ci">${st.icon}</span><b>${esc(st.name)}${st.orig ? ` <small>${esc(st.orig)}</small>` : ''}</b></div>`;
-  if (st.g) h += `<div class="cg"><span style="color:#2f6fd0">구글</span>${st.sub ? ' · ' + esc(st.sub) : ''}</div>`;
+  // 윗줄: 아이콘·이름(넓게) + 오른쪽 작은 버튼 ♥ 가고 싶어요 · ✔ 다녀왔어요 · ⓘ 자세히(켜진 쪽 색, 다시 누르면 표시 없음) / 둘째 줄: 원래 이름(일본어·영어) / 셋째 줄: 종류·동네
+  let h = `<div class="ct"><span class="ci">${st.icon}</span><b>${esc(st.name)}</b><span class="cbtns cic${st.g && c.p.found ? ' nudge' : ''}"><button class="wi${st.wish ? ' on' : ''}" onclick="cardSet('wish')" aria-label="가고 싶어요">♥</button><button class="ok${st.been ? ' on' : ''}" onclick="cardSet('been')" aria-label="다녀왔어요">✔</button><button class="cdt" onclick="cardOpen()" aria-label="자세히">ⓘ</button></span></div>`;
+  if (st.orig) h += `<div class="co">${esc(st.orig)}</div>`;
+  const sub = [st.g ? '<span style="color:#2f6fd0">구글</span>' : '', esc(st.sub || ''), st.warn ? `<span style="color:#c0392b">${st.warn}</span>` : ''].filter(Boolean).join(' · ');
+  if (sub) h += `<div class="cg">${sub}</div>`;
   if (c.remote) { const d = Math.hypot(st.x - P.x, st.y - P.y); h += `<div class="cd">📍 여기서 ${d < 1 ? Math.round(d * 1000) + 'm' : d.toFixed(1) + 'km'}</div>`; }
-  // 윗줄 오른쪽 = 자세히, 아랫줄 = 상태 버튼 둘(켜진 쪽 색, 다시 누르면 표시 없음). 상세 창엔 상태 버튼 없음
-  h = h.replace('</b></div>', `</b><button class="cdt" onclick="cardOpen()">자세히 ▲</button></div>`);
-  h += `<div class="cbtns${st.g && c.p.found ? ' nudge' : ''}"><button class="wi${st.wish ? ' on' : ''}" onclick="cardSet('wish')">💭 가고 싶어요</button><button class="ok${st.been ? ' on' : ''}" onclick="cardSet('been')">✔ 다녀왔어요</button></div>`;
   $('card').innerHTML = h;
 }
 window.cardSet = st => {
   const c = PEEK && PEEK.card; if (!c) return;
+  S.icTip = (S.icTip || 0) + 1; if (S.icTip <= 6) toast(st === 'wish' ? '♥ 가고 싶어요' : '✔ 다녀왔어요', 900);   // 처음 몇 번은 아이콘 뜻
   if (c.type === 'g') { gToFlag(c.p, st === 'wish' ? 'want' : 'been'); return; }   // 구글 가게 → 내 깃발(다음 화면부터 깃발 카드)
   const x = c.type === 'spot' ? c.s.x : c.rt.x, y = c.type === 'spot' ? c.s.y : c.rt.y;
   if (c.type === 'spot') {
@@ -1406,14 +1409,15 @@ function gNearby() {
   const day = gDay(); if (day.n >= G_DAY) { if (!GP.capT) { GP.capT = 1; toast(`🔵 오늘 구글 가게 찾기 ${G_DAY}번을 다 썼어요 (무료 한도 지키기) · 내일 다시`, 3000); } return; }
   day.n++; try { localStorage.setItem('jjway-gcnt', JSON.stringify(day)); } catch (e) {}
   GP.busy = true; GP.t = now; const at = { x: P.x, y: P.y }, c = unproj(P.x, P.y); GP.calls++;
-  fetch('https://places.googleapis.com/v1/places:searchNearby', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.primaryType,places.primaryTypeDisplayName' },
+  fetch('https://places.googleapis.com/v1/places:searchNearby', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.primaryType,places.primaryTypeDisplayName,places.shortFormattedAddress,places.businessStatus' },   // 같은 Pro 단계라 추가 비용 없음
     body: JSON.stringify({ includedTypes: G_TYPES, maxResultCount: 20, rankPreference: 'DISTANCE', languageCode: 'ko', locationRestriction: { circle: { center: { latitude: c.lat, longitude: c.lon }, radius: G_R * 1000 } } }) })
     .then(r => r.json()).then(j => {
       GP.done.push(at); if (GP.done.length > 400) GP.done.shift(); const have = new Set(GP.list.map(p => p.id)), mine = new Set(S.flags.map(f => f.gid).filter(Boolean));
-      for (const p of j.places || []) { if (have.has(p.id) || mine.has(p.id) || !p.location) continue; const q = proj(p.location.longitude, p.location.latitude);
-        GP.list.push({ id: p.id, name: p.displayName ? p.displayName.text : '', type: p.primaryType || '', tl: p.primaryTypeDisplayName ? p.primaryTypeDisplayName.text : '', x: q.x, y: q.y, lat: p.location.latitude, lon: p.location.longitude }); }
+      for (const p of j.places || []) { if (have.has(p.id) || mine.has(p.id) || !p.location || p.businessStatus === 'CLOSED_PERMANENTLY') continue; const q = proj(p.location.longitude, p.location.latitude);   // 폐업은 뺌
+        const town = (p.shortFormattedAddress || '').split(/,\s*/).map(x => x.replace(/[0-9０-９−\-–]+/g, '').trim()).filter(x => x && !/^(일본|Japan)$/.test(x))[0] || '';   // 짧은 주소에서 번지 빼고 동네만
+        GP.list.push({ id: p.id, name: p.displayName ? p.displayName.text : '', type: p.primaryType || '', tl: p.primaryTypeDisplayName ? p.primaryTypeDisplayName.text : '', town, biz: p.businessStatus || '', x: q.x, y: q.y, lat: p.location.latitude, lon: p.location.longitude }); }
       GP.list = GP.list.filter(p => Math.hypot(p.x - P.x, p.y - P.y) < 1).slice(-300);
-      wantKo(GP.list.map(p => p.name));
+      wantKo(GP.list.flatMap(p => [p.name, p.town]));
     }).catch(() => {}).finally(() => { GP.busy = false; });
 }
 function gStep(hitR, still, dt) {

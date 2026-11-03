@@ -261,7 +261,9 @@ def run(w, h, tag):
         pg.click('#sheet .ytx >> nth=1'); time.sleep(.3); assert pg.locator('#sheet .ytps').count() == 0, '접기'
         pg.click('#sheet .ytv >> nth=0'); time.sleep(.5); assert pg.evaluate('!!YT.v && YT.v.who === "ko"') and pg.is_visible('#ytChip')
         pg.evaluate('(() => { const p = YT.v.places[0]; setSpan("walk", 1); P.x = p.x; P.y = p.y; P.vx = P.vy = 0; })()'); time.sleep(1.5)
-        assert '나옴' in pg.inner_text('#card') and 'youtube.com/watch' in pg.get_attribute('#card .cln', 'href'), pg.inner_text('#card')
+        assert '영상' in pg.inner_text('#card') and 'youtube.com/watch' in pg.get_attribute('#card .cplay', 'href') and 'google.com/maps' in pg.get_attribute('#card .cln', 'href'), pg.inner_text('#card')   # ▶ = 유튜브 그 장면, 🔗 = 구글 지도(다른 카드와 같게)
+        assert pg.evaluate("document.getElementById('card').classList.contains('isyt')"), '영상 카드 바탕색'
+        pg.click('#card .cdt'); time.sleep(.8); assert pg.is_visible('#sheet'); pg.evaluate('closeSheet()'); time.sleep(.6); pg.click('#card .cdt'); time.sleep(.8); assert pg.is_visible('#sheet'), 'ⓘ 두 번째도 떠야 함'; pg.evaluate('closeSheet()'); time.sleep(.6)
         nf0 = pg.evaluate('S.flags.length'); pg.click('#card .cic .wi'); time.sleep(.3)
         f = pg.evaluate('S.flags[S.flags.length - 1]'); assert pg.evaluate('S.flags.length') == nf0 + 1 and f['status'] == 'want' and f.get('gid') and 'youtube' in f['link'], f
         pg.click('#ytChip button'); time.sleep(.2); assert not pg.evaluate('YT.v') and not pg.is_visible('#ytChip')

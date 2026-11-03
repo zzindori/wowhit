@@ -244,12 +244,16 @@ def run(w, h, tag):
           for (let r = .1; r <= 1.01 && !near; r += .1) for (let a = 0; a < 32 && !near; a++) near = fineWater(P.x + Math.cos(a * .196) * tol * r, P.y + Math.sin(a * .196) * tol * r) === 0;
           return {lat: unproj(P.x, P.y).lat, near, tolM: Math.round(tol * 1000)}; })()''')
         assert st['lat'] < 34.36 and st['near'], f'바다로 걸어감 {st}'
-        # 확대 단계 버튼: 📍 가까이(2km) · 🚶 동네(20km) · 🚗 멀리(260km), 지금 단계에 불
-        for bi, span in [(0, 2), (1, 20), (2, 260)]:
-            pg.click(f'#bands .band[data-b="{bi}"]'); time.sleep(1.6)
-            assert pg.evaluate('S.span.walk') == span and pg.evaluate(f'document.querySelector(\'#bands .band[data-b="{bi}"]\').classList.contains("on")'), f'단계 버튼 {bi}'
-        pg.evaluate('S.span.walk = 4'); time.sleep(1.2)
-        assert pg.evaluate('document.querySelector(\'#bands .band[data-b="1"]\').classList.contains("on")'), '손으로 4km면 동네 단계 불'
+        # 확대 막대: 점 누르면 그 확대(2km = 3번째 점), ＋/－ 한 단계, 지금 확대에 가장 가까운 점이 큼, 점 색 = 되는 것(분홍 3km 이하·파랑 60km 이하·회색)
+        on = lambda: pg.evaluate("[...document.querySelectorAll('#zbar .zd')].findIndex(d => d.classList.contains('on'))")
+        pg.click('#zbar .zd[data-i="3"]'); time.sleep(1.6); assert pg.evaluate('S.span.walk') == 2 and on() == 3, ('점 2km', pg.evaluate('S.span.walk'), on())
+        mn = pg.evaluate("spanMin('walk')")   # 구글 키가 있으면 0.25km, 없으면 지리원 1.2km
+        pg.click('#zIn'); time.sleep(1.6); assert pg.evaluate('S.span.walk') == (1 if mn < 1 else 1.2) and on() == 2, ('＋', mn, pg.evaluate('S.span.walk'), on())
+        assert pg.locator('#zbar .zd.off').count() == (0 if mn < .5 else 2), '지리원 지도면 0.25·0.5km 점은 막힘'
+        pg.click('#zOut'); time.sleep(.3); pg.click('#zOut'); time.sleep(1.6); assert pg.evaluate('S.span.walk') == 5 and on() == 4, ('－ 두 번', pg.evaluate('S.span.walk'))
+        cols = pg.evaluate("[...document.querySelectorAll('#zbar .zd')].map(d => d.style.getPropertyValue('--zc'))")
+        assert cols[3] == '#e05a8a' and cols[6] == '#2f6fd0' and cols[9] == '#8d8a96', cols
+        pg.evaluate('S.span.walk = 4'); time.sleep(1.2); assert on() == 4, '손으로 4km면 5km 점'
         # 멀리 볼 땐(260km) 예전처럼 넉넉하게(해협 건너기)
         pg.evaluate('S.span.walk = 260'); time.sleep(1.2); hold(pg, 'ArrowUp', .6)
         assert pg.evaluate('unproj(P.x, P.y).lat') > 34.37, '멀리 볼 때도 막힘'

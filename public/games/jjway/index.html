@@ -204,6 +204,7 @@ button,input,select{font-family:inherit;color:inherit}
     <div class="small">넣으면 🔍 장소 찾기가 구글 검색이 돼요(한국어 그대로·작은 가게까지). 키는 <b>이 폰(브라우저)에만</b> 저장되고 우리 서버로 보내지 않아요. 만드는 법은 <a href="/guide#gmaps" target="_blank">이용 안내</a>.</div>
     <div class="fsearch" style="margin-top:6px"><input id="gkIn" class="fin" type="password" autocomplete="off" placeholder="구글 지도 API 키 붙여넣기"><button class="qgo" id="gkGo">확인</button></div>
     <div id="gkMsg" class="small" style="text-align:left"></div>
+    <div id="gUse" class="small" style="text-align:left;color:#5d6b7a"></div>
     <h3 style="margin-top:10px">✨ Gemini 키 (가게 이름 한글로)</h3>
     <div class="small">구글 가게 이름이 일본어·영어일 때 한글 읽기로 바꿔요(예: Toritei → 토리테이). 이 폰에만 저장.</div>
     <div class="fsearch" style="margin-top:6px"><input id="gmIn" class="fin" type="password" autocomplete="off" placeholder="Gemini API 키 붙여넣기"><button class="qgo" id="gmGo">확인</button></div>
@@ -1399,7 +1400,8 @@ const FLAGS = [];   // 그리기용 {f, x, y, born, armed, last}
 // 지도 그림에 아이콘이 이미 있어 핀은 안 그림. 닿으면 살짝 반짝, 멈춰 서면 카드 → [가고 싶어요]·[다녀왔어요]를 직접 눌러야 내 깃발(자동 없음, 장소 ID gid만 구글 것). 받은 가게 목록은 저장 안 함(메모리에만)
 const GP = { list: [], done: [], t: 0, busy: false, calls: 0 };
 const G_SPAN = 1.5, G_R = .15, G_DAY = 150;   // 화면 1.5km 이하에서만(가게 아이콘이 보이는 확대), 반경 150m, 하루 150번(월 무료 5,000번 ÷ 30)
-const gDay = () => { const d = new Date().toISOString().slice(0, 10); try { const o = JSON.parse(localStorage.getItem('jjway-gcnt') || '{}'); return o.d === d ? o : { d, n: 0 }; } catch (e) { return { d, n: 0 }; } };
+const today = () => new Date().toLocaleDateString('sv');   // 이 폰 시간대의 날짜(YYYY-MM-DD) — UTC면 한국·일본은 아침 9시에 넘어갔음
+const gDay = () => { const d = today(); try { const o = JSON.parse(localStorage.getItem('jjway-gcnt') || '{}'); return o.d === d ? o : { d, n: 0 }; } catch (e) { return { d, n: 0 }; } };
 const G_TYPES = ['restaurant', 'cafe', 'bakery', 'bar', 'meal_takeaway', 'store', 'shopping_mall', 'tourist_attraction', 'museum', 'art_gallery', 'lodging'];
 const gCat = t => /cafe|bakery|coffee/.test(t || '') ? 'cafe' : /restaurant|food|bar|meal|ramen|sushi|udon/.test(t || '') ? 'food' : /lodging|hotel|inn/.test(t || '') ? 'stay' : /store|shop|mall|market/.test(t || '') ? 'shop' : 'etc';
 function gNearby() {
@@ -1432,7 +1434,7 @@ function gStep(hitR, still, dt) {
     if (P.ring >= 1) {
       near.found = 1; CARD_SIG = '';
       burst(near.x, near.y, 14, ['#7fb3ff', '#fff', '#ffd84d']); SFX.chime(); vib(12);
-      const d = new Date().toISOString().slice(0, 10); let o = {}; try { o = JSON.parse(localStorage.getItem('jjway-gfound') || '{}'); } catch (e) {}
+      const d = today(); let o = {}; try { o = JSON.parse(localStorage.getItem('jjway-gfound') || '{}'); } catch (e) {}
       if (o.d !== d) o = { d, ids: [] };
       if (!o.ids.includes(near.id)) { o.ids.push(near.id); try { localStorage.setItem('jjway-gfound', JSON.stringify(o)); } catch (e) {} addPts(1); toast(`👀 발견! ${koName(near.name) || near.name} +1`, 1500); }
       else toast(`👀 ${koName(near.name) || near.name}`, 1200);
@@ -1452,16 +1454,27 @@ function gMarks(g, cam, cx, cy) {   // 닿아 있는 구글 가게만 파란 고
   const x = cx + (p.x - cam.x) * cam.z, y = cy + (p.y - cam.y) * cam.z, k = (Math.sin(performance.now() / 160) + 1) / 2;
   g.strokeStyle = `rgba(47,111,208,${.5 + .4 * k})`; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 13 + 3 * k, 0, 6.29); g.stroke();
 }
+const GD = new Map(), G_DDAY = 30;   // 자세히: 켜 둔 동안 같은 가게는 한 번만 받음(메모리에만 — 약관상 오래 저장 안 함) · 하루 30번(월 무료 1,000번 ÷ 30), 넘으면 구글 지도 링크(무료)
 const G_PHOTOS = 3;   // 자세히 사진 장수(장마다 요금 — 월 1,000장 무료, 많다 싶으면 1로). 더 보기는 구글 지도에서
 const PRICE = { PRICE_LEVEL_FREE: '무료', PRICE_LEVEL_INEXPENSIVE: '¥', PRICE_LEVEL_MODERATE: '¥¥', PRICE_LEVEL_EXPENSIVE: '¥¥¥', PRICE_LEVEL_VERY_EXPENSIVE: '¥¥¥¥' };
 async function gDetail(p) {   // 자세히(Place Details — 사진·평점·가격대·영업시간·리뷰·연락처). 저장 안 함, 열 때마다 받음
   const key = GK.get(), nm = () => { const f = S.flags.find(x => x.gid === p.id); return f ? f.name : showName(p.name || ''); };
   const head = () => `<h2>📍 ${esc(nm())}</h2><button class="cbtn" onclick="closeSheet()">닫기</button>`;
-  openSheet(head(), `<div class="qmsg">📡 구글에서 정보 받는 중…</div>`, 'g:' + p.id, 'gplace');
+  const gmap = `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}&query_place_id=${p.id}`;
+  let d = GD.get(p.id);
+  if (!d) {
+    const day = (() => { const dd = today(); try { const o = JSON.parse(localStorage.getItem('jjway-gdcnt') || '{}'); return o.d === dd ? o : { d: dd, n: 0 }; } catch (e) { return { d: dd, n: 0 }; } })();
+    if (day.n >= G_DDAY) { openSheet(head(), `<div class="qmsg">🔵 오늘 자세히 ${G_DDAY}번을 다 봤어요(구글 무료 한도 지키기) · 내일 다시</div><a class="nav" href="${gmap}" target="_blank" rel="noopener">🧭 구글 지도에서 무료로 보기(사진·리뷰·영업시간)</a>`, 'g:' + p.id, 'gplace'); return; }
+    day.n++; try { localStorage.setItem('jjway-gdcnt', JSON.stringify(day)); } catch (e) {}
+  }
+  if (!d) openSheet(head(), `<div class="qmsg">📡 구글에서 정보 받는 중…</div>`, 'g:' + p.id, 'gplace');
   try {
-    const r = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(p.id)}?languageCode=ko`, { headers: { 'X-Goog-Api-Key': key,
-      'X-Goog-FieldMask': 'displayName,primaryTypeDisplayName,formattedAddress,rating,userRatingCount,priceLevel,currentOpeningHours,regularOpeningHours,nationalPhoneNumber,websiteUri,googleMapsUri,photos,reviews,editorialSummary' } });
-    const d = await r.json(); if (!r.ok) throw new Error((d.error && d.error.message || '실패').slice(0, 60));
+    if (!d) {
+      const r = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(p.id)}?languageCode=ko`, { headers: { 'X-Goog-Api-Key': key,
+        'X-Goog-FieldMask': 'displayName,primaryTypeDisplayName,formattedAddress,rating,userRatingCount,priceLevel,currentOpeningHours,regularOpeningHours,nationalPhoneNumber,websiteUri,googleMapsUri,photos,reviews,editorialSummary' } });
+      d = await r.json(); if (!r.ok) throw new Error((d.error && d.error.message || '실패').slice(0, 60));
+      GD.set(p.id, d); if (GD.size > 60) GD.delete(GD.keys().next().value);
+    }
     if (P.sheetFor !== 'g:' + p.id) return;
     if (d.displayName && !p.name) p.name = d.displayName.text;
     const render = () => {
@@ -1877,7 +1890,11 @@ function renderInts() {
 }
 const soundLbl = () => $('soundBtn').textContent = S.sound === false ? '🔇 소리 꺼짐' : '🔊 소리 켜짐';
 $('soundBtn').onclick = () => { S.sound = S.sound === false; save(); soundLbl(); if (S.sound) SFX.coin(); };
-$('bSet').onclick = () => { renderInts(); soundLbl(); $('settings').hidden = false; };
+$('bSet').onclick = () => { renderInts(); soundLbl(); gUseLbl(); $('settings').hidden = false; };
+function gUseLbl() {   // 이 폰에서 센 오늘 사용량(구글 실제 사용량은 콘솔에서 — 진짜 상한은 콘솔 할당량)
+  const rd = k => { try { const o = JSON.parse(localStorage.getItem(k) || '{}'); return o.d === today() ? o.n || 0 : 0; } catch (e) { return 0; } };
+  $('gUse').textContent = GK.get() ? `📊 오늘(이 폰): 가게 찾기 ${rd('jjway-gcnt')}/${G_DAY} · 자세히 ${rd('jjway-gdcnt')}/${G_DDAY} — 확실한 상한은 구글 콘솔 할당량에서` : '';
+}
 $('setClose').onclick = () => { $('settings').hidden = true; const k = P.sheetFor; if (k) { closeSheet(); P.closedFor = null; } };
 $('resetBtn').onclick = () => { if (confirm('가족 설정·여행 기록·위치를 모두 지우고 처음부터 할까요?')) { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); } };
 $('bHome').onclick = () => location.href = '/jjway';

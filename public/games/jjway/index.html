@@ -126,6 +126,9 @@ button,input,select{font-family:inherit;color:inherit}
 @keyframes kfill{from{--kp:0%}to{--kp:100%}}
 .kwait span{display:inline-block;opacity:.45;filter:blur(.6px);animation:kwave 1.1s ease-in-out infinite;white-space:pre}
 @keyframes kwave{0%,100%{transform:translateY(0)}35%{transform:translateY(-3px)}70%{transform:translateY(1px)}}
+.ytf{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 8px}.ytf span{flex:1}.ytf button{height:30px;padding:0 10px;border-radius:999px;border:2px solid var(--ink);background:#fff;font:13px system-ui,sans-serif}.ytf button.on{background:#ffcf5a}
+.ytv{display:flex;gap:9px;padding:7px 0;border-top:1px solid #e6e1d6;cursor:pointer;align-items:flex-start}.ytv.on{background:#fff3c4}.ytv img{width:120px;height:68px;object-fit:cover;border-radius:8px;flex:none;background:#ddd}.ytv b{display:block;font:14px system-ui,sans-serif;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ytv small{color:#6b6876;font-size:12px}
+#ytChip{position:fixed;top:calc(104px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));z-index:18;max-width:calc(100vw - 190px)!important;display:flex;align-items:center;gap:4px;background:#d62828;color:#fff;border-radius:999px;padding:4px 4px 4px 12px;font:13px system-ui,sans-serif;box-shadow:0 3px 0 rgba(0,0,0,.2);max-width:80vw}#ytChip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}#ytChip button{width:26px;height:26px;border-radius:50%;border:0;background:rgba(255,255,255,.25);color:#fff;font-size:13px}
 .cg{font-size:13px;color:#5d6b7a;margin:2px 0 0 31px;word-break:break-all}.co{font-size:13px;color:#7a8794;margin:1px 0 0 31px;word-break:break-all}
 .cbtns.cic{flex:none;margin:0;gap:4px}.cbtns.cic button,.cbtns.cic .cln{flex:none;width:28px;height:28px;padding:0;border-radius:50%;font:700 13px system-ui,sans-serif;line-height:1;box-shadow:0 1px 0 rgba(44,43,53,.25)}.cbtns.cic .cln{display:flex;align-items:center;justify-content:center;border:2px solid var(--ink);background:#fff;text-decoration:none;font-size:12px}
 [data-lp]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;cursor:copy}.cad{white-space:normal!important;overflow:visible!important;word-break:break-all}
@@ -597,8 +600,7 @@ function sheetCity(c) {
     const seen = S.seen[s.key], d = Math.round(dist(s, P));
     return `<div class="sp${seen ? ' seen' : ''}"><span class="ic">${ICON[s.t] || '📍'}</span><div><b>${s.ko}</b>${s.ferry ? ' <span class="al">⛴️ 페리</span>' : ''}${seen ? ' <span class="al ok">✔ 다녀왔어요</span>' : S.wish[s.key] ? ' <span class="al">💭 가고 싶어요</span>' : ''}<div class="d">${s.d}</div></div><i>${d < 1 ? '여기' : d + 'km'}</i></div>`;
   }).join('');
-  const on = S.ints.filter(i => i.on).map(i => INTERESTS.find(x => x[0] === i.k)[1]).filter(x => !/관광|자연/.test(x));
-  if (on.length) h += `<div class="soon">🔦 ${on.join(' · ')} 정보는 다음 단계에서 채워져요 (유튜브 현지인·한국인 영상 정리).</div>`;
+  h += `<button class="nav" style="border:0;width:100%" onclick="ytList('${c.id}')">📺 이 도시 유튜브·쇼츠 영상 — 고르면 나온 곳만 지도에</button>`;
   openSheet(head, h + PNOTE(), 'city:' + c.id, 'city');
 }
 function spotBadge(k) { return S.seen[k] ? '<em>✔</em>' : S.wish[k] ? '<em style="color:#e05a8a">💭</em>' : ''; }
@@ -717,7 +719,7 @@ function moveOnLand(dt, ix, iy, sp, okFn, res = .5) {
 let PEEK = null;
 function peek(key, title, open, card) {
   // 다른 것의 창이 열려 있으면 닫음(멀어졌으니)
-  const kinds = key ? ['spot', 'flag', 'city', 'air', 'land', 'gplace'] : ['spot', 'flag', 'city', 'gplace'];   // 공항 창은 autoSheet가 맡음
+  const kinds = key ? ['spot', 'flag', 'city', 'air', 'land', 'gplace', 'ytp'] : ['spot', 'flag', 'city', 'gplace', 'ytp'];   // 공항 창은 autoSheet가 맡음
   if (!P.pinned && kinds.includes(P.sheetKind) && P.sheetFor !== key) closeSheet();
   const el = $('peek');
   if (!key || P.sheetFor === key) { el.hidden = true; PEEK = key ? { key, open, card } : null; return; }
@@ -733,6 +735,8 @@ let CARD_SIG = '';
 function cardState(c) {
   const gq = (lat, lon, gid, nm) => gid ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nm || `${lat},${lon}`)}&query_place_id=${gid}` : `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
   if (c.type === 'spot') { const k = c.s.key, ci = CITY.find(x => x.id === c.s.city); return { icon: ICON[c.s.t] || '📍', name: c.s.ko, orig: c.s.ja || '', sub: `명소${ci ? ' · ' + ci.ko : ''}`, been: !!S.seen[k], wish: !!S.wish[k], x: c.s.x, y: c.s.y, url: c.s.g ? gq(c.s.lat, c.s.lon, c.s.g, c.s.ja) : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.s.ja || c.s.ko)}&ll=${c.s.lat},${c.s.lon}` }; }
+  if (c.type === 'yt') { const p = c.p, v = YT.v || {}; const mine = S.flags.find(f => f.gid === p.g);
+    return { icon: '📺', name: p.ko || p.name, orig: p.ko && p.ko !== p.name ? p.name : '', sub: `${p.n}번 · ${p.t || ''}에 나옴${p.type ? ' · ' + p.type : ''}`, addr: p.why || '', been: mine && mine.status === 'been', wish: mine && mine.status === 'want', x: p.x, y: p.y, url: ytUrl(v.id, p.t), yt: 1 }; }
   if (c.type === 'g') { const p = c.p; return { icon: CATS[gCat(p.type)][0], name: koName(p.name) || p.name, orig: koName(p.name) ? p.name : '', sub: p.tl || '', addr: p.addr || '', warn: p.biz === 'CLOSED_TEMPORARILY' ? '⚠️ 임시 휴업' : '', been: false, wish: false, x: p.x, y: p.y, g: 1, url: gq(p.lat, p.lon, p.id, p.name) }; }
   const f = c.rt.f, m = f.name.match(/^(.*\S)\s+\((.+)\)$/);   // '토리테이 (Toritei)' → 이름 / 원래 이름 두 줄
   return { icon: CATS[f.cat][0], name: m ? m[1] : f.name, orig: m ? m[2] : '', sub: `내 마커 · ${CATS[f.cat][1]}${f.star ? ' · ' + '★'.repeat(f.star) : ''}`, been: f.status === 'been', wish: f.status === 'want', x: c.rt.x, y: c.rt.y, url: gq(f.lat, f.lon, f.gid, m ? m[2] : f.name) };
@@ -750,7 +754,7 @@ function renderCard() {
   if (st.orig) h += `<div class="co" data-lp="names">${esc(st.orig)}</div>`;
   const sub = [esc(st.sub || ''), st.warn ? `<span style="color:#c0392b">${st.warn}</span>` : ''].filter(Boolean).join(' · ');
   if (sub) h += `<div class="cg">${sub}</div>`;
-  if (st.addr) h += `<div class="cg cad" data-lp="addr" data-copy="${esc(st.addr)}">📍 ${esc(st.addr)}</div>`;
+  if (st.addr) h += st.yt ? `<div class="cg" style="white-space:normal">💬 ${esc(st.addr)}</div>` : `<div class="cg cad" data-lp="addr" data-copy="${esc(st.addr)}">📍 ${esc(st.addr)}</div>`;
   if (c.remote) { const d = Math.hypot(st.x - P.x, st.y - P.y); h += `<div class="cd">📍 여기서 ${d < 1 ? Math.round(d * 1000) + 'm' : d.toFixed(1) + 'km'}</div>`; }
   $('card').innerHTML = h;
 }
@@ -789,6 +793,7 @@ function nameShow(t) {   // 잘린 이름을 작은 팝업으로 전부(2.5초 �
 document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp]')) e.preventDefault(); });
 window.cardSet = st => {
   const c = PEEK && PEEK.card; if (!c) return;
+  if (c.type === 'yt') { ytSave(c.p, st === 'wish' ? 'want' : 'been'); CARD_SIG = ''; return; }
   S.icTip = (S.icTip || 0) + 1; if (S.icTip <= 6) toast(st === 'wish' ? '♥ 가고 싶어요' : '✔ 다녀왔어요', 900);   // 처음 몇 번은 아이콘 뜻
   if (c.type === 'g') { gToFlag(c.p, st === 'wish' ? 'want' : 'been'); return; }   // 구글 가게 → 내 깃발(다음 화면부터 깃발 카드)
   const x = c.type === 'spot' ? c.s.x : c.rt.x, y = c.type === 'spot' ? c.s.y : c.rt.y;
@@ -805,7 +810,8 @@ window.cardSet = st => {
   if (on) { burst(x, y, 16, st === 'been' ? ['#ffd84d', '#fff', '#ff8a5c'] : ['#e05a8a', '#fff', '#ffc2d6']); st === 'been' ? SFX.stamp() : SFX.pop(); vib(15); }
   CARD_SIG = ''; renderCard();
 };
-window.cardOpen = () => { if (PEEK && PEEK.card && PEEK.card.type === 'flag' && PEEK.card.rt.f.gid && GK.get()) { const f = PEEK.card.rt.f; $('peek').hidden = true; G_OPEN = { id: f.gid, name: f.name, lat: f.lat, lon: f.lon }; gDetail(G_OPEN); P.pinned = true; return; }   // 구글에서 온 내 마커: ⓘ 한 번에 구글 정보(내 마커 고치기·메모도 그 창에)
+window.cardOpen = () => { if (PEEK && PEEK.card && PEEK.card.type === 'yt') { $('peek').hidden = true; ytDetail(PEEK.card.p); P.pinned = true; return; }
+   if (PEEK && PEEK.card && PEEK.card.type === 'flag' && PEEK.card.rt.f.gid && GK.get()) { const f = PEEK.card.rt.f; $('peek').hidden = true; G_OPEN = { id: f.gid, name: f.name, lat: f.lat, lon: f.lon }; gDetail(G_OPEN); P.pinned = true; return; }   // 구글에서 온 내 마커: ⓘ 한 번에 구글 정보(내 마커 고치기·메모도 그 창에)
   if (PEEK && PEEK.card && PEEK.card.type === 'g') { const rt = gToFlag(PEEK.card.p, ''); $('peek').hidden = true; G_OPEN = { id: rt.f.gid, name: rt.f.name, lat: rt.f.lat, lon: rt.f.lon }; gDetail(G_OPEN); P.pinned = true; return; }   // 구글 가게: 자세히 = 내 마커로 저장(표시 없음) + 자세히
   if (PEEK) { const rem = PEEK.card && PEEK.card.remote; PEEK.open(); if (rem) P.pinned = true; } $('peek').hidden = true; P.remote = null; };   // 멀리서 연 상세는 움직이기 전까지 열림
 $('peekBtn').onclick = () => { if (PEEK) PEEK.open(); $('peek').hidden = true; };
@@ -854,6 +860,8 @@ function step(dt) {
     P.onSpotT = spotT ? spotT.key : null;
     const city = nearest(CITY, NEAR.city * (far() ? 1.3 : 1));
     const fl = flagStep(hitR);
+    const yp = deep ? ytNear(hitR) : null; P.onYt = yp ? yp.vid + ':' + yp.n : null;
+    if (yp && P.onYtW !== P.onYt) { P.onYtW = P.onYt; SFX.pop(); vib(8); burst(yp.x, yp.y, 10, ['#ff6b6b', '#fff']); }
     const gDeep = Math.min(W, H) / CAM.z <= G_SPAN;
     if (gDeep) gNearby();
     const gp = gDeep && !spot && !fl ? gStep(hitR, still, dt) : (P.onG = null, null);
@@ -868,6 +876,7 @@ function step(dt) {
     if (P.remote && (!still || !P.remoteAt || Math.hypot(P.x - P.remoteAt.x, P.y - P.remoteAt.y) > .05)) P.remote = null;   // 움직이거나 자리가 바뀌면 멀리서 연 카드 닫힘
     if (P.sheetKind === 'flagform') { /* 깃발 적는 중 */ }
     else if (P.remote && still) { /* 멀리서 누른 핀 카드: 움직이기 전까지 유지 */ }
+    else if (yp) peek('yt:' + P.onYt, '', () => ytDetail(yp), { type: 'yt', p: yp });
     else if (spot) peek('spot:' + spot.key, '', () => sheetSpot(spot), { type: 'spot', s: spot });
     else if (fl) peek('flag:' + fl.f.id, '', () => sheetFlag(fl), { type: 'flag', rt: fl });
     else if (gp && gp.show) { G_OPEN = gp.p; peek('g:' + gp.p.id, '', () => gDetail(gp.p), { type: 'g', p: gp.p }); }
@@ -1354,9 +1363,12 @@ function draw(t) {
   LBL.push([cx + (P.x - CAM.x) * CAM.z, cy + (P.y - CAM.y) * CAM.z - 14, 40, 40]);
   airportMarks(g, CAM, cx, cy, !FLY(S.mode));
   cityMarks(g, CAM, cx, cy, span);
+  if (YT.v) g.globalAlpha = .35;   // 영상 보는 중엔 다른 마커는 흐리게
   spotMarks(g, CAM, cx, cy, span, false);
   flagMarks(g, CAM, cx, cy, span, false);
+  g.globalAlpha = 1;
   gMarks(g, CAM, cx, cy);
+  ytMarks(g, CAM, cx, cy);
   cityLabels(g, CAM, cx, cy, P.alt > .5 ? 2e6 : span < 150 ? 0 : 2.5e5, 12);
   if (!FLY(S.mode) && span > 160) admLabels(g, CAM, cx, cy, 12);
   if (P.g > 0 && P.gAt) ring(g, cx + (P.gAt.x - CAM.x) * CAM.z, cy + (P.gAt.y - CAM.y) * CAM.z, 20, 4, P.g, GCOL[P.gKind]);
@@ -1595,7 +1607,88 @@ window.gWish = (id, st) => {
   if (G_RENDER) G_RENDER();
 };
 let G_OPEN = null;
+function ytSave(p, st) {   // 영상 곳 → 내 마커(이미 있으면 상태 바꿈): 장소 ID·이름·메모(좋은 점)·링크(그 장면)
+  const mine = S.flags.find(f => f.gid === p.g);
+  if (mine) return setFlagSt(mine.id, st === 'want' ? 'wish' : st);
+  const now = Date.now(), f = { id: uid(), lat: p.lat, lon: p.lon, gid: p.g, name: p.ko && p.ko !== p.name ? `${p.ko} (${p.name})` : p.name, memo: p.why ? '📺 ' + p.why : '', link: ytUrl(p.vid, p.t), cat: gCat(p.type), star: 0, status: st, autoW: 1, vis: 'private', created: now, updated: now };
+  S.flags.push(f); const rt = flagRT(f, 0); rt.armed = false; FLAGS.push(rt); save();
+  if (st === 'want') { wishFx(rt.x, rt.y, f.name); addPts(2); } else { burst(rt.x, rt.y, 16, ['#ffd84d', '#fff', '#ff8a5c']); SFX.stamp(); f.paid = 1; addPts(3); }
+}
+function ytDetail(p) {   // 영상 곳 자세히: 영상 정보 + 장면 바로가기 + (키 있으면) 구글 사진·평점
+  const v = YT.v || {}, head = `<h2 data-lp="names" data-names="${esc(JSON.stringify([...new Set([p.ko, p.name].filter(Boolean))]))}">📺 ${p.n}. ${esc(p.ko || p.name)}</h2><button class="cbtn" onclick="closeSheet()">닫기</button>`;
+  let top = `<div class="ytv" style="cursor:default"><img alt="" src="${esc(v.thumb || '')}"><div><b>${esc(v.title || '')}</b><small>${v.who === 'ko' ? '🇰🇷' : '🇯🇵'} ${esc(v.ch || '')} · 조회 ${fmtV(v.views || 0)}</small></div></div>`;
+  if (p.why) top += `<div class="intro">💬 ${esc(p.why)}</div>`;
+  top += `<a class="nav" href="${ytUrl(v.id, p.t)}" target="_blank" rel="noopener">▶ ${esc(p.t || '')} 장면부터 보기</a>`;
+  const mine = S.flags.find(f => f.gid === p.g);
+  top += `<div class="cbtns"><button class="wi${mine && mine.status === 'want' ? ' on' : ''}" onclick="ytSaveCur('want')">♥ 가고 싶어요</button><button class="ok${mine && mine.status === 'been' ? ' on' : ''}" onclick="ytSaveCur('been')">✔ 다녀왔어요</button></div>`;
+  YT_CUR = p;
+  if (GK.get() && p.g) gDetail({ id: p.g, name: p.name, lat: p.lat, lon: p.lon }, { head, top, key: 'ytp:' + p.vid + ':' + p.n, kind: 'ytp', noWish: 1 });
+  else openSheet(head, top + `<div class="note">🔑 구글 지도 키를 넣으면 사진·평점·영업시간도 보여요</div>`, 'ytp:' + p.vid + ':' + p.n, 'ytp');
+}
+let YT_CUR = null;
+window.ytSaveCur = st => { if (YT_CUR) { ytSave(YT_CUR, st); ytDetail(YT_CUR); } };
 window.gInfo = id => { const f = S.flags.find(x => x.gid === id); if (f) { G_OPEN = { id, name: f.name, lat: f.lat, lon: f.lon }; gDetail(G_OPEN); P.pinned = true; } };   // 깃발 위에 서 있어도 안 닫히게(움직이면 닫힘)
+/* ---------- 📺 유튜브·쇼츠 따라가기: 영상을 고르면 그 영상에 나온 곳만 ①②③ 번호 핀 + 나온 순서 점선, 닿으면 장면 카드 ---------- */
+// 데이터 yt/도시.json(scripts/jjway/yt/collect.py — Gemini가 영상을 직접 보고 뽑음, 구글 장소 ID). 영상 자체는 저장 안 함(링크·썸네일 주소·요약·장면 시각만)
+const YT = { data: {}, v: null, filt: 'all', sort: 'views' };
+const ytSec = t => { const m = String(t || '').match(/(\d+):(\d+)(?::(\d+))?/); return m ? (m[3] ? (+m[1] * 3600 + +m[2] * 60 + +m[3]) : (+m[1] * 60 + +m[2])) : 0; };
+const ytUrl = (id, t) => `https://www.youtube.com/watch?v=${id}${t ? '&t=' + ytSec(t) + 's' : ''}`;
+const fmtV = n => n >= 1e4 ? (n / 1e4).toFixed(n >= 1e5 ? 0 : 1) + '만' : n.toLocaleString();
+async function ytLoad(cid) {
+  if (YT.data[cid] !== undefined) return YT.data[cid];
+  try { const r = await fetch(`yt/${cid}.json`); YT.data[cid] = r.ok ? await r.json() : null; } catch (e) { YT.data[cid] = null; }
+  const d = YT.data[cid]; if (d) for (const v of d.videos) v.places.forEach((p, i) => { Object.assign(p, proj(p.lon, p.lat), { n: i + 1, vid: v.id }); });
+  return d;
+}
+async function ytList(cid) {   // 도시 창 → 📺 영상 목록(썸네일·조회수·🇰🇷/🇯🇵·쇼츠)
+  const c = CITY.find(x => x.id === cid), d = await ytLoad(cid);
+  const head = `<h2>📺 ${c ? c.ko : ''} 영상</h2><button class="cbtn" onclick="closeSheet()">닫기</button>`;
+  if (!d) return openSheet(head, `<div class="qmsg">아직 이 도시 영상은 모으지 않았어요</div>`, 'yt:' + cid, 'yt');
+  let vs = d.videos.filter(v => YT.filt === 'all' || v.who === YT.filt);
+  vs = vs.slice().sort((a, b) => YT.sort === 'new' ? b.date.localeCompare(a.date) : b.views - a.views);
+  const chip = (k, t, cur, fn) => `<button class="${cur === k ? 'on' : ''}" onclick="${fn}('${k}','${cid}')">${t}</button>`;
+  let h = `<div class="ytf">${chip('all', '전체', YT.filt, 'ytFilt')}${chip('ko', '🇰🇷 한국인', YT.filt, 'ytFilt')}${chip('ja', '🇯🇵 일본인', YT.filt, 'ytFilt')}<span></span>${chip('views', '조회수순', YT.sort, 'ytSort')}${chip('new', '최신순', YT.sort, 'ytSort')}</div>`;
+  h += vs.map(v => `<div class="ytv${YT.v && YT.v.id === v.id ? ' on' : ''}" onclick="ytPick('${cid}','${v.id}')"><img loading="lazy" alt="" src="${esc(v.thumb)}"><div><b>${esc(v.title)}</b><small>${v.who === 'ko' ? '🇰🇷' : '🇯🇵'} ${esc(v.ch)} · 조회 ${fmtV(v.views)} · ${v.short ? '쇼츠' : Math.round(v.sec / 60) + '분'} · 📍 ${v.places.length}곳</small></div></div>`).join('');
+  h += `<div class="note">영상에서 Gemini가 뽑은 곳이에요(${esc(d.at)}) · 틀릴 수 있어요 · 고르면 지도에 그 영상에 나온 곳만 번호로</div>`;
+  openSheet(head, h, 'yt:' + cid, 'yt');
+}
+window.ytFilt = (k, cid) => { YT.filt = k; ytList(cid); };
+window.ytSort = (k, cid) => { YT.sort = k; ytList(cid); };
+window.ytPick = (cid, id) => {
+  const v = YT.data[cid].videos.find(x => x.id === id); YT.v = v; YT.cid = cid; closeSheet(); P.pinned = false; ytChip();
+  // 첫 곳이 보이게(지도에서 보기처럼 화면만 — 캐릭터는 제자리, 움직이면 내 위치로)
+  const a = v.places[0]; if (a) { P.look = { x: a.x, y: a.y, until: performance.now() + 2500 }; if (Math.min(W, H) / CAM.z > 20) setSpan('walk', 20); }
+  toast(`📺 ${v.places.length}곳 — ① 부터 걸어가 봐요`, 2000); SFX.pop();
+};
+window.ytOff = () => { YT.v = null; ytChip(); };
+window.ytOpenList = cid => ytList(cid);
+window.ytList = ytList;
+function ytChip() {
+  let el = $('ytChip'); if (!YT.v) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'ytChip'; document.body.appendChild(el); }
+  const v = YT.v;
+  el.innerHTML = `<span onclick="ytOpenList('${YT.cid}')">📺 ${esc(v.title.slice(0, 22))}${v.title.length > 22 ? '…' : ''}</span><button onclick="ytOff()" aria-label="영상 끄기">✕</button>`;
+}
+function ytNear(hitR) {   // 고른 영상의 곳 중 닿은 것
+  if (!YT.v) return null; let near = null, nd = hitR;
+  for (const p of YT.v.places) { const d = Math.hypot(p.x - P.x, p.y - P.y); if (d < nd) { nd = d; near = p; } }
+  return near;
+}
+function ytMarks(g, cam, cx, cy) {   // ①②③ 빨간 번호 핀 + 나온 순서 점선
+  if (!YT.v || FLY(S.mode)) return;
+  const ps = YT.v.places, pt = p => [cx + (p.x - cam.x) * cam.z, cy + (p.y - cam.y) * cam.z];
+  g.save(); g.strokeStyle = 'rgba(214,40,40,.7)'; g.lineWidth = 2.5; g.setLineDash([6, 6]); g.beginPath();
+  ps.forEach((p, i) => { const [x, y] = pt(p); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke(); g.setLineDash([]);
+  for (const p of ps) {
+    const [x, y] = pt(p), on = P.onYt === p.vid + ':' + p.n, mine = S.flags.some(f => f.gid === p.g), r = on ? 15 : 12;
+    g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.arc(x + 1.5, y + 2, r, 0, 6.29); g.fill();
+    g.fillStyle = mine ? '#ffe79a' : '#d62828'; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.fill();
+    g.strokeStyle = '#fff'; g.lineWidth = 2.5; g.stroke();
+    g.fillStyle = mine ? '#8a6a1d' : '#fff'; g.font = `bold ${on ? 15 : 13}px system-ui,sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(p.n, x, y + .5);
+    if (cam.z * 1 > 40 || on) text(g, p.ko || p.name, x, y - r - 9, 12, '#7a1010');
+  }
+  g.restore();
+}
 function flagRT(f, born) { const p = proj(f.lon, f.lat); return { f, x: p.x, y: p.y, born: born || 0, armed: false, last: 0 }; }
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

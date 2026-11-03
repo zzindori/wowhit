@@ -254,6 +254,15 @@ def run(w, h, tag):
         cols = pg.evaluate("[...document.querySelectorAll('#zbar .zd')].map(d => d.style.getPropertyValue('--zc'))")
         assert cols[3] == '#e05a8a' and cols[6] == '#2f6fd0' and cols[9] == '#8d8a96', cols
         pg.evaluate('S.span.walk = 4'); time.sleep(1.2); assert on() == 4, '손으로 4km면 5km 점'
+        # 📺 영상 따라가기: 도시 창 → 영상 목록(🇰🇷/🇯🇵 거르기) → 고르면 그 영상 곳만 번호 → ① 닿으면 장면 카드 → ♥ = 내 마커(장소 ID·장면 링크) → ✕ 끄기
+        pg.evaluate('sheetCity(CITY.find(c => c.id === "takamatsu")); P.pinned = true'); time.sleep(.2); pg.click('text=이 도시 유튜브'); pg.wait_for_selector('#sheet .ytv', timeout=5000)
+        nv = pg.locator('#sheet .ytv').count(); pg.click('#sheet .ytf button:has-text("한국인")'); time.sleep(.3); nk = pg.locator('#sheet .ytv').count(); assert 0 < nk < nv, (nv, nk)
+        pg.click('#sheet .ytv >> nth=0'); time.sleep(.5); assert pg.evaluate('!!YT.v && YT.v.who === "ko"') and pg.is_visible('#ytChip')
+        pg.evaluate('(() => { const p = YT.v.places[0]; setSpan("walk", 1); P.x = p.x; P.y = p.y; P.vx = P.vy = 0; })()'); time.sleep(1.5)
+        assert '나옴' in pg.inner_text('#card') and 'youtube.com/watch' in pg.get_attribute('#card .cln', 'href'), pg.inner_text('#card')
+        nf0 = pg.evaluate('S.flags.length'); pg.click('#card .cic .wi'); time.sleep(.3)
+        f = pg.evaluate('S.flags[S.flags.length - 1]'); assert pg.evaluate('S.flags.length') == nf0 + 1 and f['status'] == 'want' and f.get('gid') and 'youtube' in f['link'], f
+        pg.click('#ytChip button'); time.sleep(.2); assert not pg.evaluate('YT.v') and not pg.is_visible('#ytChip')
         # 멀리 볼 땐(260km) 예전처럼 넉넉하게(해협 건너기)
         pg.evaluate('S.span.walk = 260'); time.sleep(1.2); hold(pg, 'ArrowUp', .6)
         assert pg.evaluate('unproj(P.x, P.y).lat') > 34.37, '멀리 볼 때도 막힘'

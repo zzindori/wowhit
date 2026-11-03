@@ -79,6 +79,11 @@ button,input,select{font-family:inherit;color:inherit}
 .sp.seen b{color:#8a6a1d}.al.ok{background:#fff3c4;border-color:#e2c25a}
 #zoom{position:fixed;right:calc(10px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;z-index:20;transition:bottom .15s}
 #zoom button{width:46px;height:46px;font-size:26px!important;border-radius:12px;border:2px solid var(--ink);background:var(--card);font-size:22px;line-height:1;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer;padding:0}
+#bands{display:flex;flex-direction:column;border:2px solid var(--ink);border-radius:12px;overflow:hidden;background:var(--card);box-shadow:0 3px 0 rgba(44,43,53,.25)}
+#zoom #bands button.band{border:0;border-radius:0;box-shadow:none;height:50px;font-size:20px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;opacity:.55}
+#zoom #bands button.band+button.band{border-top:1px solid rgba(44,43,53,.2)}
+#zoom #bands button.band small{font-size:10px;font-weight:700;color:var(--ink)}
+#zoom #bands button.band.on{background:#ffcf5a;opacity:1}
 #zoom button.on{background:#ffcf5a;box-shadow:0 0 0 3px rgba(255,207,90,.5),0 3px 0 rgba(44,43,53,.25)}
 #zoom button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 #sheet a{color:var(--blue)}
@@ -156,7 +161,7 @@ button,input,select{font-family:inherit;color:inherit}
   <button class="ib" id="bHome" title="소개">⌂</button>
 </div>
 <div id="pipWrap"><canvas id="pip"></canvas><div id="pipTxt" hidden></div></div>
-<div id="zoom"><button id="bFlag" aria-label="장소 찾기" hidden>🔍</button><button id="bTarget" aria-label="내 위치 · 기본 비율">⌖</button></div>
+<div id="zoom"><button id="bFlag" aria-label="장소 찾기" hidden>🔍</button><div id="bands"><button class="band" data-b="0" aria-label="가까이 — 마커 체크">📍<small>가까이</small></button><button class="band" data-b="1" aria-label="동네 — 탑승·다리">🚶<small>동네</small></button><button class="band" id="bTarget" data-b="2" aria-label="멀리 — 빠른 이동">🚗<small>멀리</small></button></div></div>
 <div id="sheet" hidden></div>
 
 <div id="peek" hidden><button id="peekBtn"></button><div id="card" hidden></div></div>
@@ -213,7 +218,7 @@ const SEOUL = { x: -457.8, y: -284.2 };
 // 땅 위는 모드 하나(walk) — 확대하면 🚶 가족, 축소하면 🚗 자동차로 그림. ⌖ 버튼 = 자동차 비율(260km)로
 const SPAN = { walk: [260, 1.2, 700], plane: [1500, 700, 2600] };
 const SPF = { walk: .26, plane: .18 };   // 속도 = 보이는 거리 × 이 값(km/초) → 화면에서 늘 비슷한 빠르기
-const CARV = 120;                         // 이보다 멀리 보면 자동차 그림·명소 숨김·공항 화살표
+const CARV = 60;                          // 이보다 멀리 보면 자동차 그림·명소 숨김·공항 화살표(단계 🚗 멀리)
 const DEEP = 3;                           // 이보다 가까이(최대 확대 쪽) 볼 때만 명소·깃발에 들어감
 function defParty(n) {
   const base = [['아빠', '아빠'], ['엄마', '엄마'], ['', '아들'], ['', '딸']];
@@ -273,7 +278,7 @@ function canStand(x, y, c) {      // 땅이거나 땅에서 5km 안(좁은 해�
 // 국토지리원 벡터 타일 z12(물 면적 waterarea = 1:25,000 원본, 바다·호수·넓은 강·해자) — 물은 못 걷고, 그 위 도로·철도·방파제(다리·제방)는 걸을 수 있게 지움.
 // 타일 하나 약 8km·20~35KB → 1024px(약 8m 칸)로 칠해 둠. 먼 바다는 타일이 없어 404 = 전부 물. 아직 못 받았거나 실패하면 예전 거친 판정(canStand).
 // 보이는 거리 WSPAN km 이하일 때만(멀리 볼 땐 예전처럼 넉넉하게 — 해협·섬 건너기)
-const WZ = 12, WPX = 1024, WSPAN = 60, WROAD = 3.5;   // WROAD: 다리로 칠 도로 굵기(px, 약 28m)
+const WZ = 12, WPX = 1024, WSPAN = CARV, WROAD = 3.5, SHORE_PX = 4;   // WROAD: 다리로 칠 도로 굵기(px, 약 28m) · SHORE_PX: 물이어도 화면 이만큼 안에 땅이 있으면 걸음
 const WT = new Map();
 function pbf(b, s, e, cb) {
   let i = s;
@@ -399,7 +404,11 @@ cv.addEventListener('pointermove', e => {
 const endPtr = e => { PTR.delete(e.pointerId); if (joy && e.pointerId === joy.id) joy = null; if (PTR.size < 2) pinch = null; };
 cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
 cv.addEventListener('wheel', e => { e.preventDefault(); zoomBy(Math.exp(e.deltaY * .0015)); }, { passive: false });
-$('bTarget').onclick = () => { S.span[spanKey()] = SPAN[spanKey()][0]; CAM.x = P.x; CAM.y = P.y; vib(10); save(); };
+// 확대 단계 셋(손가락·휠로도 자유롭게, 버튼은 그 단계 기본 크기로 바로) — 📍 가까이 ≤ DEEP: 마커 체크·탑승·정밀 바다 / 🚶 동네 ≤ CARV: 탑승·정밀 바다·마커 보기 / 🚗 멀리: 빠른 이동
+const BANDS = [{ def: 2, ic: '📍', name: '가까이', does: '마커 체크 · 공항 탑승 · 다리로 건너기' }, { def: 20, ic: '🚶', name: '동네', does: '공항 탑승 · 다리로 건너기 · 마커는 보기만' }, { def: 260, ic: '🚗', name: '멀리', does: '빠른 이동 · 공항 화살표' }];
+const bandOf = v => v <= DEEP ? 0 : v <= CARV ? 1 : 2;
+let BAND = -1;
+document.querySelectorAll('#bands .band').forEach(b => b.onclick = () => { const B = BANDS[+b.dataset.b]; S.span.walk = B.def; CAM.x = P.x; CAM.y = P.y; vib(10); save(); toast(`${B.ic} ${B.name} — ${B.does}`, 1800); });
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
   keys.add(e.key.toLowerCase()); if (e.key.startsWith('Arrow')) e.preventDefault();
@@ -424,7 +433,7 @@ const FX = [];
 const NEAR = { city: 9, spot: 1.6 };
 // 닿기 규칙 하나: 화면에서 아이콘 반경 TOUCH px 안이면 닿음 — 명소·깃발·공항 탑승·비행기 착륙 모두 같음.
 // 멀리 볼 때 22px가 수십 km라 시내에서 탑승되던 것 → 공항 탑승은 보이는 거리 AIR_DEEP km 이하로 확대했을 때만(명소·깃발은 DEEP)
-const TOUCH = 22, AIR_DEEP = 60;
+const TOUCH = 22, AIR_DEEP = CARV;   // 단계 🚶 동네부터
 const touchR = () => TOUCH / CAM.z;
 const airR = touchR, askR = touchR;
 const FLY = m => m === 'ground' || m === 'takeoff' || m === 'plane' || m === 'landing';
@@ -587,14 +596,24 @@ Object.assign(window, { cancelBoard, cancelLanding });
 /* ---------- 갱신 ---------- */
 let locT = 0;
 const ease = f => f * f * (3 - 2 * f);
-function moveOnLand(dt, ix, iy, sp, okFn) {
+function moveOnLand(dt, ix, iy, sp, okFn, res = .5) {
   const k = 1 - Math.exp(-dt * 9);
   P.vx += (ix * sp - P.vx) * k; P.vy += (iy * sp - P.vy) * k;
-  let nx = P.x + P.vx * dt, ny = P.y + P.vy * dt;
-  if (!okFn(nx, ny)) { if (okFn(nx, P.y)) ny = P.y; else if (okFn(P.x, ny)) nx = P.x; else { nx = P.x; ny = P.y; } }
-  const moved = Math.hypot(nx - P.x, ny - P.y); P.x = nx; P.y = ny;
+  // 잘게 나눠(res km 이하) 걸음마다 판정 — 빠를 때 좁은 물을 건너뛰거나 꺾인 다리에서 막히지 않게.
+  // 가려는 쪽이 물이면 좌우로 10°씩 최대 80°까지 돌려 걸을 수 있는 가장 가까운 방향으로 미끄러짐(그 방향 성분만큼) — 가는 다리·해안을 대충 밀어도 따라감
+  const L = Math.hypot(P.vx, P.vy) * dt, th = Math.atan2(P.vy, P.vx), n = Math.min(400, Math.ceil(L / res));
+  const ox = P.x, oy = P.y; let x = P.x, y = P.y;
+  for (let i = 0; i < n; i++) {
+    const s = L / n; let ok = false;
+    for (let a = 0; a <= 80 && !ok; a += 10) for (const sg of a ? [1, -1] : [1]) {
+      const t = th + sg * a * Math.PI / 180, st = s * Math.cos(a * Math.PI / 180), qx = x + Math.cos(t) * st, qy = y + Math.sin(t) * st;
+      if (okFn(qx, qy)) { x = qx; y = qy; ok = true; break; }
+    }
+    if (!ok) break;
+  }
+  const moved = Math.hypot(x - ox, y - oy); P.x = x; P.y = y;
   if (moved > 0) { P.trail.unshift({ x: P.x, y: P.y }); if (P.trail.length > 400) P.trail.length = 400; }
-  if (Math.hypot(P.vx, P.vy) > sp * .05) { const t = Math.atan2(P.vy, P.vx); let d = t - P.hd; d = Math.atan2(Math.sin(d), Math.cos(d)); P.hd += d * Math.min(1, dt * 10); }
+  if (moved > sp * dt * .05) { const t = Math.atan2(y - oy, x - ox); let d = t - P.hd; d = Math.atan2(Math.sin(d), Math.cos(d)); P.hd += d * Math.min(1, dt * 10); }   // 실제로 간 쪽을 봄
   return moved;
 }
 // 지금 가까이 있는 것에 맞춰 창 자동으로 열기·닫기 (명소 > 공항 > 도시)
@@ -671,10 +690,13 @@ function step(dt) {
     // 확대했을 땐 지리원 물 면적으로 정밀하게(서 있는 곳이 이미 물이면 — 멀리 볼 때 넉넉한 판정으로 들어온 경우 — 빠져나올 수 있게 허용)
     const fine = S.country === 'JPN' && Math.min(W, H) / CAM.z <= WSPAN, here = fine ? fineWater(P.x, P.y) : null;
     if (fine) wtPrefetch(P.x, P.y);
+    // 화면에서 땅으로 보이는 만큼: 물이어도 화면 SHORE_PX 안에 땅(다리·해안)이 있으면 걸음 — 확대하면 해안선 그대로, 축소할수록 가는 다리가 화면 굵기만큼 넓어져 따라가기 쉬움
+    const tol = Math.max(.012, SHORE_PX / CAM.z), nearLand = (x, y) => { for (const f of [1, .5]) for (let a = 0; a < 8; a++) if (fineWater(x + Math.cos(a * .785) * tol * f, y + Math.sin(a * .785) * tol * f) === 0) return true; return false; };
+    const lost = here === 1 && !nearLand(P.x, P.y);   // 땅이 보이지 않는 바다 한가운데(멀리 볼 때 넉넉한 판정으로 들어온 경우)만 빠져나오게 자유 이동
     moveOnLand(dt, ix, iy, sp, (x, y) => {
-      if (fine) { const w = fineWater(x, y); if (w !== null) return !w || here === 1; }
+      if (fine) { const w = fineWater(x, y); if (w !== null) return !w || lost || nearLand(x, y); }
       return canStand(x, y, S.country) || bridge(x, y);
-    });
+    }, fine ? .006 : .5);   // 정밀 판정 칸(약 8m)보다 작은 걸음
     P.alt = 0;
     const air = nearestAirport(airR(), a => a.c === S.country), airDeep = Math.min(W, H) / CAM.z <= AIR_DEEP;
     if (air && !airDeep && canFly(air) && P.quiet !== air.code && P.onAirT !== air.code) toast(`🔍 ${cityName(air.code)} 공항 — 더 확대하면 탈 수 있어요`, 2000);
@@ -765,6 +787,7 @@ function step(dt) {
 
   $('zoom').hidden = S.mode !== 'walk' && S.mode !== 'ground';
   $('bFlag').hidden = S.mode !== 'walk';
+  { const b = bandOf(Math.min(W, H) / CAM.z); if (b !== BAND) { BAND = b; document.querySelectorAll('#bands .band').forEach(e => e.classList.toggle('on', +e.dataset.b === b)); } }
   if (PEEK && PEEK.card && !$('peek').hidden) renderCard();
   stepFX(dt);
   pipLabel();

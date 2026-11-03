@@ -217,8 +217,17 @@ def run(w, h, tag):
         pg.evaluate('S.country = "JPN"; S.span.walk = 4'); at(pg, 'proj(134.0465, 34.3505)'); time.sleep(.3); at(pg, 'proj(134.0465, 34.3505)')
         wait(pg, 'fineWater(P.x, P.y) === 0', 8)
         hold(pg, 'ArrowUp', 3)
-        st = pg.evaluate('({lat: unproj(P.x, P.y).lat, w: fineWater(P.x, P.y)})')
-        assert st['lat'] < 34.36 and st['w'] == 0, f'바다로 걸어감 {st}'
+        # 물이어도 화면 4px(SHORE_PX) 안에 땅이 보이면 걸음 → 끝 자리는 땅이거나 땅에서 tol 안
+        st = pg.evaluate('''(() => { const tol = Math.max(.012, SHORE_PX / CAM.z); let near = fineWater(P.x, P.y) === 0;
+          for (let r = .1; r <= 1.01 && !near; r += .1) for (let a = 0; a < 32 && !near; a++) near = fineWater(P.x + Math.cos(a * .196) * tol * r, P.y + Math.sin(a * .196) * tol * r) === 0;
+          return {lat: unproj(P.x, P.y).lat, near, tolM: Math.round(tol * 1000)}; })()''')
+        assert st['lat'] < 34.36 and st['near'], f'바다로 걸어감 {st}'
+        # 확대 단계 버튼: 📍 가까이(2km) · 🚶 동네(20km) · 🚗 멀리(260km), 지금 단계에 불
+        for bi, span in [(0, 2), (1, 20), (2, 260)]:
+            pg.click(f'#bands .band[data-b="{bi}"]'); time.sleep(1.6)
+            assert pg.evaluate('S.span.walk') == span and pg.evaluate(f'document.querySelector(\'#bands .band[data-b="{bi}"]\').classList.contains("on")'), f'단계 버튼 {bi}'
+        pg.evaluate('S.span.walk = 4'); time.sleep(1.2)
+        assert pg.evaluate('document.querySelector(\'#bands .band[data-b="1"]\').classList.contains("on")'), '손으로 4km면 동네 단계 불'
         # 멀리 볼 땐(260km) 예전처럼 넉넉하게(해협 건너기)
         pg.evaluate('S.span.walk = 260'); time.sleep(1.2); hold(pg, 'ArrowUp', .6)
         assert pg.evaluate('unproj(P.x, P.y).lat') > 34.37, '멀리 볼 때도 막힘'

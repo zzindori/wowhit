@@ -1411,8 +1411,7 @@ async function gDetail(p) {   // 자세히(Place Details — 평점·영업시�
     if (d.websiteUri) h += `<div class="sub"><a href="${esc(d.websiteUri)}" target="_blank" rel="noopener">🔗 홈페이지</a></div>`;
     const mine = S.flags.find(f => f.gid === p.id);
     if (!mine) h += `<div class="cbtns"><button class="wi" onclick="gWish('${p.id}','want')">💭 가고 싶어요</button><button class="ok" onclick="gWish('${p.id}','been')">✔ 다녀왔어요</button></div>`;
-    h += `<a class="nav" href="${esc(d.googleMapsUri || `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}&query_place_id=${p.id}`)}" target="_blank" rel="noopener">🧭 구글 지도에서 열기 · 길 찾기</a>`;
-    h += `<div class="note">정보: Google Maps · 열 때마다 새로 받아요</div>`;
+    h += `<div class="note">정보: Google Maps · 열 때마다 새로 받아요 · <a href="${esc(d.googleMapsUri || `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}&query_place_id=${p.id}`)}" target="_blank" rel="noopener">🧭 구글 지도에서 열기</a></div>`;
     openSheet(head, h, 'g:' + p.id, 'gplace');
   } catch (e) { if (P.sheetFor === 'g:' + p.id) openSheet(head, `<div class="qmsg">⚠️ ${esc(e.message)}</div>`, 'g:' + p.id, 'gplace'); }
 }
@@ -1483,8 +1482,9 @@ function sheetFlag(rt) {
   if (f.memo) h += `<div class="intro">${esc(f.memo)}</div>`;
   if (f.link) h += `<div class="sub"><a href="${esc(/^https?:\/\//.test(f.link) ? f.link : 'https://' + f.link)}" target="_blank" rel="noopener">🔗 링크 열기</a></div>`;
   if (f.gid && GK.get()) h += `<button class="nav" style="border:0;width:100%" onclick="gInfo('${f.gid}')">⭐ 구글 정보(평점·영업시간)</button>`;
-  h += `<a class="nav" href="https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lon}" target="_blank" rel="noopener">🧭 구글 지도에서 길 찾기</a>`;
-  h += `<div class="note">🔒 나만 보기 · ${new Date(f.created).toLocaleDateString('ko-KR')} 꽂음</div>`;
+  // 구글 지도 앱으로(실제 길 안내·사진·리뷰는 거기서): 장소 ID가 있으면 그 가게 페이지, 없으면 좌표
+  const gUrl = f.gid ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.name)}&query_place_id=${f.gid}` : `https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}`;
+  h += `<div class="note">🔒 나만 보기 · ${new Date(f.created).toLocaleDateString('ko-KR')} 꽂음 · <a href="${gUrl}" target="_blank" rel="noopener">🧭 구글 지도에서 열기</a></div>`;
   openSheet(head, h, 'flag:' + f.id, 'flag');
 }
 window.setFlagSt = (id, st) => {

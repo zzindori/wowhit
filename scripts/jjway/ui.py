@@ -47,6 +47,7 @@ def run(w, h, tag):
         pg = b.new_page(viewport={'width': w, 'height': h}, device_scale_factor=1)
         pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.on('console', lambda m: m.type == 'error' and errs.append(m.text))
+        pg.on('response', lambda r: r.status >= 500 and print(tag, '서버 오류', r.status, r.url.split('?')[0][:90]))
         pg.goto(f'http://127.0.0.1:{PORT}/games/jjway/index.html')
         pg.wait_for_function('typeof AIR !== "undefined" && AIR.length > 0 && SPOT.length > 0')
         pg.fill('#mems .mem:nth-child(3) input', '첫째'); pg.click('#goBtn'); time.sleep(.3)

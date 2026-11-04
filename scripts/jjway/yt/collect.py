@@ -8,8 +8,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 def env(f, k): return [l.split('=', 1)[1].strip() for l in open(os.path.expanduser(f)) if l.startswith(k + '=')][0]
 YT, GEM, GMAP = env('~/.secrets/itne.env', 'YOUTUBE_API_KEY'), env('~/.secrets/itne.env', 'GEMINI_API_KEY'), env('~/.secrets/jjway.env', 'GMAPS_KEY')
 # 검색어: 다른 곳과 헷갈리는 이름은 현·지방을 붙임. 좌표·이름은 places.json에서
-QJA = {'takamatsu': '高松', 'matsuyama': '愛媛 松山', 'kanazawa': '金沢', 'kumamoto': '熊本', 'yufu': '由布院', 'nagasaki': '長崎', 'kagoshima': '鹿児島', 'kurashiki': '倉敷', 'hiroshima': '広島', 'hakodate': '函館', 'takayama': '飛騨高山'}
-QKO = {'yufu': '유후인'}
+QJA = {'takamatsu': '高松', 'matsuyama': '愛媛 松山', 'kanazawa': '金沢', 'kumamoto': '熊本', 'yufu': '由布院', 'nagasaki': '長崎', 'kagoshima': '鹿児島', 'kurashiki': '倉敷', 'hiroshima': '広島', 'hakodate': '函館', 'takayama': '飛騨高山', 'tokushima': '徳島', 'kochi': '高知', 'imabari': '今治', 'naoshima': '直島', 'shodoshima': '小豆島', 'kotohira': '琴平 こんぴら'}
+QKO = {'yufu': '유후인', 'kochi': '일본 고치'}
 CID = sys.argv[1] if len(sys.argv) > 1 else 'takamatsu'; N = int(sys.argv[2]) if len(sys.argv) > 2 else 16
 _c = next(c for c in json.load(open(os.path.join(HERE, '../../../public/games/jjway/places.json')))['cities'] if c['id'] == CID)
 city = {'ko': QKO.get(CID, re.sub(r'\s*\(.*', '', _c['ko'])), 'ja': QJA.get(CID, _c['ja'].rstrip('市町村')), 'lat': _c['lat'], 'lon': _c['lon']}

@@ -875,8 +875,13 @@ function step(dt) {
     P.onSpotT = spotT ? spotT.key : null;
     const city = nearest(CITY, NEAR.city * (far() ? 1.3 : 1));
     const fl = flagStep(hitR);
-    const yp = deep ? ytNear(hitR) : null; P.onYt = yp ? yp.vid + ':' + yp.n : null;
-    if (yp && P.onYtW !== P.onYt) { P.onYtW = P.onYt; SFX.pop(); vib(8); burst(yp.x, yp.y, 10, ['#ff6b6b', '#fff']); }
+    const ypT = !far() ? ytNear(hitR) : null, yp = deep ? ypT : null; P.onYt = yp ? yp.vid + ':' + yp.n : null;
+    const ypTk = ypT ? ypT.vid + ':' + ypT.n : null;
+    if (ypT && !deep && P.onYtT !== ypTk) toast(`🔍 ${ypT.ko || ypT.name} — 더 확대하면 들어갈 수 있어요`, 2000);
+    P.onYtT = ypTk;
+    if (yp && P.onYtW !== P.onYt) { P.onYtW = P.onYt; P.ytRing = 0; SFX.pop(); vib(8); burst(yp.x, yp.y, 10, ['#ff6b6b', '#fff']); }
+    // 영상 곳도 멈춰 서면 고리가 차서 뾰로롱(발견) — 구글 가게와 같음, 저장은 버튼을 눌러야만
+    if (yp) { if (yp.found) P.ytRing = 1; else if (!still) P.ytRing = 0; else { P.ytRing = Math.min(1, (P.ytRing || 0) + dt / RING_T); if (P.ytRing >= 1) { yp.found = 1; foundFx(yp.g, yp.x, yp.y, yp.ko || yp.name); } } }
     const gDeep = Math.min(W, H) / CAM.z <= G_SPAN;
     if (gDeep) gNearby();
     const gp = gDeep && !spot && !fl ? gStep(hitR, still, dt) : (P.onG = null, null);
@@ -1349,6 +1354,8 @@ function overhead(g, cx, cy, t) {
   if (S.mode !== 'walk') return;
   const s = P.onSpot && SPOT.find(x => x.key === P.onSpot), rt = !s && PEEK && PEEK.key.startsWith('flag:') && FLAGS.find(r => 'flag:' + r.f.id === PEEK.key);
   const gp = !s && !rt && PEEK && PEEK.key.startsWith('g:') && PEEK.card && PEEK.card.p;
+  const yq = P.onYt && YT.v ? YT.v.places.find(q => q.vid + ':' + q.n === P.onYt) : null;
+  if (yq) { const x = cx + (P.x - CAM.x) * CAM.z, y = cy + (P.y - CAM.y) * CAM.z - 58 + Math.sin(t * 3) * 2, r = 19, nm = yq.ko || yq.name; g.fillStyle = 'rgba(0,0,0,.15)'; g.beginPath(); g.arc(x + 2, y + 3, r, 0, 6.29); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.fill(); g.strokeStyle = '#d9352b'; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.stroke(); ring(g, x, y, r + 5, 4, P.ytRing || 0, '#d9352b'); g.fillStyle = '#d9352b'; g.font = 'bold 18px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(yq.n), x, y + 1); text(g, nm.length > 14 ? nm.slice(0, 13) + '…' : nm, x, y + r + 11, 13, '#2c2b35'); return; }
   if (!s && !rt && !gp) return;
   const ic = s ? ICON[s.t] || '📍' : gp ? CATS[gCat(gp.type)][0] : CATS[rt.f.cat][0], name = s ? s.ko : gp ? (koName(gp.name) || gp.name) : rt.f.name;
   const been = s ? !!S.seen[s.key] : !gp && rt.f.status === 'been', wish = s ? !!S.wish[s.key] : !gp && rt.f.status === 'want';
@@ -1536,6 +1543,13 @@ function gNearby() {
       wantKo(GP.list.map(p => p.name));
     }).catch(() => {}).finally(() => { GP.busy = false; });
 }
+function foundFx(id, x, y, name) {   // 발견: 뾰로롱 + 반짝이, 같은 곳은 하루 한 번만 +1
+  burst(x, y, 14, ['#7fb3ff', '#fff', '#ffd84d']); SFX.chime(); vib(12);
+  const d = today(); let o = {}; try { o = JSON.parse(localStorage.getItem('jjway-gfound') || '{}'); } catch (e) {}
+  if (o.d !== d) o = { d, ids: [] };
+  if (!o.ids.includes(id)) { o.ids.push(id); try { localStorage.setItem('jjway-gfound', JSON.stringify(o)); } catch (e) {} addPts(1); toast(`👀 발견! ${name} +1`, 1500); }
+  else toast(`👀 ${name}`, 1200);
+}
 function gStep(hitR, still, dt) {
   let near = null, nd = hitR;
   for (const p of GP.list) { const d = Math.hypot(p.x - P.x, p.y - P.y); if (d < nd) { nd = d; near = p; } }
@@ -1547,11 +1561,7 @@ function gStep(hitR, still, dt) {
     P.ring = Math.min(1, (P.ring || 0) + dt / RING_T);
     if (P.ring >= 1) {
       near.found = 1; CARD_SIG = '';
-      burst(near.x, near.y, 14, ['#7fb3ff', '#fff', '#ffd84d']); SFX.chime(); vib(12);
-      const d = today(); let o = {}; try { o = JSON.parse(localStorage.getItem('jjway-gfound') || '{}'); } catch (e) {}
-      if (o.d !== d) o = { d, ids: [] };
-      if (!o.ids.includes(near.id)) { o.ids.push(near.id); try { localStorage.setItem('jjway-gfound', JSON.stringify(o)); } catch (e) {} addPts(1); toast(`👀 발견! ${koName(near.name) || near.name} +1`, 1500); }
-      else toast(`👀 ${koName(near.name) || near.name}`, 1200);
+      foundFx(near.id, near.x, near.y, koName(near.name) || near.name);
     }
   } else P.ring = 1;
   return { p: near, show: true };

@@ -104,7 +104,7 @@ button,input,select{font-family:inherit;color:inherit}
 .mg{margin:10px 0 4px;font-family:Jua,sans-serif;font-size:17px;display:flex;align-items:center;gap:8px}
 .mg small{font:12px system-ui,sans-serif;color:#8a8794}
 .bar{flex:1;height:8px;background:#eee8da;border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#f2b134,#e8594f)}
-.mc{font:14px Jua,sans-serif;color:#6b6876;margin:6px 0 2px 2px;display:flex;align-items:center;gap:6px}
+.mrg{margin:14px 0 2px;font:12px system-ui,sans-serif;font-weight:700;color:#8a8794}.mpf{cursor:pointer;margin:6px 0 4px}.mar{font-style:normal;color:#8a8794;width:12px}.mc[data-city]{cursor:pointer}.mc{font:14px Jua,sans-serif;color:#6b6876;margin:6px 0 2px 2px;display:flex;align-items:center;gap:6px}
 .mr{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:10px;cursor:pointer;font-size:14px}
 .mr:active{background:#fff3c4}.mr .ic{font-size:18px;width:26px;text-align:center}.mr b{font-weight:600;flex:1}.mr i{font-style:normal;font-size:12px;color:#8a8794;white-space:nowrap}
 .mr.no{opacity:.45}.mr.ok b{color:#8a6a1d}
@@ -525,7 +525,7 @@ function input() {
 const P = { x: S.pos.x, y: S.pos.y, vx: 0, vy: 0, hd: 0, trail: [], warnAt: {}, sheetFor: null, alt: 0, anim: null, skip: null, quiet: null, g: 0, gFor: null, gKind: null, gAt: null, bad: null };
 const CAM = { x: P.x, y: P.y, z: 1 };
 const FX = [];
-const NEAR = { city: 9, spot: 1.6 };
+const NEAR = { city: 9, spot: 1.6 }, CITY_FAR = 200;   // CITY_FAR: 화면 거리(km)가 이보다 넓으면 큰 도시 이름판만
 // 닿기 규칙 하나: 화면에서 아이콘 반경 TOUCH px 안이면 닿음 — 명소·깃발·공항 탑승·비행기 착륙 모두 같음.
 // 멀리 볼 때 22px가 수십 km라 시내에서 탑승되던 것 → 공항 탑승은 보이는 거리 AIR_DEEP km 이하로 확대했을 때만(명소·깃발은 DEEP)
 const TOUCH = 22, AIR_DEEP = CARV;   // 단계 🚶 동네부터
@@ -534,7 +534,7 @@ const airR = touchR, askR = touchR;
 const FLY = m => m === 'ground' || m === 'takeoff' || m === 'plane' || m === 'landing';
 const GAUGE = { board: 1.5, land: 1.2 };
 const GCOL = { board: '#e8594f', land: '#3fa66b' };
-const ICON = { castle: '🏯', garden: '🌳', temple: '🛕', shrine: '⛩️', museum: '🏛️', island: '🏝️', theater: '🎭', aquarium: '🐟', onsen: '♨️', bridge: '🌉', view: '🏞️', sea: '🌊', valley: '🏞️' };
+const ICON = { castle: '🏯', garden: '🌳', temple: '🛕', shrine: '⛩️', museum: '🏛️', island: '🏝️', theater: '🎭', aquarium: '🐟', onsen: '♨️', bridge: '🌉', view: '🏞️', sea: '🌊', valley: '🏞️', town: '🏘️', market: '🛒', tower: '🗼', zoo: '🦁', mountain: '⛰️', ruins: '🏺' };
 
 function toast(msg, ms = 2600) {
   const t = document.createElement('div'); t.className = 't'; t.textContent = msg; $('toast').appendChild(t);
@@ -592,7 +592,7 @@ function sheetAirport(a, how) {
     const near = CITY.filter(c => dist(c, a) < 140).sort((p, q) => dist(p, a) - dist(q, a));
     if (near.length) h += `<div class="rt"><b>가까운 도시</b><div>${near.map(c => `<span class="al">🏙️ ${c.ko} ${Math.round(dist(c, a))}km</span>`).join('')}</div></div>`;
     else { const ne = M.places.filter(p => p.c === 'JPN' && Math.hypot(p.x - a.x, p.y - a.y) < 90).slice(0, 6); if (ne.length) h += `<div class="rt"><b>주변 도시</b><div>${ne.map(p => `<span class="al">${p.ko.replace(/시$/, '')}</span>`).join('')}</div></div>`; }
-    if (!near.length) h += `<div class="soon">🔦 이 지역 도시·명소는 아직 준비 중이에요 (지금은 시코쿠부터).</div>`;
+    if (!near.length) h += `<div class="soon">🔦 이 지역 도시·명소는 아직 준비 중이에요 .</div>`;
   }
   openSheet(head, h + goBox(a.x + .8, a.y, 20) + NOTE(), 'air:' + a.code, how === 'land' ? 'land' : 'air');
 }
@@ -615,7 +615,7 @@ function sheetCity(c) {
     const seen = S.seen[s.key], d = Math.round(dist(s, P));
     return `<div class="sp${seen ? ' seen' : ''}"><span class="ic">${ICON[s.t] || '📍'}</span><div><b>${s.ko}</b>${s.ferry ? ' <span class="al">⛴️ 페리</span>' : ''}${seen ? ' <span class="al ok">✔ 다녀왔어요</span>' : S.wish[s.key] ? ' <span class="al">💭 가고 싶어요</span>' : ''}<div class="d">${s.d}</div></div><i>${d < 1 ? '여기' : d + 'km'}</i></div>`;
   }).join('');
-  openSheet(head, h + PNOTE(), 'city:' + c.id, 'city');
+  openSheet(head, h + goBox(c.x, c.y, 20) + PNOTE(), 'city:' + c.id, 'city');
 }
 function spotBadge(k) { return S.seen[k] ? '<em>✔</em>' : S.wish[k] ? '<em style="color:#e05a8a">💭</em>' : ''; }
 // 다녀왔어요 표시(자동 = 채움 반 넘김 / 수동 = 버튼). 포인트는 명소마다 한 번만
@@ -1177,11 +1177,13 @@ function airportMarks(g, cam, cx, cy, labelAll) {
 }
 function cityMarks(g, cam, cx, cy, span) {
   if (FLY(S.mode) && P.alt > .3) return;
-  for (const c of CITY) {
+  const nearC = nearest(CITY, NEAR.city * 1.3);
+  for (const c of CITY) {   // CITY는 큰 도시가 먼저(글자 자리 먼저 차지)
+    if (span > CITY_FAR && !c.big && c !== nearC) continue;   // 멀리 볼 땐 큰 도시만
     const sx = cx + (c.x - cam.x) * cam.z, sy = cy + (c.y - cam.y) * cam.z;
     if (!onScr(g, sx, sy)) continue;
     // 도시 = 남색 이름판(지역 표지판). 채움·체크 없음 — 명소(핀)와 모양부터 다르게
-    const near = nearest(CITY, NEAR.city * 1.3) === c;
+    const near = nearC === c;
     if (span < 40) {   // 확대하면 도시 범위를 옅은 점선 원으로, 이름판은 연하게
       g.strokeStyle = 'rgba(52,80,107,.35)'; g.lineWidth = 2; g.setLineDash([8, 6]); g.beginPath(); g.arc(sx, sy, NEAR.city * cam.z, 0, 6.29); g.stroke(); g.setLineDash([]);
     }
@@ -2013,7 +2015,7 @@ function tapMap(x, y) {
   else peek(best.key, '', () => sheetFlag(best.rt), { type: 'flag', rt: best.rt, remote: true });
 }
 /* ---------- 🏅 나의 여행 기록 ---------- */
-let MTAB = 'spot';
+let MTAB = 'spot', MOPEN = null;   // MOPEN: 기록 목록에서 펼친 현(처음엔 가까운 현 + 기록 있는 현)
 const dstr = t => t > 1 ? new Date(t).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }) : '';
 function renderMedals() {
   const seenN = SPOT.filter(x => S.seen[x.key]).length, airN = Object.keys(S.stamps).length;
@@ -2021,13 +2023,18 @@ function renderMedals() {
   document.querySelectorAll('.mtabs button').forEach(b => b.classList.toggle('on', b.dataset.t === MTAB));
   let h = '';
   if (MTAB === 'spot') {
-    const prefs = [...new Set(CITY.map(c => c.pref))];
-    for (const pf of prefs) {
-      const cs = CITY.filter(c => c.pref === pf), all = cs.flatMap(c => c.spots), got = all.filter(x => S.seen[x.key]).length;
-      h += `<div class="mg">${pf}<small>${got}/${all.length}</small><span class="bar"><i style="width:${all.length ? got / all.length * 100 : 0}%"></i></span></div>`;
+    const here = nearest(CITY, 1e9);
+    if (!MOPEN) { MOPEN = new Set(here && dist(here, P) < 150 ? [here.pref] : []); for (const c of CITY) if (c.spots.some(x => S.seen[x.key] || S.wish[x.key])) MOPEN.add(c.pref); }
+    let reg = '';
+    for (const pf of PL.prefs) {
+      const cs = CITY.filter(c => c.pref === pf), all = cs.flatMap(c => c.spots), got = all.filter(x => S.seen[x.key]).length, open = MOPEN.has(pf);
+      if (!cs.length) continue;
+      if (cs[0].region !== reg) { reg = cs[0].region; h += `<div class="mrg">${PL.regions[reg] || reg}</div>`; }
+      h += `<div class="mg mpf" data-pf="${pf}"><i class="mar">${open ? '▾' : '▸'}</i>${pf}<small>${got}/${all.length}</small><span class="bar"><i style="width:${all.length ? got / all.length * 100 : 0}%"></i></span></div>`;
+      if (!open) continue;
       for (const c of cs) {
         const g2 = c.spots.filter(x => S.seen[x.key]).length;
-        h += `<div class="mc">🏙️ ${c.ko} <small>${g2}/${c.spots.length}</small>${g2 === c.spots.length ? ' 🏆' : ''}</div>`;
+        h += `<div class="mc" data-city="${c.id}">🏙️ ${c.ko} <small>${g2}/${c.spots.length}</small>${g2 === c.spots.length ? ' 🏆' : ''}</div>`;
         const rank = x => S.seen[x.key] ? 2 : S.wish[x.key] ? 1 : 0;
         h += c.spots.slice().sort((a, b) => rank(b) - rank(a)).map(x => { const t = S.seen[x.key], w = S.wish[x.key];
           return `<div class="mr ${t ? 'ok' : w ? '' : 'no'}" data-spot="${x.key}"><span class="ic">${t ? '✔' : w ? '💭' : ICON[x.t] || '📍'}</span><b>${x.ko}</b><i>${t ? '다녀옴 ' + dstr(t) : w ? '가고 싶어요' : x.ferry ? '⛴️ 페리' : '아직'}</i>${t ? '' : `<button class="hb${w ? ' on' : ''}" data-wish="${x.key}" aria-label="가고 싶어요">♥</button>`}</div>`; }).join('');
@@ -2069,6 +2076,10 @@ $('pts').onclick = () => { MTAB = 'spot'; renderMedals(); $('medals').hidden = f
 $('mClose').onclick = () => { $('medals').hidden = true; };
 document.querySelectorAll('.mtabs button').forEach(b => b.onclick = () => { MTAB = b.dataset.t; renderMedals(); $('mList').scrollTop = 0; });
 $('mList').onclick = e => {
+  const pfr = e.target.closest('.mpf');
+  if (pfr) { const k = pfr.dataset.pf; if (MOPEN.has(k)) MOPEN.delete(k); else MOPEN.add(k); const sc = $('mList').scrollTop; renderMedals(); $('mList').scrollTop = sc; return; }
+  const cr = e.target.closest('.mc[data-city]');
+  if (cr) { $('medals').hidden = true; P.closedFor = null; sheetCity(CITY.find(c => c.id === cr.dataset.city)); P.pinned = true; return; }
   const hb = e.target.closest('[data-wish]');
   if (hb) { const k = hb.dataset.wish; if (S.wish[k]) delete S.wish[k]; else { S.wish[k] = Date.now(); SFX.pop(); } save(); const sc = $('mList').scrollTop; renderMedals(); $('mList').scrollTop = sc; return; }
   const r = e.target.closest('.mr'); if (!r) return;
@@ -2173,7 +2184,7 @@ function frame(ts) {
   for (const a of M.adm) ADM.push({ ko: a.ko, ja: a.ja, c: a.c, lx: a.lx, ly: a.ly, p: a.r.map(x => decode(x, M.proj.q)) });
   AIR = Object.entries(M.airports).map(([code, a]) => ({ code, ...a, pref: (R.kr[code] && R.kr[code].pref) || a.pref }));
   buildMask();
-  CITY = PL.cities.map(c => ({ ...c, ...proj(c.lon, c.lat), c: 'JPN' }));
+  CITY = PL.cities.map(c => ({ ...c, ...proj(c.lon, c.lat), c: 'JPN' })).sort((a, b) => (b.big || 0) - (a.big || 0));
   for (const c of CITY) { c.spots = c.spots.map((s, i) => ({ ...s, ...proj(s.lon, s.lat), city: c.id, key: c.id + ':' + i })); SPOT.push(...c.spots); }
   FLAGS.push(...S.flags.map(f => flagRT(f)));
   $('ptsN').textContent = S.pts || 0;

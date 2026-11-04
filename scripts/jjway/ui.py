@@ -221,7 +221,7 @@ def run(w, h, tag):
         # 🏅 기록 창: 명소(현·도시 묶음·진행도) · 공항 · 깃발 탭, 항목 누르면 창
         pg.click('#pts'); time.sleep(.2); assert pg.is_visible('#medals')
         ml = pg.inner_text('#mList'); assert '가가와현' in ml and '리쓰린 공원' in ml and '에히메현' in ml and '도고 온천' in ml, ml[:200]
-        assert '/34' in pg.inner_text('#mSum')
+        assert '/392' in pg.inner_text('#mSum')
         hb = pg.locator('#mList .hb').first; kk = hb.get_attribute('data-wish'); was = pg.evaluate(f'!!S.wish["{kk}"]')
         hb.click(); time.sleep(.1); assert pg.evaluate(f'!!S.wish["{kk}"]') != was and pg.is_visible('#medals'), '목록 ♥ 안 됨'
         pg.click('.mtabs button[data-t="air"]'); assert '다카마쓰공항' in pg.inner_text('#mList')

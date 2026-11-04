@@ -1,0 +1,2055 @@
+{
+"sapporo:大通公園": {
+"g": "ChIJKdPFSFEpC18RnuAg7TaybA4",
+"name": "오도리 공원",
+"m": 742,
+"rv": 3961
+},
+"sapporo:札幌市時計台": {
+"g": "ChIJR3JQJ3YpC18R680ES0qomxs",
+"name": "삿포로시 시계탑",
+"m": 17,
+"rv": 18023
+},
+"sapporo:北海道神宮": {
+"g": "ChIJk6jwxNwpC18RCNdmWzXijew",
+"name": "홋카이도 신궁",
+"m": 13,
+"rv": 16807
+},
+"sapporo:藻岩山": {
+"g": "ChIJAyBVFOzVCl8RJrvOr6UIv6U",
+"name": "모이와야마",
+"m": 429,
+"rv": 0
+},
+"otaru:小樽運河": {
+"g": "ChIJ0UxVV2ThCl8RIZdpda0H7gQ",
+"name": "오타루 운하",
+"m": 86,
+"rv": 7546
+},
+"otaru:天狗山": {
+"g": "ChIJJc51EcjgCl8RKVSfBVStG6A",
+"name": "Tenguyama",
+"m": 24,
+"rv": 323
+},
+"otaru:小樽市総合博物館": {
+"g": "ChIJ25Wx28fhCl8Rhmk8jN3Y-Tc",
+"name": "오타루시 종합박물관 본관",
+"m": 3,
+"rv": 1888
+},
+"hakodate:五稜郭": {
+"g": "ChIJJVWNy2v0nl8RAtXEli295Kk",
+"name": "고료카쿠",
+"m": 15,
+"rv": 11842
+},
+"hakodate:函館山": {
+"g": "ChIJqUkGjFXynl8Rvj6P2613ojo",
+"name": "하코다테 산",
+"m": 66,
+"rv": 3467
+},
+"hakodate:函館朝市": {
+"g": "ChIJ9Th38KHznl8RlR8a2ny1fuQ",
+"name": "하코다테 아침시장 에키니 시장",
+"m": 30,
+"rv": 1931
+},
+"hakodate:金森赤レンガ倉庫": {
+"g": "ChIJo1BfeKjznl8R-KEsd6JreQ4",
+"name": "카네모리 아카렌가 창고",
+"m": 116,
+"rv": 16981
+},
+"asahikawa:旭川市旭山動物園": {
+"g": "ChIJyyPgtczgDF8R01OoHb3cJcg",
+"name": "아사히야마 동물원",
+"m": 118,
+"rv": 29630
+},
+"asahikawa:神居古潭": {
+"g": "ChIJY8A47hPsDF8RaEy5NMzWSSw",
+"name": "Kamuy Kotan",
+"m": 125,
+"rv": 1378
+},
+"furano:ファーム富田": {
+"g": "ChIJdzcW1F2zDF8Rkm1ghwLPbbc",
+"name": "팜 도미타",
+"m": 151,
+"rv": 9695
+},
+"furano:富良野スキー場": {
+"g": "ChIJbZHWeqNSc18RaEeiZoUE7kI",
+"name": "Kitanomine Zone",
+"m": 2117,
+"rv": 382
+},
+"biei:青い池": {
+"g": "ChIJbyoi3mLMDF8RnndLnx8YzQQ",
+"name": "청의 호수",
+"m": 21,
+"rv": 31442
+},
+"biei:四季彩の丘": {
+"g": "ChIJDeIPuVXIDF8RPhiBRw83_ag",
+"name": "Panoramic Flower Gardens Shikisai-no-oka",
+"m": 66,
+"rv": 17930
+},
+"noboribetsu:登別温泉": {
+"g": "ChIJZ_xikcZmdV8REajG3Qc27UU",
+"name": "Noboribetsu Onsen",
+"m": 299,
+"rv": 0
+},
+"noboribetsu:登別地獄谷": {
+"g": "ChIJ___jisJmdV8RzL7_3Cqwtcc",
+"name": "지옥계곡",
+"m": 11,
+"rv": 15049
+},
+"kushiro:釧路湿原": null,
+"kushiro:阿寒湖": {
+"g": "ChIJC6LOPiOEcl8RiVVNMtGqcBI",
+"name": "아칸 호",
+"m": 791,
+"rv": 753
+},
+"abashiri:博物館網走監獄": {
+"g": "ChIJgbHDHGs0bV8R7V7YFMvI1qc",
+"name": "박물관 아바시리 감옥",
+"m": 77,
+"rv": 8900
+},
+"abashiri:能取湖": {
+"g": "ChIJ587i-gHLEl8RS8rY6EWqr-o",
+"name": "노토로 호수",
+"m": 819,
+"rv": 132
+},
+"shari:知床五湖": {
+"g": "ChIJTVxpoUDHbF8Rh0ickOUF4Uw",
+"name": "Shiretokogo Lake",
+"m": 237,
+"rv": 565
+},
+"shari:知床半島": null,
+"aomori:三内丸山遺跡": {
+"g": "ChIJC4PqxWGfm18RCQvPVzBVwnI",
+"name": "산나이마루야마 유적",
+"m": 160,
+"rv": 5356
+},
+"aomori:青森県立美術館": {
+"g": "ChIJay8Fp2Kfm18RQJejfgH_m9A",
+"name": "아오모리 현립 미술관",
+"m": 18,
+"rv": 4996
+},
+"aomori:八甲田山": null,
+"hirosaki:弘前城": {
+"g": "ChIJW01KG8QBm18R8M5txbKLSUk",
+"name": "히로사키 성",
+"m": 18,
+"rv": 11416
+},
+"hirosaki:白神山地": null,
+"towada:奥入瀬渓流": null,
+"towada:十和田湖": {
+"g": "ChIJ4cjU-rUim18RLOTTZFDdfo8",
+"name": "도와다 호",
+"m": 985,
+"rv": 1169
+},
+"towada:十和田市現代美術館": {
+"g": "ChIJVQx_IklCm18RjC49IXp3AOs",
+"name": "도와다시 현대미술관",
+"m": 12,
+"rv": 3799
+},
+"morioka:盛岡城跡公園": {
+"g": "ChIJ7XWWSS92hV8RiTd1VB-a-WY",
+"name": "모리오카 성터 공원",
+"m": 133,
+"rv": 4646
+},
+"morioka:岩手山": {
+"g": "ChIJU_73Ym5shV8RYWMaDY2yIrU",
+"name": "이와테 산",
+"m": 16,
+"rv": 431
+},
+"hiraizumi:中尊寺": {
+"g": "ChIJ5f8N8ubNiF8R0marjOV-5cQ",
+"name": "Konjikidō",
+"m": 16,
+"rv": 4666
+},
+"hiraizumi:毛越寺": {
+"g": "ChIJRdE1NQXOiF8RPvFSstTkNFw",
+"name": "모츠지",
+"m": 83,
+"rv": 5136
+},
+"tono:遠野ふるさと村": {
+"g": "ChIJw2efJwbwhV8RQp51k_eTc54",
+"name": "Tono Furusato Village",
+"m": 2,
+"rv": 837
+},
+"sendai:仙台城": {
+"g": "ChIJF6wsi2OHiV8RoVzSLi8znqU",
+"name": "센다이 성 혼마루회관",
+"m": 47,
+"rv": 10421
+},
+"sendai:瑞鳳殿": {
+"g": "ChIJ8y-8UGkoil8ROchbu7NB2iw",
+"name": "즈이호덴",
+"m": 10,
+"rv": 7254
+},
+"sendai:大崎八幡宮": {
+"g": "ChIJ3VvuU8gpil8Rmx_4_QZWdk4",
+"name": "오사키 하치만구",
+"m": 36,
+"rv": 5686
+},
+"sendai:秋保大滝": {
+"g": "ChIJebYZOFItil8RpAXgQehB3wI",
+"name": "Akiu Great Falls",
+"m": 61,
+"rv": 4668
+},
+"matsushima:瑞巌寺": {
+"g": "ChIJwUdFdZ6biV8Rh8mo-3tHHU4",
+"name": "즈이간지",
+"m": 27,
+"rv": 6751
+},
+"matsushima:五大堂": {
+"g": "ChIJU1qHi5-biV8RTNulyjfaDSo",
+"name": "고다이도",
+"m": 0,
+"rv": 3818
+},
+"matsushima:松島湾": null,
+"akita:千秋公園": {
+"g": "ChIJFV7595XCj18R1eaR7dO0nVk",
+"name": "센슈 공원",
+"m": 145,
+"rv": 3204
+},
+"kakunodate:角館武家屋敷": {
+"g": "ChIJ17RfjWWaj18RgaxMk5aONVk",
+"name": "Bukeyashiki Street",
+"m": 331,
+"rv": 0
+},
+"kakunodate:田沢湖": {
+"g": "ChIJjzSdMoKJj18RISzxuUubhMI",
+"name": "다자와 호",
+"m": 1099,
+"rv": 1074
+},
+"kakunodate:乳頭温泉郷": null,
+"oga:入道崎": {
+"g": "ChIJkc0Jj0UVkF8RXeMl_DB2rhA",
+"name": "Cape Nyudo",
+"m": 100,
+"rv": 1046
+},
+"oga:真山神社": {
+"g": "ChIJfQCCRGs9kF8RJmW_0IzSccA",
+"name": "Shinzan Shrine",
+"m": 42,
+"rv": 708
+},
+"yamagata:立石寺": {
+"g": "ChIJeUV2g-_Oi18RwK-4JcNEe44",
+"name": "릿샤쿠지(야마데라)",
+"m": 261,
+"rv": 9656
+},
+"yamagata:霞城公園": {
+"g": "ChIJUbDr9xq2i18Rfx5NywomFiM",
+"name": "가조 공원",
+"m": 77,
+"rv": 4141
+},
+"yamagata:蔵王温泉": null,
+"ginzan:銀山温泉": {
+"g": "ChIJ7SNY19pdiV8RIRfQXnlYhtk",
+"name": "Ginzan Onsen",
+"m": 112,
+"rv": 0
+},
+"tsuruoka:羽黒山": {
+"g": "ChIJ6_aVSqoGjF8ReF8WejzXUm4",
+"name": "하구로 산",
+"m": 1622,
+"rv": 21
+},
+"tsuruoka:鶴岡市立加茂水族館": {
+"g": "ChIJEeZzlGsXjF8RdxWTWpasRk0",
+"name": "Kamo Aquarium",
+"m": 68,
+"rv": 12270
+},
+"aizu:会津若松城": {
+"g": "ChIJu_8vTpdU9V8Riy6BmrzAfGc",
+"name": "쓰루가 성",
+"m": 7,
+"rv": 21454
+},
+"aizu:さざえ堂": {
+"g": "ChIJXTLrW1aril8ReGhNTBRVwik",
+"name": "Sazae Temple",
+"m": 9,
+"rv": 7553
+},
+"aizu:飯盛山": {
+"g": "ChIJHzP4tVaril8R0jFhvBg28fA",
+"name": "이이모리 산",
+"m": 24,
+"rv": 422
+},
+"ouchi:大内宿": {
+"g": "ChIJsRZu4rH8H2ARMPL0O-FTKWI",
+"name": "오우치주쿠",
+"m": 8,
+"rv": 19718
+},
+"fukushima:花見山公園": {
+"g": "ChIJNVdTBRGEil8RFzSmHJ2DSpE",
+"name": "Hanamiyama Park",
+"m": 223,
+"rv": 1987
+},
+"fukushima:飯坂温泉": {
+"g": "ChIJXb8ChruJil8RSl0piz9fORk",
+"name": "Iizaka Onsen",
+"m": 128,
+"rv": 0
+},
+"mito:偕楽園": {
+"g": "ChIJt43VZ0IkImARkblBKJUzdh0",
+"name": "가이라쿠엔",
+"m": 339,
+"rv": 11353
+},
+"mito:弘道館": {
+"g": "ChIJHRm8WKklImAReDjkIs_odsY",
+"name": "미토성 산노마루 미토번교 고도칸",
+"m": 64,
+"rv": 1662
+},
+"hitachinaka:国営ひたち海浜公園": {
+"g": "ChIJQURehB2LIWAR4fDmA-odfnY",
+"name": "국영 히타치 해변 공원",
+"m": 749,
+"rv": 25413
+},
+"tsukuba:筑波山": {
+"g": "ChIJgVMGQSsEImARyJf1-PdSjnw",
+"name": "쓰쿠바산",
+"m": 232,
+"rv": 2430
+},
+"nikko:日光東照宮": {
+"g": "ChIJNSAhU8WmH2ARlA7wenFbUKs",
+"name": "닛코 동조궁",
+"m": 120,
+"rv": 34962
+},
+"nikko:華厳滝": {
+"g": "ChIJwb6wwMioH2ARjVZDylifnCc",
+"name": "Kegon Waterfalls",
+"m": 23,
+"rv": 21467
+},
+"nikko:中禅寺湖": {
+"g": "ChIJVe3KYi2sH2ARcHgBO2EHmhg",
+"name": "주젠지호",
+"m": 2009,
+"rv": 1568
+},
+"nikko:鬼怒川温泉": {
+"g": "ChIJRb3oWDefH2ARd9VD5zzFKMg",
+"name": "Kinugawa Onsen",
+"m": 112,
+"rv": 0
+},
+"utsunomiya:大谷資料館": {
+"g": "ChIJtx0KVDtvH2ARJOcQ-maarcQ",
+"name": "Oya History Museum - Historic Quarry Mine",
+"m": 2,
+"rv": 16665
+},
+"utsunomiya:宇都宮二荒山神社": {
+"g": "ChIJ3afyyaRnH2ARCC-GMX2SYzc",
+"name": "우쓰노미야 후타라산 신사",
+"m": 6,
+"rv": 2850
+},
+"nasu:殺生石": {
+"g": "ChIJNSzP5BeKH2AR7hI8smN0cfQ",
+"name": "셋쇼세키(살생석)",
+"m": 15,
+"rv": 2100
+},
+"nasu:那須岳": {
+"g": "ChIJZc0SuGuLH2ARkhHS5NgCNB4",
+"name": "나스 산",
+"m": 945,
+"rv": 239
+},
+"kusatsu:草津温泉": {
+"g": "ChIJ7brFG1XmHWARqx4K0Be5o9k",
+"name": "Kusatsu Onsen",
+"m": 19,
+"rv": 0
+},
+"ikaho:伊香保温泉": {
+"g": "ChIJKV4LP3ljHmARZa3nGK653ao",
+"name": "Ikaho Onsen",
+"m": 1259,
+"rv": 0
+},
+"tomioka:富岡製糸場": {
+"g": "ChIJ3Zb6swyQHmARmALIsJRFKkM",
+"name": "도미오카 제사장",
+"m": 17,
+"rv": 11464
+},
+"kawagoe:時の鐘": {
+"g": "ChIJrbCsQWHaGGARYf8yVWFvO7k",
+"name": "토키노카네",
+"m": 2,
+"rv": 10143
+},
+"kawagoe:喜多院": {
+"g": "ChIJO3dQdvbaGGARtW67IJWiC-s",
+"name": "기타인",
+"m": 7,
+"rv": 6141
+},
+"kawagoe:川越氷川神社": {
+"g": "ChIJMzbS6onaGGARXPCQpOZ-zn8",
+"name": "가와고에 히카와 신사",
+"m": 5,
+"rv": 14621
+},
+"chichibu:秩父神社": {
+"g": "ChIJFbCn_Oe5HmARYkuqFCIPnO4",
+"name": "지치부 신사",
+"m": 31,
+"rv": 9218
+},
+"chichibu:三峯神社": {
+"g": "ChIJaWeNYVG_GGARdMc4WfTKSoA",
+"name": "Mitsumine Shrine",
+"m": 7,
+"rv": 11005
+},
+"narita:成田山新勝寺": {
+"g": "ChIJJ6XDoxqLImAR3cOipbe3fN4",
+"name": "나리타산신쇼지",
+"m": 6,
+"rv": 20323
+},
+"katori:香取神宮": {
+"g": "ChIJkybpsTD4ImARbyF-YAIrxC8",
+"name": "가토리 신궁",
+"m": 19,
+"rv": 12726
+},
+"kamogawa:鴨川シーワールド": {
+"g": "ChIJhc6dSJdTPWARF6Kvf3gGDg8",
+"name": "가모가와 시월드",
+"m": 36,
+"rv": 18529
+},
+"tokyo:浅草寺": {
+"g": "ChIJ8T1GpMGOGGARDYGSgpooDWw",
+"name": "센소지",
+"m": 23,
+"rv": 101090
+},
+"tokyo:東京スカイツリー": {
+"g": "ChIJ35ov0dCOGGARKvdDH7NPHX0",
+"name": "도쿄 스카이트리",
+"m": 2,
+"rv": 120895
+},
+"tokyo:東京タワー": {
+"g": "ChIJCewJkL2LGGAR3Qmk0vCTGkg",
+"name": "도쿄 타워",
+"m": 12,
+"rv": 102431
+},
+"tokyo:明治神宮": {
+"g": "ChIJ5SZMmreMGGARcz8QSTiJyo8",
+"name": "메이지 신궁",
+"m": 35,
+"rv": 54376
+},
+"tokyo:皇居": {
+"g": "ChIJTQbYAg2MGGARt22eNwtfGtE",
+"name": "고쿄",
+"m": 303,
+"rv": 32143
+},
+"tokyo:上野恩賜公園": {
+"g": "ChIJw2qQRZuOGGARWmROEiM2y7E",
+"name": "우에노 공원",
+"m": 351,
+"rv": 35156
+},
+"tokyo:東京国立博物館": {
+"g": "ChIJEX3XFIOOGGAR3XdJvRjWLyM",
+"name": "도쿄 국립박물관",
+"m": 13,
+"rv": 31860
+},
+"tokyo:新宿御苑": {
+"g": "ChIJPyOTG8KMGGARh_IXobWxHmo",
+"name": "신주쿠 교엔",
+"m": 227,
+"rv": 46232
+},
+"tokyo:築地場外市場": {
+"g": "ChIJW2cLzSGLGGARXAKXv6EkbqI",
+"name": "쓰키지 장외시장",
+"m": 377,
+"rv": 56349
+},
+"tokyo:高尾山": {
+"g": "ChIJb4ejXn8ZGWAR3y_2HoQLB8c",
+"name": "다카오산",
+"m": 19,
+"rv": 5295
+},
+"yokohama:横浜中華街": {
+"g": "ChIJ__-Le-9cGGARNY-CTSHwq5A",
+"name": "요코하마 차이나타운",
+"m": 178,
+"rv": 49605
+},
+"yokohama:横浜赤レンガ倉庫": {
+"g": "ChIJSXGAhfhcGGARcz3MKth9lJQ",
+"name": "요코하마 아카렌가소코 2호관",
+"m": 49,
+"rv": 44271
+},
+"yokohama:三溪園": {
+"g": "ChIJo1uokdFCGGARYvl6Z6AcVTU",
+"name": "산케이엔",
+"m": 111,
+"rv": 8125
+},
+"yokohama:横浜ランドマークタワー": {
+"g": "ChIJEaFmc11cGGARx8g0NQrvYTY",
+"name": "요코하마 랜드마크 타워",
+"m": 36,
+"rv": 30931
+},
+"kamakura:鶴岡八幡宮": {
+"g": "ChIJiaqQeLhFGGARtTZQEBCtZ6g",
+"name": "쓰루가오카하치만궁",
+"m": 12,
+"rv": 29673
+},
+"kamakura:高徳院": {
+"g": "ChIJBbxJ3_JFGGARTO9rLbCTwx4",
+"name": "고토쿠인",
+"m": 6,
+"rv": 33440
+},
+"kamakura:長谷寺 (鎌倉市)": {
+"g": "ChIJ1SdxB_RFGGAR0a33ulBh61c",
+"name": "하세데라",
+"m": 9,
+"rv": 17492
+},
+"kamakura:江の島": {
+"g": "ChIJpQqJoOZOGGAR7FpKUYhZ_gQ",
+"name": "에노시마",
+"m": 26,
+"rv": 0
+},
+"hakone:箱根神社": {
+"g": "ChIJtcIqzYuYGWARmuDHR2ij5Ko",
+"name": "하코네 신사",
+"m": 105,
+"rv": 20329
+},
+"hakone:大涌谷": {
+"g": "ChIJfw3hyDefGWARilyx_0ZSqKE",
+"name": "오와쿠다니 인포메이션 센터",
+"m": 205,
+"rv": 20638
+},
+"hakone:芦ノ湖": {
+"g": "ChIJoT-oK-mYGWARy-ItUPA6ekk",
+"name": "아시노 호",
+"m": 236,
+"rv": 1582
+},
+"hakone:彫刻の森美術館": {
+"g": "ChIJMfOWowSiGWARX2wK6ac5jlg",
+"name": "조각의 숲 미술관",
+"m": 86,
+"rv": 16346
+},
+"niigata:萬代橋": {
+"g": "ChIJZWLYvYfJ9F8R1k0_wvt1P8U",
+"name": "반다이바시",
+"m": 17,
+"rv": 590
+},
+"niigata:朱鷺メッセ": {
+"g": "ChIJSxyXcB7K9F8RkFjx7GwWcZM",
+"name": "도키멧세",
+"m": 47,
+"rv": 5767
+},
+"yuzawa:苗場スキー場": {
+"g": "ChIJ___r-BvG9F8RhoQ30qhS_mo",
+"name": "나에바 스키장",
+"m": 494,
+"rv": 2042
+},
+"yuzawa:越後湯沢温泉": {
+"g": "ChIJAQBcRCUCHmARl7y1tT7pCYA",
+"name": "Echigoyuzawa Onsen",
+"m": 210,
+"rv": 0
+},
+"sado:佐渡金山": {
+"g": "ChIJUW4tS_9l818RYoG0Cao-WaI",
+"name": "사도광산 (사도금광)",
+"m": 10,
+"rv": 3040
+},
+"sado:尖閣湾": {
+"g": "ChIJvcKNcKFp818Rwq_oSWhf_ps",
+"name": "센카쿠만 아게시마 유원지",
+"m": 446,
+"rv": 1531
+},
+"toyama:富山市ガラス美術館": {
+"g": "ChIJSU90xaaC918RX-cV13mPXwc",
+"name": "도야마시 유리 미술관",
+"m": 44,
+"rv": 8107
+},
+"toyama:富岩運河環水公園": {
+"g": "ChIJMa0Onwya918R8_ZU2ohNK6I",
+"name": "후간 운하 간스이 공원",
+"m": 82,
+"rv": 9249
+},
+"toyama:富山城": {
+"g": "ChIJE0W4wG2R918R1fUdNadDRiQ",
+"name": "도야마 성",
+"m": 87,
+"rv": 1371
+},
+"tateyama:立山": {
+"g": "ChIJx0ERK-_n918RTyqJaMjjIDQ",
+"name": "다테 산",
+"m": 0,
+"rv": 635
+},
+"tateyama:黒部ダム": {
+"g": "ChIJB7x2Jpru918RXnjJFJb9E94",
+"name": "구로베 댐",
+"m": 73,
+"rv": 12805
+},
+"nanto:五箇山": {
+"g": "ChIJ2WkByg8W-F8RHIPaqKArths",
+"name": "Gokayama",
+"m": 61,
+"rv": 0
+},
+"kanazawa:兼六園": {
+"g": "ChIJBVmy-YMz-F8R5PID8D17Cpc",
+"name": "겐로쿠엔",
+"m": 25,
+"rv": 38467
+},
+"kanazawa:金沢城": null,
+"kanazawa:金沢21世紀美術館": {
+"g": "ChIJAbhT24Az-F8RwWhli9sBKlE",
+"name": "가나자와 21세기 미술관",
+"m": 49,
+"rv": 18753
+},
+"kanazawa:ひがし茶屋街": {
+"g": "ChIJsfC6oXQz-F8RdA1qXiF6jLs",
+"name": "히가시차야가이",
+"m": 67,
+"rv": 24141
+},
+"kanazawa:尾山神社": {
+"g": "ChIJwQG-F3kz-F8RAfWyK1svniU",
+"name": "오야마 신사",
+"m": 37,
+"rv": 5743
+},
+"wajima:白米千枚田": {
+"g": "ChIJzaTD0m8x8V8RM2pBpQutITc",
+"name": "시로요네 센마이다",
+"m": 27,
+"rv": 6456
+},
+"fukui:一乗谷朝倉氏遺跡": {
+"g": "ChIJs9voyKmk-F8RhYo0Lt2Qj3A",
+"name": "이치조다니 아사쿠라 유적",
+"m": 7,
+"rv": 4062
+},
+"eiheiji:永平寺": {
+"g": "ChIJzYo4YsSX-F8R6Sl4_CeuUyw",
+"name": "에이헤이지(영평사)",
+"m": 0,
+"rv": 8576
+},
+"katsuyama:福井県立恐竜博物館": {
+"g": "ChIJedhrVPOa-F8R4bRGdkr_0VU",
+"name": "후쿠이현 공룡 박물관",
+"m": 69,
+"rv": 17880
+},
+"tojinbo:東尋坊": {
+"g": "ChIJ8w9fldvl-F8RxirqCy78VTs",
+"name": "도진보",
+"m": 26,
+"rv": 18683
+},
+"tojinbo:丸岡城": {
+"g": "ChIJeXrpXVzr-F8RyAOcr44yWRM",
+"name": "마루오카 성",
+"m": 1,
+"rv": 5751
+},
+"kawaguchiko:河口湖": {
+"g": "ChIJTz8EpbRfGWARR30zHkuyyyk",
+"name": "가와구치 호",
+"m": 502,
+"rv": 3734
+},
+"kawaguchiko:新倉山浅間公園": {
+"g": "ChIJu6hYHU1nGWARfaBH0X127o8",
+"name": "아라쿠라야마 센겐공원",
+"m": 31,
+"rv": 10612
+},
+"kawaguchiko:忍野八海": {
+"g": "ChIJK4SZn4VmGWARcZ-vsGukOhY",
+"name": "오시노 핫카이",
+"m": 139,
+"rv": 44825
+},
+"kawaguchiko:富士山": {
+"g": "ChIJmcj9QppiGWAR36TzFsn8oaY",
+"name": "후지 산",
+"m": 15,
+"rv": 13638
+},
+"kofu:武田神社": {
+"g": "ChIJWwoIlDj4G2AR_SyHLzLtqPI",
+"name": "다케다 신사",
+"m": 29,
+"rv": 10189
+},
+"kofu:昇仙峡": {
+"g": "ChIJ11JUoi0GHGARBghUQ03b2wI",
+"name": "쇼센쿄",
+"m": 126,
+"rv": 3254
+},
+"matsumoto:松本城": {
+"g": "ChIJmVmaCoUOHWARVPa8-iAOLZA",
+"name": "마쓰모토 성",
+"m": 38,
+"rv": 33348
+},
+"matsumoto:上高地": {
+"g": "ChIJC8XxEJAOHWARBzhcrx9Cbpo",
+"name": "가미코치",
+"m": 474,
+"rv": 10625
+},
+"matsumoto:旧開智学校": {
+"g": "ChIJJ_CmpIMOHWARzcYDoNLiiws",
+"name": "Former Kaichi School",
+"m": 31,
+"rv": 2451
+},
+"nagano:善光寺": {
+"g": "ChIJhyd2jeKGHWARLg80YfuZ-vQ",
+"name": "젠코지 선광사",
+"m": 12,
+"rv": 27559
+},
+"nagano:戸隠神社": {
+"g": "ChIJqUaopGuF918R6vpw-DMDtyo",
+"name": "도가쿠시 신사",
+"m": 9,
+"rv": 6645
+},
+"nagano:地獄谷野猿公苑": {
+"g": "ChIJzyCiTOzzHWARH9aN73OLTfY",
+"name": "지고쿠다니 야생 원숭이 공원",
+"m": 53,
+"rv": 11545
+},
+"karuizawa:白糸の滝 (長野県)": {
+"g": "ChIJFYs9aaXYHWARsnooiOit2r0",
+"name": "시라이토노타키 폭포",
+"m": 45,
+"rv": 13803
+},
+"karuizawa:雲場池": {
+"g": "ChIJ7bKhDZvTHWARQfIWff0_-Yo",
+"name": "Kumoba Pond",
+"m": 70,
+"rv": 1169
+},
+"nagiso:妻籠宿": {
+"g": "ChIJM7uYpeS3HGAR9jZQMTUsvIc",
+"name": "나카센도 쓰마고주쿠",
+"m": 258,
+"rv": 8162
+},
+"nagiso:馬籠宿": {
+"g": "ChIJBzCC3Rq3HGAR-hYRNmVudn0",
+"name": "마고메",
+"m": 1436,
+"rv": 0
+},
+"takayama:高山陣屋": {
+"g": "ChIJj29EXtm6AmAR4ZH1chH39Zg",
+"name": "다카야마 진야",
+"m": 37,
+"rv": 9314
+},
+"takayama:飛騨の里": {
+"g": "ChIJmWTYrzm7AmARRPwmwmCypNY",
+"name": "히다노사토",
+"m": 65,
+"rv": 7133
+},
+"takayama:新穂高ロープウェイ": {
+"g": "ChIJLUAe875PHWARkR1e5ffwR9k",
+"name": "신호타카 로프웨이",
+"m": 572,
+"rv": 3697
+},
+"shirakawa:白川郷": {
+"g": "ChIJ5yW_trBx-F8R-AVYnbtRxcw",
+"name": "시라카와고",
+"m": 164,
+"rv": 44021
+},
+"gujo:郡上八幡城": {
+"g": "ChIJkZJfVhXwAmAR0npJJBLaQiY",
+"name": "구조 하치만 성",
+"m": 31,
+"rv": 6381
+},
+"gifu:岐阜城": {
+"g": "ChIJqw4uj3mpA2ARSslCVWXDcSg",
+"name": "기후 성",
+"m": 14,
+"rv": 11602
+},
+"shizuoka:久能山東照宮": {
+"g": "ChIJ5eGCOiU3GmARbfpaswGky_8",
+"name": "쿠노잔 토쇼구",
+"m": 11,
+"rv": 9238
+},
+"shizuoka:三保松原": {
+"g": "ChIJ7WtuRlMwGmAREsK0h6OIz2Q",
+"name": "미호노 마츠바라",
+"m": 50,
+"rv": 9673
+},
+"shizuoka:駿府城": {
+"g": "ChIJhVlURBlKGmARSQe5jkQMwfY",
+"name": "슨푸 성 공원",
+"m": 27,
+"rv": 5846
+},
+"atami:MOA美術館": {
+"g": "ChIJjfhKF3y-GWAR4cJUHQTH3EA",
+"name": "MOA미술관",
+"m": 4,
+"rv": 6923
+},
+"atami:來宮神社": {
+"g": "ChIJ8x2GH26-GWARmzGnRPJIkDo",
+"name": "기노미야 신사",
+"m": 13,
+"rv": 15113
+},
+"shimoda:了仙寺": {
+"g": "ChIJ8Szq9L9YF2ARlZdiL1OWCjU",
+"name": "Ryosenji",
+"m": 11,
+"rv": 695
+},
+"izu:修禅寺": {
+"g": "ChIJOwdW99DsGWARousj-05vNbQ",
+"name": "슈젠지",
+"m": 5,
+"rv": 2391
+},
+"izu:修善寺温泉": {
+"g": "ChIJZy3iec_sGWARrrfrFgYUC_8",
+"name": "Shuzenji Onsen",
+"m": 565,
+"rv": 0
+},
+"hamamatsu:浜松城": {
+"g": "ChIJAz1PxGHeGmARcvnm6UTOBW8",
+"name": "하마마쓰성",
+"m": 6,
+"rv": 6915
+},
+"hamamatsu:浜名湖": null,
+"fujinomiya:富士山本宮浅間大社": {
+"g": "ChIJE_h8kefUG2ARt84QZaZLCNg",
+"name": "후지산혼구 센겐타이샤",
+"m": 16,
+"rv": 10355
+},
+"nagoya:名古屋城": {
+"g": "ChIJse-wx8t2A2ARd6Z1knjp07k",
+"name": "나고야 성",
+"m": 133,
+"rv": 46104
+},
+"nagoya:熱田神宮": {
+"g": "ChIJ3abhnht6A2ARu-Y4yDEWlao",
+"name": "아쓰타 신궁",
+"m": 94,
+"rv": 23896
+},
+"nagoya:徳川美術館": {
+"g": "ChIJp-eMF_1wA2ARC_ohxjLyXbY",
+"name": "도쿠가와 미술관",
+"m": 20,
+"rv": 4593
+},
+"nagoya:大須観音": {
+"g": "ChIJr3HDSzJ3A2AR6Pctdr3J-yc",
+"name": "오스칸논",
+"m": 54,
+"rv": 12404
+},
+"nagoya:トヨタ産業技術記念館": {
+"g": "ChIJ____05N2A2ARK1ejw7VH1KM",
+"name": "도요타 산업기술 기념관",
+"m": 70,
+"rv": 14212
+},
+"inuyama:犬山城": {
+"g": "ChIJke1IrfUOA2ARNfYDRkP6Wig",
+"name": "이누야마 성",
+"m": 3,
+"rv": 19753
+},
+"inuyama:博物館明治村": {
+"g": "ChIJRboWC5ASA2ARXQgGtKbl3n0",
+"name": "박물관 메이지무라 (명치촌)",
+"m": 176,
+"rv": 7254
+},
+"toyota:香嵐渓": {
+"g": "ChIJKzjivPSoBGARzBNWLNcE7Sc",
+"name": "고란계곡",
+"m": 46,
+"rv": 7816
+},
+"ise:皇大神宮": {
+"g": "ChIJ8zef3-tQBGARpwz2UzdmCfA",
+"name": "이세신궁(내궁)",
+"m": 4,
+"rv": 33680
+},
+"ise:豊受大神宮": {
+"g": "ChIJ75HcSIRaBGARx9ty9HE9rqQ",
+"name": "이세신궁 외궁",
+"m": 11,
+"rv": 23064
+},
+"ise:おかげ横丁": {
+"g": "ChIJL93NSZNQBGARmNlxBX-cj9Y",
+"name": "오카게 요코초",
+"m": 2,
+"rv": 38735
+},
+"ise:夫婦岩": {
+"g": "ChIJBVDBdIBXBGARJUnwAzEVmGk",
+"name": "후타미오키타마 신사",
+"m": 74,
+"rv": 12563
+},
+"toba:鳥羽水族館": {
+"g": "ChIJVVVANuv1A2ARyCiTNeo9qAs",
+"name": "도바 수족관",
+"m": 31,
+"rv": 17139
+},
+"toba:ミキモト真珠島": {
+"g": "ChIJDRi-Buv4BGARimZ9EZCKxFA",
+"name": "미키모토 진주섬",
+"m": 15,
+"rv": 206
+},
+"kumano-mie:鬼ヶ城": {
+"g": "ChIJB3Yn9N5wBmAR0iNe6N5GW-w",
+"name": "오니가조 바위",
+"m": 29,
+"rv": 5132
+},
+"kumano-mie:花の窟神社": {
+"g": "ChIJuW1VcdJxBmARxOyikv-I_JQ",
+"name": "하나노 이와야 신사",
+"m": 23,
+"rv": 929
+},
+"otsu:延暦寺": {
+"g": "ChIJMyzNoxsKAWARlcl_aAD9XZA",
+"name": "엔랴쿠지",
+"m": 10,
+"rv": 9553
+},
+"otsu:石山寺": {
+"g": "ChIJ73ex4kptAWARP9WRn_BxADQ",
+"name": "이시야마데라",
+"m": 11,
+"rv": 5071
+},
+"otsu:園城寺": {
+"g": "ChIJW_hH73EMAWAR3DLfYrSpmdA",
+"name": "온조지(미이데라)",
+"m": 10,
+"rv": 3298
+},
+"otsu:琵琶湖": null,
+"hikone:彦根城": {
+"g": "ChIJw9u_XSsrAmARMIwpeAshKu4",
+"name": "히코네 성",
+"m": 18,
+"rv": 21324
+},
+"hikone:玄宮園": {
+"g": "ChIJETPWYywrAmARUWD2FQlyuU4",
+"name": "겐큐엔",
+"m": 97,
+"rv": 1806
+},
+"nagahama:黒壁スクエア": {
+"g": "ChIJUfkboCIpAmARhtlwuYX-pYU",
+"name": "구로카베 스퀘어",
+"m": 62,
+"rv": 6247
+},
+"nagahama:竹生島": {
+"g": "ChIJ98d08UeJAWARsDFLexrlQyg",
+"name": "치쿠부섬",
+"m": 14,
+"rv": 476
+},
+"kyoto:清水寺": {
+"g": "ChIJB_vchdMIAWARujTEUIZlr2I",
+"name": "기요미즈데라",
+"m": 36,
+"rv": 74122
+},
+"kyoto:伏見稲荷大社": {
+"g": "ChIJIW0uPRUPAWAR6eI6dRzKGns",
+"name": "후시미 이나리 신사",
+"m": 532,
+"rv": 93417
+},
+"kyoto:鹿苑寺": {
+"g": "ChIJvUbrwCCoAWARX2QiHCsn5A4",
+"name": "금각사",
+"m": 69,
+"rv": 71690
+},
+"kyoto:慈照寺": {
+"g": "ChIJ4W9CCwUJAWARyauI6BzKiiU",
+"name": "지쇼지",
+"m": 41,
+"rv": 18377
+},
+"kyoto:二条城": {
+"g": "ChIJC5srCtQHAWARLy9qkFmHaxA",
+"name": "니조 성",
+"m": 86,
+"rv": 43705
+},
+"kyoto:龍安寺": {
+"g": "ChIJp7ocMCqoAWARQoXXRj4Xq-E",
+"name": "료안지",
+"m": 8,
+"rv": 11713
+},
+"kyoto:天龍寺": {
+"g": "ChIJk54PuAGqAWARwEgz_9o-nM0",
+"name": "텐류지",
+"m": 17,
+"rv": 17469
+},
+"kyoto:嵐山": {
+"g": "ChIJ49PvUVQHAWARTAF7WU_Wqqs",
+"name": "Arashiyama",
+"m": 38,
+"rv": 7724
+},
+"uji:平等院": {
+"g": "ChIJqyva4AwRAWARpAf6j5MUhGA",
+"name": "뵤도인",
+"m": 19,
+"rv": 22829
+},
+"uji:宇治上神社": {
+"g": "ChIJYfl6dXMRAWARX1-X0_AOYBE",
+"name": "우지가미 신사",
+"m": 22,
+"rv": 3221
+},
+"miyazu:天橋立": {
+"g": "ChIJl-LBxy2X_18RgWzksvPOYbo",
+"name": "아마노하시다테",
+"m": 32,
+"rv": 7898
+},
+"ine:伊根の舟屋": {
+"g": "ChIJC1Z_so2f_18RieRebkLKVII",
+"name": "이네노후나야",
+"m": 91,
+"rv": 8284
+},
+"osaka:大阪城": {
+"g": "ChIJ_TooXM3gAGARQR6hXH3QAQ8",
+"name": "오사카 성",
+"m": 4,
+"rv": 102257
+},
+"osaka:道頓堀": {
+"g": "ChIJ_fmKgRPnAGARkKWLtCYTu7g",
+"name": "도톤보리",
+"m": 15,
+"rv": 87420
+},
+"osaka:通天閣": {
+"g": "ChIJ_0Lgd2DnAGARV0X03lbPy-U",
+"name": "쓰텐카쿠 전망대",
+"m": 35,
+"rv": 44407
+},
+"osaka:海遊館": {
+"g": "ChIJzakNjPToAGARzCwIriDFg28",
+"name": "해유관",
+"m": 9,
+"rv": 62929
+},
+"osaka:四天王寺": {
+"g": "ChIJIVA6O_jdAGARLWCtv8iBqrY",
+"name": "시텐노지",
+"m": 62,
+"rv": 13374
+},
+"osaka:ユニバーサル・スタジオ・ジャパン": {
+"g": "ChIJXeLVg9DgAGARqlIyMCX-BTY",
+"name": "유니버설 스튜디오 재팬",
+"m": 125,
+"rv": 157182
+},
+"osaka:黒門市場": {
+"g": "ChIJXSJB5UHnAGARQcEjvngsHaw",
+"name": "구로몬 시장",
+"m": 67,
+"rv": 21333
+},
+"sakai:大仙陵古墳": {
+"g": "ChIJY9sFeXjbAGARpd7b47AdN64",
+"name": "다이센릉 고분 (모즈노미미하라 중릉)",
+"m": 17,
+"rv": 984
+},
+"kobe:神戸ポートタワー": {
+"g": "ChIJweTiKACPAGARgqyoB9hC7rc",
+"name": "고베 포트 타워",
+"m": 15,
+"rv": 12122
+},
+"kobe:北野異人館街": {
+"g": "ChIJT6cViuCOAGARegX_ORkvbs0",
+"name": "기타노이진칸",
+"m": 141,
+"rv": 5923
+},
+"kobe:有馬温泉": {
+"g": "ChIJiWt2AGqKAGAR7D1vqNxjhyQ",
+"name": "Arima Onsen",
+"m": 33,
+"rv": 0
+},
+"kobe:南京町": {
+"g": "ChIJkaqwvf2OAGARARl_1gEYbx0",
+"name": "난킨마치(차이나타운)",
+"m": 18,
+"rv": 24734
+},
+"kobe:六甲山": {
+"g": "ChIJSYLQZQiLAGARCKCYCqdMG-8",
+"name": "롯코 산",
+"m": 31,
+"rv": 685
+},
+"himeji:姫路城": {
+"g": "ChIJsyQzogPgVDURsYG6bi-MT3o",
+"name": "히메지 성",
+"m": 27,
+"rv": 60884
+},
+"himeji:好古園": {
+"g": "ChIJDxT9HRvgVDURt_SPzwe2f_E",
+"name": "코코엔",
+"m": 124,
+"rv": 7320
+},
+"himeji:圓教寺": {
+"g": "ChIJ8XekUFEeVTUReE7cQvDevKU",
+"name": "엔교지",
+"m": 321,
+"rv": 3837
+},
+"kinosaki:城崎温泉": {
+"g": "ChIJvzzwnzvI_18R7pmJyu_Wa8U",
+"name": "Kinosaki Onsen",
+"m": 1260,
+"rv": 0
+},
+"kinosaki:出石城": {
+"g": "ChIJ_-dlUtfn_18R5aCDDSDASGo",
+"name": "Izushi Castle Ruins",
+"m": 41,
+"rv": 1297
+},
+"asago:竹田城": {
+"g": "ChIJx1Cv0LlZVTURyVATTFSdDY0",
+"name": "Takeda Castle Ruins",
+"m": 5,
+"rv": 4110
+},
+"awaji:明石海峡大橋": null,
+"awaji:伊弉諾神宮": {
+"g": "ChIJO9CGW4i3VDURPglN0FloZz8",
+"name": "이자나기 신궁",
+"m": 17,
+"rv": 7075
+},
+"nara:東大寺": {
+"g": "ChIJ3XYIepA5AWARjzzVnT-skPg",
+"name": "도다이지",
+"m": 22,
+"rv": 32747
+},
+"nara:春日大社": {
+"g": "ChIJ1Wqwa8A5AWARlpXjgoPnl0w",
+"name": "카스가타이샤",
+"m": 26,
+"rv": 15764
+},
+"nara:奈良公園": {
+"g": "ChIJYWCMvZY5AWARVnREV_OsbPk",
+"name": "나라 공원",
+"m": 58,
+"rv": 78273
+},
+"nara:興福寺": {
+"g": "ChIJs-w9sog5AWARk0WDN0cPgxE",
+"name": "고후쿠지",
+"m": 13,
+"rv": 13184
+},
+"nara:平城宮": {
+"g": "ChIJFZVuxKM7AWARd4rzIg38E70",
+"name": "헤이조궁터 역사공원",
+"m": 523,
+"rv": 5966
+},
+"ikaruga:法隆寺": {
+"g": "ChIJT4_DYfUvAWAR_NviFfadTOk",
+"name": "호류지",
+"m": 31,
+"rv": 7933
+},
+"ikaruga:中宮寺": {
+"g": "ChIJ4yDAYfUvAWARkjAtxSJk9mI",
+"name": "주구지",
+"m": 47,
+"rv": 838
+},
+"yoshino:吉野山": {
+"g": "ChIJ05Spo7LHBmARoHN4E0GQq9g",
+"name": "요시노산",
+"m": 0,
+"rv": 574
+},
+"yoshino:金峯山寺": {
+"g": "ChIJ3WXNOzfGBmARHf_m5YNxqFk",
+"name": "긴푸센지",
+"m": 53,
+"rv": 4181
+},
+"asuka:石舞台古墳": null,
+"asuka:飛鳥寺": {
+"g": "ChIJxfjEuYXMBmAR4HYdcOzNWg8",
+"name": "아스카데라",
+"m": 18,
+"rv": 2756
+},
+"asuka:高松塚古墳": {
+"g": "ChIJeWarK1zMBmAR33ft0JWNTB8",
+"name": "Takamatsuzuka Mounded Tomb",
+"m": 27,
+"rv": 560
+},
+"wakayama:和歌山城": {
+"g": "ChIJxdJgocGyAGARk2yAa2IxAOE",
+"name": "와카야마 성",
+"m": 45,
+"rv": 9409
+},
+"wakayama:淡嶋神社": {
+"g": "ChIJHXxtCAOSGWAR1x9lXtrQS9k",
+"name": "아와시마 신사",
+"m": 29,
+"rv": 1960
+},
+"koya:金剛峯寺": {
+"g": "ChIJXVifh3InB2ARxY1UV-2ukyo",
+"name": "콘고부지(금강봉사)",
+"m": 6,
+"rv": 7427
+},
+"koya:奥之院 (高野山)": {
+"g": "ChIJZd0I7j86GWARXgG-91Ta5j8",
+"name": "고야산 오쿠노인",
+"m": 610,
+"rv": 8476
+},
+"nachi:熊野那智大社": {
+"g": "ChIJ1d7uC3cVBmARsVLmY1fG2yw",
+"name": "쿠마노 나치 타이샤",
+"m": 34,
+"rv": 7630
+},
+"nachi:那智滝": {
+"g": "ChIJ-Z5J5fM_BmARNg5zbIxDfNc",
+"name": "나치 폭포",
+"m": 482,
+"rv": 12085
+},
+"tanabe:熊野本宮大社": {
+"g": "ChIJP3bnaCFaBmARAu9qmLB6eXA",
+"name": "쿠마노 혼구 타이샤",
+"m": 20,
+"rv": 8965
+},
+"shirahama:アドベンチャーワールド": {
+"g": "ChIJZfJikKymB2ARn17tXPSRGwY",
+"name": "어드벤처 월드",
+"m": 46,
+"rv": 18624
+},
+"shirahama:三段壁": {
+"g": "ChIJVVXlyqChB2ARjLmVaql2CLk",
+"name": "산단베키 동굴",
+"m": 24,
+"rv": 3673
+},
+"shirahama:白良浜": {
+"g": "ChIJ41DZ7wKhB2AROvuZjd3Uhdk",
+"name": "Shirarahama Beach",
+"m": 146,
+"rv": 8048
+},
+"tottori:鳥取砂丘": {
+"g": "ChIJbx8cHUSPVTURazEAdQKsetg",
+"name": "돗토리 사구",
+"m": 207,
+"rv": 17611
+},
+"kurayoshi:三徳山三佛寺": {
+"g": "ChIJxekO1VvDVTURwP5n_KP53-w",
+"name": "산부쓰지",
+"m": 2,
+"rv": 937
+},
+"sakaiminato:水木しげるロード": {
+"g": "ChIJ5X6UvLJVVjURiAEjL4Xpzck",
+"name": "미즈키 시게루 로드",
+"m": 695,
+"rv": 10210
+},
+"matsue:松江城": {
+"g": "ChIJ9bsDJgUFVzURPfuazkEsEBQ",
+"name": "마쓰에 성",
+"m": 21,
+"rv": 16630
+},
+"matsue:宍道湖": {
+"g": "ChIJ1VRig9ATVzURG78HXVSDnmM",
+"name": "신지 호",
+"m": 1608,
+"rv": 358
+},
+"matsue:小泉八雲記念館": {
+"g": "ChIJkb2w5wcFVzURsyG6H_sPm5Y",
+"name": "Lafcadio Hearn Memorial Museum",
+"m": 15,
+"rv": 1721
+},
+"izumo:出雲大社": {
+"g": "ChIJPRlWKpRcVzUR74S6_K5qanA",
+"name": "이즈모 타이샤",
+"m": 9,
+"rv": 34323
+},
+"izumo:稲佐の浜": {
+"g": "ChIJM0G9XoZcVzURmbcJMDPMRmc",
+"name": "이나사노하마",
+"m": 56,
+"rv": 6425
+},
+"oda:石見銀山": {
+"g": "ChIJMe8nKm0PWjURzp8TiZJPlf8",
+"name": "이와미 은광",
+"m": 866,
+"rv": 1869
+},
+"tsuwano:津和野城": {
+"g": "ChIJQdoVl_YtWzURb7SH72QItZI",
+"name": "쓰와노성터",
+"m": 129,
+"rv": 262
+},
+"okayama:岡山後楽園": {
+"g": "ChIJhwt8jCQGVDURabQ6FPH0nXQ",
+"name": "오카야마 고라쿠엔",
+"m": 108,
+"rv": 17105
+},
+"okayama:岡山城": {
+"g": "ChIJER_WDSUGVDURujV4pMtef44",
+"name": "오카야마 성",
+"m": 11,
+"rv": 10685
+},
+"okayama:吉備津神社": {
+"g": "ChIJ7YMxK7wAVDUR9LRQLgHRogA",
+"name": "키비츠 신사",
+"m": 22,
+"rv": 7808
+},
+"kurashiki:倉敷美観地区": {
+"g": "ChIJ1do4lkdWUTURvg3rFkFpzhE",
+"name": "구라시키 미관지구",
+"m": 111,
+"rv": 28149
+},
+"kurashiki:大原美術館": {
+"g": "ChIJVVXFlUdWUTUR0eP250FshZ0",
+"name": "오하라 미술관",
+"m": 6,
+"rv": 3415
+},
+"kurashiki:瀬戸大橋": {
+"g": "ChIJmwW7XPLhUzURmFn5lKeM98Q",
+"name": "세토대교",
+"m": 619,
+"rv": 792
+},
+"hiroshima:原爆ドーム": {
+"g": "ChIJqYAn2wyiWjURlsDG4Hpn5jQ",
+"name": "원폭 돔",
+"m": 8,
+"rv": 34573
+},
+"hiroshima:広島平和記念公園": {
+"g": "ChIJgzAzVG2iWjURZRZ1udXOKeE",
+"name": "히로시마 평화기념공원",
+"m": 16,
+"rv": 31237
+},
+"hiroshima:広島城": {
+"g": "ChIJw-f36qaYWjURMpYztSzpe_U",
+"name": "히로시마 성",
+"m": 7,
+"rv": 18523
+},
+"hiroshima:縮景園": {
+"g": "ChIJAfBmWKmYWjUR42FdSpYghNc",
+"name": "슛케이엔",
+"m": 30,
+"rv": 9105
+},
+"miyajima:厳島神社": {
+"g": "ChIJj23HfgTjGmARkNW10PcocjU",
+"name": "이쓰쿠시마 신사",
+"m": 35,
+"rv": 37133
+},
+"miyajima:弥山": {
+"g": "ChIJGUy2HtSwWjURk5ao-WBFAf0",
+"name": "미센 산",
+"m": 24,
+"rv": 807
+},
+"onomichi:千光寺": {
+"g": "ChIJd8AuAbQBUTURTuJysl7V87E",
+"name": "센코지",
+"m": 53,
+"rv": 3314
+},
+"onomichi:耕三寺": {
+"g": "ChIJMb4ZDa4BUTURx4YGYg-YHwQ",
+"name": "고산지",
+"m": 173,
+"rv": 2865
+},
+"kure:呉市海事歴史科学館": {
+"g": "ChIJfcG1zCgIUDURuU8VYF3Gk2g",
+"name": "야마토 박물관",
+"m": 5,
+"rv": 17504
+},
+"fukuyama:鞆の浦": {
+"g": "ChIJI-cJv-sOUTURw0wiuDb8kB0",
+"name": "토모노우라",
+"m": 253,
+"rv": 6034
+},
+"fukuyama:福山城": {
+"g": "ChIJaSoAVuQQUTURp_PUsleNKSg",
+"name": "후쿠야마시립 후쿠야마성 박물관",
+"m": 12,
+"rv": 1861
+},
+"hagi:萩城": {
+"g": "ChIJMaYfHmavRDURKs7VLe1hZK4",
+"name": "하기 성터",
+"m": 145,
+"rv": 1543
+},
+"hagi:松陰神社 (萩市)": {
+"g": "ChIJvUUorJWvRDURfEv8A6MsvfU",
+"name": "쇼인신사",
+"m": 9,
+"rv": 3275
+},
+"iwakuni:錦帯橋": {
+"g": "ChIJHWZuaz40RTURCJfwPHOzVGY",
+"name": "킨타이 교",
+"m": 4,
+"rv": 19274
+},
+"iwakuni:岩国城": {
+"g": "ChIJ-eSyAGs0RTURzEmC98jBF7A",
+"name": "이와쿠니 성",
+"m": 3,
+"rv": 3968
+},
+"shimonoseki:唐戸市場": {
+"g": "ChIJNVeCCJ29QzURQrmJDMCxImw",
+"name": "가라토시장",
+"m": 10,
+"rv": 26117
+},
+"shimonoseki:赤間神宮": {
+"g": "ChIJAQAQh3e9QzUR8mNjoS49mA4",
+"name": "아카마신궁",
+"m": 46,
+"rv": 5264
+},
+"shimonoseki:関門橋": {
+"g": "ChIJAwZKl_eXQzURmvWYSirr6Zg",
+"name": "간몬교",
+"m": 237,
+"rv": 617
+},
+"shimonoseki:角島大橋": {
+"g": "ChIJlyxJOY8TQzURdl2pDhhvhZQ",
+"name": "츠노시마 대교",
+"m": 250,
+"rv": 2186
+},
+"mine:秋芳洞": {
+"g": "ChIJZ-WH63OeRDURTHdZ21gYFRc",
+"name": "아키요시동굴",
+"m": 6,
+"rv": 7625
+},
+"mine:秋吉台": {
+"g": "ChIJqzN9Kpl8QzURKj4EnnNsBTs",
+"name": "아키요시다이",
+"m": 1062,
+"rv": 5839
+},
+"fukuoka:福岡タワー": {
+"g": "ChIJAQAEI6qTQTURLZF6YTY7dPk",
+"name": "후쿠오카 타워",
+"m": 2,
+"rv": 23803
+},
+"fukuoka:櫛田神社 (福岡市)": {
+"g": "ChIJV2pTquqRQTURpI1FhH5siaE",
+"name": "구시다 신사",
+"m": 28,
+"rv": 14227
+},
+"fukuoka:大濠公園": {
+"g": "ChIJx6TbjMyTQTURmPdN7915780",
+"name": "오호리 공원",
+"m": 43,
+"rv": 15965
+},
+"fukuoka:福岡城": {
+"g": "ChIJQ_6JJtOTQTURigJ8dBobe18",
+"name": "후쿠오카 성터",
+"m": 96,
+"rv": 5027
+},
+"dazaifu:太宰府天満宮": {
+"g": "ChIJzfvrKp-bQTURl65fp6vRJLg",
+"name": "다자이후 텐만구",
+"m": 18,
+"rv": 44897
+},
+"dazaifu:九州国立博物館": {
+"g": "ChIJK4ld4qiTQTURnIfmKzchJLs",
+"name": "규슈국립박물관",
+"m": 19,
+"rv": 10403
+},
+"kitakyushu:小倉城": {
+"g": "ChIJIwxQlK24QzURaG19997uBxM",
+"name": "고쿠라성",
+"m": 1,
+"rv": 13082
+},
+"kitakyushu:門司港レトロ": {
+"g": "ChIJ2W-aPimWQzURtAmKbRfMEvA",
+"name": "모지코 레트로",
+"m": 199,
+"rv": 13891
+},
+"kitakyushu:皿倉山": {
+"g": "ChIJq7QgVKfIQzURHDEmcVY-3J0",
+"name": "Mount Sarakura",
+"m": 139,
+"rv": 458
+},
+"yanagawa:柳川藩主立花邸御花": {
+"g": "ChIJbVJADa9MQDUR40iwcLzZl1c",
+"name": "야나가와 영주 타치바나저택 오하나",
+"m": 32,
+"rv": 1746
+},
+"saga:佐賀城": {
+"g": "ChIJlSUddnzKQTURPfUdulV1Hx8",
+"name": "사가 성터",
+"m": 59,
+"rv": 2157
+},
+"saga:吉野ヶ里遺跡": {
+"g": "ChIJX-D2_AG6QTURNFKdK0BI3Vk",
+"name": "요시노가리 유적",
+"m": 450,
+"rv": 6198
+},
+"arita:陶山神社": {
+"g": "ChIJV8oi_5-cajUR1w1jEP0jD2U",
+"name": "스에야마 신사",
+"m": 26,
+"rv": 1330
+},
+"arita:佐賀県立九州陶磁文化館": {
+"g": "ChIJtXvJT0GEajURNxc9nwiODV8",
+"name": "현립 규슈 도자기 문화관",
+"m": 10,
+"rv": 918
+},
+"karatsu:唐津城": {
+"g": "ChIJk2WZ-3Z4ajURR_Cyd8NIKE0",
+"name": "가라쓰 성",
+"m": 14,
+"rv": 7431
+},
+"karatsu:虹の松原": null,
+"ureshino:嬉野温泉": {
+"g": "ChIJFfz9A6ogQDUReJRd7_OxOxo",
+"name": "Ureshino Onsen",
+"m": 330,
+"rv": 0
+},
+"nagasaki:グラバー園": {
+"g": "ChIJ34BEgoRTFTURm9sPe3FbyOs",
+"name": "글로버 가든",
+"m": 30,
+"rv": 12987
+},
+"nagasaki:大浦天主堂": {
+"g": "ChIJwd-Grw9TFTURJg1yCFQf8PU",
+"name": "오우라 천주당",
+"m": 13,
+"rv": 1748
+},
+"nagasaki:平和公園 (長崎市)": {
+"g": "ChIJ4acabdqsajURNnu2TKq8nKQ",
+"name": "평화공원",
+"m": 102,
+"rv": 9803
+},
+"nagasaki:出島": null,
+"nagasaki:端島 (長崎県)": {
+"g": "ChIJeSN4S51GFTURpO7LblMx06g",
+"name": "하시마 섬",
+"m": 24,
+"rv": 1251
+},
+"nagasaki:稲佐山": {
+"g": "ChIJG5CoZThTFTURn9E9mHqF_EY",
+"name": "이나사산 전망대",
+"m": 9,
+"rv": 12865
+},
+"sasebo:ハウステンボス": {
+"g": "ChIJvc-zbma9ajUR93iHfUJ7Jm8",
+"name": "하우스텐보스",
+"m": 579,
+"rv": 25877
+},
+"sasebo:九十九島": {
+"g": "ChIJR1KXy6DuajURUaEEPdh87Og",
+"name": "Kujūku Islands",
+"m": 1913,
+"rv": 0
+},
+"shimabara:島原城": {
+"g": "ChIJMaq7um1sQDUREgBMrygVyj8",
+"name": "시마바라 성",
+"m": 13,
+"rv": 4497
+},
+"shimabara:雲仙温泉": {
+"g": "ChIJCa4_7aUNQDURvKRQNY_ES2g",
+"name": "Unzen Onsen",
+"m": 463,
+"rv": 0
+},
+"kumamoto:熊本城": {
+"g": "ChIJWco6Ag70QDURMOTNdshmi14",
+"name": "구마모토성",
+"m": 18,
+"rv": 25826
+},
+"kumamoto:水前寺成趣園": {
+"g": "ChIJp9zy8OrzQDUR8yoTLZcF_nQ",
+"name": "스이젠지 조주엔",
+"m": 149,
+"rv": 7624
+},
+"aso:阿蘇山": {
+"g": "ChIJ-VhChHvYQDURAxEnbeZESjc",
+"name": "아소 산",
+"m": 2132,
+"rv": 1608
+},
+"aso:阿蘇神社": {
+"g": "ChIJc9MbvBwmQTURC0avzvBfFyA",
+"name": "아소 신사",
+"m": 41,
+"rv": 8804
+},
+"aso:草千里ヶ浜": {
+"g": "ChIJXathGaooQTURTo7Evdbc8_g",
+"name": "쿠사센리(쿠사센리가하마)",
+"m": 39,
+"rv": 3777
+},
+"kurokawa:黒川温泉": {
+"g": "ChIJzUJBlOowQTURUBGnm484qQQ",
+"name": "Kurokawa Onsen",
+"m": 50,
+"rv": 0
+},
+"amakusa:﨑津教会": {
+"g": "ChIJWzps2ibZPzURH64XJa89xlY",
+"name": "천주교 사키츠 성당",
+"m": 10,
+"rv": 2086
+},
+"beppu:別府温泉": {
+"g": "ChIJZVeAC-imRjURIqTN3ciwE-k",
+"name": "Beppu Onsen",
+"m": 111,
+"rv": 0
+},
+"beppu:海地獄": {
+"g": "ChIJq4-fiLynRjURj0PbI_2JcAw",
+"name": "우미 지고쿠 (바다지옥)",
+"m": 79,
+"rv": 12793
+},
+"yufu:由布院温泉": {
+"g": "ChIJ0ZDlF9qtRjURarRwoPcjsFA",
+"name": "Yufuin Onsen",
+"m": 1261,
+"rv": 0
+},
+"yufu:金鱗湖": {
+"g": "ChIJa7QFnn2uRjUR5ofN82Ctd44",
+"name": "긴린코",
+"m": 10,
+"rv": 23001
+},
+"yufu:由布岳": {
+"g": "ChIJW2pWcsOuRjURh34nbTameiU",
+"name": "유후 산",
+"m": 50,
+"rv": 508
+},
+"usuki:臼杵石仏": {
+"g": "ChIJJX1hDjWFRjUR5iNwZ88ldfQ",
+"name": "우스키 석불",
+"m": 160,
+"rv": 2630
+},
+"oita:高崎山自然動物園": null,
+"oita:大分マリーンパレス水族館": {
+"g": "ChIJtWo9JTmhRjURWoOoSdM0xDk",
+"name": "우미타마고 수족관",
+"m": 4,
+"rv": 9323
+},
+"usa:宇佐神宮": {
+"g": "ChIJgfs8mVgPRDURvrxWiYvEYf4",
+"name": "우사 신궁",
+"m": 361,
+"rv": 9338
+},
+"miyazaki:青島神社": {
+"g": "ChIJT-2sQ6zHODURsIWf6alhEX8",
+"name": "아오시마 신사",
+"m": 14,
+"rv": 5911
+},
+"miyazaki:宮崎神宮": null,
+"takachiho:高千穂峡": {
+"g": "ChIJLwml_t0sRzURix_JnSldeVg",
+"name": "타카치호 협곡",
+"m": 52,
+"rv": 20198
+},
+"takachiho:高千穂神社": {
+"g": "ChIJNcALc-gsRzUR-st4jmE03b4",
+"name": "다카치호 신사",
+"m": 40,
+"rv": 7617
+},
+"takachiho:天岩戸神社": {
+"g": "ChIJfROknsIrRzURpLyxKAE_j_8",
+"name": "아마노이와토 신사",
+"m": 15,
+"rv": 6068
+},
+"nichinan:飫肥城": {
+"g": "ChIJXS9N9jHUODUR4oLDhUrdae0",
+"name": "Obi Castle Ruins",
+"m": 69,
+"rv": 2273
+},
+"nichinan:鵜戸神宮": {
+"g": "ChIJsZ9DS1naODURG8yz8QHnFYc",
+"name": "우도신궁",
+"m": 19,
+"rv": 8979
+},
+"kagoshima:桜島": {
+"g": "ChIJl-1qAHL1PjURlI5hzxStZZc",
+"name": "사쿠라지마 섬",
+"m": 796,
+"rv": 1524
+},
+"kagoshima:仙巌園": {
+"g": "ChIJ4X7e7l5ePjURPwj6UsWmblk",
+"name": "센간엔",
+"m": 31,
+"rv": 13780
+},
+"kagoshima:城山 (鹿児島市)": {
+"g": "ChIJQ6cuZ-RdPjURn0RJrwC_iIw",
+"name": "시로야마공원 전망대",
+"m": 112,
+"rv": 5729
+},
+"ibusuki:指宿温泉": {
+"g": "ChIJ6Ug6IbcqPDUR70EuYI5F6ws",
+"name": "Ibusuki Onsen",
+"m": 1965,
+"rv": 0
+},
+"ibusuki:池田湖": {
+"g": "ChIJwbqUcyXUPTURUN_SEC-oOTk",
+"name": "이케다 호수",
+"m": 346,
+"rv": 306
+},
+"ibusuki:開聞岳": {
+"g": "ChIJQ2hgD6fRPTURsjqOag25w0g",
+"name": "가이몬 산",
+"m": 15,
+"rv": 747
+},
+"yakushima:縄文杉": {
+"g": "ChIJjzW-MqwjPTURaMrzqGi63Ok",
+"name": "조몬 삼나무",
+"m": 18,
+"rv": 1055
+},
+"yakushima:白谷雲水峡": {
+"g": "ChIJ2d70aRUfPTURDlCRzuGnAps",
+"name": "시라타니운스이쿄",
+"m": 14,
+"rv": 1611
+},
+"kirishima:霧島神宮": {
+"g": "ChIJTYc1w1D8PjURjMzQ3_QGddM",
+"name": "키리시마 신궁",
+"m": 5,
+"rv": 13491
+},
+"chiran:知覧特攻平和会館": {
+"g": "ChIJlwQAW6x3PjURUosLknKAha4",
+"name": "치란 특공 평화 회관",
+"m": 33,
+"rv": 10581
+},
+"chiran:知覧武家屋敷庭園": {
+"g": "ChIJR6BxaxB3PjURLyfyzrCTjhQ",
+"name": "치란 사무라이 저택 정원",
+"m": 57,
+"rv": 764
+},
+"naha:首里城": {
+"g": "ChIJZ9v0bP5r5TQRi0-esrqficA",
+"name": "슈리성",
+"m": 3,
+"rv": 34388
+},
+"naha:国際通り": {
+"g": "ChIJMS9BUXdp5TQRAl6RXvY5aY0",
+"name": "고쿠사이 거리",
+"m": 248,
+"rv": 1027
+},
+"naha:玉陵": {
+"g": "ChIJLZXjOP1r5TQRTvnj1SMSPTs",
+"name": "타마우둔",
+"m": 3,
+"rv": 1684
+},
+"motobu:沖縄美ら海水族館": {
+"g": "ChIJPZ5hUjH65DQR_p_dD3CmCOo",
+"name": "오키나와 추라우미 수족관",
+"m": 8,
+"rv": 74492
+},
+"motobu:今帰仁城": {
+"g": "ChIJk_KWO7b55DQRF6wOVeWpIDE",
+"name": "나키진 성터",
+"m": 125,
+"rv": 6725
+},
+"motobu:備瀬のフクギ並木": null,
+"nanjo:斎場御嶽": {
+"g": "ChIJ32ERcPJx5TQRGVMsDCjNVDk",
+"name": "세이파 우타키",
+"m": 141,
+"rv": 5155
+},
+"onna:万座毛": {
+"g": "ChIJ-adBh3gD5TQRGFnnzG897N8",
+"name": "만좌모",
+"m": 32,
+"rv": 24182
+},
+"ishigaki:川平湾": {
+"g": "ChIJq3PQEe7dXzQR8VwfG5-d-Jo",
+"name": "Kabira Bay",
+"m": 78,
+"rv": 4349
+},
+"ishigaki:竹富島": {
+"g": "ChIJmdpNCzd0YDQRmYcxhdUWa_g",
+"name": "다케토미섬",
+"m": 271,
+"rv": 525
+},
+"shodoshima:寒霞渓": {
+"g": "ChIJoZMdM295VDURbW-oRikGZBU",
+"name": "칸카케이 케이블카",
+"m": 18,
+"rv": 3734
+},
+"shodoshima:小豆島オリーブ公園": {
+"g": "ChIJC-KIFXR4VDURasxl3L0o26M",
+"name": "미치노에키 쇼도시마 올리브 공원",
+"m": 107,
+"rv": 6182
+},
+"shodoshima:エンジェルロード": {
+"g": "ChIJISiqLJiJUzUREqZM0_6o3jM",
+"name": "엔젤 로드",
+"m": 103,
+"rv": 6988
+},
+"ozu:大洲城": {
+"g": "ChIJHftTq8R_RTURfu8rYuPe6V8",
+"name": "오즈 성",
+"m": 33,
+"rv": 2768
+},
+"ozu:臥龍山荘": {
+"g": "ChIJwYj3u9h_RTURSF5n6_ypEuw",
+"name": "가류 산장",
+"m": 1,
+"rv": 1578
+},
+"shimanto:四万十川": null,
+"muroto:室戸岬": {
+"g": "ChIJ-ZjLnE5hUzURAlmA34_Y-fo",
+"name": "무로토곶",
+"m": 239,
+"rv": 3059
+}
+}

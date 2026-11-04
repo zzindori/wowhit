@@ -13,7 +13,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--sea);color:var(--ink);font-family:Jua,system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
-#vp{position:fixed;inset:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);pointer-events:none;height:100dvh}
+:root{--sb:0px;--sbi:calc(env(safe-area-inset-bottom,0px) + var(--sb))}#lh{position:fixed;top:0;bottom:0;left:0;width:0;pointer-events:none;visibility:hidden}#vp{position:fixed;inset:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);pointer-events:none;height:100dvh}
 #cv{position:fixed;left:0;top:0;touch-action:none}
 button,input,select{font-family:inherit;color:inherit}
 .chip{position:fixed;background:rgba(255,253,247,.94);border:2px solid var(--ink);border-radius:999px;padding:5px 12px;font-size:15px;box-shadow:0 3px 0 rgba(44,43,53,.25);z-index:20}
@@ -37,10 +37,10 @@ button,input,select{font-family:inherit;color:inherit}
 .cbtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 .hint{background:#fff7e0;border:1px solid #f0d98c;border-radius:10px;padding:7px 10px;font-size:13px;line-height:1.45;margin:4px 0 8px}
 #pipTxt{margin-top:6px;font-size:13px;background:rgba(255,253,247,.94);border:2px solid var(--ink);border-radius:10px;padding:3px 8px;max-width:190px;line-height:1.3}
-#toast{position:fixed;left:calc(50% - 32px);transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(calc(100vw - 92px),440px)}
+#toast{position:fixed;left:calc(50% - 32px);transform:translateX(-50%);bottom:calc(16px + var(--sbi));z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(calc(100vw - 92px),440px)}
 .t{background:var(--ink);color:#fff;border-radius:12px;padding:8px 14px;font-size:15px;line-height:1.35;text-align:center;animation:tin .25s ease-out}
 @keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-#sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));width:min(96vw,460px);max-height:46vh;overflow:auto;background:var(--card);border:2px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 rgba(44,43,53,.25);z-index:30;padding:12px 14px 14px;touch-action:pan-y;font-family:system-ui,sans-serif}
+#sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + var(--sbi));width:min(96vw,460px);max-height:46vh;overflow:auto;background:var(--card);border:2px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 rgba(44,43,53,.25);z-index:30;padding:12px 14px 14px;touch-action:pan-y;font-family:system-ui,sans-serif}
 #sheet h2{font-family:Jua,sans-serif;font-weight:400;margin:0 0 2px;font-size:22px}
 #sheet .sub{color:#6b6876;font-size:13px;margin-bottom:8px}
 #sheet .x{position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:50%;border:none;background:#eee9df;font-size:16px;cursor:pointer}
@@ -51,7 +51,7 @@ button,input,select{font-family:inherit;color:inherit}
 .note{font-size:12px;color:#8a8794;margin-top:8px;line-height:1.45}
 .warn{background:#fff0ee;border:1px solid #f2c2bb;border-radius:10px;padding:8px 10px;font-size:14px;margin:6px 0}
 .soon{background:#f3f7ee;border:1px dashed #b9cfa3;border-radius:10px;padding:8px 10px;font-size:13px;margin-top:8px}
-.ov{position:fixed;inset:0;z-index:60;background:rgba(44,43,53,.45);display:grid;place-items:center;padding:12px;touch-action:pan-y}
+.ov{position:fixed;inset:0 0 var(--sb) 0;z-index:60;background:rgba(44,43,53,.45);display:grid;place-items:center;padding:12px;touch-action:pan-y}
 .box{background:var(--card);border:3px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 rgba(44,43,53,.3);width:min(96vw,440px);max-height:92vh;overflow:auto;padding:18px 16px;font-family:system-ui,sans-serif}
 .box h1{font-family:Jua,sans-serif;font-weight:400;margin:0;font-size:30px;text-align:center}
 .box h1 small{display:block;font-size:15px;color:#6b6876;margin-top:2px}
@@ -77,7 +77,7 @@ button,input,select{font-family:inherit;color:inherit}
 .sp .ic{font-size:20px;line-height:1.2}.sp b{font-family:Jua,sans-serif;font-weight:400;font-size:16px}
 .sp .d{font-size:12px;color:#6b6876;line-height:1.4;margin-top:1px}.sp i{font-style:normal;font-size:12px;color:#8a8794;white-space:nowrap;margin-left:auto}
 .sp.seen b{color:#8a6a1d}.al.ok{background:#fff3c4;border-color:#e2c25a}
-#zoom{position:fixed;right:calc(10px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;z-index:20;transition:bottom .15s}
+#zoom{position:fixed;right:calc(10px + env(safe-area-inset-right));bottom:calc(16px + var(--sbi));display:flex;flex-direction:column;gap:8px;z-index:20;transition:bottom .15s}
 #zoom button{width:46px;height:46px;font-size:26px!important;border-radius:12px;border:2px solid var(--ink);background:var(--card);font-size:22px;line-height:1;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer;padding:0}
 #zbar{display:flex;flex-direction:column;align-items:center;border:2px solid var(--ink);border-radius:14px;background:var(--card);box-shadow:0 3px 0 rgba(44,43,53,.25);padding:2px 0;width:46px}
 #zoom #zbar button.zs{width:42px;height:34px;border:0;border-radius:10px;box-shadow:none;background:transparent;font:700 22px system-ui,sans-serif!important;color:var(--ink)}
@@ -156,7 +156,7 @@ button,input,select{font-family:inherit;color:inherit}
 .mfoot{display:flex;gap:8px;margin-top:8px}.mfoot button{flex:1;height:38px;border-radius:10px;border:2px solid #d8d3c8;background:#fff;font:14px Jua,sans-serif;color:#a33;cursor:pointer}
 .empty{text-align:center;color:#8a8794;font-size:14px;padding:24px 8px;line-height:1.6}
 
-#peek{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:28;max-width:calc(100vw - 130px)}
+#peek{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + var(--sbi));z-index:28;max-width:calc(100vw - 130px)}
 #peek.in{animation:pin .28s cubic-bezier(.3,1.6,.5,1)}
 @keyframes pin{from{transform:translate(-50%,30px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
 #peekBtn{height:44px;padding:0 16px;border-radius:999px;border:2px solid var(--ink);background:var(--card);font-family:Jua,sans-serif;font-size:17px;box-shadow:0 3px 0 rgba(44,43,53,.3);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -177,13 +177,13 @@ button,input,select{font-family:inherit;color:inherit}
 .lock{font-size:13px;background:#eef3ff;border:1px solid #c9d6f5;border-radius:999px;padding:3px 10px}.lock.off{opacity:.45}
 .del{display:block;margin:10px auto 0;border:none;background:none;color:#a33;font-size:13px;text-decoration:underline;cursor:pointer}
 .nav{display:block;text-align:center;margin:8px 0;padding:10px;border:2px solid var(--ink);border-radius:12px;background:#eef3ff;font-family:Jua,sans-serif;font-size:16px;text-decoration:none;color:var(--ink)!important}
-#attr{position:fixed;left:calc(6px + env(safe-area-inset-left));bottom:calc(4px + env(safe-area-inset-bottom));z-index:15;font:10px system-ui,sans-serif;color:#555;background:rgba(255,255,255,.75);padding:1px 5px;border-radius:4px}
+#attr{position:fixed;left:calc(6px + env(safe-area-inset-left));bottom:calc(4px + var(--sbi));z-index:15;font:10px system-ui,sans-serif;color:#555;background:rgba(255,255,255,.75);padding:1px 5px;border-radius:4px}
 #attr a{color:inherit}
 #attr .glogo{font:600 12px Roboto,Arial,sans-serif;color:#5f6368;letter-spacing:.1px}
 </style>
 </head>
 <body>
-<div id="vp"></div>
+<div id="vp"></div><div id="lh"></div>
 <canvas id="cv" aria-label="한국·일본 여행 지도"></canvas>
 <div id="loc" class="chip" role="button" title="새로 읽기">📍 불러오는 중…</div>
 <div id="pts" class="chip" title="여행 포인트">🏅 <b id="ptsN">0</b></div>
@@ -447,7 +447,10 @@ let W = 0, H = 0, DPR = 1, PIPS = 150;
 function resize() {
   const vv = window.visualViewport;
   W = Math.min(innerWidth, document.documentElement.clientWidth || innerWidth);
-  H = Math.min(...[innerHeight, document.documentElement.clientHeight, vv && Math.abs(vv.scale - 1) < .01 ? vv.height : 1e9].filter(v => v > 100));
+  // 삼성 인터넷 등: position:fixed의 바닥(레이아웃 높이)이 아래 도구 막대 밑까지 내려감 → 보이는 높이와의 차이(--sb)만큼 아래 붙는 것을 전부 올림
+  const lh = $('lh').getBoundingClientRect().height, dvh = $('vp').getBoundingClientRect().height;
+  H = Math.min(...[innerHeight, document.documentElement.clientHeight, dvh, vv && Math.abs(vv.scale - 1) < .01 ? vv.height : 1e9].filter(v => v > 100));
+  document.documentElement.style.setProperty('--sb', Math.max(0, Math.round(lh - H)) + 'px');
   DPR = Math.min(2, devicePixelRatio || 1);   // 3배 화면(S24 등)도 2배로 — 칠할 픽셀 2.25배 줄임(지도 조각·글자 차이는 거의 안 보임)
   cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
   PIPS = Math.round(Math.max(120, Math.min(190, Math.min(W, H) * .34)));
@@ -456,6 +459,7 @@ function resize() {
   document.documentElement.style.setProperty('--pipw', PIPS + 'px');
 }
 addEventListener('resize', resize); window.visualViewport && visualViewport.addEventListener('resize', resize);
+setTimeout(resize, 400); setTimeout(resize, 1500);   // 브라우저 도구 막대가 자리 잡은 뒤 한 번 더
 
 /* ---------- 입력: 한 손가락 = 조이스틱, 두 손가락 = 확대·축소, 휠 = 확대·축소 ---------- */
 let joy = null, pinch = null; const keys = new Set(), PTR = new Map();
@@ -789,7 +793,7 @@ function namePick(names) {
   const lab = t => /[가-힣]/.test(t) ? '한글' : /[ぁ-ゖァ-ヺ一-龯]/.test(t) ? '일본어' : '영문';
   const el = document.createElement('div'); el.id = 'cpick'; el.className = 'k-' + ($('card').dataset.kind || 'spot');
   el.innerHTML = `<small>📋 복사할 이름</small>` + names.map((n, i) => `<button data-i="${i}">${lab(n)} · ${esc(n)}</button>`).join('') + `<button data-i="-1" style="text-align:center">취소</button>`;
-  el.style.bottom = `calc(${($('peek').hidden ? 0 : $('peek').offsetHeight) + ($('sheet').hidden ? 0 : $('sheet').offsetHeight) + 24}px + env(safe-area-inset-bottom))`;
+  el.style.bottom = `calc(${($('peek').hidden ? 0 : $('peek').offsetHeight) + ($('sheet').hidden ? 0 : $('sheet').offsetHeight) + 24}px + var(--sbi))`;
   el.onclick = e => { const b = e.target.closest('button'); if (!b) return; const i = +b.dataset.i; el.remove(); if (i >= 0) copyText(names[i], '이름'); };
   document.body.appendChild(el);
 }
@@ -807,7 +811,7 @@ function nameShow(t) {   // 잘린 이름을 작은 팝업으로 전부(2.5초 �
   const old = $('cpick'); if (old) old.remove();
   const el = document.createElement('div'); el.id = 'cpick'; el.className = 'nshow k-' + ($('card').dataset.kind || 'spot');   // 카드 바로 위 말풍선, 카드 종류 색
   el.innerHTML = names.map((n, i) => `<div class="${i ? 'n2' : 'n1'}">${esc(n)}</div>`).join('') + `<small>📋 길게 누르면 복사</small>`;
-  el.style.bottom = `calc(${($('peek').hidden ? 0 : $('peek').offsetHeight) + ($('sheet').hidden ? 0 : $('sheet').offsetHeight) + 24}px + env(safe-area-inset-bottom))`;
+  el.style.bottom = `calc(${($('peek').hidden ? 0 : $('peek').offsetHeight) + ($('sheet').hidden ? 0 : $('sheet').offsetHeight) + 24}px + var(--sbi))`;
   document.body.appendChild(el); el.onclick = () => el.remove(); setTimeout(() => el.isConnected && el.remove(), 2500);
 }
 document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp]')) e.preventDefault(); });
@@ -1379,8 +1383,8 @@ function draw(t) {
   const sh = $('sheet'), pk = $('peek'), sheetH = sh.hidden ? (pk.hidden ? 0 : pk.offsetHeight + 8) : sh.offsetHeight + 10;
   const ty = sheetH ? Math.max(.22, Math.min(.55, (H - sheetH) / H * .55)) : .55;
   CY += (ty - CY) * .12;
-  $('toast').style.bottom = `calc(${16 + sheetH}px + env(safe-area-inset-bottom))`;
-  $('zoom').style.bottom = `calc(${16 + sheetH}px + env(safe-area-inset-bottom))`;   // 정보 창 위로 따라 올라감
+  $('toast').style.bottom = `calc(${16 + sheetH}px + var(--sbi))`;
+  $('zoom').style.bottom = `calc(${16 + sheetH}px + var(--sbi))`;   // 정보 창 위로 따라 올라감
   const g = ctx, cx = W / 2, cy = H * CY, span = Math.min(W, H) / CAM.z; LBL = [];
   g.setTransform(DPR, 0, 0, DPR, 0, 0);
   const grd = g.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, SEA); grd.addColorStop(1, SEA2); g.fillStyle = grd; g.fillRect(0, 0, W, H);

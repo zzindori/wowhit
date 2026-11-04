@@ -1044,7 +1044,7 @@ const TILE = { url: (z, x, y) => `https://cyberjapandata.gsi.go.jp/xyz/pale/${z}
 const unproj = (x, y) => ({ lon: x / M.proj.kx + M.proj.lon0, lat: M.proj.lat0 - y / M.proj.ky });
 const t2lon = (x, n) => x / n * 360 - 180, t2lat = (y, n) => Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI;
 const lon2t = (lon, n) => (lon + 180) / 360 * n, lat2t = (lat, n) => { const r = lat * Math.PI / 180; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n; };
-// 키 순서: 내가 넣은 키 > 가족 키(가족 코드로 서버에서 받아 메모리에만 — 폰에 저장 안 함, 화면에도 안 보임)
+// 키 순서: 내가 넣은 키 > 가족 키(가족 주소로 받음, 설정 화면엔 안 보임)
 let FAM = { key: '', on: false };
 const GK = { own() { try { return localStorage.getItem('jjway-gkey') || ''; } catch (e) { return ''; } }, get() { return this.own() || FAM.key; }, set(v) { try { v ? localStorage.setItem('jjway-gkey', v) : localStorage.removeItem('jjway-gkey'); } catch (e) {} } };
 // ✨ 가게 이름 한글 읽기(각자 Gemini 키, 이 폰에만). 모델은 소스에 안 넣고 키로 목록을 받아 가장 새 flash를 고름. 결과는 켜 둔 동안 메모리에만
@@ -1943,20 +1943,13 @@ async function search(q) {
   for (const r of out) { const p = proj(r.lon, r.lat); r.km = Math.hypot(p.x - P.x, p.y - P.y); }
   return out;
 }
-async function famLoad() {   // ?family=코드로 들어오면 코드만 저장하고 주소에서 지움. 내 키가 있으면 안 받음
-  let code = '';
+function famLoad() {   // 가족 주소(?k=키를 16진수로)로 한 번 들어오면 이 폰에 넣어 두고 주소에서 지움. 내 키가 있으면 내 키 우선
   try {
-    const u = new URL(location.href), q = u.searchParams.get('family');
-    if (q) { localStorage.setItem('jjway-fam', q); u.searchParams.delete('family'); history.replaceState(null, '', u.pathname + u.search + u.hash); }
-    code = localStorage.getItem('jjway-fam') || '';
+    const u = new URL(location.href), q = u.searchParams.get('k');
+    if (q && /^[0-9a-f]+$/i.test(q)) { localStorage.setItem('jjway-famkey', q.replace(/../g, h => String.fromCharCode(parseInt(h, 16)))); u.searchParams.delete('k'); history.replaceState(null, '', u.pathname + u.search + u.hash); }
+    localStorage.removeItem('jjway-fam');
+    const k = localStorage.getItem('jjway-famkey') || ''; FAM = { key: k, on: !!k };
   } catch (e) {}
-  FAM = { key: '', on: false };
-  if (!code || GK.own()) return;
-  try {
-    const r = await fetch('/api/jjway/family?code=' + encodeURIComponent(code), { cache: 'no-store' });
-    if (r.ok) { const j = await r.json(); if (j.key) { FAM = { key: j.key, on: true }; TILE.cache.clear(); } }
-    else if (r.status === 403) { try { localStorage.removeItem('jjway-fam'); } catch (e) {} toast('👨‍👩‍👧 가족 코드가 바뀌었어요 · 새 링크를 받거나 ⚙️ 설정에 내 키를 넣어 주세요', 4000); }
-  } catch (e) {}   // 인터넷이 안 되면 코드는 두고 다음에 다시
 }
 famLoad();
 $('gkIn').value = GK.own(); $('gmIn').value = GM.get();
@@ -1969,10 +1962,10 @@ $('gmGo').onclick = async () => {
 };
 $('gkGo').onclick = async () => {
   const v = $('gkIn').value.trim(), m = $('gkMsg');
-  if (!v) { GK.set(''); TILE.cache.clear(); m.textContent = '내 키를 지웠어요'; famLoad().then(gUseLbl); return; }
+  if (!v) { GK.set(''); TILE.cache.clear(); m.textContent = '내 키를 지웠어요'; gUseLbl(); return; }
   m.textContent = '📡 확인 중…';
   try {
-    await gPlaces('高松駅', 1, v); GK.set(v); FAM = { key: '', on: false };
+    await gPlaces('高松駅', 1, v); GK.set(v);
     let mapOk = true; try { await gSession(v, true); } catch (e) { mapOk = false; }
     TILE.cache.clear(); m.textContent = '✅ 키가 돼요 · 🔍 장소 찾기 = 구글 검색' + (mapOk ? ' · 🗺️ 확대하면 구글 지도' : ' · (지도는 Map Tiles API를 켜면 구글 지도)'); SFX.coin();
   }

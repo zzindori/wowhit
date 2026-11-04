@@ -230,6 +230,7 @@ button,input,select{font-family:inherit;color:inherit}
     <div class="small">넣으면 🔍 장소 찾기가 구글 검색이 돼요(한국어 그대로·작은 가게까지). 키는 <b>이 폰(브라우저)에만</b> 저장되고 우리 서버로 보내지 않아요. 만드는 법은 <a href="/guide#gmaps" target="_blank">이용 안내</a>.</div>
     <div class="fsearch" style="margin-top:6px"><input id="gkIn" class="fin" type="password" autocomplete="off" placeholder="구글 지도 API 키 붙여넣기"><button class="qgo" id="gkGo">확인</button></div>
     <div id="gkMsg" class="small" style="text-align:left"></div>
+    <div id="famNote" class="small" style="text-align:left;color:#2f6fd0" hidden>👨‍👩‍👧 가족 키로 사용 중 · 내 키를 넣으면 그 키로 바뀌어요</div>
     <div id="gUse" class="small" style="text-align:left;color:#5d6b7a"></div>
     <div id="gBtns" class="row2" style="margin-top:6px;flex-wrap:wrap"><button id="gOnBtn"></button><button id="gOverBtn"></button></div>
     <h3 style="margin-top:10px">✨ Gemini 키 (가게 이름 한글로)</h3>
@@ -1043,7 +1044,9 @@ const TILE = { url: (z, x, y) => `https://cyberjapandata.gsi.go.jp/xyz/pale/${z}
 const unproj = (x, y) => ({ lon: x / M.proj.kx + M.proj.lon0, lat: M.proj.lat0 - y / M.proj.ky });
 const t2lon = (x, n) => x / n * 360 - 180, t2lat = (y, n) => Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI;
 const lon2t = (lon, n) => (lon + 180) / 360 * n, lat2t = (lat, n) => { const r = lat * Math.PI / 180; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n; };
-const GK = { get() { try { return localStorage.getItem('jjway-gkey') || ''; } catch (e) { return ''; } }, set(v) { try { v ? localStorage.setItem('jjway-gkey', v) : localStorage.removeItem('jjway-gkey'); } catch (e) {} } };
+// 키 순서: 내가 넣은 키 > 가족 키(가족 코드로 서버에서 받아 메모리에만 — 폰에 저장 안 함, 화면에도 안 보임)
+let FAM = { key: '', on: false };
+const GK = { own() { try { return localStorage.getItem('jjway-gkey') || ''; } catch (e) { return ''; } }, get() { return this.own() || FAM.key; }, set(v) { try { v ? localStorage.setItem('jjway-gkey', v) : localStorage.removeItem('jjway-gkey'); } catch (e) {} } };
 // ✨ 가게 이름 한글 읽기(각자 Gemini 키, 이 폰에만). 모델은 소스에 안 넣고 키로 목록을 받아 가장 새 flash를 고름. 결과는 켜 둔 동안 메모리에만
 const GM = { get() { try { return localStorage.getItem('jjway-gemkey') || ''; } catch (e) { return ''; } }, set(v) { try { v ? localStorage.setItem('jjway-gemkey', v) : localStorage.removeItem('jjway-gemkey'); } catch (e) {} }, model: '', ko: new Map(), wait: new Set(), busy: false };
 async function gemModel(key = GM.get()) {
@@ -1094,7 +1097,7 @@ async function gSession(key = GK.get(), force) {
   const j = await r.json().catch(() => ({}));
   if (!r.ok || !j.session) throw new Error(j.error && j.error.status === 'PERMISSION_DENIED' ? '키가 Map Tiles API를 못 써요' : (j.error && j.error.message || '지도 세션 실패').slice(0, 80));
   Object.assign(GT, { sess: j.session, exp: +j.expiry, key, bad: '' });
-  try { localStorage.setItem('jjway-gsess', JSON.stringify({ sess: GT.sess, exp: GT.exp, key })); } catch (e) {}
+  try { if (key === GK.own()) localStorage.setItem('jjway-gsess', JSON.stringify({ sess: GT.sess, exp: GT.exp, key })); else localStorage.removeItem('jjway-gsess'); } catch (e) {}   // 가족 키는 폰에 안 남김
   return GT.sess;
 }
 function gReady() {   // 구글 타일을 쓸 수 있으면 세션, 아니면 null(한 번 시도해서 실패하면 지리원)
@@ -1940,7 +1943,23 @@ async function search(q) {
   for (const r of out) { const p = proj(r.lon, r.lat); r.km = Math.hypot(p.x - P.x, p.y - P.y); }
   return out;
 }
-$('gkIn').value = GK.get(); $('gmIn').value = GM.get();
+async function famLoad() {   // ?family=코드로 들어오면 코드만 저장하고 주소에서 지움. 내 키가 있으면 안 받음
+  let code = '';
+  try {
+    const u = new URL(location.href), q = u.searchParams.get('family');
+    if (q) { localStorage.setItem('jjway-fam', q); u.searchParams.delete('family'); history.replaceState(null, '', u.pathname + u.search + u.hash); }
+    code = localStorage.getItem('jjway-fam') || '';
+  } catch (e) {}
+  FAM = { key: '', on: false };
+  if (!code || GK.own()) return;
+  try {
+    const r = await fetch('/api/jjway/family?code=' + encodeURIComponent(code), { cache: 'no-store' });
+    if (r.ok) { const j = await r.json(); if (j.key) { FAM = { key: j.key, on: true }; TILE.cache.clear(); } }
+    else if (r.status === 403) { try { localStorage.removeItem('jjway-fam'); } catch (e) {} toast('👨‍👩‍👧 가족 코드가 바뀌었어요 · 새 링크를 받거나 ⚙️ 설정에 내 키를 넣어 주세요', 4000); }
+  } catch (e) {}   // 인터넷이 안 되면 코드는 두고 다음에 다시
+}
+famLoad();
+$('gkIn').value = GK.own(); $('gmIn').value = GM.get();
 $('gmGo').onclick = async () => {
   const v = $('gmIn').value.trim(), m = $('gmMsg');
   if (!v) { GM.set(''); GM.ko.clear(); m.textContent = '키를 지웠어요 · 가게 이름은 구글이 준 그대로'; return; }
@@ -1950,10 +1969,10 @@ $('gmGo').onclick = async () => {
 };
 $('gkGo').onclick = async () => {
   const v = $('gkIn').value.trim(), m = $('gkMsg');
-  if (!v) { GK.set(''); TILE.cache.clear(); m.textContent = '키를 지웠어요 · 장소 찾기는 좌표·구글 링크만 · 지도는 지리원'; return; }
+  if (!v) { GK.set(''); TILE.cache.clear(); m.textContent = '내 키를 지웠어요'; famLoad().then(gUseLbl); return; }
   m.textContent = '📡 확인 중…';
   try {
-    await gPlaces('高松駅', 1, v); GK.set(v);
+    await gPlaces('高松駅', 1, v); GK.set(v); FAM = { key: '', on: false };
     let mapOk = true; try { await gSession(v, true); } catch (e) { mapOk = false; }
     TILE.cache.clear(); m.textContent = '✅ 키가 돼요 · 🔍 장소 찾기 = 구글 검색' + (mapOk ? ' · 🗺️ 확대하면 구글 지도' : ' · (지도는 Map Tiles API를 켜면 구글 지도)'); SFX.coin();
   }
@@ -2169,6 +2188,7 @@ function gUseLbl() {   // 이 폰에서 센 오늘 사용량(구글 실제 사�
   $('gOnBtn').textContent = `🔵 구글 가게 찾기: ${S.gOn === false ? '꺼짐' : '켜짐'}`;
   $('gOverBtn').textContent = `⚠️ 무료 한도 넘어도 계속: ${S.gOver ? '켜짐(요금 발생)' : '꺼짐'}`;
   $('gBtns').hidden = !GK.get();
+  $('famNote').hidden = !(FAM.on && !GK.own());
 }
 $('setClose').onclick = () => { $('settings').hidden = true; const k = P.sheetFor; if (k) { closeSheet(); P.closedFor = null; } };
 $('resetBtn').onclick = () => { if (confirm('가족 설정·여행 기록·위치를 모두 지우고 처음부터 할까요?')) { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); } };

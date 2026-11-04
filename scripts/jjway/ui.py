@@ -256,8 +256,9 @@ def run(w, h, tag):
         pg.evaluate('S.span.walk = 4'); time.sleep(1.2); assert on() == 4, '손으로 4km면 5km 점'
         # 📺 영상 따라가기: 도시 창 → 영상 목록(🇰🇷/🇯🇵 거르기) → 고르면 그 영상 곳만 번호 → ① 닿으면 장면 카드 → ♥ = 내 마커(장소 ID·장면 링크) → ✕ 끄기
         pg.click('#bYt'); pg.wait_for_selector('#sheet .ytv', timeout=5000)   # 📺 버튼(🔍 위) → 가장 가까운 영상 있는 도시
-        nv = pg.locator('#sheet .ytv').count(); pg.click('#sheet .ytf button[aria-label="한국인"]'); time.sleep(.3); nk = pg.locator('#sheet .ytv').count(); assert 0 < nk < nv, (nv, nk)
+        nv = pg.locator('#sheet .ytv').count(); pg.click('#sheet .ytf button[aria-label="한국어 영상"]'); time.sleep(.3); nk = pg.locator('#sheet .ytv').count(); assert 0 < nk < nv, (nv, nk)
         pg.click('#sheet .ytx >> nth=1'); time.sleep(.3); np_ = pg.locator('#sheet .ytps > div').count(); assert np_ > 0, '영상 곳 펼치기'
+        assert 'youtube.com/watch' in pg.get_attribute('#sheet .ytps .ytsc >> nth=0', 'href') and pg.locator('#sheet .ytps .ytsc').count() == np_, '곳마다 그 장면부터 재생'
         pg.click('#sheet .ytx >> nth=1'); time.sleep(.3); assert pg.locator('#sheet .ytps').count() == 0, '접기'
         pg.click('#sheet .ytv >> nth=0'); time.sleep(.5); assert pg.evaluate('!!YT.v && YT.v.who === "ko"') and pg.is_visible('#ytChip')
         pg.evaluate('(() => { const p = YT.v.places[0]; setSpan("walk", 1); P.x = p.x; P.y = p.y; P.vx = P.vy = 0; })()'); time.sleep(1.5)

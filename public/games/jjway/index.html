@@ -22,8 +22,8 @@ button,input,select{font-family:inherit;color:inherit}
 #loc::after{content:' ↻';color:#8a8794;font-size:13px}
 #loc .cty{font-size:11px;color:#8a8794;margin-right:6px;vertical-align:1px}
 #loc b{font-weight:400;font-size:18px}
-#btns{position:fixed;left:calc(10px + env(safe-area-inset-left));top:calc(50px + env(safe-area-inset-top));display:flex;gap:8px;z-index:20}
-.ib{width:42px;height:42px;border-radius:50%;border:2px solid var(--ink);background:var(--card);font-size:20px;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer;display:grid;place-items:center;padding:0}
+#btns{position:fixed;left:calc(10px + env(safe-area-inset-left));top:calc(50px + env(safe-area-inset-top));display:flex;gap:6px;z-index:20}
+.ib{width:36px;height:36px;border-radius:50%;border:2px solid var(--ink);background:var(--card);font-size:17px;box-shadow:0 3px 0 rgba(44,43,53,.25);cursor:pointer;display:grid;place-items:center;padding:0}
 .ib:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.25)}
 #pipWrap{position:fixed;right:calc(10px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));z-index:20;pointer-events:none;text-align:center}
 #pip{pointer-events:auto;cursor:pointer;border-radius:50%;border:3px solid var(--ink);box-shadow:0 4px 0 rgba(44,43,53,.25),0 0 0 5px rgba(255,255,255,.7);background:var(--sea);display:block}
@@ -137,7 +137,8 @@ button,input,select{font-family:inherit;color:inherit}
 .ytw,.ytt{flex:none;width:28px;height:28px;padding:0;border:0;border-radius:9px;display:grid;place-items:center;cursor:pointer;text-decoration:none}.ytw{background:#d62828;color:#fff}.ytt{background:#e6eefb;color:#2f6fd0}.ytt.on{background:#2f6fd0;color:#fff}.ytx:active,.ytw:active,.ytt:active,.ytsc:active{transform:scale(.93)}
 .ytps{position:relative;margin:2px 0 8px;padding:2px 0 2px 2px}.ytps::before{content:'';position:absolute;left:12px;top:14px;bottom:18px;width:2px;background:#eec9c6}.ytps>div{position:relative;display:flex;align-items:flex-start;gap:9px;padding:7px 4px 7px 0;border-radius:10px;cursor:pointer}.ytps i{flex:none;width:22px;height:22px;border-radius:50%;background:#d62828;color:#fff;font:700 12px/22px system-ui,sans-serif;text-align:center;font-style:normal;box-shadow:0 0 0 3px var(--card)}.ytps span{flex:1;min-width:0}.ytps b{display:block;font:600 14px/1.3 system-ui,sans-serif;color:#2c2b35}.ytps small{display:block;color:#7a8794;font:12px system-ui,sans-serif;margin-top:1px}.ytps em{display:block;font:12.5px/1.4 system-ui,sans-serif;font-style:normal;color:#5d6b7a;margin-top:3px}
 .ytsc{flex:none;display:inline-flex;align-items:center;gap:3px;height:26px;padding:0 8px 0 6px;border-radius:8px;background:#fdeceb;color:#c22222;font:700 12px system-ui,sans-serif;text-decoration:none;white-space:nowrap}
-#ytChip{position:fixed;top:calc(104px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));z-index:18;max-width:calc(100vw - 190px)!important;display:flex;align-items:center;gap:4px;background:#d62828;color:#fff;border-radius:999px;padding:4px 4px 4px 12px;font:13px system-ui,sans-serif;box-shadow:0 3px 0 rgba(0,0,0,.2);max-width:80vw}#ytChip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}#ytChip button{width:26px;height:26px;border-radius:50%;border:0;background:rgba(255,255,255,.25);color:#fff;font-size:13px}
+#ytChip{position:fixed;top:calc(98px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));z-index:18;max-width:calc(100vw - 190px)!important;display:flex;align-items:center;gap:4px;background:#d62828;color:#fff;border-radius:999px;padding:4px 4px 4px 12px;font:13px system-ui,sans-serif;box-shadow:0 3px 0 rgba(0,0,0,.2);max-width:80vw}#ytChip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}#ytChip button{width:26px;height:26px;border-radius:50%;border:0;background:rgba(255,255,255,.25);color:#fff;font-size:13px}
+.ytm{display:inline-block;vertical-align:-2px;flex:none}.ct .ci .ytm{vertical-align:-3px}
 .cg{font-size:13px;color:#5d6b7a;margin:2px 0 0 31px;word-break:break-all}.co{font-size:13px;color:#7a8794;margin:1px 0 0 31px;word-break:break-all}
 .cbtns.cic{flex:none;margin:0;gap:5px;display:flex}.cbtns.cic button,.cbtns.cic .cln{flex:none;width:31px;height:31px;padding:0;border:0;border-radius:10px;box-shadow:none;display:grid;place-items:center;cursor:pointer;text-decoration:none;transition:background .15s,color .15s,transform .1s}.cbtns.cic button:active,.cbtns.cic .cln:active{transform:scale(.9)}
 .cbtns.cic button.wi{background:#fde8ef;color:#d1336f}.cbtns.cic button.wi.on{background:#d1336f;color:#fff}.cbtns.cic button.ok{background:#fbf1cf;color:#a8790f}.cbtns.cic button.ok.on{background:#c9930f;color:#fff}.cbtns.cic .cdt{background:#ece9f1;color:#4a4757}.cbtns.cic .cln{background:#e6eefb;color:#2f6fd0}
@@ -161,8 +162,8 @@ button,input,select{font-family:inherit;color:inherit}
 #peekBtn{height:44px;padding:0 16px;border-radius:999px;border:2px solid var(--ink);background:var(--card);font-family:Jua,sans-serif;font-size:17px;box-shadow:0 3px 0 rgba(44,43,53,.3);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 #peekBtn span{font-size:13px;color:#8a8794;margin-left:4px}#peekBtn em{font-style:normal;color:#d4a017}
 #peekBtn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(44,43,53,.3)}
-#pts{left:calc(160px + env(safe-area-inset-left));top:calc(57px + env(safe-area-inset-top));padding:3px 11px;font-size:14px}
-#pts b{font-weight:400;font-size:16px}
+#pts{left:calc(136px + env(safe-area-inset-left));top:calc(50px + env(safe-area-inset-top));width:36px;height:36px;padding:0;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:17px;line-height:1;box-sizing:border-box}
+#pts b{position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);min-width:16px;padding:1px 4px;box-sizing:border-box;border-radius:999px;background:#2c2b35;color:#fff;font:700 10px/12px system-ui,sans-serif;text-align:center;white-space:nowrap}
 #pts.bump{animation:bump .35s ease-out}
 @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
 .cats{display:flex;gap:6px;margin:4px 0 8px}
@@ -192,7 +193,7 @@ button,input,select{font-family:inherit;color:inherit}
   <button class="ib" id="bHome" title="소개">⌂</button>
 </div>
 <div id="pipWrap"><canvas id="pip"></canvas><div id="pipTxt" hidden></div></div>
-<div id="zoom"><button id="bYt" aria-label="유튜브·쇼츠 영상" hidden>📺</button><button id="bFlag" aria-label="장소 찾기" hidden>🔍</button><div id="zbar"></div></div>
+<div id="zoom"><button id="bYt" aria-label="유튜브·쇼츠 영상" hidden></button><button id="bFlag" aria-label="장소 찾기" hidden>🔍</button><div id="zbar"></div></div>
 <div id="sheet" hidden></div>
 
 <div id="peek" hidden><button id="peekBtn"></button><div id="card" hidden></div></div>
@@ -749,7 +750,7 @@ function cardState(c) {
   const gq = (lat, lon, gid, nm) => gid ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nm || `${lat},${lon}`)}&query_place_id=${gid}` : `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
   if (c.type === 'spot') { const k = c.s.key, ci = CITY.find(x => x.id === c.s.city); return { icon: ICON[c.s.t] || '📍', name: c.s.ko, orig: c.s.ja || '', sub: `명소${ci ? ' · ' + ci.ko : ''}`, been: !!S.seen[k], wish: !!S.wish[k], x: c.s.x, y: c.s.y, url: c.s.g ? gq(c.s.lat, c.s.lon, c.s.g, c.s.ja) : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.s.ja || c.s.ko)}&ll=${c.s.lat},${c.s.lon}` }; }
   if (c.type === 'yt') { const p = c.p, v = YT.v || {}; const mine = S.flags.find(f => f.gid === p.g);
-    return { icon: '📺', name: p.ko || p.name, orig: p.ko && p.ko !== p.name ? p.name : '', sub: `<b style="color:#d62828">📺 영상 ${p.n}번</b> · <a class="cplay" href="${ytUrl(v.id, p.t)}" target="_blank" rel="noopener">▶ ${esc(p.t || '처음')}</a>${p.type ? ' · ' + esc(p.type) : ''}`, subHtml: 1, addr: p.why || '', been: mine && mine.status === 'been', wish: mine && mine.status === 'want', x: p.x, y: p.y, url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.name)}&query_place_id=${p.g}`, yt: 1 }; }
+    return { icon: ytMark(24), name: p.ko || p.name, orig: p.ko && p.ko !== p.name ? p.name : '', sub: `<b style="color:#d62828">영상 ${p.n}번</b> · <a class="cplay" href="${ytUrl(v.id, p.t)}" target="_blank" rel="noopener">▶ ${esc(p.t || '처음')}</a>${p.type ? ' · ' + esc(p.type) : ''}`, subHtml: 1, addr: p.why || '', been: mine && mine.status === 'been', wish: mine && mine.status === 'want', x: p.x, y: p.y, url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.name)}&query_place_id=${p.g}`, yt: 1 }; }
   if (c.type === 'g') { const p = c.p; return { icon: CATS[gCat(p.type)][0], name: koName(p.name) || p.name, orig: koName(p.name) ? p.name : '', sub: p.tl || '', addr: p.addr || '', warn: p.biz === 'CLOSED_TEMPORARILY' ? '⚠️ 임시 휴업' : '', been: false, wish: false, x: p.x, y: p.y, g: 1, url: gq(p.lat, p.lon, p.id, p.name) }; }
   const f = c.rt.f, m = f.name.match(/^(.*\S)\s+\((.+)\)$/);   // '토리테이 (Toritei)' → 이름 / 원래 이름 두 줄
   return { icon: CATS[f.cat][0], name: m ? m[1] : f.name, orig: m ? m[2] : '', sub: `내 마커 · ${CATS[f.cat][1]}${f.star ? ' · ' + '★'.repeat(f.star) : ''}`, been: f.status === 'been', wish: f.status === 'want', x: c.rt.x, y: c.rt.y, url: gq(f.lat, f.lon, f.gid, m ? m[2] : f.name) };
@@ -1631,12 +1632,12 @@ let G_OPEN = null;
 function ytSave(p, st) {   // 영상 곳 → 내 마커(이미 있으면 상태 바꿈): 장소 ID·이름·메모(좋은 점)·링크(그 장면)
   const mine = S.flags.find(f => f.gid === p.g);
   if (mine) return setFlagSt(mine.id, st === 'want' ? 'wish' : st);
-  const now = Date.now(), f = { id: uid(), lat: p.lat, lon: p.lon, gid: p.g, name: p.ko && p.ko !== p.name ? `${p.ko} (${p.name})` : p.name, memo: p.why ? '📺 ' + p.why : '', link: ytUrl(p.vid, p.t), cat: gCat(p.type), star: 0, status: st, autoW: 1, vis: 'private', created: now, updated: now };
+  const now = Date.now(), f = { id: uid(), lat: p.lat, lon: p.lon, gid: p.g, name: p.ko && p.ko !== p.name ? `${p.ko} (${p.name})` : p.name, memo: p.why ? '영상: ' + p.why : '', link: ytUrl(p.vid, p.t), cat: gCat(p.type), star: 0, status: st, autoW: 1, vis: 'private', created: now, updated: now };
   S.flags.push(f); const rt = flagRT(f, 0); rt.armed = false; FLAGS.push(rt); save();
   if (st === 'want') { wishFx(rt.x, rt.y, f.name); addPts(2); } else { burst(rt.x, rt.y, 16, ['#ffd84d', '#fff', '#ff8a5c']); SFX.stamp(); f.paid = 1; addPts(3); }
 }
 function ytDetail(p) {   // 영상 곳 자세히: 영상 정보 + 장면 바로가기 + (키 있으면) 구글 사진·평점
-  const v = YT.v || {}, head = `<h2 data-lp="names" data-names="${esc(JSON.stringify([...new Set([p.ko, p.name].filter(Boolean))]))}">📺 ${p.n}. ${esc(p.ko || p.name)}</h2><button class="cbtn" onclick="closeSheet()">닫기</button>`;
+  const v = YT.v || {}, head = `<h2 data-lp="names" data-names="${esc(JSON.stringify([...new Set([p.ko, p.name].filter(Boolean))]))}">${ytMark(24)} ${p.n}. ${esc(p.ko || p.name)}</h2><button class="cbtn" onclick="closeSheet()">닫기</button>`;
   let top = `<div class="ytv" style="cursor:default"><img alt="" src="${esc(v.thumb || '')}"><div><b>${esc(v.title || '')}</b>${YT.trc && YT.trc[v.id] ? `<div class="ytk">${esc(YT.trc[v.id])}</div>` : ''}<small><span>${esc(v.ch || '')}</span> · ${ic('eye', 13)} ${fmtV(v.views || 0)}</small></div></div>`;
   if (p.why) top += `<div class="intro">💬 ${esc(p.why)}</div>`;
   top += `<a class="nav" href="${ytUrl(v.id, p.t)}" target="_blank" rel="noopener">▶ ${esc(p.t || '')} 장면부터 보기</a>`;
@@ -1652,6 +1653,8 @@ window.gInfo = id => { const f = S.flags.find(x => x.gid === id); if (f) { G_OPE
 // 아이콘 한 벌(이모지 대신 — 기기마다 달라 보이지 않게). 24칸, 선 굵기·둥근 끝 통일
 const ICP = { heart: 'M12 20.3s-7.6-4.6-9.3-9.2C1.5 7.8 3.7 4.8 7 4.8c2 0 3.8 1 5 2.8 1.2-1.8 3-2.8 5-2.8 3.3 0 5.5 3 4.3 6.3-1.7 4.6-9.3 9.2-9.3 9.2z|f', check: 'M4.5 12.8l5 5L19.5 7', info: 'M12 11v6M12 7.2v.1|c', link: 'M10 14a4.2 4.2 0 0 0 6 0l3-3a4.2 4.2 0 0 0-6-6l-1.2 1.2M14 10a4.2 4.2 0 0 0-6 0l-3 3a4.2 4.2 0 0 0 6 6l1.2-1.2', play: 'M7 4.8v14.4L19 12z|f', pin: 'M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z', down: 'M6 9.5l6 6 6-6', tr: 'M3.5 6h9M8 4v2c0 4-2 7-4.5 8.5M5.5 9.5c1 2.5 3 4 5.5 5M13 20l3.8-9h.4L21 20M14.3 17h5.4', eye: 'M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', clock: 'M12 7v5.2l3.3 2|c', globe: 'M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.400 5.600 12 3z|c', search: 'M10.700 17.500a6.800 6.800 0 1 0 0-13.600 6.800 6.800 0 0 0 0 13.600zM16 16l4.500 4.500', yt: 'M4.500 5.500h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM10 9v6l5-3z' };
 function ic(n, sz = 17) { const [d, m] = ICP[n].split('|'); return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="${m === 'f' ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${m === 'c' ? '<circle cx="12" cy="12" r="9.200"/>' : ''}<path d="${d}"/></svg>`; }
+// 유튜브 마크(빨간 둥근 네모 + 흰 삼각형). inv = 빨간 바탕 위에 쓸 흰 네모 + 빨간 삼각형
+function ytMark(w = 24, inv) { return `<svg class="ytm" width="${w}" height="${Math.round(w * .7)}" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5.500" fill="${inv ? '#fff' : '#f00'}"/><path d="M11.300 5.700v8.600L18.700 10z" fill="${inv ? '#f00' : '#fff'}"/></svg>`; }
 const fmtDur = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`, ytLang = w => w === 'ko' ? '가' : 'あ';
 /* ---------- 📺 유튜브·쇼츠 따라가기: 영상을 고르면 그 영상에 나온 곳만 ①②③ 번호 핀 + 나온 순서 점선, 닿으면 장면 카드 ---------- */
 // 데이터 yt/도시.json(scripts/jjway/yt/collect.py — Gemini가 영상을 직접 보고 뽑음, 구글 장소 ID). 영상 자체는 저장 안 함(링크·썸네일 주소·요약·장면 시각만)
@@ -1696,21 +1699,21 @@ window.ytOpen = (cid, id) => { YT.open = YT.open === id ? null : id; const sc = 
 window.ytSort = (k, cid) => { YT.sort = k; ytList(cid); };
 window.ytPick = (cid, id, n) => {
   const d = YT.data[cid], v = d.videos.find(x => x.id === id);
-  if (d.stale) return toast('📺 영상 데이터 갱신이 밀려서(30일 넘음) 위치는 잠시 숨겼어요 · 영상은 🔗로 볼 수 있어요', 2600);
+  if (d.stale) return toast('영상 데이터 갱신이 밀려서(30일 넘음) 위치는 잠시 숨겼어요 · 영상은 ▶로 볼 수 있어요', 2600);
   YT.v = v; YT.cid = cid; closeSheet(); P.pinned = false; ytChip();
   // 첫 곳이 보이게(지도에서 보기처럼 화면만 — 캐릭터는 제자리, 움직이면 내 위치로)
   // 펼친 목록에서 고른 곳은 움직일 때까지 보여 줌
   const a = v.places[(n || 1) - 1]; if (a) { P.look = { x: a.x, y: a.y, until: n ? 1e15 : performance.now() + 2500, manual: n ? 1 : 0 }; if (Math.min(W, H) / CAM.z > 20) setSpan('walk', 20); }
-  toast(`📺 ${v.places.length}곳 — ① 부터 걸어가 봐요`, 2000); SFX.pop();
+  toast(`${v.places.length}곳 — ① 부터 걸어가 봐요`, 2000); SFX.pop();
 };
 window.ytOff = () => { YT.v = null; ytChip(); };
 window.ytOpenList = cid => ytList(cid);
 const YT_CITIES = ['takamatsu'];   // 영상을 모은 도시(scripts/jjway/yt/collect.py)
-$('bYt').innerHTML = ic('yt', 26); $('bFlag').innerHTML = ic('search', 25);
+$('bYt').innerHTML = ytMark(32); $('bFlag').innerHTML = ic('search', 25);
 $('bYt').onclick = () => {   // 가장 가까운 '영상 있는 도시'의 목록
   const cs = CITY.filter(c => YT_CITIES.includes(c.id)).sort((a, b) => dist(a, P) - dist(b, P));
   if (!cs.length) return toast('아직 영상을 모은 도시가 없어요');
-  if (dist(cs[0], P) > 60) toast(`📺 영상이 있는 도시: ${cs.map(c => c.ko).join(' · ')}`, 1800);
+  if (dist(cs[0], P) > 60) toast(`영상이 있는 도시: ${cs.map(c => c.ko).join(' · ')}`, 1800);
   ytList(cs[0].id); P.pinned = true;
 };
 window.ytList = ytList;
@@ -1718,7 +1721,7 @@ function ytChip() {
   let el = $('ytChip'); if (!YT.v) { if (el) el.remove(); return; }
   if (!el) { el = document.createElement('div'); el.id = 'ytChip'; document.body.appendChild(el); }
   const v = YT.v;
-  el.innerHTML = `<span onclick="ytOpenList('${YT.cid}')">📺 ${esc(v.title.slice(0, 22))}${v.title.length > 22 ? '…' : ''}</span><button onclick="ytOff()" aria-label="영상 끄기">✕</button>`;
+  el.innerHTML = `<span onclick="ytOpenList('${YT.cid}')">${ytMark(20, 1)} ${esc(v.title.slice(0, 22))}${v.title.length > 22 ? '…' : ''}</span><button onclick="ytOff()" aria-label="영상 끄기">✕</button>`;
 }
 function ytNear(hitR) {   // 고른 영상의 곳 중 닿은 것
   if (!YT.v) return null; let near = null, nd = hitR;

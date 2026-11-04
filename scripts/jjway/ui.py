@@ -244,7 +244,7 @@ def run(w, h, tag):
           for (let r = .1; r <= 1.01 && !near; r += .1) for (let a = 0; a < 32 && !near; a++) near = fineWater(P.x + Math.cos(a * .196) * tol * r, P.y + Math.sin(a * .196) * tol * r) === 0;
           return {lat: unproj(P.x, P.y).lat, near, tolM: Math.round(tol * 1000)}; })()''')
         assert st['lat'] < 34.36 and st['near'], f'바다로 걸어감 {st}'
-        # 확대 막대: 점 누르면 그 확대(2km = 3번째 점), ＋/－ 한 단계, 지금 확대에 가장 가까운 점이 큼, 점 색 = 되는 것(분홍 3km 이하·파랑 60km 이하·회색)
+        # 확대 막대: 점 누르면 그 확대(2km = 3번째 점), ＋/－ 한 단계, 지금 확대에 가장 가까운 점이 큼, 점 색 = 되는 것(빨강 1.5km 이하 가게까지·주황 3km 이하·파랑 60km 이하·회색)
         on = lambda: pg.evaluate("[...document.querySelectorAll('#zbar .zd')].findIndex(d => d.classList.contains('on'))")
         pg.click('#zbar .zd[data-i="3"]'); time.sleep(1.6); assert pg.evaluate('S.span.walk') == 2 and on() == 3, ('점 2km', pg.evaluate('S.span.walk'), on())
         mn = pg.evaluate("spanMin('walk')")   # 구글 키가 있으면 0.25km, 없으면 지리원 1.2km
@@ -252,7 +252,7 @@ def run(w, h, tag):
         assert pg.locator('#zbar .zd.off').count() == (0 if mn < .5 else 2), '지리원 지도면 0.25·0.5km 점은 막힘'
         pg.click('#zOut'); time.sleep(.3); pg.click('#zOut'); time.sleep(1.6); assert pg.evaluate('S.span.walk') == 5 and on() == 4, ('－ 두 번', pg.evaluate('S.span.walk'))
         cols = pg.evaluate("[...document.querySelectorAll('#zbar .zd')].map(d => d.style.getPropertyValue('--zc'))")
-        assert cols[3] == '#e05a8a' and cols[6] == '#2f6fd0' and cols[9] == '#8d8a96', cols
+        assert cols[2] == '#d9352b' and cols[3] == '#f08a24' and cols[6] == '#2f6fd0' and cols[9] == '#8d8a96', cols
         pg.evaluate('S.span.walk = 4'); time.sleep(1.2); assert on() == 4, '손으로 4km면 5km 점'
         # 📺 영상 따라가기: 도시 창 → 영상 목록(🇰🇷/🇯🇵 거르기) → 고르면 그 영상 곳만 번호 → ① 닿으면 장면 카드 → ♥ = 내 마커(장소 ID·장면 링크) → ✕ 끄기
         pg.click('#bYt'); pg.wait_for_selector('#sheet .ytv', timeout=5000)   # 📺 버튼(🔍 위) → 가장 가까운 영상 있는 도시

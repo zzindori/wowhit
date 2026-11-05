@@ -2412,17 +2412,22 @@ $('bkOut').onclick = async () => {
 };
 $('bkIn').onclick = () => $('bkFile').click();
 const BK_ID = /^[\w-]{1,80}$/;
+const bkMetres = (a, b) => { const r = Math.PI / 180, h = Math.sin((b.lat - a.lat) * r / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin((b.lon - a.lon) * r / 2) ** 2; return 12742000 * Math.asin(Math.sqrt(h)); };
 $('bkFile').onchange = async e => {
   const file = e.target.files[0], m = $('bkMsg'); e.target.value = ''; if (!file) return;
   let d; try { d = JSON.parse(await file.text()); } catch (err) { d = null; }
   if (!d || d.jjway !== 1 || !d.state || !Array.isArray(d.state.flags) || !Array.isArray(d.photos)) return stgMsg(m, 'jjWay 백업 파일이 아니에요', 'err');
-  if (!confirm(`백업에서 마커 ${d.state.flags.length}개 · 사진 ${d.photos.length}장을 가져와 지금 기록에 합칠까요?\n같은 마커는 더 최근에 고친 쪽을 남겨요.`)) return;
+  if (!confirm(`백업에서 마커 ${d.state.flags.length}개 · 사진 ${d.photos.length}장을 가져와 지금 기록에 합칠까요?\n같은 마커는 더 최근에 고친 쪽을 남겨요.${d.state.flags.some(x => x && x.src === 'photo') ? '\n사진 앱에서 만든 곳은 50m 안에 내 마커가 있으면 그 마커에 넣어요.' : ''}`)) return;
   stgMsg(m, '가져오는 중…', 'info');
-  let added = 0, changed = 0, skipped = 0, pAdd = 0, pBad = 0;
+  let added = 0, changed = 0, skipped = 0, merged = 0, pAdd = 0, pBad = 0;
+  const into = new Map();   // 사진 앱에서 온 마커를 합친 곳: 사진의 flag → 내 마커 id
   for (const x of d.state.flags) {   // 바깥에서 온 파일이라 칸마다 확인(id·장소 ID는 창 버튼 코드에 들어감)
     if (!x || !BK_ID.test(x.id) || typeof x.name !== 'string' || !x.name || !isFinite(x.lat) || !isFinite(x.lon) || Math.abs(x.lat) > 90 || Math.abs(x.lon) > 180 || (x.gid && !BK_ID.test(x.gid))) { skipped++; continue; }
     const f = { id: x.id, lat: +x.lat, lon: +x.lon, ...(x.gid ? { gid: x.gid } : {}), name: x.name.slice(0, 120), memo: String(x.memo || '').slice(0, 400), link: String(x.link || '').slice(0, 500), cat: Object.hasOwn(CATS, x.cat) ? x.cat : 'etc', star: Math.max(0, Math.min(5, +x.star || 0)), status: ['want', 'been'].includes(x.status) ? x.status : '', vis: 'private', created: +x.created || Date.now(), updated: +x.updated || Date.now(), ...(x.autoW ? { autoW: 1 } : {}), ...(x.lock ? { lock: 1 } : {}), ...(x.paid ? { paid: 1 } : {}) };
     const cur = S.flags.find(y => y.id === f.id);
+    // 사진 앱(jjWay 사진)에서 온 새 마커: 50m 안에 내 마커가 있으면 새로 안 만들고 그 마커에 사진만
+    const nb = !cur && x.src === 'photo' ? S.flags.find(y => bkMetres(y, f) <= 50) : null;
+    if (nb) { into.set(f.id, nb.id); nb.updated = Date.now(); merged++; continue; }
     if (!cur) { S.flags.push(f); FLAGS.push(flagRT(f)); added++; }
     else if (f.updated > (cur.updated || 0)) { const rt = FLAGS.find(r => r.f === cur); Object.assign(cur, f); if (rt) { const p = proj(cur.lon, cur.lat); rt.x = p.x; rt.y = p.y; } changed++; }
   }
@@ -2430,16 +2435,17 @@ $('bkFile').onchange = async e => {
   S.pts = Math.max(S.pts || 0, +d.state.pts || 0); $('ptsN').textContent = S.pts;
   if (PH.ok) for (const p of d.photos) {
     try {
-      if (!p || !BK_ID.test(p.id) || !S.flags.some(f => f.id === p.flag) || typeof p.data !== 'string' || !p.data.startsWith('data:image/jpeg;base64,')) { pBad++; continue; }
-      const a = phList(p.flag); if (a.some(r => r.id === p.id)) continue;
+      const fid = p && (into.get(p.flag) || p.flag);
+      if (!p || !BK_ID.test(p.id) || !S.flags.some(f => f.id === fid) || typeof p.data !== 'string' || !p.data.startsWith('data:image/jpeg;base64,')) { pBad++; continue; }
+      const a = phList(fid); if (a.some(r => r.id === p.id)) continue;
       if (a.length >= PH_MAX) { pBad++; continue; }
       const bin = atob(p.data.slice(23)), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
-      const r = { id: p.id, flag: p.flag, blob: new Blob([u], { type: 'image/jpeg' }), w: +p.w || 0, h: +p.h || 0, taken: +p.taken || 0, added: +p.added || Date.now() };
+      const r = { id: p.id, flag: fid, blob: new Blob([u], { type: 'image/jpeg' }), w: +p.w || 0, h: +p.h || 0, taken: +p.taken || 0, added: +p.added || Date.now() };
       await phTx('readwrite', st => st.put(r)); phIndex(r); pAdd++;
     } catch (err) { pBad++; }
   } else pBad = d.photos.length;
   save(); CARD_SIG = '';
-  stgMsg(m, `✅ 새 마커 ${added}개 · 바뀐 마커 ${changed}개 · 사진 ${pAdd}장을 가져왔어요` + (skipped || pBad ? ` · 못 가져옴: 마커 ${skipped}개, 사진 ${pBad}장` : ''), skipped || pBad ? 'info' : 'ok');
+  stgMsg(m, `✅ 새 마커 ${added}개 · 바뀐 마커 ${changed}개${merged ? ` · 가까운 내 마커에 합침 ${merged}곳` : ''} · 사진 ${pAdd}장을 가져왔어요` + (skipped || pBad ? ` · 못 가져옴: 마커 ${skipped}개, 사진 ${pBad}장` : ''), skipped || pBad ? 'info' : 'ok');
 };
 (async () => {
   resize();

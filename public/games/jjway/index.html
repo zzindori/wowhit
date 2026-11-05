@@ -64,6 +64,31 @@ button,input,select{font-family:inherit;color:inherit}
 .go{display:block;width:100%;margin-top:16px;height:52px;border-radius:16px;border:3px solid var(--ink);background:var(--pri);color:#fff;font-family:Jua,sans-serif;font-size:22px;box-shadow:0 4px 0 rgba(44,43,53,.35);cursor:pointer}
 .go:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(44,43,53,.35)}
 .small{font-size:12px;color:#8a8794;line-height:1.5;margin-top:8px}
+.stg{display:flex;flex-direction:column;padding:0;overflow:hidden;background:#f6f2e8;max-height:92vh;max-height:92dvh}
+.stgh{flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 12px 12px 18px;background:var(--card);border-bottom:2px solid var(--ink)}
+.box .stgh h1{font-size:24px;text-align:left}
+.stgx{width:38px;height:38px;border-radius:50%;border:2px solid var(--ink);background:#fff;display:grid;place-items:center;cursor:pointer;padding:0;box-shadow:0 2px 0 rgba(44,43,53,.25)}.stgx:active{transform:translateY(2px);box-shadow:none}
+.stgb{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:12px;display:flex;flex-direction:column;gap:10px}
+.stgc{flex:none;background:var(--card);border:2px solid var(--ink);border-radius:16px;padding:13px;box-shadow:0 3px 0 rgba(44,43,53,.18)}
+.stgt{display:flex;align-items:center;gap:10px}
+.stgi{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;background:var(--c)}
+.stgn{flex:1;min-width:0}.stg b{font-family:Jua,sans-serif;font-weight:400;font-size:17px;display:block}.stg small{display:block;font-size:12px;line-height:1.35;color:#6b6876;margin-top:1px}
+.pill{flex:none;font-size:12px;padding:3px 9px;border-radius:999px;background:#ece8de;color:#6b6876;white-space:nowrap}.pill.ok{background:#dff3e2;color:#23723c}.pill.fam{background:#e3edfb;color:#2460b5}
+.stgl{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}.stgl span{font-size:12px;padding:4px 8px;border-radius:8px;background:#eef3fb;color:#34527d}
+.stgex{display:flex;align-items:center;gap:8px;margin-top:10px;padding:7px 10px;border-radius:8px;background:#f3edf9;font-size:13px;color:#6b5a7e}.stgex em{font-style:normal}.stgex b{font-size:15px;color:#6a3ea1}
+.stglb{display:block;font-size:12px;color:#6b6876;margin:11px 0 4px}
+.keyf{display:flex;gap:6px}.keyw{position:relative;flex:1;min-width:0}.keyw .fin{margin:0;height:42px;padding-right:40px;user-select:text;-webkit-user-select:text}.keyw .fin:focus{outline:none;border-color:var(--ink)}
+.keye{position:absolute;right:3px;top:3px;width:36px;height:36px;border:none;background:none;color:#8a8794;display:grid;place-items:center;cursor:pointer;padding:0}.keye.on{color:var(--blue)}
+.stg .qgo{height:42px}
+.stgm{font-size:12px;line-height:1.45;margin-top:7px;padding:7px 9px;border-radius:8px;background:#f1eee6;color:#5d6b7a;overflow-wrap:anywhere}.stgm:empty{display:none}.stgm[data-k=ok]{background:#e6f5e8;color:#23723c}.stgm[data-k=bad]{background:#fdecea;color:#b53a2c}.stgm[data-k=info]{background:#e8f0fc;color:#2460b5}
+.stgf{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#8a8794;margin-top:7px}.stgf a{color:var(--blue);text-decoration:none;white-space:nowrap}
+#gBtns{margin-top:12px}
+.stgr{width:100%;display:flex;align-items:center;gap:10px;min-height:54px;padding:8px 0;border:none;border-top:1px solid var(--line);background:none;text-align:left;cursor:pointer;font-family:system-ui,sans-serif}.stgr>span:not(.stgi){flex:1;min-width:0}
+.stgr.first{border-top:none;padding:0;min-height:38px}.stgr.dng b{color:#b53a2c}
+.tg{flex:none;width:48px;height:28px;border-radius:999px;background:#cfcabf;position:relative;transition:background .15s}.tg::after{content:'';position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+.stgr[aria-checked=true] .tg{background:#35a15a}.stgr.dng[aria-checked=true] .tg{background:#d9503f}.stgr[aria-checked=true] .tg::after{transform:translateX(20px)}
+.mts{padding:9px 0 11px;border-top:1px solid var(--line)}.mt{display:grid;grid-template-columns:1fr auto;gap:3px 8px;font-size:12px;color:#6b6876;margin-bottom:8px}.mt span{color:var(--ink);font-variant-numeric:tabular-nums}.mt i{grid-column:1/3;height:6px;border-radius:9px;background:#ece8de;overflow:hidden}.mt u{display:block;height:100%;border-radius:9px;background:#35a15a}.mt u.mid{background:#e8a530}.mt u.hi{background:#d9503f}.mtn{font-size:11px;line-height:1.4;color:#8a8794}
+.stgdel{flex:none;width:100%;border:1.5px dashed #d7a79f;border-radius:14px;background:none;padding:11px;cursor:pointer;margin-bottom:4px;font-family:system-ui,sans-serif}.stgdel b{color:#b53a2c;font-size:15px}.stgdel:active{background:#fdecea}
 .row2{display:flex;gap:8px;margin-top:12px}
 .row2 button{flex:1;height:42px;border-radius:12px;border:2px solid var(--ink);background:#fff;font-family:Jua,sans-serif;font-size:17px;cursor:pointer}
 .intro{font-size:14px;line-height:1.55;margin:2px 0 8px}
@@ -216,20 +241,36 @@ button,input,select{font-family:inherit;color:inherit}
   </div>
 </div>
 <div class="ov" id="settings" hidden>
-  <div class="box">
-    <h1 style="font-size:24px">⚙️ 설정</h1>
-    <h3 style="margin-top:14px">🗺️ 구글 지도 키</h3>
-    <div class="small">넣으면 🔍 장소 찾기가 구글 검색이 돼요(한국어 그대로·작은 가게까지). 키는 <b>이 폰(브라우저)에만</b> 저장되고 우리 서버로 보내지 않아요. 만드는 법은 <a href="/guide#gmaps" target="_blank">이용 안내</a>.</div>
-    <div class="fsearch" style="margin-top:6px"><input id="gkIn" class="fin" type="password" autocomplete="off" placeholder="구글 지도 API 키 붙여넣기"><button class="qgo" id="gkGo">확인</button></div>
-    <div id="gkMsg" class="small" style="text-align:left"></div>
-    <div id="famNote" class="small" style="text-align:left;color:#2f6fd0" hidden>👨‍👩‍👧 가족 키로 사용 중 · 내 키를 넣으면 그 키로 바뀌어요</div>
-    <div id="gUse" class="small" style="text-align:left;color:#5d6b7a"></div>
-    <div id="gBtns" class="row2" style="margin-top:6px;flex-wrap:wrap"><button id="gOnBtn"></button><button id="gOverBtn"></button></div>
-    <h3 style="margin-top:10px">✨ Gemini 키 (가게 이름 한글로)</h3>
-    <div class="small">구글 가게 이름이 일본어·영어일 때 한글 읽기로 바꿔요(예: Toritei → 토리테이). 이 폰에만 저장.</div>
-    <div class="fsearch" style="margin-top:6px"><input id="gmIn" class="fin" type="password" autocomplete="off" placeholder="Gemini API 키 붙여넣기"><button class="qgo" id="gmGo">확인</button></div>
-    <div id="gmMsg" class="small" style="text-align:left"></div>
-    <div class="row2"><button id="soundBtn">🔊 소리</button><button id="resetBtn">처음부터</button><button id="setClose">닫기</button></div>
+  <div class="box stg" role="dialog" aria-labelledby="stgT">
+    <header class="stgh"><h1 id="stgT">설정</h1><button id="setClose" class="stgx" aria-label="닫기"></button></header>
+    <div class="stgb">
+      <section class="stgc">
+        <div class="stgt"><span class="stgi" data-ic="map" style="--c:#2f6fd0"></span><div class="stgn"><b>구글 지도</b><small>더 자세한 지도와 장소 정보</small></div><span id="gkPill" class="pill"></span></div>
+        <div class="stgl"><span>🔍 장소 검색</span><span>🗺️ 한국어 지도</span><span>✨ 주변 장소 뾰로롱</span></div>
+        <label class="stglb" for="gkIn">API 키</label>
+        <div class="keyf"><div class="keyw"><input id="gkIn" class="fin" type="password" autocomplete="off" placeholder="키를 붙여넣어 주세요"><button class="keye" type="button" data-for="gkIn" aria-label="키 보기"></button></div><button class="qgo" id="gkGo">확인</button></div>
+        <div id="gkMsg" class="stgm"></div>
+        <div id="famNote" class="stgm" data-k="info" hidden>가족 키로 사용 중이에요 · 내 키를 넣으면 그 키로 바뀌어요</div>
+        <div class="stgf"><span>이 폰에만 저장돼요</span><a href="/guide#gmaps" target="_blank" rel="noopener">키 만드는 법 ›</a></div>
+        <div id="gBtns">
+          <button class="stgr" id="gOnBtn" role="switch"><span><b>주변 장소 찾기</b><small>걸을 때 가게·역·공원·주차장을 찾아요</small></span><i class="tg"></i></button>
+          <div id="gUse" class="mts"></div>
+          <button class="stgr dng" id="gOverBtn" role="switch"><span><b>무료 한도 넘어도 계속</b><small>넘은 만큼 구글 요금이 나와요</small></span><i class="tg"></i></button>
+        </div>
+      </section>
+      <section class="stgc">
+        <div class="stgt"><span class="stgi" data-ic="spark" style="--c:#8a56c9"></span><div class="stgn"><b>Gemini</b><small>가게 이름을 한글로 읽어 줘요</small></div><span id="gmPill" class="pill"></span></div>
+        <div class="stgex"><span>Toritei</span><em>›</em><b>토리테이</b></div>
+        <label class="stglb" for="gmIn">API 키</label>
+        <div class="keyf"><div class="keyw"><input id="gmIn" class="fin" type="password" autocomplete="off" placeholder="키를 붙여넣어 주세요"><button class="keye" type="button" data-for="gmIn" aria-label="키 보기"></button></div><button class="qgo" id="gmGo">확인</button></div>
+        <div id="gmMsg" class="stgm"></div>
+        <div class="stgf"><span>이 폰에만 저장돼요</span><a href="/guide" target="_blank" rel="noopener">키 만드는 법 ›</a></div>
+      </section>
+      <section class="stgc">
+        <button class="stgr first" id="soundBtn" role="switch"><span class="stgi" data-ic="sound" style="--c:#e0812c"></span><span><b>소리</b><small>뾰로롱·동전·이착륙 소리</small></span><i class="tg"></i></button>
+      </section>
+      <button class="stgdel" id="resetBtn"><b>처음부터 다시 하기</b><small>가족 설정·여행 기록·위치를 모두 지워요</small></button>
+    </div>
   </div>
 </div>
 
@@ -646,7 +687,7 @@ function goBox(x, y, span) {   // 창 아래 버튼 두 개(지금 서 있는 �
 }
 window.lookAt = (x, y) => { P.look = { x, y, until: 1e15, manual: 1 }; P.pinned = true; toast('👀 지도로 보는 중 — 움직이면 내 위치로 돌아와요', 1800); };
 window.goTo = (x, y, span) => {
-  closeSheet(); P.look = null; P.x = x; P.y = y; P.vx = P.vy = 0; P.trail = []; P.onSpot = P.onFlag = P.onG = null; GP.done = [];
+  closeSheet(); P.look = null; P.x = x; P.y = y; P.vx = P.vy = 0; P.trail = []; P.onSpot = P.onFlag = P.onG = null; GP.done = []; G_EXTRA.forEach(e => { e.done = []; });
   setSpan('walk', span); CAM.x = x; CAM.y = y; burst(x, y, 24, ['#7fd1ff', '#fff', '#ffd84d']); SFX.chime(); vib(20); save(); toast('🚀 도착!', 1200);
 };
 window.goAir = () => {   // 지금 나라에서 직항이 있는 가장 가까운 공항으로
@@ -750,7 +791,7 @@ function cardState(c) {
   if (c.type === 'spot') { const k = c.s.key, ci = CITY.find(x => x.id === c.s.city); return { icon: ICON[c.s.t] || '📍', name: c.s.ko, orig: c.s.ja || '', sub: `명소${ci ? ' · ' + ci.ko : ''}`, been: !!S.seen[k], wish: !!S.wish[k], x: c.s.x, y: c.s.y, url: c.s.g ? gq(c.s.lat, c.s.lon, c.s.g, c.s.ja) : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.s.ja || c.s.ko)}&ll=${c.s.lat},${c.s.lon}` }; }
   if (c.type === 'yt') { const p = c.p, v = YT.v || {}; const mine = S.flags.find(f => f.gid === p.g);
     return { icon: ytMark(24), name: p.ko || p.name, orig: p.ko && p.ko !== p.name ? p.name : '', sub: `<b style="color:#d62828">영상 ${p.n}번</b> · <a class="cplay" href="${ytUrl(v.id, p.t)}" target="_blank" rel="noopener">▶ ${esc(p.t || '처음')}</a>${p.type ? ' · ' + esc(p.type) : ''}`, subHtml: 1, addr: p.why || '', been: mine && mine.status === 'been', wish: mine && mine.status === 'want', x: p.x, y: p.y, url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.name)}&query_place_id=${p.g}`, yt: 1 }; }
-  if (c.type === 'g') { const p = c.p; return { icon: CATS[gCat(p.type)][0], name: koName(p.name) || p.name, orig: koName(p.name) ? p.name : '', sub: p.tl || '', addr: p.addr || '', warn: p.biz === 'CLOSED_TEMPORARILY' ? '⚠️ 임시 휴업' : '', been: false, wish: false, x: p.x, y: p.y, g: 1, url: gq(p.lat, p.lon, p.id, p.name) }; }
+  if (c.type === 'g') { const p = c.p; return { icon: gIcon(p.type), name: koName(p.name) || p.name, orig: koName(p.name) ? p.name : '', sub: p.tl || '', addr: p.addr || '', warn: p.biz === 'CLOSED_TEMPORARILY' ? '⚠️ 임시 휴업' : '', been: false, wish: false, x: p.x, y: p.y, g: 1, url: gq(p.lat, p.lon, p.id, p.name) }; }
   const f = c.rt.f, m = f.name.match(/^(.*\S)\s+\((.+)\)$/);   // '토리테이 (Toritei)' → 이름 / 원래 이름 두 줄
   return { icon: CATS[f.cat][0], name: m ? m[1] : f.name, orig: m ? m[2] : '', sub: `내 마커 · ${CATS[f.cat][1]}${f.star ? ' · ' + '★'.repeat(f.star) : ''}`, been: f.status === 'been', wish: f.status === 'want', x: c.rt.x, y: c.rt.y, url: gq(f.lat, f.lon, f.gid, m ? m[2] : f.name) };
 }
@@ -882,7 +923,7 @@ function step(dt) {
     // 영상 곳도 멈춰 서면 고리가 차서 뾰로롱(발견) — 구글 가게와 같음, 저장은 버튼을 눌러야만
     if (yp) { if (yp.found) P.ytRing = 1; else if (!still) P.ytRing = 0; else { P.ytRing = Math.min(1, (P.ytRing || 0) + dt / RING_T); if (P.ytRing >= 1) { yp.found = 1; foundFx(yp.g, yp.x, yp.y, yp.ko || yp.name); } } }
     const gDeep = Math.min(W, H) / CAM.z <= G_SPAN;
-    if (gDeep) gNearby();
+    if (gDeep) gNearby(still);
     const gp = gDeep && !spot && !fl ? gStep(hitR, still, dt) : (P.onG = null, null);
     if (spot && P.onSpot !== spot.key) { spot.hit = performance.now(); P.ring = 0; SFX.pop(); vib(8); }   // 닿는 순간 통통
     if (spot && !yp) {   // 영상 곳 위에선 자동 안 함(카드는 영상 것이라 앞뒤가 안 맞음) · 올라가 있으면 머리 위 동그라미 테두리가 빙 둘러 차오름 → 꽉 차면 '가고 싶어요'(표시 없을 때만)
@@ -1354,11 +1395,11 @@ function drawMe(g, cam, cx, cy, t, s) {
 function overhead(g, cx, cy, t) {
   if (S.mode !== 'walk') return;
   const s = P.onSpot && SPOT.find(x => x.key === P.onSpot), rt = !s && PEEK && PEEK.key.startsWith('flag:') && FLAGS.find(r => 'flag:' + r.f.id === PEEK.key);
-  const gp = !s && !rt && PEEK && PEEK.key.startsWith('g:') && PEEK.card && PEEK.card.p;
+  const gp0 = !s && !rt && PEEK && PEEK.key.startsWith('g:') && PEEK.card && PEEK.card.p, gp = gp0 && !gIsPark(gp0.type) ? gp0 : null;
   const yq = P.onYt && YT.v ? YT.v.places.find(q => q.vid + ':' + q.n === P.onYt) : null;
   if (yq) { const x = cx + (P.x - CAM.x) * CAM.z, y = cy + (P.y - CAM.y) * CAM.z - 58 + Math.sin(t * 3) * 2, r = 19, nm = yq.ko || yq.name; g.fillStyle = 'rgba(0,0,0,.15)'; g.beginPath(); g.arc(x + 2, y + 3, r, 0, 6.29); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.fill(); g.strokeStyle = '#d9352b'; g.lineWidth = 2.5; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.stroke(); ring(g, x, y, r + 5, 4, P.ytRing || 0, '#d9352b'); g.fillStyle = '#d9352b'; g.font = 'bold 18px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(yq.n), x, y + 1); text(g, nm.length > 14 ? nm.slice(0, 13) + '…' : nm, x, y + r + 11, 13, '#2c2b35'); return; }
   if (!s && !rt && !gp) return;
-  const ic = s ? ICON[s.t] || '📍' : gp ? CATS[gCat(gp.type)][0] : CATS[rt.f.cat][0], name = s ? s.ko : gp ? (koName(gp.name) || gp.name) : rt.f.name;
+  const ic = s ? ICON[s.t] || '📍' : gp ? gIcon(gp.type) : CATS[rt.f.cat][0], name = s ? s.ko : gp ? (koName(gp.name) || gp.name) : rt.f.name;
   const been = s ? !!S.seen[s.key] : !gp && rt.f.status === 'been', wish = s ? !!S.wish[s.key] : !gp && rt.f.status === 'want';
   const x = cx + (P.x - CAM.x) * CAM.z, y = cy + (P.y - CAM.y) * CAM.z - 58 + Math.sin(t * 3) * 2, r = 19;
   g.fillStyle = 'rgba(0,0,0,.15)'; g.beginPath(); g.arc(x + 2, y + 3, r, 0, 6.29); g.fill();
@@ -1525,24 +1566,34 @@ const gUse = k => { const m = today().slice(0, 7); try { const o = JSON.parse(lo
 const gUseAdd = (k, o) => { o.n++; try { localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} };
 const G_TYPES = ['restaurant', 'cafe', 'bakery', 'bar', 'meal_takeaway', 'store', 'shopping_mall', 'tourist_attraction', 'museum', 'art_gallery', 'lodging'];
 const gCat = t => /cafe|bakery|coffee/.test(t || '') ? 'cafe' : /restaurant|food|bar|meal|ramen|sushi|udon/.test(t || '') ? 'food' : /lodging|hotel|inn/.test(t || '') ? 'stay' : /store|shop|mall|market/.test(t || '') ? 'shop' : 'etc';
-function gNearby() {
-  const key = GK.get(); if (!key || GP.busy || S.mode !== 'walk' || Math.min(W, H) / CAM.z > G_SPAN) return;
-  if (GP.done.some(c => Math.hypot(P.x - c.x, P.y - c.y) < G_R * .6)) return;   // 이미 찾아본 동네(이번에 켠 동안)
-  const now = performance.now(); if (now - GP.t < 3000) return;
-  if (S.gOn === false) return;   // ⚙️ 구글 가게 찾기 꺼짐
-  const use = gUse('jjway-gcnt'); if (use.n >= G_MON && !S.gOver) { if (!GP.capT) { GP.capT = 1; toast(`🔵 이번 달 구글 가게 찾기 ${G_MON}번을 다 썼어요(무료 한도 지키기) · ⚙️ 설정에서 계속 쓰기를 켤 수 있어요(요금 발생)`, 3500); } return; }
+// 역·공원·주차장은 가게와 따로 찾음(가까운 순 20곳까지라 같이 찾으면 번화가에서 가게에 밀림 · 주차장끼리도 20곳을 채우니 역·공원과도 따로).
+// 넓게(300m) 찾고, 걷는 중엔 12초에 한 번·멈추면 3초에 한 번 → 호출이 크게 늘지 않게
+const G_EXTRA = [{ t: ['park', 'train_station', 'subway_station', 'light_rail_station'], done: [], at: 0 }, { t: ['parking'], done: [], at: 0 }], G_XR = .3, G_XMOVE = 12000;
+const gIsPark = t => /parking/.test(t || '');
+const G_BIKE = /bicycle|bike|cycle|駐輪|自転車|バイク|サイクル|자전거/i;   // 자전거 주차장도 주차장으로 분류돼 옴
+const gIcon = t => gIsPark(t) ? '🅿️' : /park|garden/.test(t || '') ? '🌳' : /station/.test(t || '') ? '🚉' : CATS[gCat(t)][0];
+function gNearby(still) {
+  const key = GK.get(); if (!key || S.mode !== 'walk' || Math.min(W, H) / CAM.z > G_SPAN || S.gOn === false) return;
+  const now = performance.now(), seen = (l, r) => l.some(c => Math.hypot(P.x - c.x, P.y - c.y) < r * .6);   // 이미 찾아본 동네(이번에 켠 동안)
+  let q = null;
+  if (!GP.busy && now - GP.t >= 3000 && !seen(GP.done, G_R)) q = { t: G_TYPES, r: G_R, done: GP.done, main: true };
+  else if (!GP.xbusy && now - (GP.xt || 0) >= (still ? 3000 : G_XMOVE)) { const e = G_EXTRA.filter(x => !seen(x.done, G_XR)).sort((a, b) => a.at - b.at)[0]; if (e) { e.at = now; q = { t: e.t, r: G_XR, get done() { return e.done; } }; } }
+  if (!q) return;
+  const use = gUse('jjway-gcnt'); if (use.n >= G_MON && !S.gOver) { if (!GP.capT) { GP.capT = 1; toast(`🔵 이번 달 주변 장소 찾기 ${G_MON}번을 다 썼어요(무료 한도 지키기) · ⚙️ 설정에서 계속 쓰기를 켤 수 있어요(요금 발생)`, 3500); } return; }
   gUseAdd('jjway-gcnt', use);
-  GP.busy = true; GP.t = now; const at = { x: P.x, y: P.y }, c = unproj(P.x, P.y); GP.calls++;
-  fetch('https://places.googleapis.com/v1/places:searchNearby', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.primaryType,places.primaryTypeDisplayName,places.shortFormattedAddress,places.businessStatus' },   // 같은 Pro 단계라 추가 비용 없음
-    body: JSON.stringify({ includedTypes: G_TYPES, maxResultCount: 20, rankPreference: 'DISTANCE', languageCode: 'ko', locationRestriction: { circle: { center: { latitude: c.lat, longitude: c.lon }, radius: G_R * 1000 } } }) })
+  const flag = q.main ? 'busy' : 'xbusy'; GP[flag] = true; GP[q.main ? 't' : 'xt'] = now; if (!q.main) GP.xcalls = (GP.xcalls || 0) + 1;
+  const at = { x: P.x, y: P.y }, c = unproj(P.x, P.y); GP.calls++;
+  fetch('https://places.googleapis.com/v1/places:searchNearby', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.primaryType,places.primaryTypeDisplayName,places.shortFormattedAddress,places.businessStatus' },   // 같은 요금 단계(Pro)
+    body: JSON.stringify({ includedTypes: q.t, maxResultCount: 20, rankPreference: 'DISTANCE', languageCode: 'ko', locationRestriction: { circle: { center: { latitude: c.lat, longitude: c.lon }, radius: q.r * 1000 } } }) })
     .then(r => r.json()).then(j => {
-      GP.done.push(at); if (GP.done.length > 400) GP.done.shift(); const have = new Set(GP.list.map(p => p.id)), mine = new Set([...S.flags.map(f => f.gid), ...SPOT.map(s => s.g)].filter(Boolean));   // 내 마커·우리 명소와 같은 곳은 구글 마커로 또 안 띄움
-      for (const p of j.places || []) { if (have.has(p.id) || mine.has(p.id) || !p.location || p.businessStatus === 'CLOSED_PERMANENTLY') continue; const q = proj(p.location.longitude, p.location.latitude);   // 폐업은 뺌
+      q.done.push(at); if (q.done.length > 400) q.done.shift();
+      const have = new Set(GP.list.map(p => p.id)), mine = new Set([...S.flags.map(f => f.gid), ...SPOT.map(s => s.g)].filter(Boolean));   // 내 마커·우리 명소와 같은 곳은 구글 마커로 또 안 띄움
+      for (const p of j.places || []) { const nm = p.displayName ? p.displayName.text : ''; if (have.has(p.id) || mine.has(p.id) || !p.location || p.businessStatus === 'CLOSED_PERMANENTLY') continue; if (gIsPark(p.primaryType) && G_BIKE.test(nm)) continue; const qq = proj(p.location.longitude, p.location.latitude);   // 폐업은 뺌
         const addr = (p.shortFormattedAddress || '').replace(/^\s*(일본|Japan)\s*/, '').replace(/〒?\s*\d{3}-\d{4}\s*/, '').trim();   // 주소는 구글이 준 그대로(번역 안 함), 전체
-        GP.list.push({ id: p.id, name: p.displayName ? p.displayName.text : '', type: p.primaryType || '', tl: p.primaryTypeDisplayName ? p.primaryTypeDisplayName.text : '', addr, biz: p.businessStatus || '', x: q.x, y: q.y, lat: p.location.latitude, lon: p.location.longitude }); }
+        GP.list.push({ id: p.id, name: nm, type: p.primaryType || '', tl: p.primaryTypeDisplayName ? p.primaryTypeDisplayName.text : '', addr, biz: p.businessStatus || '', x: qq.x, y: qq.y, lat: p.location.latitude, lon: p.location.longitude }); }
       GP.list = GP.list.filter(p => Math.hypot(p.x - P.x, p.y - P.y) < 1).slice(-300);
       wantKo(GP.list.map(p => p.name));
-    }).catch(() => {}).finally(() => { GP.busy = false; });
+    }).catch(() => {}).finally(() => { GP[flag] = false; });
 }
 function foundFx(id, x, y, name) {   // 발견: 뾰로롱 + 반짝이, 같은 곳은 하루 한 번만 +1
   burst(x, y, 14, ['#7fb3ff', '#fff', '#ffd84d']); SFX.chime(); vib(12);
@@ -1552,10 +1603,13 @@ function foundFx(id, x, y, name) {   // 발견: 뾰로롱 + 반짝이, 같은 �
   else toast(`👀 ${name}`, 1200);
 }
 function gStep(hitR, still, dt) {
-  let near = null, nd = hitR;
-  for (const p of GP.list) { const d = Math.hypot(p.x - P.x, p.y - P.y); if (d < nd) { nd = d; near = p; } }
-  if ((near ? near.id : null) !== P.onG) { P.onG = near ? near.id : null; P.gStill = 0; P.ring = 0; if (near) { near.hit = performance.now(); burst(near.x, near.y, 6, ['#7fb3ff', '#fff'], 30); } }
+  let near = null, nd = hitR, pk = null, pd = hitR;   // 주차장은 다른 곳이 닿아 있지 않을 때만
+  for (const p of GP.list) { const d = Math.hypot(p.x - P.x, p.y - P.y); if (gIsPark(p.type)) { if (d < pd) { pd = d; pk = p; } } else if (d < nd) { nd = d; near = p; } }
+  near = near || pk;
+  const quiet = near && gIsPark(near.type);
+  if ((near ? near.id : null) !== P.onG) { P.onG = near ? near.id : null; P.gStill = 0; P.ring = 0; if (near && !quiet) { near.hit = performance.now(); burst(near.x, near.y, 6, ['#7fb3ff', '#fff'], 30); } }
   if (!near) return null;
+  if (quiet) { P.ring = 0; return { p: near, show: true }; }   // 주차장: 카드만(고리·뾰로롱·점수 없음)
   // 닿으면 바로 아래 카드 + 머리 위 고리. 멈춰 서면 고리가 차고(지나가면 안 참) 꽉 차면 '👀 발견!' +1(같은 가게는 하루 한 번) + 버튼 통통 — 저장은 버튼을 눌러야만
   if (!still) P.ring = 0;
   else if (!near.found) {
@@ -1664,7 +1718,7 @@ let YT_CUR = null;
 window.ytSaveCur = st => { if (YT_CUR) { ytSave(YT_CUR, st); ytDetail(YT_CUR); } };
 window.gInfo = id => { const f = S.flags.find(x => x.gid === id); if (f) { G_OPEN = { id, name: f.name, lat: f.lat, lon: f.lon }; gDetail(G_OPEN); P.pinned = true; } };   // 깃발 위에 서 있어도 안 닫히게(움직이면 닫힘)
 // 아이콘 한 벌(이모지 대신 — 기기마다 달라 보이지 않게). 24칸, 선 굵기·둥근 끝 통일
-const ICP = { heart: 'M12 20.3s-7.6-4.6-9.3-9.2C1.5 7.8 3.7 4.8 7 4.8c2 0 3.8 1 5 2.8 1.2-1.8 3-2.8 5-2.8 3.3 0 5.5 3 4.3 6.3-1.7 4.6-9.3 9.2-9.3 9.2z|f', check: 'M4.5 12.8l5 5L19.5 7', info: 'M12 11v6M12 7.2v.1|c', link: 'M10 14a4.2 4.2 0 0 0 6 0l3-3a4.2 4.2 0 0 0-6-6l-1.2 1.2M14 10a4.2 4.2 0 0 0-6 0l-3 3a4.2 4.2 0 0 0 6 6l1.2-1.2', play: 'M7 4.8v14.4L19 12z|f', pin: 'M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z', down: 'M6 9.5l6 6 6-6', tr: 'M3.5 6h9M8 4v2c0 4-2 7-4.5 8.5M5.5 9.5c1 2.5 3 4 5.5 5M13 20l3.8-9h.4L21 20M14.3 17h5.4', eye: 'M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', clock: 'M12 7v5.2l3.3 2|c', globe: 'M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.400 5.600 12 3z|c', search: 'M10.700 17.500a6.800 6.800 0 1 0 0-13.600 6.800 6.800 0 0 0 0 13.600zM16 16l4.500 4.500', yt: 'M4.500 5.500h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM10 9v6l5-3z' };
+const ICP = { map: 'M9 4.5L3.5 6.8v13l5.5-2.3 6 2.3 5.5-2.3v-13L15 6.800zM9 4.5v13M15 6.800v13', spark: 'M12 3.500l2 5.500 5.500 2-5.500 2-2 5.500-2-5.500-5.500-2 5.500-2zM19 16.500l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z', sound: 'M4 9.500v5h3.500L12.500 19V5L7.500 9.500zM16 8.800a4.500 4.500 0 0 1 0 6.400M18.700 6a8.500 8.500 0 0 1 0 12', x: 'M6 6l12 12M18 6L6 18', heart: 'M12 20.3s-7.6-4.6-9.3-9.2C1.5 7.8 3.7 4.8 7 4.8c2 0 3.8 1 5 2.8 1.2-1.8 3-2.8 5-2.8 3.3 0 5.5 3 4.3 6.3-1.7 4.6-9.3 9.2-9.3 9.2z|f', check: 'M4.5 12.8l5 5L19.5 7', info: 'M12 11v6M12 7.2v.1|c', link: 'M10 14a4.2 4.2 0 0 0 6 0l3-3a4.2 4.2 0 0 0-6-6l-1.2 1.2M14 10a4.2 4.2 0 0 0-6 0l-3 3a4.2 4.2 0 0 0 6 6l1.2-1.2', play: 'M7 4.8v14.4L19 12z|f', pin: 'M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z', down: 'M6 9.5l6 6 6-6', tr: 'M3.5 6h9M8 4v2c0 4-2 7-4.5 8.5M5.5 9.5c1 2.5 3 4 5.5 5M13 20l3.8-9h.4L21 20M14.3 17h5.4', eye: 'M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', clock: 'M12 7v5.2l3.3 2|c', globe: 'M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.400 5.600 12 3z|c', search: 'M10.700 17.500a6.800 6.800 0 1 0 0-13.600 6.800 6.800 0 0 0 0 13.600zM16 16l4.500 4.500', yt: 'M4.500 5.500h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM10 9v6l5-3z' };
 function ic(n, sz = 17) { const [d, m] = ICP[n].split('|'); return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="${m === 'f' ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${m === 'c' ? '<circle cx="12" cy="12" r="9.200"/>' : ''}<path d="${d}"/></svg>`; }
 // 유튜브 마크(빨간 둥근 네모 + 흰 삼각형). inv = 빨간 바탕 위에 쓸 흰 네모 + 빨간 삼각형
 function ytMark(w = 24, inv) { return `<svg class="ytm" width="${w}" height="${Math.round(w * .7)}" viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5.500" fill="${inv ? '#fff' : '#f00'}"/><path d="M11.300 5.700v8.600L18.700 10z" fill="${inv ? '#f00' : '#fff'}"/></svg>`; }
@@ -1942,23 +1996,34 @@ function famLoad() {   // 가족 주소(?k=키를 16진수로)로 한 번 들어
 }
 famLoad();
 $('gkIn').value = GK.own(); $('gmIn').value = GM.get();
+const stgMsg = (m, t) => { m.textContent = t; m.dataset.k = t[0] === '✅' ? 'ok' : t[0] === '⚠' ? 'bad' : ''; };
+document.querySelectorAll('.stg [data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic, 21); });
+$('setClose').innerHTML = ic('x', 18);
+document.querySelectorAll('.keye').forEach(b => {
+  b.innerHTML = ic('eye', 19);
+  b.onclick = () => { const i = $(b.dataset.for), show = i.type === 'password'; i.type = show ? 'text' : 'password'; b.classList.toggle('on', show); b.setAttribute('aria-label', show ? '키 숨기기' : '키 보기'); };
+});
+[['gkIn', 'gkGo'], ['gmIn', 'gmGo']].forEach(([i, b]) => { $(i).addEventListener('keydown', e => { if (e.key === 'Enter') $(b).click(); }); });
+$('settings').addEventListener('click', e => { if (e.target === $('settings')) $('setClose').click(); });
 $('gmGo').onclick = async () => {
   const v = $('gmIn').value.trim(), m = $('gmMsg');
-  if (!v) { GM.set(''); GM.ko.clear(); m.textContent = '키를 지웠어요 · 가게 이름은 구글이 준 그대로'; return; }
-  m.textContent = '📡 확인 중…';
-  try { const ko = await gemKo(['Toritei', 'スターバックス 高松店'], v); GM.set(v); m.textContent = `✅ 돼요 (${GM.model.replace('models/', '')}) · 예: ${ko.join(' · ')}`; SFX.coin(); }
-  catch (e) { m.textContent = '⚠️ ' + e.message; }
+  if (!v) { GM.set(''); GM.ko.clear(); stgMsg(m, '키를 지웠어요 · 가게 이름은 구글이 준 그대로 보여요'); gUseLbl(); return; }
+  stgMsg(m, '확인하고 있어요…');
+  try { const ko = await gemKo(['Toritei', 'スターバックス 高松店'], v); GM.set(v); stgMsg(m, `✅ 연결됐어요 (${GM.model.replace('models/', '')}) · 예: ${ko.join(' · ')}`); SFX.coin(); }
+  catch (e) { stgMsg(m, '⚠️ ' + e.message); }
+  gUseLbl();
 };
 $('gkGo').onclick = async () => {
   const v = $('gkIn').value.trim(), m = $('gkMsg');
-  if (!v) { GK.set(''); TILE.cache.clear(); m.textContent = '내 키를 지웠어요'; gUseLbl(); return; }
-  m.textContent = '📡 확인 중…';
+  if (!v) { GK.set(''); TILE.cache.clear(); stgMsg(m, '내 키를 지웠어요'); gUseLbl(); return; }
+  stgMsg(m, '확인하고 있어요…');
   try {
     await gPlaces('高松駅', 1, v); GK.set(v);
     let mapOk = true; try { await gSession(v, true); } catch (e) { mapOk = false; }
-    TILE.cache.clear(); m.textContent = '✅ 키가 돼요 · 🔍 장소 찾기 = 구글 검색' + (mapOk ? ' · 🗺️ 확대하면 구글 지도' : ' · (지도는 Map Tiles API를 켜면 구글 지도)'); SFX.coin();
+    TILE.cache.clear(); stgMsg(m, '✅ 연결됐어요 · 장소 검색' + (mapOk ? '과 구글 지도를 쓸 수 있어요' : '을 쓸 수 있어요 · 지도까지 쓰려면 Map Tiles API를 켜 주세요')); SFX.coin();
   }
-  catch (e) { m.textContent = '⚠️ ' + e.message + ' — 키에 Places API (New)를 켰는지, 웹사이트 제한에 wowhit.org가 있는지 봐 주세요'; }
+  catch (e) { stgMsg(m, '⚠️ ' + e.message + ' — 키에 Places API (New)를 켰는지, 웹사이트 제한에 wowhit.org가 있는지 봐 주세요'); }
+  gUseLbl();
 };
 let QRES = [];
 window.doFind = async () => {
@@ -2142,22 +2207,25 @@ $('goBtn').onclick = () => {
   else toast(`${S.party.length}명 출발 준비 완료`);
 };
 $('bParty').onclick = () => { draftN = S.party.length; draft = S.party.map(m => ({ ...m })); renderSetup(); $('setup').hidden = false; };
-const soundLbl = () => $('soundBtn').textContent = S.sound === false ? '🔇 소리 꺼짐' : '🔊 소리 켜짐';
+const setSw = (id, on) => $(id).setAttribute('aria-checked', on ? 'true' : 'false');
+const soundLbl = () => setSw('soundBtn', S.sound !== false);
 $('soundBtn').onclick = () => { S.sound = S.sound === false; save(); soundLbl(); if (S.sound) SFX.coin(); };
 $('bSet').onclick = () => { soundLbl(); gUseLbl(); $('settings').hidden = false; };
-$('gOnBtn').onclick = () => { S.gOn = S.gOn === false; save(); gUseLbl(); toast(S.gOn ? '🔵 구글 가게 찾기를 켰어요' : '구글 가게 찾기를 껐어요 — 구글을 안 불러요', 1600); };
+$('gOnBtn').onclick = () => { S.gOn = S.gOn === false; save(); gUseLbl(); toast(S.gOn ? '주변 장소 찾기를 켰어요' : '주변 장소 찾기를 껐어요 · 걸을 때 구글을 안 불러요', 1600); };
 $('gOverBtn').onclick = () => {
-  if (!S.gOver && !confirm(`무료 한도(가게 찾기 월 ${G_MON}번 · 자세히 월 ${G_DMON}번)를 넘어도 계속 쓸까요?\n넘는 만큼은 구글 요금이 나와요(가게 찾기 1,000번에 약 $32 · 자세히 1,000번에 약 $20 이상).\n구글 콘솔에 하루 상한을 걸어 두는 걸 권해요.`)) return;
+  if (!S.gOver && !confirm(`무료 한도(주변 장소 찾기 월 ${G_MON}번 · 자세히 월 ${G_DMON}번)를 넘어도 계속 쓸까요?\n넘는 만큼은 구글 요금이 나와요(주변 장소 찾기 1,000번에 약 $32 · 자세히 1,000번에 약 $20 이상).\n구글 콘솔에 하루 상한을 걸어 두는 걸 권해요.`)) return;
   S.gOver = !S.gOver; GP.capT = 0; save(); gUseLbl();
 };
-function gUseLbl() {   // 이 폰에서 센 오늘 사용량(구글 실제 사용량은 콘솔에서 — 진짜 상한은 콘솔 할당량)
-  const rd = k => { try { const o = JSON.parse(localStorage.getItem(k) || '{}'); return o.d === today() ? o.n || 0 : 0; } catch (e) { return 0; } };
-  const a = gUse('jjway-gcnt').n, b = gUse('jjway-gdcnt').n;
-  $('gUse').textContent = GK.get() ? `📊 이번 달(이 폰): 가게 찾기 ${a}/${G_MON} · 자세히 ${b}/${G_DMON} — 확실한 상한은 구글 콘솔 할당량에서` : '';
-  $('gOnBtn').textContent = `🔵 구글 가게 찾기: ${S.gOn === false ? '꺼짐' : '켜짐'}`;
-  $('gOverBtn').textContent = `⚠️ 무료 한도 넘어도 계속: ${S.gOver ? '켜짐(요금 발생)' : '꺼짐'}`;
+function gUseLbl() {   // 이 폰에서 센 이번 달 사용량(구글 실제 사용량은 콘솔에서 — 진짜 상한은 콘솔 할당량)
+  const mt = (nm, n, max) => { const r = Math.min(1, n / max); return `<div class="mt"><div>${nm}</div><span>${n.toLocaleString()} / ${max.toLocaleString()}</span><i><u class="${r >= .9 ? 'hi' : r >= .7 ? 'mid' : ''}" style="width:${(r * 100).toFixed(1)}%"></u></i></div>`; };
+  $('gUse').innerHTML = mt('주변 장소 찾기', gUse('jjway-gcnt').n, G_MON) + mt('자세히 보기', gUse('jjway-gdcnt').n, G_DMON) + '<div class="mtn">이번 달 · 이 폰 기준이에요. 확실한 상한은 구글 콘솔 할당량에서 걸 수 있어요.</div>';
+  setSw('gOnBtn', S.gOn !== false); setSw('gOverBtn', !!S.gOver);
   $('gBtns').hidden = !GK.get();
-  $('famNote').hidden = !(FAM.on && !GK.own());
+  const fam = FAM.on && !GK.own();
+  $('famNote').hidden = !fam;
+  const pill = (id, t, c) => { const el = $(id); el.textContent = t; el.className = 'pill' + (c ? ' ' + c : ''); };
+  if (GK.own()) pill('gkPill', '내 키', 'ok'); else if (fam) pill('gkPill', '가족 키', 'fam'); else pill('gkPill', '키 없음');
+  if (GM.get()) pill('gmPill', '켜짐', 'ok'); else pill('gmPill', '키 없음');
 }
 $('setClose').onclick = () => { $('settings').hidden = true; const k = P.sheetFor; if (k) { closeSheet(); P.closedFor = null; } };
 $('resetBtn').onclick = () => { if (confirm('가족 설정·여행 기록·위치를 모두 지우고 처음부터 할까요?')) { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); } };

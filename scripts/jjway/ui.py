@@ -213,7 +213,10 @@ def run(w, h, tag):
         swipe_down(pg); assert not pg.is_visible('#sheet')
         pg.click('#pip'); time.sleep(.2); assert pg.is_visible('#sheet')
         # 설정·새로고침
-        pg.click('#bSet'); time.sleep(.2); assert pg.is_visible('#settings') and not pg.locator('#settings h1', has_text='관심').count(); pg.click('#setClose')
+        pg.click('#bSet'); time.sleep(.2); assert pg.is_visible('#settings') and not pg.locator('#settings h1', has_text='관심').count()
+        s0 = pg.get_attribute('#soundBtn', 'aria-checked'); pg.click('#soundBtn'); assert pg.get_attribute('#soundBtn', 'aria-checked') != s0; pg.click('#soundBtn')
+        assert pg.evaluate("document.querySelector('.stgb').scrollWidth <= document.querySelector('.stgb').clientWidth"), '설정 창 가로 넘침'
+        pg.click('#setClose')
         pg.evaluate('save()'); pg.reload(); pg.wait_for_function('typeof AIR !== "undefined" && SPOT.length > 0'); time.sleep(.4)
         assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('S.party.length') == 4 and len(pg.evaluate('Object.keys(S.seen)')) >= 2
         assert pg.evaluate('FLAGS.length') == 2 and pg.evaluate('S.pts') >= 26, '새로고침 뒤 깃발·포인트 없음'

@@ -168,6 +168,9 @@ button,input,select{font-family:inherit;color:inherit}
 #cpick.k-yt{--pk:#fff0ef;background:#fff0ef;border-color:#d62828}#cpick.k-g{--pk:#eef4ff;background:#eef4ff;border-color:#2f6fd0}#cpick.k-flag{--pk:#fff8e8;background:#fff8e8}#cpick.k-yt small,#cpick.k-g small{color:#7a8794}
 #cpick{position:fixed;z-index:60;left:50%;transform:translateX(-50%);background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:8px;box-shadow:0 4px 0 rgba(44,43,53,.3);display:flex;flex-direction:column;gap:6px;width:min(86vw,320px);font-family:system-ui,sans-serif}#cpick button{height:38px;border-radius:10px;border:2px solid var(--ink);background:#fff;font:15px system-ui,sans-serif;text-align:left;padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cpick small{color:#7a8794;padding:0 2px}.ct b small{font:12px system-ui,sans-serif;color:#7a8794}
 .gph{display:flex;gap:6px;overflow-x:auto;margin:6px 0 2px}.gph img{height:120px;border-radius:10px;flex:none;background:#eee}.gpa{font-size:11px;color:#7a8794;margin-bottom:6px}.gmore{width:100%;cursor:pointer}
+.mph{display:flex;gap:6px;overflow-x:auto;margin:6px 0 4px;touch-action:pan-x}.mph img{width:84px;height:84px;object-fit:cover;border-radius:10px;flex:none;cursor:pointer;background:#eee}.mpa{flex:none;width:84px;height:84px;border:2px dashed #c9a95c;border-radius:10px;background:#fffdf5;color:#7a6220;font:12px Jua,sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}.mpa b{font-size:22px;line-height:1;font-weight:400}
+#phv{position:fixed;inset:0;z-index:1200;background:rgba(10,10,14,.94);display:flex;align-items:center;justify-content:center}#phv[hidden]{display:none}#phvImg{max-width:100%;max-height:100%;object-fit:contain}#phv button{cursor:pointer;border:0;color:#fff;background:rgba(255,255,255,.16);font:16px Jua,sans-serif}#phv button[hidden]{display:none}#phvX{position:absolute;top:calc(10px + env(safe-area-inset-top));right:10px;width:42px;height:42px;border-radius:50%;font-size:18px!important}#phvPrev,#phvNext{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border-radius:12px;font-size:30px!important}#phvPrev{left:8px}#phvNext{right:8px}#phvBar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;font-size:14px}#phvDel{padding:9px 13px;border-radius:10px;flex:none}
+.bkbs{display:flex;gap:8px;margin-top:10px}.bkbs button{flex:1;min-width:0;height:44px;border:2px solid var(--ink);border-radius:11px;background:#fff;color:var(--ink);font:16px Jua,sans-serif;cursor:pointer}.bkbs #bkOut{background:var(--pri);color:#fff}
 .grv{border-top:1px solid #e6e1d6;padding:7px 0;font-size:13px}.grv b{font-size:12px}.grv p{margin:3px 0 0;color:#3d3c48;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .ct .cdt{flex:none;height:32px;padding:0 12px;border-radius:999px;border:2px solid var(--ink);background:#fff;font:14px Jua,sans-serif;cursor:pointer;box-shadow:0 2px 0 rgba(44,43,53,.25)}.ct .cdt:active{transform:translateY(2px);box-shadow:none}
 .cbtns button:active{transform:translateY(2px);box-shadow:none}
@@ -214,6 +217,9 @@ button,input,select{font-family:inherit;color:inherit}
 <div id="pipWrap"><canvas id="pip"></canvas><div id="pipTxt" hidden></div></div>
 <div id="zoom"><button id="bYt" aria-label="유튜브·쇼츠 영상" hidden></button><button id="bFlag" aria-label="장소 찾기" hidden>🔍</button><div id="zbar"></div></div>
 <div id="sheet" hidden></div>
+<input id="phIn" type="file" accept="image/*" multiple hidden>
+<input id="bkFile" type="file" accept=".json,application/json" hidden>
+<div id="phv" hidden><img id="phvImg" alt="내 사진"><button id="phvX" aria-label="닫기">✕</button><button id="phvPrev" aria-label="이전 사진">‹</button><button id="phvNext" aria-label="다음 사진">›</button><div id="phvBar"><span id="phvCap"></span><button id="phvDel">🗑 지우기</button></div></div>
 
 <div id="peek" hidden><button id="peekBtn"></button><div id="card" hidden></div></div>
 <div id="toast"></div>
@@ -269,7 +275,13 @@ button,input,select{font-family:inherit;color:inherit}
       <section class="stgc">
         <button class="stgr first" id="soundBtn" role="switch"><span class="stgi" data-ic="sound" style="--c:#e0812c"></span><span><b>소리</b><small>뾰로롱·동전·이착륙 소리</small></span><i class="tg"></i></button>
       </section>
-      <button class="stgdel" id="resetBtn"><b>처음부터 다시 하기</b><small>가족 설정·여행 기록·위치를 모두 지워요</small></button>
+      <section class="stgc">
+        <div class="stgt"><span class="stgi" data-ic="down" style="--c:#3fa66b"></span><div class="stgn"><b>내 기록 백업</b><small>마커·내 사진·여행 기록을 파일 하나로</small></div></div>
+        <div class="bkbs"><button id="bkOut">내보내기</button><button id="bkIn">가져오기</button></div>
+        <div id="bkMsg" class="stgm"></div>
+        <div class="stgf"><span>기록은 이 브라우저에만 있어요. 브라우저를 바꾸거나 데이터를 지우기 전에 내보내 두세요. API 키는 파일에 안 들어가요.</span></div>
+      </section>
+      <button class="stgdel" id="resetBtn"><b>처음부터 다시 하기</b><small>가족 설정·여행 기록·내 사진·위치를 모두 지워요</small></button>
     </div>
   </div>
 </div>
@@ -1629,7 +1641,7 @@ function gToFlag(p, st) {   // 구글 가게 → 내 깃발(이름·위치는 �
 // 예전엔 카드 ⓘ만 눌러도 마커로 저장됐음 → 그렇게 생겨 손댄 적 없는 빈 마커를 한 번만 물어보고 정리(만든 뒤 고치거나 ♥ ✔를 누른 곳은 updated가 달라 안 건드림)
 function askEmptyFlags() {
   if (S.emptyCk) return;
-  const list = S.flags.filter(f => f.gid && f.autoW && !f.status && !f.memo && !f.link && !f.star && f.updated === f.created);
+  const list = S.flags.filter(f => f.gid && f.autoW && !f.status && !f.memo && !f.link && !f.star && f.updated === f.created && !phList(f.id).length);
   if (!list.length) { S.emptyCk = 1; save(); return; }
   setTimeout(() => {
     const names = list.slice(0, 12).map(f => '· ' + f.name).join('\n') + (list.length > 12 ? `\n… 외 ${list.length - 12}곳` : '');
@@ -1886,6 +1898,7 @@ window.saveFlag = () => {
 };
 window.deleteFlag = id => {
   if (!confirm('이 마커를 삭제할까요?')) return;
+  phRemoveFlags([id]);
   S.flags = S.flags.filter(x => x.id !== id); const i = FLAGS.findIndex(r => r.f.id === id), rt = FLAGS[i];
   if (rt) { burst(rt.x, rt.y, 14, ['#bbb', '#888']); FLAGS.splice(i, 1); }
   FORM = null; save(); closeSheet(); toast('마커를 삭제했어요');
@@ -1897,6 +1910,7 @@ function sheetFlag(rt) {   // 마커 보기 창은 이것 하나: 내 기록이 
   const head = `<h2 data-lp="names" data-names="${esc(JSON.stringify(mm ? [mm[1], mm[2]] : [f.name]))}">${c[0]} ${esc(f.name)}</h2><button class="cbtn" onclick="editFlag('${f.id}')">✏️ 고치기</button>`;
   let h = `<div class="mine"><div class="sub">내 기록 · ${c[1]}${f.star ? ' · <span class="mstar">' + '★'.repeat(f.star) + '</span>' : ''} · ${new Date(f.created).toLocaleDateString('ko-KR')}</div>`;
   h += f.memo ? `<div class="intro">${esc(f.memo)}</div>` : `<div class="sub mnone">메모 없음 · ✏️ 고치기에서 적을 수 있어요</div>`;
+  h += phStrip(f);
   if (f.link) h += `<div class="sub"><a href="${esc(/^https?:\/\//.test(f.link) ? f.link : 'https://' + f.link)}" target="_blank" rel="noopener">🔗 링크 열기</a></div>`;
   h += `<div class="cbtns"><button class="wi${f.status === 'want' ? ' on' : ''}" onclick="setFlagSt('${f.id}','wish')">💭 가고 싶어요</button><button class="ok${f.status === 'been' ? ' on' : ''}" onclick="setFlagSt('${f.id}','been')">✔ 다녀왔어요</button></div></div>`;
   h += goBox(rt.x, rt.y, 1);
@@ -2172,7 +2186,7 @@ function renderMedals() {
       const list = S.flags.filter(f => f.cat === k).sort((a, b) => b.created - a.created); if (!list.length) continue;
       const been = list.filter(f => f.status === 'been').length;
       h += `<div class="mg">${c[0]} ${c[1]}<small>${list.length}곳 · 다녀옴 ${been}</small></div>`;
-      h += list.map(f => `<div class="mr ${f.status === 'been' ? 'ok' : ''}" data-flag="${f.id}"><span class="ic">${f.status === 'been' ? '✔' : f.status === 'want' ? '💭' : '📍'}</span><b>${esc(f.name)}</b><i>${f.star ? '★'.repeat(f.star) + ' · ' : ''}${dstr(f.created)}</i></div>`).join('');
+      h += list.map(f => `<div class="mr ${f.status === 'been' ? 'ok' : ''}" data-flag="${f.id}"><span class="ic">${f.status === 'been' ? '✔' : f.status === 'want' ? '💭' : '📍'}</span><b>${esc(f.name)}</b>${phList(f.id).length ? `<small class="mpn">📷${phList(f.id).length}</small>` : ''}<i>${f.star ? '★'.repeat(f.star) + ' · ' : ''}${dstr(f.created)}</i></div>`).join('');
     }
   }
   $('mList').innerHTML = h;
@@ -2181,12 +2195,12 @@ function renderMedals() {
 $('mResetTab').onclick = () => {
   const nm = { spot: '명소 기록(다녀왔어요·가고 싶어요)', air: '공항 착륙 기록', flag: '내 마커' }[MTAB];
   if (!confirm(`${nm}을(를) 모두 지울까요? 되돌릴 수 없어요. (포인트는 그대로)`)) return;
-  if (MTAB === 'spot') { S.seen = {}; S.wish = {}; S.lock = {}; } else if (MTAB === 'air') S.stamps = {}; else { S.flags = []; FLAGS.length = 0; }
+  if (MTAB === 'spot') { S.seen = {}; S.wish = {}; S.lock = {}; } else if (MTAB === 'air') S.stamps = {}; else { S.flags = []; FLAGS.length = 0; phClearAll(); }
   save(); closeSheet(); renderMedals(); toast(`${nm}을(를) 지웠어요`);
 };
 $('mResetAll').onclick = () => {
   if (!confirm('명소 기록, 공항 착륙, 내 마커, 포인트를 모두 처음으로 돌릴까요? 되돌릴 수 없어요.\n(가족 설정·지금 위치는 그대로)')) return;
-  S.seen = {}; S.wish = {}; S.paid = {}; S.lock = {}; S.stamps = {}; S.flags = []; FLAGS.length = 0; S.pts = 0; $('ptsN').textContent = 0;
+  S.seen = {}; S.wish = {}; S.paid = {}; S.lock = {}; S.stamps = {}; S.flags = []; FLAGS.length = 0; phClearAll(); S.pts = 0; $('ptsN').textContent = 0;
   save(); closeSheet(); renderMedals(); toast('기록을 모두 처음으로 돌렸어요');
 };
 $('pts').onclick = () => { MTAB = 'spot'; renderMedals(); $('medals').hidden = false; };
@@ -2254,7 +2268,7 @@ function gUseLbl() {   // 이 폰에서 센 이번 달 사용량(구글 실제 �
   if (GM.get()) pill('gmPill', '켜짐', 'ok'); else pill('gmPill', '키 없음');
 }
 $('setClose').onclick = () => { $('settings').hidden = true; const k = P.sheetFor; if (k) { closeSheet(); P.closedFor = null; } };
-$('resetBtn').onclick = () => { if (confirm('가족 설정·여행 기록·위치를 모두 지우고 처음부터 할까요?')) { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); } };
+$('resetBtn').onclick = async () => { if (confirm('가족 설정·여행 기록·내 사진·위치를 모두 지우고 처음부터 할까요?')) { try { localStorage.removeItem(KEY); } catch (e) {} await phClearAll(); location.reload(); } };
 $('bHome').onclick = () => location.href = '/jjway';
 // 창 위쪽(손잡이·제목 줄)을 아래로 쓸어내리면 닫힘
 (() => {
@@ -2284,8 +2298,152 @@ function frame(ts) {
   if ($('setup').hidden && $('settings').hidden && $('medals').hidden) step(dt); else { P.vx = P.vy = 0; }
   draw(t); requestAnimationFrame(frame);
 }
+/* ---------- 📷 내 마커 사진: 이 브라우저 안(IndexedDB)에만, 줄여서 저장(원본은 갤러리에 그대로) ---------- */
+const PH_MAX = 5, PH_SIDE = 1600, PH = { db: null, ok: false, by: new Map(), for: null };
+const phList = id => PH.by.get(id) || [];
+const phUrl = r => r.url || (r.url = URL.createObjectURL(r.blob));
+const phTx = (mode, fn) => new Promise((ok, no) => { const t = PH.db.transaction('photos', mode), q = fn(t.objectStore('photos')); t.oncomplete = () => ok(q && q.result); t.onerror = t.onabort = () => no(t.error); });
+function phIndex(r) { const a = PH.by.get(r.flag) || []; a.push(r); a.sort((x, y) => x.added - y.added); PH.by.set(r.flag, a); }
+async function phOpen() {
+  try {
+    PH.db = await new Promise((ok, no) => { const q = indexedDB.open('jjway-photos', 1); q.onupgradeneeded = () => q.result.createObjectStore('photos', { keyPath: 'id' }); q.onsuccess = () => ok(q.result); q.onerror = () => no(q.error); });
+    (await phTx('readonly', s => s.getAll())).forEach(phIndex);
+    PH.ok = true;
+  } catch (e) { PH.ok = false; }
+}
+// 찍은 날: 사진을 줄이면 사진 정보가 사라지니 먼저 읽어 둠(위치는 안드로이드 웹에선 지워져서 안 읽음)
+function phTaken(buf) {
+  try {
+    const b = new Uint8Array(buf); let t = -1;
+    for (let i = 0; i + 10 < b.length && i < 2e6; i++) if (b[i] === 0x45 && b[i + 1] === 0x78 && b[i + 2] === 0x69 && b[i + 3] === 0x66 && !b[i + 4] && !b[i + 5]) { t = i + 6; break; }
+    if (t < 0) return 0;
+    const dv = new DataView(buf, t), le = b[t] === 0x49, u16 = o => dv.getUint16(o, le), u32 = o => dv.getUint32(o, le);
+    const tag = (off, want) => { for (let i = 0, n = u16(off); i < n; i++) { const e = off + 2 + i * 12; if (u16(e) === want) return e; } return 0; };
+    const ex = tag(u32(4), 0x8769); if (!ex) return 0;
+    const d = tag(u32(ex + 8), 0x9003); if (!d) return 0;
+    let s = ''; for (let i = 0, at = u32(d + 8); i < 19; i++) s += String.fromCharCode(dv.getUint8(at + i));
+    const m = s.match(/^(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d)/); if (!m) return 0;
+    const v = new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime();
+    return isFinite(v) ? v : 0;
+  } catch (e) { return 0; }
+}
+async function phShrink(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const im = new Image(); im.src = url; await im.decode();   // 그림 요소로 읽어야 사진의 회전 정보가 적용됨
+    const k = Math.min(1, PH_SIDE / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas');
+    c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
+    c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+    const enc = q => new Promise((ok, no) => c.toBlob(b => b ? ok(b) : no(new Error('blob')), 'image/jpeg', q));
+    let blob = await enc(.8); if (blob.size > 600 * 1024) blob = await enc(.62);
+    return { blob, w: c.width, h: c.height };
+  } finally { URL.revokeObjectURL(url); }
+}
+window.phPick = id => { if (!PH.ok) return toast('이 브라우저에선 사진을 저장할 수 없어요'); if (phList(id).length >= PH_MAX) return toast(`사진은 마커마다 ${PH_MAX}장까지예요`); PH.for = id; $('phIn').click(); };
+$('phIn').onchange = async e => {
+  const files = [...e.target.files], id = PH.for, rt = FLAGS.find(r => r.f.id === id); e.target.value = '';
+  if (!files.length || !rt) return;
+  const room = PH_MAX - phList(id).length, todo = files.slice(0, room); let done = 0, fail = 0, full = false;
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  toast(`📷 사진 ${todo.length}장 넣는 중…`, 1500);
+  for (const f of todo) {
+    try {
+      const taken = phTaken(await f.arrayBuffer()), s = await phShrink(f), r = { id: uid(), flag: id, blob: s.blob, w: s.w, h: s.h, taken, added: Date.now() + done };
+      await phTx('readwrite', st => st.put(r)); phIndex(r); done++;
+    } catch (err) { if (err && err.name === 'QuotaExceededError') { full = true; break; } fail++; }
+  }
+  rt.f.updated = Date.now(); save();
+  if (P.sheetFor === 'flag:' + id) sheetFlag(rt);
+  if (full) toast('폰 저장 공간이 부족해서 다 넣지 못했어요', 3000);
+  else if (fail) toast(`${fail}장은 읽지 못했어요(이 브라우저가 못 여는 형식일 수 있어요)`, 3000);
+  else if (files.length > room) toast(`${done}장 넣었어요 · 마커마다 ${PH_MAX}장까지예요`, 2600);
+  else toast(`📷 ${done}장 넣었어요`, 1400);
+};
+function phForgetMem(r) { if (r.url) URL.revokeObjectURL(r.url); }
+async function phRemoveFlags(ids) {   // 마커를 지울 때 그 사진도
+  if (!PH.ok) return;
+  for (const id of ids) { const a = phList(id); if (!a.length) continue; try { await phTx('readwrite', st => { let q; a.forEach(r => { q = st.delete(r.id); }); return q; }); a.forEach(phForgetMem); PH.by.delete(id); } catch (e) {} }
+}
+async function phClearAll() {
+  if (!PH.ok) return;
+  try { await phTx('readwrite', st => st.clear()); PH.by.forEach(a => a.forEach(phForgetMem)); PH.by.clear(); } catch (e) {}
+}
+let PHV = null;
+function phShow() {
+  const a = phList(PHV.flag); if (!a.length) { $('phv').hidden = true; PHV = null; return; }
+  PHV.i = Math.max(0, Math.min(a.length - 1, PHV.i)); const r = a[PHV.i];
+  $('phvImg').src = phUrl(r);
+  $('phvCap').textContent = `${PHV.i + 1} / ${a.length}` + (r.taken ? ` · ${new Date(r.taken).toLocaleDateString('ko-KR')} 찍음` : '');
+  $('phvPrev').hidden = PHV.i === 0; $('phvNext').hidden = PHV.i === a.length - 1;
+}
+window.phView = (flag, i) => { PHV = { flag, i }; $('phv').hidden = false; phShow(); };
+$('phvX').onclick = () => { $('phv').hidden = true; PHV = null; };
+$('phvPrev').onclick = () => { PHV.i--; phShow(); };
+$('phvNext').onclick = () => { PHV.i++; phShow(); };
+$('phvDel').onclick = async () => {
+  if (!PHV || !confirm('이 사진을 지울까요? (갤러리 원본은 그대로예요)')) return;
+  const a = phList(PHV.flag), r = a[PHV.i], flag = PHV.flag;
+  try { await phTx('readwrite', st => st.delete(r.id)); } catch (e) { return toast('지우지 못했어요'); }
+  a.splice(PHV.i, 1); phForgetMem(r); if (!a.length) PH.by.delete(flag);
+  phShow();
+  const rt = FLAGS.find(x => x.f.id === flag); if (rt) { rt.f.updated = Date.now(); save(); if (P.sheetFor === 'flag:' + flag) sheetFlag(rt); }
+};
+function phStrip(f) {   // 내 기록 칸 안 사진 줄
+  if (!PH.ok) return `<div class="sub mnone">이 브라우저에선 사진을 저장할 수 없어요</div>`;
+  const a = phList(f.id);
+  return `<div class="mph">${a.map((r, i) => `<img alt="내 사진 ${i + 1}" src="${phUrl(r)}" onclick="phView('${f.id}',${i})">`).join('')}${a.length < PH_MAX ? `<button class="mpa" onclick="phPick('${f.id}')"><b>＋</b>사진 ${a.length}/${PH_MAX}</button>` : ''}</div>`;
+}
+/* ---------- 💾 백업: 마커·사진·기록을 파일 하나로(API 키·가족 설정은 안 넣음), 가져오면 합침 ---------- */
+const BK_OBJ = ['seen', 'wish', 'paid', 'lock', 'stamps'];
+const blob2url = b => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => no(r.error); r.readAsDataURL(b); });
+$('bkOut').onclick = async () => {
+  const m = $('bkMsg'); stgMsg(m, '만드는 중…', 'info');
+  try {
+    const state = { flags: S.flags, pts: S.pts || 0 }; BK_OBJ.forEach(k => { state[k] = S[k] || {}; });
+    const parts = [`{"jjway":1,"at":${Date.now()},"state":${JSON.stringify(state)},"photos":[`]; let n = 0;
+    for (const a of PH.by.values()) for (const r of a) {
+      parts.push((n++ ? ',' : '') + JSON.stringify({ id: r.id, flag: r.flag, w: r.w, h: r.h, taken: r.taken, added: r.added, data: await blob2url(r.blob) }));
+    }
+    parts.push(']}');
+    const blob = new Blob(parts, { type: 'application/json' }), url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = `jjway-backup-${today()}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+    stgMsg(m, `✅ 마커 ${S.flags.length}개 · 사진 ${n}장 (${(blob.size / 1048576).toFixed(1)}MB) 파일을 내려받았어요`, 'ok');
+  } catch (e) { stgMsg(m, '백업 파일을 만들지 못했어요', 'err'); }
+};
+$('bkIn').onclick = () => $('bkFile').click();
+const BK_ID = /^[\w-]{1,80}$/;
+$('bkFile').onchange = async e => {
+  const file = e.target.files[0], m = $('bkMsg'); e.target.value = ''; if (!file) return;
+  let d; try { d = JSON.parse(await file.text()); } catch (err) { d = null; }
+  if (!d || d.jjway !== 1 || !d.state || !Array.isArray(d.state.flags) || !Array.isArray(d.photos)) return stgMsg(m, 'jjWay 백업 파일이 아니에요', 'err');
+  if (!confirm(`백업에서 마커 ${d.state.flags.length}개 · 사진 ${d.photos.length}장을 가져와 지금 기록에 합칠까요?\n같은 마커는 더 최근에 고친 쪽을 남겨요.`)) return;
+  stgMsg(m, '가져오는 중…', 'info');
+  let added = 0, changed = 0, skipped = 0, pAdd = 0, pBad = 0;
+  for (const x of d.state.flags) {   // 바깥에서 온 파일이라 칸마다 확인(id·장소 ID는 창 버튼 코드에 들어감)
+    if (!x || !BK_ID.test(x.id) || typeof x.name !== 'string' || !x.name || !isFinite(x.lat) || !isFinite(x.lon) || Math.abs(x.lat) > 90 || Math.abs(x.lon) > 180 || (x.gid && !BK_ID.test(x.gid))) { skipped++; continue; }
+    const f = { id: x.id, lat: +x.lat, lon: +x.lon, ...(x.gid ? { gid: x.gid } : {}), name: x.name.slice(0, 120), memo: String(x.memo || '').slice(0, 400), link: String(x.link || '').slice(0, 500), cat: Object.hasOwn(CATS, x.cat) ? x.cat : 'etc', star: Math.max(0, Math.min(5, +x.star || 0)), status: ['want', 'been'].includes(x.status) ? x.status : '', vis: 'private', created: +x.created || Date.now(), updated: +x.updated || Date.now(), ...(x.autoW ? { autoW: 1 } : {}), ...(x.lock ? { lock: 1 } : {}), ...(x.paid ? { paid: 1 } : {}) };
+    const cur = S.flags.find(y => y.id === f.id);
+    if (!cur) { S.flags.push(f); FLAGS.push(flagRT(f)); added++; }
+    else if (f.updated > (cur.updated || 0)) { const rt = FLAGS.find(r => r.f === cur); Object.assign(cur, f); if (rt) { const p = proj(cur.lon, cur.lat); rt.x = p.x; rt.y = p.y; } changed++; }
+  }
+  for (const k of BK_OBJ) { const o = d.state[k]; if (o && typeof o === 'object') for (const c of Object.keys(o)) if (c !== '__proto__' && !(c in S[k])) S[k][c] = o[c]; }
+  S.pts = Math.max(S.pts || 0, +d.state.pts || 0); $('ptsN').textContent = S.pts;
+  if (PH.ok) for (const p of d.photos) {
+    try {
+      if (!p || !BK_ID.test(p.id) || !S.flags.some(f => f.id === p.flag) || typeof p.data !== 'string' || !p.data.startsWith('data:image/jpeg;base64,')) { pBad++; continue; }
+      const a = phList(p.flag); if (a.some(r => r.id === p.id)) continue;
+      if (a.length >= PH_MAX) { pBad++; continue; }
+      const bin = atob(p.data.slice(23)), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      const r = { id: p.id, flag: p.flag, blob: new Blob([u], { type: 'image/jpeg' }), w: +p.w || 0, h: +p.h || 0, taken: +p.taken || 0, added: +p.added || Date.now() };
+      await phTx('readwrite', st => st.put(r)); phIndex(r); pAdd++;
+    } catch (err) { pBad++; }
+  } else pBad = d.photos.length;
+  save(); CARD_SIG = '';
+  stgMsg(m, `✅ 새 마커 ${added}개 · 바뀐 마커 ${changed}개 · 사진 ${pAdd}장을 가져왔어요` + (skipped || pBad ? ` · 못 가져옴: 마커 ${skipped}개, 사진 ${pBad}장` : ''), skipped || pBad ? 'info' : 'ok');
+};
 (async () => {
   resize();
+  await phOpen();
   const [m, r, pl] = await Promise.all(['map.json', 'routes.json', 'places.json'].map(f => fetch(f).then(x => x.json())));
   M = m; R = r; PL = pl;
   for (const k in M.land) LAND[k] = M.land[k].map(a => decode(a, M.proj.q));

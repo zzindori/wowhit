@@ -167,7 +167,7 @@ button,input,select{font-family:inherit;color:inherit}
 #cpick .n1{font:19px Jua,sans-serif;word-break:break-all}#cpick .n2{font:14px system-ui,sans-serif;color:#5d6b7a;word-break:break-all}
 #cpick.k-yt{--pk:#fff0ef;background:#fff0ef;border-color:#d62828}#cpick.k-g{--pk:#eef4ff;background:#eef4ff;border-color:#2f6fd0}#cpick.k-flag{--pk:#fff8e8;background:#fff8e8}#cpick.k-yt small,#cpick.k-g small{color:#7a8794}
 #cpick{position:fixed;z-index:60;left:50%;transform:translateX(-50%);background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:8px;box-shadow:0 4px 0 rgba(44,43,53,.3);display:flex;flex-direction:column;gap:6px;width:min(86vw,320px);font-family:system-ui,sans-serif}#cpick button{height:38px;border-radius:10px;border:2px solid var(--ink);background:#fff;font:15px system-ui,sans-serif;text-align:left;padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cpick small{color:#7a8794;padding:0 2px}.ct b small{font:12px system-ui,sans-serif;color:#7a8794}
-.gph{display:flex;gap:6px;overflow-x:auto;margin:6px 0 2px}.gph img{height:120px;border-radius:10px;flex:none;background:#eee}.gpa{font-size:11px;color:#7a8794;margin-bottom:6px}
+.gph{display:flex;gap:6px;overflow-x:auto;margin:6px 0 2px}.gph img{height:120px;border-radius:10px;flex:none;background:#eee}.gpa{font-size:11px;color:#7a8794;margin-bottom:6px}.gmore{width:100%;cursor:pointer}
 .grv{border-top:1px solid #e6e1d6;padding:7px 0;font-size:13px}.grv b{font-size:12px}.grv p{margin:3px 0 0;color:#3d3c48;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .ct .cdt{flex:none;height:32px;padding:0 12px;border-radius:999px;border:2px solid var(--ink);background:#fff;font:14px Jua,sans-serif;cursor:pointer;box-shadow:0 2px 0 rgba(44,43,53,.25)}.ct .cdt:active{transform:translateY(2px);box-shadow:none}
 .cbtns button:active{transform:translateY(2px);box-shadow:none}
@@ -1632,7 +1632,9 @@ function gMarks(g, cam, cx, cy) {   // 닿아 있는 구글 가게만 파란 고
   g.strokeStyle = `rgba(47,111,208,${.5 + .4 * k})`; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 13 + 3 * k, 0, 6.29); g.stroke();
 }
 const GD = new Map(), G_DMON = 900;   // 자세히: 켜 둔 동안 같은 가게는 한 번만 받음(메모리에만 — 약관상 오래 저장 안 함) · 한 달 900번(무료 1,000번에서 여유), 넘으면 구글 지도 링크(무료)
-const G_PHOTOS = 3;   // 자세히 사진 장수(장마다 요금 — 월 1,000장 무료, 많다 싶으면 1로). 더 보기는 구글 지도에서
+const G_PHOTOS = 3, G_PMON = 900;   // 자세히 사진 장수(장마다 요금 — 월 1,000장 무료, 많다 싶으면 1로) · 한 달 900장(넘으면 사진만 안 보임). 더 보기는 구글 지도에서
+const G_PSEEN = new Set();   // 켜 둔 동안 같은 사진은 한 번만 셈. 화면에 불러온(또는 실패한) 사진만 — 옆으로 안 밀어 안 불린 사진은 안 셈
+window.gPhSeen = el => { const n = el.dataset.ph; if (!G_PSEEN.has(n)) { G_PSEEN.add(n); gUseAdd('jjway-gpcnt', gUse('jjway-gpcnt')); } };
 const PRICE = { PRICE_LEVEL_FREE: '무료', PRICE_LEVEL_INEXPENSIVE: '¥', PRICE_LEVEL_MODERATE: '¥¥', PRICE_LEVEL_EXPENSIVE: '¥¥¥', PRICE_LEVEL_VERY_EXPENSIVE: '¥¥¥¥' };
 async function gDetail(p, o = {}) {
   if (!o.key) { const rt = FLAGS.find(r => r.f.gid === p.id); if (rt) return sheetFlag(rt); }   // 내 마커면 어디서 열어도 같은 창
@@ -1662,9 +1664,10 @@ async function gDetail(p, o = {}) {
       if (P.sheetFor !== SK) return;
       const oh = d.currentOpeningHours || d.regularOpeningHours, wk = (d.regularOpeningHours || oh || {}).weekdayDescriptions || [], di = (new Date().getDay() + 6) % 7;
       let h = o.top || '';
-      const ph = (d.photos || []).slice(0, G_PHOTOS);
-      if (ph.length) {
-        h += `<div class="gph">${ph.map(x => `<img loading="lazy" alt="" src="https://places.googleapis.com/v1/${x.name}/media?maxHeightPx=360&key=${encodeURIComponent(key)}">`).join('')}</div>`;
+      const ph = (d.photos || []).slice(0, G_PHOTOS), phOver = ph.length && gUse('jjway-gpcnt').n >= G_PMON && !S.gOver && !ph.every(x => G_PSEEN.has(x.name));
+      if (phOver) h += `<div class="gpa">🔵 이번 달 구글 사진 ${G_PMON}장을 다 봤어요(무료 한도 지키기) · 사진은 아래 구글 지도에서</div>`;
+      else if (ph.length) {
+        h += `<div class="gph">${ph.map(x => `<img loading="lazy" alt="" data-ph="${esc(x.name)}" onload="gPhSeen(this)" onerror="gPhSeen(this)" src="https://places.googleapis.com/v1/${x.name}/media?maxHeightPx=360&key=${encodeURIComponent(key)}">`).join('')}</div>`;
         const au = [...new Set(ph.flatMap(x => (x.authorAttributions || []).map(a => a.displayName)).filter(Boolean))];
         if (au.length) h += `<div class="gpa">📷 ${au.map(esc).join(', ')} · 사진 더 보기는 아래 구글 지도에서</div>`;
       }
@@ -1682,7 +1685,7 @@ async function gDetail(p, o = {}) {
         const t = rv.text || rv.originalText; if (!t || !t.text) continue;
         h += `<div class="grv"><b>${'★'.repeat(Math.round(rv.rating || 0))} ${esc(rv.authorAttribution ? rv.authorAttribution.displayName : '')}</b> <small>${esc(rv.relativePublishTimeDescription || '')}</small><p>${esc(t.text)}</p></div>`;
       }
-      h += `<div class="note">정보·사진·리뷰: Google Maps · 열 때마다 새로 받아요 · <a href="${esc(d.googleMapsUri || `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}&query_place_id=${p.id}`)}" target="_blank" rel="noopener">🧭 구글 지도에서 열기(사진 더 보기·길 찾기)</a></div>`;
+      h += `<div class="note">정보·사진·리뷰: Google Maps · <a href="${esc(d.googleMapsUri || `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}&query_place_id=${p.id}`)}" target="_blank" rel="noopener">🧭 구글 지도에서 열기(사진 더 보기·길 찾기)</a></div>`;
       openSheet(head(), h, SK, SKIND);
     };
     render(); G_RENDER = render;
@@ -1872,6 +1875,7 @@ window.deleteFlag = id => {
   FORM = null; save(); closeSheet(); toast('마커를 삭제했어요');
 };
 window.editFlag = id => openFlagForm(FLAGS.find(r => r.f.id === id));
+let FLAG_MORE = null;
 function sheetFlag(rt) {   // 마커 보기 창은 이것 하나: 내 기록이 맨 위(구글 정보를 못 받아도 보임), 그 아래 구글 정보
   const f = rt.f, c = CATS[f.cat], mm = f.name.match(/^(.*\S)\s+\((.+)\)$/);
   const head = `<h2 data-lp="names" data-names="${esc(JSON.stringify(mm ? [mm[1], mm[2]] : [f.name]))}">${c[0]} ${esc(f.name)}</h2><button class="cbtn" onclick="editFlag('${f.id}')">✏️ 고치기</button>`;
@@ -1880,7 +1884,13 @@ function sheetFlag(rt) {   // 마커 보기 창은 이것 하나: 내 기록이 
   if (f.link) h += `<div class="sub"><a href="${esc(/^https?:\/\//.test(f.link) ? f.link : 'https://' + f.link)}" target="_blank" rel="noopener">🔗 링크 열기</a></div>`;
   h += `<div class="cbtns"><button class="wi${f.status === 'want' ? ' on' : ''}" onclick="setFlagSt('${f.id}','wish')">💭 가고 싶어요</button><button class="ok${f.status === 'been' ? ' on' : ''}" onclick="setFlagSt('${f.id}','been')">✔ 다녀왔어요</button></div></div>`;
   h += goBox(rt.x, rt.y, 1);
-  if (f.gid && GK.get()) { gDetail({ id: f.gid, name: f.name, lat: f.lat, lon: f.lon }, { head, top: h, key: 'flag:' + f.id, kind: 'flag', noWish: 1 }); return; }
+  // 내 기록을 보는 데는 구글을 안 부름: 버튼을 눌렀을 때만, 켜 둔 동안 받아 둔 곳이면 호출 없이 바로
+  if (f.gid && GK.get()) {
+    const more = () => gDetail({ id: f.gid, name: f.name, lat: f.lat, lon: f.lon }, { head, top: h, key: 'flag:' + f.id, kind: 'flag', noWish: 1 });
+    if (GD.has(f.gid)) { more(); return; }
+    FLAG_MORE = more;
+    h += `<button class="nav gmore" onclick="FLAG_MORE && FLAG_MORE()">구글 사진·평점 보기</button>`;
+  }
   // 구글 키가 없거나 직접 찍은 곳: 구글 지도 앱으로(장소 ID가 있으면 그 가게 페이지, 없으면 좌표)
   const gUrl = f.gid ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.name)}&query_place_id=${f.gid}` : `https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}`;
   h += `<div class="note"><a href="${gUrl}" target="_blank" rel="noopener">🧭 구글 지도에서 열기</a></div>`;
@@ -2213,12 +2223,12 @@ $('soundBtn').onclick = () => { S.sound = S.sound === false; save(); soundLbl();
 $('bSet').onclick = () => { soundLbl(); gUseLbl(); $('settings').hidden = false; };
 $('gOnBtn').onclick = () => { S.gOn = S.gOn === false; save(); gUseLbl(); toast(S.gOn ? '주변 장소 찾기를 켰어요' : '주변 장소 찾기를 껐어요 · 걸을 때 구글을 안 불러요', 1600); };
 $('gOverBtn').onclick = () => {
-  if (!S.gOver && !confirm(`무료 한도(주변 장소 찾기 월 ${G_MON}번 · 자세히 월 ${G_DMON}번)를 넘어도 계속 쓸까요?\n넘는 만큼은 구글 요금이 나와요(주변 장소 찾기 1,000번에 약 $32 · 자세히 1,000번에 약 $20 이상).\n구글 콘솔에 하루 상한을 걸어 두는 걸 권해요.`)) return;
+  if (!S.gOver && !confirm(`무료 한도(주변 장소 찾기 월 ${G_MON}번 · 자세히 월 ${G_DMON}번 · 구글 사진 월 ${G_PMON}장)를 넘어도 계속 쓸까요?\n넘는 만큼은 구글 요금이 나와요(주변 장소 찾기 1,000번에 약 $32 · 자세히 1,000번에 약 $20 이상).\n구글 콘솔에 하루 상한을 걸어 두는 걸 권해요.`)) return;
   S.gOver = !S.gOver; GP.capT = 0; save(); gUseLbl();
 };
 function gUseLbl() {   // 이 폰에서 센 이번 달 사용량(구글 실제 사용량은 콘솔에서 — 진짜 상한은 콘솔 할당량)
   const mt = (nm, n, max) => { const r = Math.min(1, n / max); return `<div class="mt"><div>${nm}</div><span>${n.toLocaleString()} / ${max.toLocaleString()}</span><i><u class="${r >= .9 ? 'hi' : r >= .7 ? 'mid' : ''}" style="width:${(r * 100).toFixed(1)}%"></u></i></div>`; };
-  $('gUse').innerHTML = mt('주변 장소 찾기', gUse('jjway-gcnt').n, G_MON) + mt('자세히 보기', gUse('jjway-gdcnt').n, G_DMON) + '<div class="mtn">이번 달 · 이 폰 기준이에요. 확실한 상한은 구글 콘솔 할당량에서 걸 수 있어요.</div>';
+  $('gUse').innerHTML = mt('주변 장소 찾기', gUse('jjway-gcnt').n, G_MON) + mt('자세히 보기', gUse('jjway-gdcnt').n, G_DMON) + mt('구글 사진', gUse('jjway-gpcnt').n, G_PMON) + '<div class="mtn">이번 달 · 이 폰 기준이에요. 확실한 상한은 구글 콘솔 할당량에서 걸 수 있어요.</div>';
   setSw('gOnBtn', S.gOn !== false); setSw('gOverBtn', !!S.gOver);
   $('gBtns').hidden = !GK.get();
   const fam = FAM.on && !GK.own();

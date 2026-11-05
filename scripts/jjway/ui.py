@@ -148,7 +148,7 @@ def run(w, h, tag):
         assert pg.is_visible('#bFlag')
         pts0 = pg.evaluate('S.pts || 0')
         pg.evaluate('(() => { P.x += 3; P.y += 2; })()'); time.sleep(.3)
-        pg.click('#bFlag'); time.sleep(.2); pg.click('#sheet .qbs button:nth-child(2)'); time.sleep(.2); assert '깃발 꽂기' in pg.inner_text('#sheet')
+        pg.click('#bFlag'); time.sleep(.2); pg.click('#sheet .qbs button:nth-child(2)'); time.sleep(.2); assert '마커 꽂기' in pg.inner_text('#sheet')
         pg.click('#sheet .go'); time.sleep(.2); assert pg.evaluate('S.flags.length') == 0, '이름 없이 저장됨'
         pg.fill('#fName', '테스트 우동집'); pg.click('#sheet .cats button[data-c="cafe"]'); pg.click('#sheet .stars button[data-s="4"]'); pg.click('#sheet .seg button[data-v="been"]')
         pg.click('#sheet .go'); time.sleep(1.4)
@@ -170,7 +170,7 @@ def run(w, h, tag):
         assert pg.evaluate('!!P.pick') and '자리 고르기' in pg.inner_text('#sheet'), '좌표로 십자선 안 됨'
         px0 = pg.evaluate('P.x'); hold(pg, 'ArrowRight', .3)
         assert pg.evaluate('P.x') == px0, '십자선 모드인데 사람이 움직임'
-        pg.click('#sheet .go'); time.sleep(.3); assert '깃발 꽂기' in pg.inner_text('#sheet')
+        pg.click('#sheet .go'); time.sleep(.3); assert '마커 꽂기' in pg.inner_text('#sheet')
         pg.fill('#fName', '리쓰린 근처 카페'); pg.click('#sheet .go'); time.sleep(.5)
         nf = pg.evaluate('S.flags.find(f => f.name === "리쓰린 근처 카페")'); assert nf and abs(nf['lat'] - 34.3295) < .02 and abs(nf['lon'] - 134.0439) < .02, nf
         pg.click('#bFlag'); time.sleep(.2)

@@ -91,7 +91,7 @@ button,input,select{font-family:inherit;color:inherit}
 .stgdel{flex:none;width:100%;border:1.5px dashed #d7a79f;border-radius:14px;background:none;padding:11px;cursor:pointer;margin-bottom:4px;font-family:system-ui,sans-serif}.stgdel b{color:#b53a2c;font-size:15px}.stgdel:active{background:#fdecea}
 .row2{display:flex;gap:8px;margin-top:12px}
 .row2 button{flex:1;height:42px;border-radius:12px;border:2px solid var(--ink);background:#fff;font-family:Jua,sans-serif;font-size:17px;cursor:pointer}
-.intro{font-size:14px;line-height:1.55;margin:2px 0 8px}
+.intro{font-size:14px;line-height:1.55;margin:2px 0 8px}.mine{background:#fff8e6;border:2px solid #f0dca8;border-radius:12px;padding:9px 11px;margin:2px 0 10px}.mine .intro{margin:5px 0 4px;white-space:pre-wrap;font-size:15px}.mine .mstar{color:#c9930f}.mine .mnone{color:#9a97a3}
 .sp{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-top:1px dashed var(--line);font-size:14px}
 .sp .ic{font-size:20px;line-height:1.2}.sp b{font-family:Jua,sans-serif;font-weight:400;font-size:16px}
 .sp .d{font-size:12px;color:#6b6876;line-height:1.4;margin-top:1px}.sp i{font-style:normal;font-size:12px;color:#8a8794;white-space:nowrap;margin-left:auto}
@@ -235,7 +235,7 @@ button,input,select{font-family:inherit;color:inherit}
   <div class="box mbox">
     <div class="mhead"><h1 style="font-size:24px;text-align:left">🏅 나의 여행 기록</h1><button class="mx" id="mClose" aria-label="닫기">✕</button></div>
     <div id="mSum"></div>
-    <div class="mtabs"><button data-t="spot" class="on">📍 명소</button><button data-t="air">✈️ 공항</button><button data-t="flag">🚩 깃발</button></div>
+    <div class="mtabs"><button data-t="spot" class="on">📍 명소</button><button data-t="air">✈️ 공항</button><button data-t="flag">🚩 내 마커</button></div>
     <div id="mList"></div>
     <div class="mfoot"><button id="mResetTab">이 탭 기록 지우기</button><button id="mResetAll">전체 초기화</button></div>
   </div>
@@ -866,8 +866,8 @@ window.cardSet = st => {
   CARD_SIG = ''; renderCard();
 };
 window.cardOpen = () => { if (PEEK && PEEK.card && PEEK.card.type === 'yt') { $('peek').hidden = true; ytDetail(PEEK.card.p); P.pinned = true; return; }
-   if (PEEK && PEEK.card && PEEK.card.type === 'flag' && PEEK.card.rt.f.gid && GK.get()) { const f = PEEK.card.rt.f; $('peek').hidden = true; G_OPEN = { id: f.gid, name: f.name, lat: f.lat, lon: f.lon }; gDetail(G_OPEN); P.pinned = true; return; }   // 구글에서 온 내 마커: ⓘ 한 번에 구글 정보(내 마커 고치기·메모도 그 창에)
-  if (PEEK && PEEK.card && PEEK.card.type === 'g') { const rt = gToFlag(PEEK.card.p, ''); $('peek').hidden = true; G_OPEN = { id: rt.f.gid, name: rt.f.name, lat: rt.f.lat, lon: rt.f.lon }; gDetail(G_OPEN); P.pinned = true; return; }   // 구글 가게: 자세히 = 내 마커로 저장(표시 없음) + 자세히
+  if (PEEK && PEEK.card && PEEK.card.type === 'flag') { $('peek').hidden = true; sheetFlag(PEEK.card.rt); P.pinned = true; return; }   // 어디서 열어도 같은 창
+  if (PEEK && PEEK.card && PEEK.card.type === 'g') { const rt = gToFlag(PEEK.card.p, ''); $('peek').hidden = true; sheetFlag(rt); P.pinned = true; return; }   // 구글 가게: 자세히 = 내 마커로 저장(표시 없음) + 자세히
   if (PEEK) { const rem = PEEK.card && PEEK.card.remote; PEEK.open(); if (rem) P.pinned = true; } $('peek').hidden = true; P.remote = null; };   // 멀리서 연 상세는 움직이기 전까지 열림
 $('peekBtn').onclick = () => { if (PEEK) PEEK.open(); $('peek').hidden = true; };
 function autoSheet(key, open) {
@@ -1634,7 +1634,9 @@ function gMarks(g, cam, cx, cy) {   // 닿아 있는 구글 가게만 파란 고
 const GD = new Map(), G_DMON = 900;   // 자세히: 켜 둔 동안 같은 가게는 한 번만 받음(메모리에만 — 약관상 오래 저장 안 함) · 한 달 900번(무료 1,000번에서 여유), 넘으면 구글 지도 링크(무료)
 const G_PHOTOS = 3;   // 자세히 사진 장수(장마다 요금 — 월 1,000장 무료, 많다 싶으면 1로). 더 보기는 구글 지도에서
 const PRICE = { PRICE_LEVEL_FREE: '무료', PRICE_LEVEL_INEXPENSIVE: '¥', PRICE_LEVEL_MODERATE: '¥¥', PRICE_LEVEL_EXPENSIVE: '¥¥¥', PRICE_LEVEL_VERY_EXPENSIVE: '¥¥¥¥' };
-async function gDetail(p, o = {}) {   // o: { head, top, key, kind, noWish } — 명소 창에 구글 정보 붙일 때   // 자세히(Place Details — 사진·평점·가격대·영업시간·리뷰·연락처). 저장 안 함, 열 때마다 받음
+async function gDetail(p, o = {}) {
+  if (!o.key) { const rt = FLAGS.find(r => r.f.gid === p.id); if (rt) return sheetFlag(rt); }   // 내 마커면 어디서 열어도 같은 창
+    // o: { head, top, key, kind, noWish } — 명소 창에 구글 정보 붙일 때   // 자세히(Place Details — 사진·평점·가격대·영업시간·리뷰·연락처). 저장 안 함, 열 때마다 받음
   const key = GK.get(), nm = () => { const f = S.flags.find(x => x.gid === p.id); return f ? f.name : showName(p.name || ''); };
   const SK = o.key || 'g:' + p.id, SKIND = o.kind || 'gplace';
   const head = () => { if (o.head) return o.head; const f = S.flags.find(x => x.gid === p.id), n = nm(), mm = n.match(/^(.*\S)\s+\((.+)\)$/), names = mm ? [mm[1], mm[2]] : [n, p.name].filter(Boolean);
@@ -1643,7 +1645,7 @@ async function gDetail(p, o = {}) {   // o: { head, top, key, kind, noWish } —
   let d = GD.get(p.id);
   if (!d) {
     const use = gUse('jjway-gdcnt');
-    if (use.n >= G_DMON && !S.gOver) { openSheet(head(), `<div class="qmsg">🔵 이번 달 자세히 ${G_DMON}번을 다 봤어요(구글 무료 한도 지키기) · ⚙️ 설정에서 계속 쓰기를 켤 수 있어요(요금 발생)</div><a class="nav" href="${gmap}" target="_blank" rel="noopener">🧭 구글 지도에서 무료로 보기(사진·리뷰·영업시간)</a>`, SK, SKIND); return; }
+    if (use.n >= G_DMON && !S.gOver) { openSheet(head(), (o.top || '') + `<div class="qmsg">🔵 이번 달 자세히 ${G_DMON}번을 다 봤어요(구글 무료 한도 지키기) · ⚙️ 설정에서 계속 쓰기를 켤 수 있어요(요금 발생)</div><a class="nav" href="${gmap}" target="_blank" rel="noopener">🧭 구글 지도에서 무료로 보기(사진·리뷰·영업시간)</a>`, SK, SKIND); return; }
     gUseAdd('jjway-gdcnt', use);
   }
   openSheet(head(), (o.top || '') + `<div class="qmsg">📡 구글 사진·평점 받는 중…</div>`, SK, SKIND);   // 기억해 둔 정보여도 창부터 열고 그림(안 그러면 '이 창 열려 있나'에서 멈춰 두 번째 ⓘ가 안 떴음)
@@ -1670,7 +1672,7 @@ async function gDetail(p, o = {}) {   // o: { head, top, key, kind, noWish } —
       if (d.editorialSummary && d.editorialSummary.text) h += `<div class="intro">${esc(d.editorialSummary.text)}</div>`;
       if (wk.length) h += `<details class="sub"><summary>🕒 오늘 ${esc((wk[di] || '').replace(/^[^:]+:\s*/, ''))}</summary>${wk.map(esc).join('<br>')}</details>`;
       const mf = S.flags.find(f => f.gid === p.id);
-      if (mf && mf.memo) h += `<div class="intro">📝 ${esc(mf.memo)}</div>`;
+      if (mf && mf.memo && SKIND !== 'flag') h += `<div class="intro">📝 ${esc(mf.memo)}</div>`;
       if (d.formattedAddress) { const ad = d.formattedAddress.replace(/^\s*(일본|Japan)\s*/, '').replace(/\s*(일본|Japan)$/, '').replace(/〒?\s*\d{3}-\d{4}\s*/, ''); h += `<div class="sub cad" data-lp="addr" data-copy="${esc(ad)}">📍 ${esc(ad)} <small style="color:#9aa">(길게 누르면 복사)</small></div>`; }
       if (d.nationalPhoneNumber) h += `<div class="sub">📞 <a href="tel:${esc(d.nationalPhoneNumber)}">${esc(d.nationalPhoneNumber)}</a></div>`;
       if (d.websiteUri) h += `<div class="sub"><a href="${esc(d.websiteUri)}" target="_blank" rel="noopener">🔗 홈페이지</a></div>`;
@@ -1684,14 +1686,15 @@ async function gDetail(p, o = {}) {   // o: { head, top, key, kind, noWish } —
       openSheet(head(), h, SK, SKIND);
     };
     render(); G_RENDER = render;
-  } catch (e) { if (P.sheetFor === SK) openSheet(head(), `<div class="qmsg">⚠️ ${esc(e.message)}</div>`, SK, SKIND); }
+  } catch (e) { if (P.sheetFor === SK) openSheet(head(), (o.top || '') + `<div class="qmsg">⚠️ ${esc(e.message)}</div>`, SK, SKIND); }
 }
 let G_RENDER = null;
 window.gWish = (id, st) => {
   const mine = S.flags.find(f => f.gid === id);
   if (mine) setFlagSt(mine.id, st === 'want' ? 'wish' : st);
   else { const p = GP.list.find(q => q.id === id) || G_OPEN; if (!p) return; gToFlag(p, st); }
-  if (G_RENDER) G_RENDER();
+  const rt = FLAGS.find(r => r.f.gid === id);
+  if (rt) { if (P.sheetFor !== 'flag:' + rt.f.id) sheetFlag(rt); } else if (G_RENDER) G_RENDER();
 };
 let G_OPEN = null;
 function ytSave(p, st) {   // 영상 곳 → 내 마커(이미 있으면 상태 바꿈): 장소 ID·이름·메모(좋은 점)·링크(그 장면)
@@ -1714,7 +1717,6 @@ function ytDetail(p) {   // 영상 곳 자세히: 영상 정보 + 장면 바로�
 }
 let YT_CUR = null;
 window.ytSaveCur = st => { if (YT_CUR) { ytSave(YT_CUR, st); ytDetail(YT_CUR); } };
-window.gInfo = id => { const f = S.flags.find(x => x.gid === id); if (f) { G_OPEN = { id, name: f.name, lat: f.lat, lon: f.lon }; gDetail(G_OPEN); P.pinned = true; } };   // 깃발 위에 서 있어도 안 닫히게(움직이면 닫힘)
 // 아이콘 한 벌(이모지 대신 — 기기마다 달라 보이지 않게). 24칸, 선 굵기·둥근 끝 통일
 const ICP = { map: 'M9 4.5L3.5 6.8v13l5.5-2.3 6 2.3 5.5-2.3v-13L15 6.800zM9 4.5v13M15 6.800v13', spark: 'M12 3.500l2 5.500 5.500 2-5.500 2-2 5.500-2-5.500-5.500-2 5.500-2zM19 16.500l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z', sound: 'M4 9.500v5h3.500L12.500 19V5L7.500 9.500zM16 8.800a4.500 4.500 0 0 1 0 6.400M18.700 6a8.500 8.500 0 0 1 0 12', x: 'M6 6l12 12M18 6L6 18', heart: 'M12 20.3s-7.6-4.6-9.3-9.2C1.5 7.8 3.7 4.8 7 4.8c2 0 3.8 1 5 2.8 1.2-1.8 3-2.8 5-2.8 3.3 0 5.5 3 4.3 6.3-1.7 4.6-9.3 9.2-9.3 9.2z|f', check: 'M4.5 12.8l5 5L19.5 7', info: 'M12 11v6M12 7.2v.1|c', link: 'M10 14a4.2 4.2 0 0 0 6 0l3-3a4.2 4.2 0 0 0-6-6l-1.2 1.2M14 10a4.2 4.2 0 0 0-6 0l-3 3a4.2 4.2 0 0 0 6 6l1.2-1.2', play: 'M7 4.8v14.4L19 12z|f', pin: 'M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z', down: 'M6 9.5l6 6 6-6', tr: 'M3.5 6h9M8 4v2c0 4-2 7-4.5 8.5M5.5 9.5c1 2.5 3 4 5.5 5M13 20l3.8-9h.4L21 20M14.3 17h5.4', eye: 'M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', clock: 'M12 7v5.2l3.3 2|c', globe: 'M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.400 5.600 12 3z|c', search: 'M10.700 17.500a6.800 6.800 0 1 0 0-13.600 6.800 6.800 0 0 0 0 13.600zM16 16l4.500 4.500', yt: 'M4.500 5.500h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM10 9v6l5-3z' };
 function ic(n, sz = 17) { const [d, m] = ICP[n].split('|'); return `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="${m === 'f' ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${m === 'c' ? '<circle cx="12" cy="12" r="9.200"/>' : ''}<path d="${d}"/></svg>`; }
@@ -1820,19 +1822,18 @@ const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 let FORM = null;   // 작성 중 {id?, lat, lon, cat, star, status}
 function openFlagForm(rt, pre) {
   const f = rt ? rt.f : null, here = pre || unproj(P.x, P.y);
-  FORM = f ? { id: f.id, lat: f.lat, lon: f.lon, cat: f.cat, star: f.star || 0, status: f.status || 'want' } : { lat: here.lat, lon: here.lon, cat: 'food', star: 0, status: '', gid: here.gid || '' };
+  FORM = f ? { id: f.id, lat: f.lat, lon: f.lon, cat: f.cat, star: f.star || 0, status: f.status || '' } : { lat: here.lat, lon: here.lon, cat: 'food', star: 0, status: '', gid: here.gid || '' };
   const fa = (() => { const p = proj(FORM.lon, FORM.lat); return admAt(p.x, p.y); })();
-  const head = `<h2>🚩 ${f ? '깃발 고치기' : '여기에 깃발 꽂기'}</h2><button class="cbtn" onclick="cancelFlag()">취소</button>`;
-  let h = `<div class="sub">${FORM.lat.toFixed(5)}, ${FORM.lon.toFixed(5)}${fa ? ' · ' + fa.ko : ''}</div>`;
+  const head = `<h2>🚩 ${f ? '마커 고치기' : '여기에 마커 꽂기'}</h2><button class="cbtn" onclick="cancelFlag()">취소</button>`;
+  let h = fa ? `<div class="sub">${fa.ko}</div>` : '';
   h += `<div class="cats">${Object.entries(CATS).map(([k, c]) => `<button data-c="${k}" class="${k === FORM.cat ? 'on' : ''}" onclick="pickCat('${k}')">${c[0]}<span>${c[1]}</span></button>`).join('')}</div>`;
   h += `<input id="fName" class="fin" maxlength="40" placeholder="이름 (예: 우동 바카이치)" value="${esc(f ? f.name : pre && pre.name ? pre.name.slice(0, 40) : '')}">`;
   h += `<textarea id="fMemo" class="fin" maxlength="200" rows="2" placeholder="한 줄 메모 (선택)">${esc(f && f.memo)}</textarea>`;
   h += `<input id="fLink" class="fin" maxlength="300" placeholder="링크 (선택) — 구글 지도·타베로그·유튜브" value="${esc(f && f.link)}">`;
   h += `<div class="frow"><div class="stars">${[1, 2, 3, 4, 5].map(i => `<button data-s="${i}" onclick="pickStar(${i})">★</button>`).join('')}</div>`;
   h += `<div class="seg"><button data-v="want" onclick="pickStatus('want')">가고 싶어요</button><button data-v="been" onclick="pickStatus('been')">다녀왔어요</button></div></div>`;
-  h += `<div class="frow"><span class="lock">🔒 나만 보기</span><span class="lock off" title="나중에">🌏 공개 (준비 중)</span></div>`;
-  h += `<button class="go" style="margin-top:10px;height:48px" onclick="saveFlag()">${f ? '💾 고친 내용 저장' : '✨ 깃발 꽂기'}</button>`;
-  if (f) h += `<button class="del" onclick="deleteFlag('${f.id}')">깃발 뽑기(삭제)</button>`;
+  h += `<button class="go" style="margin-top:10px;height:48px" onclick="saveFlag()">${f ? '💾 고친 내용 저장' : '✨ 마커 꽂기'}</button>`;
+  if (f) h += `<button class="del" onclick="deleteFlag('${f.id}')">마커 삭제</button>`;
   openSheet(head, h, 'flagform', 'flagform');
   paintForm(); if (!f) setTimeout(() => $('fName') && $('fName').focus(), 50);
 }
@@ -1844,12 +1845,12 @@ function paintForm() {
 }
 window.pickCat = k => { FORM.cat = k; SFX.pop(); paintForm(); };
 window.pickStar = i => { FORM.star = FORM.star === i ? 0 : i; paintForm(); };
-window.pickStatus = v => { FORM.status = v; FORM.lock = 1; paintForm(); };
-window.cancelFlag = () => { FORM = null; P.look = null; closeSheet(); };
+window.pickStatus = v => { FORM.status = FORM.status === v ? '' : v; FORM.lock = 1; paintForm(); };   // 다시 누르면 표시 없음
+window.cancelFlag = () => { const id = FORM && FORM.id, rt = id && FLAGS.find(r => r.f.id === id); FORM = null; P.look = null; if (rt) sheetFlag(rt); else closeSheet(); };   // 고치다 취소하면 보던 창으로
 window.saveFlag = () => {
   const name = ($('fName').value || '').trim();
   if (!name) { $('fName').classList.add('bad'); $('fName').focus(); toast('이름을 적어 주세요'); return; }
-  const now = Date.now(), data = { name, memo: $('fMemo').value.trim(), link: $('fLink').value.trim(), cat: FORM.cat, star: FORM.star, status: FORM.status, ...(FORM.lock ? { lock: 1 } : {}) };
+  const now = Date.now(), data = { name, memo: $('fMemo').value.trim(), link: $('fLink').value.trim(), cat: FORM.cat, star: FORM.star, status: FORM.status, ...(FORM.lock ? { lock: 1, autoW: 1 } : {}) };   // 손으로 고른 상태는 고리가 다시 안 채움
   if (FORM.id) {
     const f = S.flags.find(x => x.id === FORM.id); Object.assign(f, data, { updated: now });
     const rt = FLAGS.find(r => r.f === f); FORM = null; save(); sheetFlag(rt); burst(rt.x, rt.y, 12, ['#ffd84d', '#fff']); SFX.pop(); toast('💾 저장했어요'); return;
@@ -1862,31 +1863,32 @@ window.saveFlag = () => {
   const col = CATS[f.cat][2];
   setTimeout(() => { shock(rt.x, rt.y, col); shock(rt.x, rt.y, '#ffd84d'); burst(rt.x, rt.y, 36, [col, '#ffd84d', '#ffffff', '#7fd1ff']); vib([30, 40, 60]);
     const sx = W / 2 + (rt.x - CAM.x) * CAM.z, sy = H * CY + (rt.y - CAM.y) * CAM.z; coinsTo(sx, sy, 5); addPts(5); }, 420);
-  SFX.plant(); toast(`🚩 ${CATS[f.cat][0]} ${name} — 깃발을 꽂았어요! +5`, 3000);
+  SFX.plant(); toast(`🚩 ${CATS[f.cat][0]} ${name} — 마커를 꽂았어요! +5`, 3000);
 };
 window.deleteFlag = id => {
-  if (!confirm('이 깃발을 뽑을까요?')) return;
+  if (!confirm('이 마커를 삭제할까요?')) return;
   S.flags = S.flags.filter(x => x.id !== id); const i = FLAGS.findIndex(r => r.f.id === id), rt = FLAGS[i];
   if (rt) { burst(rt.x, rt.y, 14, ['#bbb', '#888']); FLAGS.splice(i, 1); }
-  FORM = null; save(); closeSheet(); toast('깃발을 뽑았어요');
+  FORM = null; save(); closeSheet(); toast('마커를 삭제했어요');
 };
 window.editFlag = id => openFlagForm(FLAGS.find(r => r.f.id === id));
-function sheetFlag(rt) {
-  const f = rt.f, c = CATS[f.cat];
-  const head = `<h2>${c[0]} ${esc(f.name)}</h2><button class="cbtn" onclick="editFlag('${f.id}')">✏️ 고치기</button>`;
-  let h = `<div class="sub">🚩 내 깃발 · ${c[1]}${f.star ? ' · ' + '★'.repeat(f.star) : ''}</div>`;
-  if (f.memo) h += `<div class="intro">${esc(f.memo)}</div>`;
+function sheetFlag(rt) {   // 마커 보기 창은 이것 하나: 내 기록이 맨 위(구글 정보를 못 받아도 보임), 그 아래 구글 정보
+  const f = rt.f, c = CATS[f.cat], mm = f.name.match(/^(.*\S)\s+\((.+)\)$/);
+  const head = `<h2 data-lp="names" data-names="${esc(JSON.stringify(mm ? [mm[1], mm[2]] : [f.name]))}">${c[0]} ${esc(f.name)}</h2><button class="cbtn" onclick="editFlag('${f.id}')">✏️ 고치기</button>`;
+  let h = `<div class="mine"><div class="sub">내 기록 · ${c[1]}${f.star ? ' · <span class="mstar">' + '★'.repeat(f.star) + '</span>' : ''} · ${new Date(f.created).toLocaleDateString('ko-KR')}</div>`;
+  h += f.memo ? `<div class="intro">${esc(f.memo)}</div>` : `<div class="sub mnone">메모 없음 · ✏️ 고치기에서 적을 수 있어요</div>`;
   if (f.link) h += `<div class="sub"><a href="${esc(/^https?:\/\//.test(f.link) ? f.link : 'https://' + f.link)}" target="_blank" rel="noopener">🔗 링크 열기</a></div>`;
-  if (f.gid && GK.get()) h += `<button class="nav" style="border:0;width:100%" onclick="gInfo('${f.gid}')">⭐ 구글 정보(평점·영업시간)</button>`;
-  // 구글 지도 앱으로(실제 길 안내·사진·리뷰는 거기서): 장소 ID가 있으면 그 가게 페이지, 없으면 좌표
-  const gUrl = f.gid ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.name)}&query_place_id=${f.gid}` : `https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}`;
+  h += `<div class="cbtns"><button class="wi${f.status === 'want' ? ' on' : ''}" onclick="setFlagSt('${f.id}','wish')">💭 가고 싶어요</button><button class="ok${f.status === 'been' ? ' on' : ''}" onclick="setFlagSt('${f.id}','been')">✔ 다녀왔어요</button></div></div>`;
   h += goBox(rt.x, rt.y, 1);
-  h += `<div class="note">🔒 나만 보기 · ${new Date(f.created).toLocaleDateString('ko-KR')} 꽂음 · <a href="${gUrl}" target="_blank" rel="noopener">🧭 구글 지도에서 열기</a></div>`;
+  if (f.gid && GK.get()) { gDetail({ id: f.gid, name: f.name, lat: f.lat, lon: f.lon }, { head, top: h, key: 'flag:' + f.id, kind: 'flag', noWish: 1 }); return; }
+  // 구글 키가 없거나 직접 찍은 곳: 구글 지도 앱으로(장소 ID가 있으면 그 가게 페이지, 없으면 좌표)
+  const gUrl = f.gid ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.name)}&query_place_id=${f.gid}` : `https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}`;
+  h += `<div class="note"><a href="${gUrl}" target="_blank" rel="noopener">🧭 구글 지도에서 열기</a></div>`;
   openSheet(head, h, 'flag:' + f.id, 'flag');
 }
 window.setFlagSt = (id, st) => {
   const rt = FLAGS.find(r => r.f.id === id), f = rt.f, v = st === 'wish' ? 'want' : st;
-  f.status = f.status === v ? '' : v; st = f.status; f.updated = Date.now();   // 같은 걸 다시 누르면 표시 없음
+  f.status = f.status === v ? '' : v; st = f.status; f.autoW = 1; f.updated = Date.now();   // 같은 걸 다시 누르면 표시 없음, 손으로 고르면 고리가 다시 안 채움
   if (st === 'been' && !f.paid) { f.paid = 1; addPts(3); coinsTo(W / 2 + (rt.x - CAM.x) * CAM.z, H * CY + (rt.y - CAM.y) * CAM.z, 3); }
   SFX.pop(); save(); if (P.sheetFor === 'flag:' + id) sheetFlag(rt);
   CARD_SIG = '';
@@ -2108,7 +2110,7 @@ let MTAB = 'spot', MOPEN = null;   // MOPEN: 기록 목록에서 펼친 현(처�
 const dstr = t => t > 1 ? new Date(t).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }) : '';
 function renderMedals() {
   const seenN = SPOT.filter(x => S.seen[x.key]).length, airN = Object.keys(S.stamps).length;
-  $('mSum').innerHTML = `<div><b>${S.pts || 0}</b>포인트</div><div><b>${seenN}/${SPOT.length}</b>다녀온 명소</div><div><b>${Object.keys(S.wish).length}</b>가고 싶어요</div><div><b>${S.flags.length}</b>내 깃발</div>`;
+  $('mSum').innerHTML = `<div><b>${S.pts || 0}</b>포인트</div><div><b>${seenN}/${SPOT.length}</b>다녀온 명소</div><div><b>${Object.keys(S.wish).length}</b>가고 싶어요</div><div><b>${S.flags.length}</b>내 마커</div>`;
   document.querySelectorAll('.mtabs button').forEach(b => b.classList.toggle('on', b.dataset.t === MTAB));
   let h = '';
   if (MTAB === 'spot') {
@@ -2139,25 +2141,25 @@ function renderMedals() {
       h += list.map(c => `<div class="mr ok" data-air="${c}"><span class="ic">🛬</span><b>${airName(c)}</b><i>${dstr(S.stamps[c])}</i></div>`).join('');
     }
   } else {
-    if (!S.flags.length) h = `<div class="empty">아직 꽂은 깃발이 없어요.<br>🔍 버튼으로 장소를 찾아 🚩 깃발로 맛집·가게·숙소를 기록해 보세요</div>`;
+    if (!S.flags.length) h = `<div class="empty">아직 꽂은 마커가 없어요.<br>🔍 버튼으로 장소를 찾아 🚩 마커로 맛집·가게·숙소를 기록해 보세요</div>`;
     for (const [k, c] of Object.entries(CATS)) {
       const list = S.flags.filter(f => f.cat === k).sort((a, b) => b.created - a.created); if (!list.length) continue;
       const been = list.filter(f => f.status === 'been').length;
       h += `<div class="mg">${c[0]} ${c[1]}<small>${list.length}곳 · 다녀옴 ${been}</small></div>`;
-      h += list.map(f => `<div class="mr ${f.status === 'been' ? 'ok' : ''}" data-flag="${f.id}"><span class="ic">${f.status === 'been' ? '✔' : '💭'}</span><b>${esc(f.name)}</b><i>${f.star ? '★'.repeat(f.star) + ' · ' : ''}${dstr(f.created)}</i></div>`).join('');
+      h += list.map(f => `<div class="mr ${f.status === 'been' ? 'ok' : ''}" data-flag="${f.id}"><span class="ic">${f.status === 'been' ? '✔' : f.status === 'want' ? '💭' : '📍'}</span><b>${esc(f.name)}</b><i>${f.star ? '★'.repeat(f.star) + ' · ' : ''}${dstr(f.created)}</i></div>`).join('');
     }
   }
   $('mList').innerHTML = h;
 }
 // 기록 지우기: 탭별(포인트는 그대로) · 전체(명소·공항·깃발·포인트, 가족 설정·위치는 그대로)
 $('mResetTab').onclick = () => {
-  const nm = { spot: '명소 기록(다녀왔어요·가고 싶어요)', air: '공항 착륙 기록', flag: '내 깃발' }[MTAB];
+  const nm = { spot: '명소 기록(다녀왔어요·가고 싶어요)', air: '공항 착륙 기록', flag: '내 마커' }[MTAB];
   if (!confirm(`${nm}을(를) 모두 지울까요? 되돌릴 수 없어요. (포인트는 그대로)`)) return;
   if (MTAB === 'spot') { S.seen = {}; S.wish = {}; S.lock = {}; } else if (MTAB === 'air') S.stamps = {}; else { S.flags = []; FLAGS.length = 0; }
   save(); closeSheet(); renderMedals(); toast(`${nm}을(를) 지웠어요`);
 };
 $('mResetAll').onclick = () => {
-  if (!confirm('명소 기록, 공항 착륙, 내 깃발, 포인트를 모두 처음으로 돌릴까요? 되돌릴 수 없어요.\n(가족 설정·지금 위치는 그대로)')) return;
+  if (!confirm('명소 기록, 공항 착륙, 내 마커, 포인트를 모두 처음으로 돌릴까요? 되돌릴 수 없어요.\n(가족 설정·지금 위치는 그대로)')) return;
   S.seen = {}; S.wish = {}; S.paid = {}; S.lock = {}; S.stamps = {}; S.flags = []; FLAGS.length = 0; S.pts = 0; $('ptsN').textContent = 0;
   save(); closeSheet(); renderMedals(); toast('기록을 모두 처음으로 돌렸어요');
 };

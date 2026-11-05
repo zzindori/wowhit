@@ -1231,9 +1231,7 @@ function cityMarks(g, cam, cx, cy, span) {
     if (!onScr(g, sx, sy)) continue;
     // 도시 = 남색 이름판(지역 표지판). 채움·체크 없음 — 명소(핀)와 모양부터 다르게
     const near = nearC === c;
-    if (span < 40) {   // 확대하면 도시 범위를 옅은 점선 원으로, 이름판은 연하게
-      g.strokeStyle = 'rgba(52,80,107,.35)'; g.lineWidth = 2; g.setLineDash([8, 6]); g.beginPath(); g.arc(sx, sy, NEAR.city * cam.z, 0, 6.29); g.stroke(); g.setLineDash([]);
-    }
+    // 확대하면(span < 40) 이름판을 작고 연하게
     const lab = '🏙️ ' + c.ko, fs = span < 40 ? 13 : 15; g.font = `${fs}px Jua,sans-serif`;
     const w = g.measureText(lab).width + 16, h = fs + 10;
     if (!free(sx, sy, w, h)) continue;

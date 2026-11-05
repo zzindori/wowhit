@@ -1782,7 +1782,7 @@ window.ytPick = (cid, id, n) => {
 window.ytOff = () => { YT.v = null; ytChip(); };
 window.ytOpenList = cid => ytList(cid);
 const YT_NEAR = 150;   // 가장 가까운 영상 도시가 이보다 멀면 '이 근처는 아직 없음' 안내(km)
-const YT_CITIES = ['takamatsu', 'matsuyama', 'kanazawa', 'kumamoto', 'yufu', 'nagasaki', 'kagoshima', 'kurashiki', 'tokushima', 'kochi', 'imabari', 'naoshima', 'shodoshima', 'kotohira'];   // 영상을 모은 도시(scripts/jjway/yt/collect.py)
+const YT_CITIES = ['takamatsu', 'matsuyama', 'kanazawa', 'kumamoto', 'yufu', 'nagasaki', 'kagoshima', 'kurashiki', 'tokushima', 'kochi', 'imabari', 'naoshima', 'shodoshima', 'kotohira', 'naruto', 'marugame', 'ozu', 'uchiko', 'uwajima', 'miyoshi', 'shimanto', 'muroto'];   // 영상을 모은 도시(scripts/jjway/yt/collect.py)
 $('bYt').innerHTML = ytMark(32); $('bFlag').innerHTML = ic('search', 25);
 $('bYt').onclick = () => {   // 가장 가까운 '영상 있는 도시'의 목록
   const cs = CITY.filter(c => YT_CITIES.includes(c.id)).sort((a, b) => dist(a, P) - dist(b, P));

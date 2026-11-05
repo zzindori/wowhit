@@ -11,6 +11,7 @@ YT, GMAP = env('~/.secrets/itne.env', 'YOUTUBE_API_KEY'), env('~/.secrets/jjway.
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../public/games/jjway/yt'))
 def get(url, headers={}):
     return json.load(urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=60))
+CACHE = {}
 for path in sorted(glob.glob(os.path.join(ROOT, '*.json'))):
     d = json.load(open(path)); before = json.dumps(d, sort_keys=True)
     ids = [v['id'] for v in d['videos']]; got = {}
@@ -25,11 +26,15 @@ for path in sorted(glob.glob(os.path.join(ROOT, '*.json'))):
                                      thumb=(sn['thumbnails'].get('medium') or sn['thumbnails'].get('default'))['url'])
         pl = []
         for p in v['places']:
-            try:
-                q = get(f"https://places.googleapis.com/v1/places/{urllib.parse.quote(p['g'])}", {'X-Goog-Api-Key': GMAP, 'Referer': 'https://wowhit.org/', 'X-Goog-FieldMask': 'id,location,businessStatus'})
-            except urllib.error.HTTPError as e:
-                if e.code == 404: closed += 1; continue   # 없어진 장소
-                raise
+            q = CACHE.get(p['g'])   # 같은 곳이 여러 영상에 나와도 구글은 한 번만
+            if q is None:
+                try:
+                    q = get(f"https://places.googleapis.com/v1/places/{urllib.parse.quote(p['g'])}", {'X-Goog-Api-Key': GMAP, 'Referer': 'https://wowhit.org/', 'X-Goog-FieldMask': 'id,location,businessStatus'})
+                except urllib.error.HTTPError as e:
+                    if e.code != 404: raise
+                    q = {}   # 없어진 장소
+                CACHE[p['g']] = q
+            if not q: closed += 1; continue
             if q.get('businessStatus') == 'CLOSED_PERMANENTLY': closed += 1; continue
             if q.get('id') and q['id'] != p['g']: p['g'] = q['id']   # 장소 ID가 바뀌었으면 새 것으로
             p['lat'], p['lon'] = q['location']['latitude'], q['location']['longitude']; pl.append(p)

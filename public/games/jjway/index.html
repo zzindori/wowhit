@@ -867,7 +867,7 @@ window.cardSet = st => {
 };
 window.cardOpen = () => { if (PEEK && PEEK.card && PEEK.card.type === 'yt') { $('peek').hidden = true; ytDetail(PEEK.card.p); P.pinned = true; return; }
   if (PEEK && PEEK.card && PEEK.card.type === 'flag') { $('peek').hidden = true; sheetFlag(PEEK.card.rt); P.pinned = true; return; }   // 어디서 열어도 같은 창
-  if (PEEK && PEEK.card && PEEK.card.type === 'g') { const rt = gToFlag(PEEK.card.p, ''); $('peek').hidden = true; sheetFlag(rt); P.pinned = true; return; }   // 구글 가게: 자세히 = 내 마커로 저장(표시 없음) + 자세히
+  if (PEEK && PEEK.card && PEEK.card.type === 'g') { $('peek').hidden = true; gDetail(PEEK.card.p); P.pinned = true; return; }   // 구글 가게: 보기만(저장은 ♥ ✔ 또는 창의 '내 마커로 저장')
   if (PEEK) { const rem = PEEK.card && PEEK.card.remote; PEEK.open(); if (rem) P.pinned = true; } $('peek').hidden = true; P.remote = null; };   // 멀리서 연 상세는 움직이기 전까지 열림
 $('peekBtn').onclick = () => { if (PEEK) PEEK.open(); $('peek').hidden = true; };
 function autoSheet(key, open) {
@@ -1626,6 +1626,22 @@ function gToFlag(p, st) {   // 구글 가게 → 내 깃발(이름·위치는 �
   if (st === 'want') { wishFx(rt.x, rt.y, f.name); addPts(2); } else if (st === 'been') { burst(rt.x, rt.y, 16, ['#ffd84d', '#fff', '#ff8a5c']); SFX.stamp(); f.paid = 1; addPts(3); } else { burst(rt.x, rt.y, 10, ['#7fb3ff', '#fff']); SFX.pop(); }
   CARD_SIG = ''; return rt;
 }
+// 예전엔 카드 ⓘ만 눌러도 마커로 저장됐음 → 그렇게 생겨 손댄 적 없는 빈 마커를 한 번만 물어보고 정리(만든 뒤 고치거나 ♥ ✔를 누른 곳은 updated가 달라 안 건드림)
+function askEmptyFlags() {
+  if (S.emptyCk) return;
+  const list = S.flags.filter(f => f.gid && f.autoW && !f.status && !f.memo && !f.link && !f.star && f.updated === f.created);
+  if (!list.length) { S.emptyCk = 1; save(); return; }
+  setTimeout(() => {
+    const names = list.slice(0, 12).map(f => '· ' + f.name).join('\n') + (list.length > 12 ? `\n… 외 ${list.length - 12}곳` : '');
+    if (confirm(`자세히 보기만 눌러서 저장된 빈 마커가 ${list.length}개 있어요.\n메모·표시를 넣지 않은 곳이에요. 지울까요?\n\n${names}`)) {
+      const ids = new Set(list.map(f => f.id));
+      S.flags = S.flags.filter(f => !ids.has(f.id));
+      for (let i = FLAGS.length - 1; i >= 0; i--) if (ids.has(FLAGS[i].f.id)) FLAGS.splice(i, 1);
+      toast(`빈 마커 ${list.length}개를 지웠어요`, 1800);
+    }
+    S.emptyCk = 1; save();
+  }, 900);
+}
 function gMarks(g, cam, cx, cy) {   // 닿아 있는 구글 가게만 파란 고리로 살짝(아이콘은 지도 그림에)
   const p = P.onG && GP.list.find(q => q.id === P.onG); if (!p) return;
   const x = cx + (p.x - cam.x) * cam.z, y = cy + (p.y - cam.y) * cam.z, k = (Math.sin(performance.now() / 160) + 1) / 2;
@@ -1680,7 +1696,7 @@ async function gDetail(p, o = {}) {
       if (d.nationalPhoneNumber) h += `<div class="sub">📞 <a href="tel:${esc(d.nationalPhoneNumber)}">${esc(d.nationalPhoneNumber)}</a></div>`;
       if (d.websiteUri) h += `<div class="sub"><a href="${esc(d.websiteUri)}" target="_blank" rel="noopener">🔗 홈페이지</a></div>`;
       const mine = S.flags.find(f => f.gid === p.id);
-      if (!o.noWish) h += `<div class="cbtns"><button class="wi${mine && mine.status === 'want' ? ' on' : ''}" onclick="gWish('${p.id}','want')">💭 가고 싶어요</button><button class="ok${mine && mine.status === 'been' ? ' on' : ''}" onclick="gWish('${p.id}','been')">✔ 다녀왔어요</button></div>`;
+      if (!o.noWish) h += `<div class="cbtns"><button class="wi${mine && mine.status === 'want' ? ' on' : ''}" onclick="gWish('${p.id}','want')">💭 가고 싶어요</button><button class="ok${mine && mine.status === 'been' ? ' on' : ''}" onclick="gWish('${p.id}','been')">✔ 다녀왔어요</button></div>${mine ? '' : `<button class="nav gmore" onclick="gWish('${p.id}','')">📍 내 마커로 저장</button>`}`;
       for (const rv of (d.reviews || []).slice(0, 3)) {
         const t = rv.text || rv.originalText; if (!t || !t.text) continue;
         h += `<div class="grv"><b>${'★'.repeat(Math.round(rv.rating || 0))} ${esc(rv.authorAttribution ? rv.authorAttribution.displayName : '')}</b> <small>${esc(rv.relativePublishTimeDescription || '')}</small><p>${esc(t.text)}</p></div>`;
@@ -2279,6 +2295,7 @@ function frame(ts) {
   CITY = PL.cities.map(c => ({ ...c, ...proj(c.lon, c.lat), c: 'JPN' })).sort((a, b) => (b.big || 0) - (a.big || 0));
   for (const c of CITY) { c.spots = c.spots.map((s, i) => ({ ...s, ...proj(s.lon, s.lat), city: c.id, key: c.id + ':' + i })); SPOT.push(...c.spots); }
   FLAGS.push(...S.flags.map(f => flagRT(f)));
+  askEmptyFlags();
   $('ptsN').textContent = S.pts || 0;
   if (FLY(S.mode) && !S.from) S.mode = 'walk';
   if (S.mode === 'takeoff') S.mode = 'ground';

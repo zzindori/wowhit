@@ -64,12 +64,6 @@ button,input,select{font-family:inherit;color:inherit}
 .go{display:block;width:100%;margin-top:16px;height:52px;border-radius:16px;border:3px solid var(--ink);background:var(--pri);color:#fff;font-family:Jua,sans-serif;font-size:22px;box-shadow:0 4px 0 rgba(44,43,53,.35);cursor:pointer}
 .go:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(44,43,53,.35)}
 .small{font-size:12px;color:#8a8794;line-height:1.5;margin-top:8px}
-.int{display:flex;align-items:center;gap:8px;padding:7px 4px;border-top:1px dashed var(--line);font-size:16px}
-.int .nm{flex:1}
-.int button{width:34px;height:30px;border-radius:8px;border:2px solid #d8d3c8;background:#fff;cursor:pointer}
-.sw{width:50px;height:28px;border-radius:999px;border:2px solid var(--ink);background:#ddd;position:relative;cursor:pointer;padding:0}
-.sw::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid var(--ink);transition:left .15s}
-.sw.on{background:#7cc576}.sw.on::after{left:24px}
 .row2{display:flex;gap:8px;margin-top:12px}
 .row2 button{flex:1;height:42px;border-radius:12px;border:2px solid var(--ink);background:#fff;font-family:Jua,sans-serif;font-size:17px;cursor:pointer}
 .intro{font-size:14px;line-height:1.55;margin:2px 0 8px}
@@ -189,7 +183,7 @@ button,input,select{font-family:inherit;color:inherit}
 <div id="pts" class="chip" title="여행 포인트">🏅 <b id="ptsN">0</b></div>
 <div id="btns">
   <button class="ib" id="bParty" title="가족 설정">👨‍👩‍👧‍👦</button>
-  <button class="ib" id="bSet" title="관심 분야">⚙️</button>
+  <button class="ib" id="bSet" title="설정">⚙️</button>
   <button class="ib" id="bHome" title="소개">⌂</button>
 </div>
 <div id="pipWrap"><canvas id="pip"></canvas><div id="pipTxt" hidden></div></div>
@@ -223,9 +217,7 @@ button,input,select{font-family:inherit;color:inherit}
 </div>
 <div class="ov" id="settings" hidden>
   <div class="box">
-    <h1 style="font-size:24px">⚙️ 관심 분야</h1>
-    <div class="small" style="text-align:center">켠 분야만 보이고, 위에 있을수록 먼저 보여요.</div>
-    <div id="ints"></div>
+    <h1 style="font-size:24px">⚙️ 설정</h1>
     <h3 style="margin-top:14px">🗺️ 구글 지도 키</h3>
     <div class="small">넣으면 🔍 장소 찾기가 구글 검색이 돼요(한국어 그대로·작은 가게까지). 키는 <b>이 폰(브라우저)에만</b> 저장되고 우리 서버로 보내지 않아요. 만드는 법은 <a href="/guide#gmaps" target="_blank">이용 안내</a>.</div>
     <div class="fsearch" style="margin-top:6px"><input id="gkIn" class="fin" type="password" autocomplete="off" placeholder="구글 지도 API 키 붙여넣기"><button class="qgo" id="gkGo">확인</button></div>
@@ -253,9 +245,6 @@ const KEY = 'jjway-v1';
 const COLORS = ['#e8594f', '#2f6fd0', '#f2b134', '#3fa66b', '#9b59b6', '#ef7fb0', '#16a5a5', '#8d6e4c'];
 const RELS = ['나', '아빠', '엄마', '남편', '아내', '아들', '딸', '형제·자매', '할아버지', '할머니', '친구', '기타'];
 const AGES = ['성인', '학생', '어린이', '유아'];
-const INTERESTS = [
-  ['food', '🍜 맛집', 1], ['shop', '🛍️ 쇼핑', 1], ['stay', '🏨 숙박', 1], ['onsen', '♨️ 온천', 0], ['sight', '🏯 관광·명소', 0],
-  ['nature', '🌿 자연·풍경', 0], ['cafe', '🍰 카페·디저트', 0], ['izakaya', '🍶 이자카야·술집', 0], ['fest', '🎎 축제·행사', 0], ['move', '🚃 이동·교통', 0]];
 const SEOUL = { x: -457.8, y: -284.2 };
 // 모드마다 화면 짧은 쪽에 보이는 거리(km): [기본, 최소, 최대] — 두 손가락·휠로 바꾸면 모드별로 기억
 // 땅 위는 모드 하나(walk) — 확대하면 🚶 가족, 축소하면 🚗 자동차로 그림. ⌖ 버튼 = 자동차 비율(260km)로
@@ -271,7 +260,7 @@ function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.party) return s; } catch (e) {}
   return null;
 }
-let S = load() || { party: defParty(4), ints: INTERESTS.map(([k, , on]) => ({ k, on: !!on })), pos: { ...SEOUL }, mode: 'walk', country: 'KOR', from: null, stamps: {}, started: false };
+let S = load() || { party: defParty(4), pos: { ...SEOUL }, mode: 'walk', country: 'KOR', from: null, stamps: {}, started: false };
 S.span = Object.assign({ walk: SPAN.walk[0], plane: SPAN.plane[0] }, S.span || {}); delete S.span.car;
 if (S.mode === 'car') S.mode = 'walk';
 if (S.boardFrom === 'car') S.boardFrom = 'walk';
@@ -2153,22 +2142,9 @@ $('goBtn').onclick = () => {
   else toast(`${S.party.length}명 출발 준비 완료`);
 };
 $('bParty').onclick = () => { draftN = S.party.length; draft = S.party.map(m => ({ ...m })); renderSetup(); $('setup').hidden = false; };
-function renderInts() {
-  const box = $('ints'); box.innerHTML = '';
-  S.ints.forEach((it, i) => {
-    const nm = INTERESTS.find(x => x[0] === it.k)[1];
-    const row = document.createElement('div'); row.className = 'int';
-    row.innerHTML = `<span class="nm">${nm}</span><button aria-label="위로">▲</button><button aria-label="아래로">▼</button><button class="sw${it.on ? ' on' : ''}" aria-label="켜기"></button>`;
-    const [, up, dn, sw] = row.children;
-    up.onclick = () => { if (i) { [S.ints[i - 1], S.ints[i]] = [S.ints[i], S.ints[i - 1]]; save(); renderInts(); } };
-    dn.onclick = () => { if (i < S.ints.length - 1) { [S.ints[i + 1], S.ints[i]] = [S.ints[i], S.ints[i + 1]]; save(); renderInts(); } };
-    sw.onclick = () => { it.on = !it.on; if (!S.ints.some(x => x.on)) it.on = true; save(); renderInts(); };
-    box.appendChild(row);
-  });
-}
 const soundLbl = () => $('soundBtn').textContent = S.sound === false ? '🔇 소리 꺼짐' : '🔊 소리 켜짐';
 $('soundBtn').onclick = () => { S.sound = S.sound === false; save(); soundLbl(); if (S.sound) SFX.coin(); };
-$('bSet').onclick = () => { renderInts(); soundLbl(); gUseLbl(); $('settings').hidden = false; };
+$('bSet').onclick = () => { soundLbl(); gUseLbl(); $('settings').hidden = false; };
 $('gOnBtn').onclick = () => { S.gOn = S.gOn === false; save(); gUseLbl(); toast(S.gOn ? '🔵 구글 가게 찾기를 켰어요' : '구글 가게 찾기를 껐어요 — 구글을 안 불러요', 1600); };
 $('gOverBtn').onclick = () => {
   if (!S.gOver && !confirm(`무료 한도(가게 찾기 월 ${G_MON}번 · 자세히 월 ${G_DMON}번)를 넘어도 계속 쓸까요?\n넘는 만큼은 구글 요금이 나와요(가게 찾기 1,000번에 약 $32 · 자세히 1,000번에 약 $20 이상).\n구글 콘솔에 하루 상한을 걸어 두는 걸 권해요.`)) return;

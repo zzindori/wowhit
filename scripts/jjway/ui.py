@@ -213,8 +213,7 @@ def run(w, h, tag):
         swipe_down(pg); assert not pg.is_visible('#sheet')
         pg.click('#pip'); time.sleep(.2); assert pg.is_visible('#sheet')
         # 설정·새로고침
-        pg.click('#bSet'); time.sleep(.2); pg.click('#ints .int:nth-child(4) .sw'); pg.click('#setClose')
-        assert pg.evaluate('S.ints[3].on') is True
+        pg.click('#bSet'); time.sleep(.2); assert pg.is_visible('#settings') and not pg.locator('#settings h1', has_text='관심').count(); pg.click('#setClose')
         pg.evaluate('save()'); pg.reload(); pg.wait_for_function('typeof AIR !== "undefined" && SPOT.length > 0'); time.sleep(.4)
         assert pg.evaluate('S.mode') == 'walk' and pg.evaluate('S.party.length') == 4 and len(pg.evaluate('Object.keys(S.seen)')) >= 2
         assert pg.evaluate('FLAGS.length') == 2 and pg.evaluate('S.pts') >= 26, '새로고침 뒤 깃발·포인트 없음'

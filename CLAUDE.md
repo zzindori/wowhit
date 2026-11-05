@@ -78,6 +78,7 @@ version: 'x.y.z+build'
 ## 작업 히스토리
 
 ### 2026-11-05
+- jjWay 마커당 사진 5 → 10장(사용자 결정): 게임 `PH_MAX`, 앱 `maxPerMarker`(`jjwayPhoto` v1.0.1+2, 자료실 'jjWay사진_v1.0.1.apk'·릴리스 jjwayphoto-v1.0.1.2). 사진 시험 72·가져오기 20·앱 시험 통과, ui.py 통과. 큰 백업(수백 MB) 내보내기·가져오기는 안 해 봄.
 - jjWay 홈 화면 앱(사용자: '홈 화면에 앱 아이콘 못 만드나?'): `manifest.webmanifest`·`icons/`(192·512, 기존 아이콘)·head 링크 — standalone(주소창 없음), 저장은 같은 사이트 저장 공간. 서비스 워커 없음(오프라인 안 됨). 실제 폰 설치는 사용자 확인 대기.
 - jjWay 사진 전용 앱 `~/dev/workspace/android/jjwayPhoto`(사용자: '전용 앱, 사진 선택으로 되잖아, 게임과 무관하게' — 웹은 위치가 지워져 안 됨): Flutter + photo_manager, 사진 원본 위치(ACCESS_MEDIA_LOCATION + setRequireOriginal)·날짜별 고르기 → 50m 묶기 → 이름(폰 주소 찾기, 키 없음)·빼기·나누기 확인 → 다운로드 폴더에 jjWay 백업 형식 json. 게임은 코드 변경 없이 가져오기로 받되, `src:'photo'` 새 마커는 50m 안 내 마커가 있으면 사진만 합침(`bkMetres`, `into` — 내용·상태 안 바꿈). 새 마커는 다녀왔어요·포인트 없음.
   APK(시험판, 홈 카드엔 안 넣음): wowhit-releases `jjwayphoto-v1.0.0.1`(arm64 17.8MB), 서명 ~/.secrets/jjwayphoto.jks. 확인: flutter test·analyze, 앱 코드가 만든 형식 파일을 게임에 가져오기 시험 20개(합침·새 마커·중복·새로고침), 사진 시험 72개, ui.py 세 번. **실제 폰에서 앱은 아직 안 돌려 봄**(S24 adb 거부) — 위치 읽기·사진 줄이기·주소 이름은 사용자 확인 대기. 소스는 그 폴더 CLAUDE.md.

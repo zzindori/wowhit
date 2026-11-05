@@ -2301,7 +2301,7 @@ function frame(ts) {
   draw(t); requestAnimationFrame(frame);
 }
 /* ---------- 📷 내 마커 사진: 이 브라우저 안(IndexedDB)에만, 줄여서 저장(원본은 갤러리에 그대로) ---------- */
-const PH_MAX = 5, PH_SIDE = 1600, PH = { db: null, ok: false, by: new Map(), for: null };
+const PH_MAX = 10, PH_SIDE = 1600, PH = { db: null, ok: false, by: new Map(), for: null };
 const phList = id => PH.by.get(id) || [];
 const phUrl = r => r.url || (r.url = URL.createObjectURL(r.blob));
 const phTx = (mode, fn) => new Promise((ok, no) => { const t = PH.db.transaction('photos', mode), q = fn(t.objectStore('photos')); t.oncomplete = () => ok(q && q.result); t.onerror = t.onabort = () => no(t.error); });

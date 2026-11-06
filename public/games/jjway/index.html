@@ -335,6 +335,15 @@ function defParty(n) {
   const base = [['아빠', '아빠'], ['엄마', '엄마'], ['', '아들'], ['', '딸']];
   return Array.from({ length: n }, (_, i) => ({ name: base[i] ? base[i][0] : '', rel: base[i] ? base[i][1] : '기타', age: '성인', col: COLORS[i % COLORS.length] }));
 }
+// 저장은 가장 나중에 켜거나 다시 본 창 하나만: 창이 둘이면(홈 화면 앱 + 브라우저 탭) 각자 기억하던 옛 기록으로 2초마다 서로 덮어써 마커가 사라졌음
+const OWNER = 'jjway-owner', ME = Date.now().toString(36) + Math.random().toString(36).slice(2);
+function isOwner() { try { return localStorage.getItem(OWNER) === ME; } catch (e) { return true; } }
+try { localStorage.setItem(OWNER, ME); } catch (e) {}
+// 다른 창이 저장을 넘겨받은 뒤 이 창을 다시 보면 옛 기억을 버리고 저장된 기록으로 새로 읽음
+function ownerWake() { if (!document.hidden && !isOwner()) location.reload(); }
+document.addEventListener('visibilitychange', ownerWake);
+addEventListener('focus', ownerWake);
+addEventListener('pageshow', ownerWake);
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.party) return s; } catch (e) {}
   return null;
@@ -349,7 +358,12 @@ delete S.fill;                  // (예전 자동 채움 — 이제 가고 싶�
 if (!S.paid) { S.paid = {}; for (const k in S.seen) S.paid[k] = 1; }
 // 자동 '다녀왔어요'는 명소마다 딱 한 번. 한 번 자동으로 됐거나 손으로 바꾼 곳은 그 뒤 수동만(S.lock)
 S.lock = S.lock || {}; for (const k in S.seen) S.lock[k] = 1;   // '가고 싶어요'는 미리 표시라 잠그지 않음
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let saveFailT = 0;
+function save() {
+  if (!isOwner()) return;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (e) { const n = Date.now(); if (n - saveFailT > 30000) { saveFailT = n; toast('⚠️ 저장하지 못했어요. 저장 공간을 확인해 주세요', 4000); } }
+}
 
 /* ---------- 데이터 ---------- */
 let M = null, R = null, PL = null;  // map.json, routes.json, places.json

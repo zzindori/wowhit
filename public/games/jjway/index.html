@@ -122,6 +122,9 @@ button,input,select{font-family:inherit;color:inherit}
 .mtabs{display:flex;gap:4px;border-bottom:2px solid var(--ink);margin-bottom:6px}
 .mtabs button{flex:1;border:2px solid #d8d3c8;border-bottom:none;border-radius:10px 10px 0 0;background:#f3efe6;padding:7px 0;font:15px Jua,sans-serif;cursor:pointer}
 .mtabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+#mTodo{display:flex;align-items:center;gap:6px;width:100%;margin:2px 0 6px;padding:9px 12px;border:2px solid var(--ink);border-radius:11px;background:#ffcf5a;color:var(--ink);font:16px Jua,sans-serif;cursor:pointer;text-align:left}#mTodo[hidden]{display:none}#mTodo em{margin-left:auto;font-style:normal}
+.tdbox{height:calc(var(--vis,100vh) - 24px);max-height:calc(var(--vis,100vh) - 24px);overflow:hidden;padding:14px 12px 10px}#tdN{font-size:13px;color:#6b6876;margin:2px 0 8px}#tdList{position:relative;overflow:auto;flex:1;min-height:0;overscroll-behavior:contain}.tdc{border:2px solid #d8d3c8;border-radius:14px;background:#fff;padding:10px;margin-bottom:10px}.tdc .mph{margin:0 0 6px}.tdw{display:flex;gap:8px;justify-content:space-between;font-size:12px;color:#6b6876;margin-bottom:4px}.tdw a{flex:none;color:var(--blue)}.tdc .fin{user-select:text;-webkit-user-select:text}.tdc .fin.bad{border-color:var(--pri)}.tdn{font-weight:700}.tdb{display:flex;align-items:center;gap:10px;margin-top:6px}.tdb .tds{flex:1;height:44px;border:2px solid var(--ink);border-radius:11px;background:var(--pri);color:#fff;font:17px Jua,sans-serif;cursor:pointer}.tdb .tdx{flex:none;height:44px;padding:0 10px;border:0;background:none;color:#a33;font-size:13px;text-decoration:underline;cursor:pointer}.tdend{text-align:center;padding:36px 10px}.tdend div{font-size:46px;line-height:1.2}.tdend b{display:block;font:400 24px Jua,sans-serif;margin:4px 0}.tdend p{margin:0 0 16px;color:#6b6876;font-size:14px}.tdend button{width:100%;height:46px;border:2px solid var(--ink);border-radius:11px;background:var(--pri);color:#fff;font:17px Jua,sans-serif;cursor:pointer}
+#bkdGo{display:block;width:100%;height:44px;margin-top:12px;border:2px solid var(--ink);border-radius:11px;background:#ffcf5a;color:var(--ink);font:16px Jua,sans-serif;cursor:pointer}#bkdGo[hidden]{display:none}#bkdGo+#bkdOk{margin-top:8px;background:#fff;color:var(--ink)}
 #mList{overflow:auto;flex:1;min-height:120px}#mFlagBar{display:flex;gap:6px;align-items:center;margin:2px 0 4px}#mFlagBar[hidden]{display:none}#mQ{flex:1;min-width:0;width:auto;margin:0;height:38px;user-select:text;-webkit-user-select:text}.mview{flex:none;display:flex;border:2px solid var(--ink);border-radius:10px;overflow:hidden}.mview button{height:34px;padding:0 8px;border:0;background:#fff;color:var(--ink);font:13px Jua,sans-serif;cursor:pointer;white-space:nowrap}.mview button.on{background:var(--ink);color:#fff}
 .mg{margin:10px 0 4px;font-family:Jua,sans-serif;font-size:17px;display:flex;align-items:center;gap:8px}
 .mg small{font:12px system-ui,sans-serif;color:#8a8794}
@@ -246,9 +249,17 @@ button,input,select{font-family:inherit;color:inherit}
     <div class="mhead"><h1 style="font-size:24px;text-align:left">🏅 나의 여행 기록</h1><button class="mx" id="mClose" aria-label="닫기">✕</button></div>
     <div id="mSum"></div>
     <div class="mtabs"><button data-t="spot" class="on">📍 명소</button><button data-t="air">✈️ 공항</button><button data-t="flag">🚩 내 마커</button></div>
+    <button id="mTodo" hidden></button>
     <div id="mFlagBar" hidden><input id="mQ" class="fin" type="search" maxlength="40" placeholder="마커 이름·메모로 찾기" aria-label="마커 찾기"><div class="mview"><button data-v="region">지역별</button><button data-v="cat">종류별</button></div></div>
     <div id="mList"></div>
     <div class="mfoot"><button id="mResetTab">이 탭 기록 지우기</button><button id="mResetAll">전체 초기화</button></div>
+  </div>
+</div>
+<div class="ov" id="todo" hidden>
+  <div class="box mbox tdbox" role="dialog" aria-labelledby="tdT">
+    <div class="mhead"><h1 id="tdT" style="font-size:24px;text-align:left">📥 정리할 곳</h1><button class="mx" id="tdClose" aria-label="닫기">✕</button></div>
+    <div id="tdN"></div>
+    <div id="tdList"></div>
   </div>
 </div>
 <div class="ov" id="settings" hidden>
@@ -295,6 +306,7 @@ button,input,select{font-family:inherit;color:inherit}
     <div id="bkdIc"></div><h2 id="bkdT"></h2><p id="bkdS" aria-live="polite"></p>
     <div id="bkdBar"><i></i></div>
     <ul id="bkdL"></ul>
+    <button id="bkdGo" hidden>📥 지금 정리하기</button>
     <button id="bkdOk" hidden>확인</button>
   </div>
 </div>
@@ -1583,6 +1595,8 @@ function wishFx(x, y, name) {   // 가고 싶어요 담김: 뾰로롱 + 분홍 �
 // [아이콘, 이름, 핀 꼬리 색] — 이 순서대로 작성 창·기록 목록에 나옴. 키는 저장값이라 바꾸지 말 것(새 종류는 추가만)
 const CATS = { food: ['🍜', '맛집', '#e8594f'], sushi: ['🍣', '스시', '#e0653a'], cafe: ['☕', '카페', '#8d6e4c'], bar: ['🍺', '술집', '#d9902f'], conv: ['🏪', '편의점', '#17a398'], shop: ['🛍️', '쇼핑', '#9b59b6'], market: ['🛒', '시장', '#c2569b'], drug: ['💊', '약국', '#5c9ded'], stay: ['🏨', '숙박', '#2f6fd0'], park: ['🌳', '공원', '#3f9a4b'], onsen: ['♨️', '온천', '#d2553f'], sight: ['📷', '명소', '#7a5cc9'], temple: ['⛩️', '절·신사', '#b5482f'], station: ['🚉', '역', '#46637f'], parking: ['🅿️', '주차', '#3b78c2'], wc: ['🚻', '화장실', '#6b8794'], etc: ['📌', '기타', '#7c8a5b'] };
 S.flags = S.flags || [];
+// 정리할 곳(f.todo): 사진 앱에서 온 마커 · 이 기능 전에 가져온 것은 출처 기록이 없어 '기타 + 내용 없음'으로 한 번만 골라 담음
+if (!S.todoInit) { S.todoInit = 1; for (const f of S.flags) if (f.cat === 'etc' && !f.gid && !f.memo && !f.star && !f.link) f.todo = 1; }
 const FLAGS = [];   // 그리기용 {f, x, y, born, armed, last}
 /* ---------- 🔵 구글 가게 = 걸어가다 닿는 마커(각자 키) ---------- */
 // 📍 가까이에서 걸을 때 내 주변 150m 가게(식당·카페·가게·관광지)를 받아 둠(80m 움직일 때마다, 2.5초에 한 번까지 — Nearby Search Pro, 월 5,000번 무료).
@@ -1905,7 +1919,7 @@ window.saveFlag = () => {
   if (!name) { $('fName').classList.add('bad'); $('fName').focus(); toast('이름을 적어 주세요'); return; }
   const now = Date.now(), data = { name, memo: $('fMemo').value.trim(), link: $('fLink').value.trim(), cat: FORM.cat, star: FORM.star, status: FORM.status, ...(FORM.lock ? { lock: 1, autoW: 1 } : {}) };   // 손으로 고른 상태는 고리가 다시 안 채움
   if (FORM.id) {
-    const f = S.flags.find(x => x.id === FORM.id); Object.assign(f, data, { updated: now });
+    const f = S.flags.find(x => x.id === FORM.id); Object.assign(f, data, { updated: now }); delete f.todo;
     const rt = FLAGS.find(r => r.f === f); FORM = null; save(); sheetFlag(rt); burst(rt.x, rt.y, 12, ['#ffd84d', '#fff']); SFX.pop(); toast('💾 저장했어요'); return;
   }
   const f = { id: uid(), lat: FORM.lat, lon: FORM.lon, ...(FORM.gid ? { gid: FORM.gid } : {}), ...data, vis: 'private', created: now, updated: now };   // gid: 구글 장소 ID(약관상 계속 저장해도 되는 것 — 평점·영업시간은 저장 안 하고 볼 때 받음)
@@ -1918,11 +1932,14 @@ window.saveFlag = () => {
     const sx = W / 2 + (rt.x - CAM.x) * CAM.z, sy = H * CY + (rt.y - CAM.y) * CAM.z; coinsTo(sx, sy, 5); addPts(5); }, 420);
   SFX.plant(); toast(`🚩 ${CATS[f.cat][0]} ${name} — 마커를 꽂았어요! +5`, 3000);
 };
-window.deleteFlag = id => {
-  if (!confirm('이 마커를 삭제할까요?')) return;
+function flagDrop(id) {
   phRemoveFlags([id]);
   S.flags = S.flags.filter(x => x.id !== id); const i = FLAGS.findIndex(r => r.f.id === id), rt = FLAGS[i];
   if (rt) { burst(rt.x, rt.y, 14, ['#bbb', '#888']); FLAGS.splice(i, 1); }
+}
+window.deleteFlag = id => {
+  if (!confirm('이 마커를 삭제할까요?')) return;
+  flagDrop(id);
   FORM = null; save(); closeSheet(); toast('마커를 삭제했어요');
 };
 window.editFlag = id => openFlagForm(FLAGS.find(r => r.f.id === id));
@@ -2261,6 +2278,8 @@ function renderMedals() {
     h = flagListHtml();
   }
   $('mFlagBar').hidden = MTAB !== 'flag';
+  const tn = S.flags.filter(f => f.todo).length; $('mTodo').hidden = MTAB !== 'flag' || !tn;
+  $('mTodo').innerHTML = `📥 정리할 곳 ${tn}곳<em>›</em>`;
   $('mList').innerHTML = h;
 }
 // 기록 지우기: 탭별(포인트는 그대로) · 전체(명소·공항·깃발·포인트, 가족 설정·위치는 그대로)
@@ -2294,6 +2313,70 @@ $('mList').onclick = e => {
   else if (r.dataset.flag) sheetFlag(FLAGS.find(x => x.f.id === r.dataset.flag));
   else if (r.dataset.air) sheetAirport(airport(r.dataset.air));
   P.pinned = true;   // 목록에서 연 창은 멀리 있어도 바로 안 닫히게
+};
+/* ---------- 📥 정리할 곳: 받은 마커를 한 목록에서 이름·종류·메모를 적고 차례로 저장 ---------- */
+const TD = { ids: [], next: 0, done: 0 }, TD_N = 12;
+const todoTaken = f => { const t = phList(f.id).map(r => r.taken).filter(Boolean); return t.length ? Math.min(...t) : f.created; };
+const todoThumbs = id => phList(id).map((r, i) => `<img alt="사진 ${i + 1}" loading="lazy" src="${phUrl(r)}" data-ph="${i}">`).join('');
+function todoCard(f) {
+  const g = flagGeo(f), where = [new Date(todoTaken(f)).toLocaleDateString('ko-KR'), g.pref, g.city].filter(Boolean).join(' · ');
+  return `<article class="tdc" data-id="${f.id}" data-cat="${f.cat}"><div class="mph">${todoThumbs(f.id)}</div>`
+    + `<div class="tdw"><span>${esc(where)}</span><a href="https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}" target="_blank" rel="noopener">🧭 지도</a></div>`
+    + `<input class="fin tdn" maxlength="120" aria-label="이름" placeholder="이름" value="${esc(f.name)}">`
+    + `<div class="cats">${Object.entries(CATS).map(([k, c]) => `<button type="button" data-c="${k}" class="${k === f.cat ? 'on' : ''}">${c[0]}<span>${c[1]}</span></button>`).join('')}</div>`
+    + `<input class="fin tdm" maxlength="200" aria-label="메모" placeholder="메모 (선택)" value="${esc(f.memo)}">`
+    + `<div class="tdb"><button type="button" class="tds">저장</button><button type="button" class="tdx">삭제</button></div></article>`;
+}
+function todoMore() {
+  const end = Math.min(TD.next + TD_N, TD.ids.length); let h = '';
+  for (; TD.next < end; TD.next++) { const f = S.flags.find(x => x.id === TD.ids[TD.next]); if (f && f.todo) h += todoCard(f); }
+  $('tdList').insertAdjacentHTML('beforeend', h);
+}
+function todoCount() {
+  const n = S.flags.filter(f => f.todo).length;
+  $('tdN').textContent = n ? `남은 곳 ${n}곳 · 찍은 날짜순 · 저장하면 지역별 목록에서 고른 종류로 분류돼요` : '';
+  return n;
+}
+function openTodo() {
+  TD.ids = S.flags.filter(f => f.todo).sort((a, b) => todoTaken(a) - todoTaken(b)).map(f => f.id); TD.next = 0; TD.done = 0;
+  $('tdList').textContent = ''; $('tdList').scrollTop = 0; todoMore(); todoCount(); $('todo').hidden = false;
+}
+function todoAfter(card) {
+  const nx = card.nextElementSibling || card.previousElementSibling; card.remove(); CARD_SIG = '';
+  if (P.sheetFor === 'flag:' + card.dataset.id) closeSheet();
+  const list = $('tdList'), left = todoCount();
+  if (list.children.length < 4) todoMore();
+  if (!left) {
+    SFX.plant(); vib(40);
+    list.innerHTML = `<div class="tdend"><div>🎉</div><b>정리 끝!</b><p>${TD.done ? `${TD.done}곳을 지역별 목록에 분류했어요` : '정리할 곳이 더 없어요'}</p><button type="button" id="tdEnd">내 마커 보기</button></div>`;
+    return;
+  }
+  if (nx && nx.isConnected) list.scrollTop = nx.offsetTop;
+}
+function todoClose() { $('todo').hidden = true; if (!$('medals').hidden) renderMedals(); }
+$('tdClose').onclick = todoClose;
+$('mTodo').onclick = openTodo;
+$('tdList').addEventListener('scroll', () => { const l = $('tdList'); if (l.scrollTop + l.clientHeight > l.scrollHeight - 300) todoMore(); });
+// 키보드가 올라와도 적는 칸이 가려지지 않게
+$('tdList').addEventListener('focusin', e => { if (e.target.matches('.fin')) setTimeout(() => e.target.scrollIntoView({ block: 'nearest' }), 300); });
+$('tdList').onclick = e => {
+  if (e.target.id === 'tdEnd') { MTAB = 'flag'; MSC = 0; $('todo').hidden = true; renderMedals(); $('medals').hidden = false; $('mList').scrollTop = 0; return; }
+  const card = e.target.closest('.tdc'); if (!card) return;
+  const f = S.flags.find(x => x.id === card.dataset.id); if (!f) { card.remove(); return; }
+  const ph = e.target.closest('[data-ph]'); if (ph) return phView(f.id, +ph.dataset.ph);
+  const cb = e.target.closest('.cats button');
+  if (cb) { card.dataset.cat = cb.dataset.c; card.querySelectorAll('.cats button').forEach(b => b.classList.toggle('on', b === cb)); SFX.pop(); return; }
+  if (e.target.closest('.tds')) {
+    const nm = card.querySelector('.tdn'), name = nm.value.trim();
+    if (!name) { nm.classList.add('bad'); nm.focus(); return; }
+    f.name = name; f.cat = card.dataset.cat; f.memo = card.querySelector('.tdm').value.trim(); f.updated = Date.now(); delete f.todo;
+    save(); TD.done++; SFX.pop(); vib(15); todoAfter(card); return;
+  }
+  if (e.target.closest('.tdx')) {
+    const n = phList(f.id).length;
+    if (!confirm(`'${f.name}' 마커${n ? `와 사진 ${n}장` : ''}을 지울까요? (갤러리 원본은 그대로예요)`)) return;
+    flagDrop(f.id); save(); todoAfter(card);
+  }
 };
 /* ---------- 설정 화면 ---------- */
 let draftN = S.party.length, draft = S.party.map(m => ({ ...m }));
@@ -2370,7 +2453,7 @@ $('loc').onclick = () => { S.pos = { x: P.x, y: P.y }; save(); location.replace(
 let last = 0;
 function frame(ts) {
   const t = ts / 1000, dt = Math.min(.05, last ? t - last : 0); last = t;
-  if ($('setup').hidden && $('settings').hidden && $('medals').hidden) step(dt); else { P.vx = P.vy = 0; }
+  if ($('setup').hidden && $('settings').hidden && $('medals').hidden && $('todo').hidden) step(dt); else { P.vx = P.vy = 0; }
   draw(t); requestAnimationFrame(frame);
 }
 /* ---------- 📷 내 마커 사진: 이 브라우저 안(IndexedDB)에만, 줄여서 저장(원본은 갤러리에 그대로) ---------- */
@@ -2460,6 +2543,7 @@ $('phvDel').onclick = async () => {
   const a = phList(PHV.flag), r = a[PHV.i], flag = PHV.flag;
   try { await phTx('readwrite', st => st.delete(r.id)); } catch (e) { return toast('지우지 못했어요'); }
   a.splice(PHV.i, 1); phForgetMem(r); if (!a.length) PH.by.delete(flag);
+  const tc = !$('todo').hidden && document.querySelector(`.tdc[data-id="${flag}"] .mph`); if (tc) tc.innerHTML = todoThumbs(flag);
   phShow();
   const rt = FLAGS.find(x => x.f.id === flag); if (rt) { rt.f.updated = Date.now(); save(); if (P.sheetFor === 'flag:' + flag) sheetFlag(rt); }
 };
@@ -2490,16 +2574,18 @@ const BK_ID = /^[\w-]{1,80}$/;
 const bkMetres = (a, b) => { const r = Math.PI / 180, h = Math.sin((b.lat - a.lat) * r / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin((b.lon - a.lon) * r / 2) ** 2; return 12742000 * Math.asin(Math.sqrt(h)); };
 // 가져오는 동안은 진행 창, 끝나면 결과 창 + 소리·진동 — [확인]을 눌러야 닫혀서 끝난 걸 놓치지 않음
 const bkBusy = (title, sub, ratio) => {
-  $('bkdIc').textContent = ''; $('bkdT').textContent = title; $('bkdS').textContent = sub; $('bkdL').textContent = ''; $('bkdOk').hidden = true;
+  $('bkdIc').textContent = ''; $('bkdT').textContent = title; $('bkdS').textContent = sub; $('bkdL').textContent = ''; $('bkdOk').hidden = true; $('bkdGo').hidden = true;
   const bar = $('bkdBar'); bar.hidden = false; bar.classList.toggle('wait', ratio == null); bar.firstElementChild.style.width = ratio == null ? '' : Math.round(ratio * 100) + '%';
   $('bkDlg').hidden = false;
 };
-const bkDone = (icon, title, sub, rows) => {
+const bkDone = (icon, title, sub, rows, go) => {
+  $('bkdGo').hidden = !go;
   $('bkdIc').textContent = icon; $('bkdT').textContent = title; $('bkdS').textContent = sub; $('bkdBar').hidden = true;
   $('bkdL').replaceChildren(...rows.map(([k, v, no]) => { const li = document.createElement('li'); li.textContent = k; if (no) li.className = 'no'; const b = document.createElement('b'); b.textContent = v; li.appendChild(b); return li; }));
   $('bkdOk').hidden = false; $('bkDlg').hidden = false; $('bkdOk').focus();
 };
 $('bkdOk').onclick = () => { $('bkDlg').hidden = true; };
+$('bkdGo').onclick = () => { $('bkDlg').hidden = true; $('settings').hidden = true; openTodo(); };
 $('bkFile').onchange = async e => {
   const file = e.target.files[0], m = $('bkMsg'); e.target.value = ''; if (!file) return;
   bkBusy('파일 읽는 중', file.name);
@@ -2515,13 +2601,15 @@ $('bkFile').onchange = async e => {
     const into = new Map();   // 사진 앱에서 온 마커를 합친 곳: 사진의 flag → 내 마커 id
     for (const x of d.state.flags) {   // 바깥에서 온 파일이라 칸마다 확인(id·장소 ID는 창 버튼 코드에 들어감)
       if (!x || !BK_ID.test(x.id) || typeof x.name !== 'string' || !x.name || !isFinite(x.lat) || !isFinite(x.lon) || Math.abs(x.lat) > 90 || Math.abs(x.lon) > 180 || (x.gid && !BK_ID.test(x.gid))) { skipped++; continue; }
-      const f = { id: x.id, lat: +x.lat, lon: +x.lon, ...(x.gid ? { gid: x.gid } : {}), name: x.name.slice(0, 120), memo: String(x.memo || '').slice(0, 400), link: String(x.link || '').slice(0, 500), cat: Object.hasOwn(CATS, x.cat) ? x.cat : 'etc', star: Math.max(0, Math.min(5, +x.star || 0)), status: ['want', 'been'].includes(x.status) ? x.status : '', vis: 'private', created: +x.created || Date.now(), updated: +x.updated || Date.now(), ...(x.autoW ? { autoW: 1 } : {}), ...(x.lock ? { lock: 1 } : {}), ...(x.paid ? { paid: 1 } : {}) };
+      const f = { id: x.id, lat: +x.lat, lon: +x.lon, ...(x.gid ? { gid: x.gid } : {}), name: x.name.slice(0, 120), memo: String(x.memo || '').slice(0, 400), link: String(x.link || '').slice(0, 500), cat: Object.hasOwn(CATS, x.cat) ? x.cat : 'etc', star: Math.max(0, Math.min(5, +x.star || 0)), status: ['want', 'been'].includes(x.status) ? x.status : '', vis: 'private', created: +x.created || Date.now(), updated: +x.updated || Date.now(), ...(x.autoW ? { autoW: 1 } : {}), ...(x.lock ? { lock: 1 } : {}), ...(x.paid ? { paid: 1 } : {}), ...(x.src === 'photo' || x.todo ? { todo: 1 } : {}) };
       const cur = S.flags.find(y => y.id === f.id);
       // 사진 앱(jjWay 사진)에서 온 새 마커: 50m 안에 내 마커가 있으면 새로 안 만들고 그 마커에 사진만
       const nb = !cur && x.src === 'photo' ? S.flags.find(y => bkMetres(y, f) <= 50) : null;
       if (nb) { into.set(f.id, nb.id); nb.updated = Date.now(); merged++; continue; }
+      // 사진 앱은 파일을 만들 때마다 시각이 새로워서, 이미 있는 마커를 덮으면 정리해 둔 이름·종류가 되돌아감 → 사진만 더함
+      if (cur && x.src === 'photo') { same++; continue; }
       if (!cur) { S.flags.push(f); FLAGS.push(flagRT(f)); added++; }
-      else if (f.updated > (cur.updated || 0)) { const rt = FLAGS.find(r => r.f === cur); Object.assign(cur, f); if (rt) { const p = proj(cur.lon, cur.lat); rt.x = p.x; rt.y = p.y; } changed++; }
+      else if (f.updated > (cur.updated || 0)) { const rt = FLAGS.find(r => r.f === cur); Object.assign(cur, f); if (!f.todo) delete cur.todo; if (rt) { const p = proj(cur.lon, cur.lat); rt.x = p.x; rt.y = p.y; } changed++; }
       else same++;
     }
     for (const k of BK_OBJ) { const o = d.state[k]; if (o && typeof o === 'object') for (const c of Object.keys(o)) if (c !== '__proto__' && !(c in S[k])) S[k][c] = o[c]; }
@@ -2556,7 +2644,7 @@ $('bkFile').onchange = async e => {
   if (pBad) rows.push(['못 가져온 사진', pBad + '장', 1]);
   stgMsg(m, stopped ? '⚠️ 가져오다 멈췄어요 · 같은 파일을 다시 가져오면 이어져요' : `✅ 새 마커 ${added}개 · 바뀐 마커 ${changed}개${merged ? ` · 가까운 내 마커에 합침 ${merged}곳` : ''} · 사진 ${pAdd}장을 가져왔어요` + (bad ? ` · 못 가져옴: 마커 ${skipped}개, 사진 ${pBad + pFull}장` : ''), stopped ? 'err' : bad ? 'info' : 'ok');
   if (stopped) { vib([60, 60, 60]); bkDone('⚠️', '가져오다 멈췄어요', '여기까지는 저장했어요. 같은 파일을 다시 가져오면 이어져요.', rows); }
-  else if (got) { SFX.plant(); vib(40); bkDone(bad ? '⚠️' : '🎉', '다 가져왔어요', bad ? '일부는 가져오지 못했어요' : '지도에서 확인해 보세요', rows); }
+  else if (got) { SFX.plant(); vib(40); bkDone(bad ? '⚠️' : '🎉', '다 가져왔어요', bad ? '일부는 가져오지 못했어요' : S.flags.some(f => f.todo) ? '이름과 종류를 정리해 보세요' : '지도에서 확인해 보세요', rows, S.flags.some(f => f.todo)); }
   else { SFX.pop(); bkDone(bad ? '⚠️' : '✅', '새로 가져온 게 없어요', bad ? '파일 내용을 쓸 수 없었어요' : '이 파일의 내용은 이미 다 있어요', rows); }
 };
 (async () => {

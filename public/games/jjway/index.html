@@ -123,7 +123,7 @@ button,input,select{font-family:inherit;color:inherit}
 .mtabs button{flex:1;border:2px solid #d8d3c8;border-bottom:none;border-radius:10px 10px 0 0;background:#f3efe6;padding:7px 0;font:15px Jua,sans-serif;cursor:pointer}
 .mtabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 #mTodo{display:flex;align-items:center;gap:6px;width:100%;margin:2px 0 6px;padding:9px 12px;border:2px solid var(--ink);border-radius:11px;background:#ffcf5a;color:var(--ink);font:16px Jua,sans-serif;cursor:pointer;text-align:left}#mTodo[hidden]{display:none}#mTodo em{margin-left:auto;font-style:normal}
-.tdbox{height:calc(var(--vis,100vh) - 24px);max-height:calc(var(--vis,100vh) - 24px);overflow:hidden;padding:14px 12px 10px}#tdN{font-size:13px;color:#6b6876;margin:2px 0 8px}#tdList{position:relative;overflow:auto;flex:1;min-height:0;overscroll-behavior:contain}.tdc{border:2px solid #d8d3c8;border-radius:14px;background:#fff;padding:10px;margin-bottom:10px}.tdc .mph{margin:0 0 6px}.tdw{display:flex;gap:8px;justify-content:space-between;font-size:12px;color:#6b6876;margin-bottom:4px}.tdw a{flex:none;color:var(--blue)}.tdc .fin{user-select:text;-webkit-user-select:text}.tdc .fin.bad{border-color:var(--pri)}.tdn{font-weight:700}.tdb{display:flex;align-items:center;gap:10px;margin-top:6px}.tdb .tds{flex:1;height:44px;border:2px solid var(--ink);border-radius:11px;background:var(--pri);color:#fff;font:17px Jua,sans-serif;cursor:pointer}.tdb .tdx{flex:none;height:44px;padding:0 10px;border:0;background:none;color:#a33;font-size:13px;text-decoration:underline;cursor:pointer}.tdend{text-align:center;padding:36px 10px}.tdend div{font-size:46px;line-height:1.2}.tdend b{display:block;font:400 24px Jua,sans-serif;margin:4px 0}.tdend p{margin:0 0 16px;color:#6b6876;font-size:14px}.tdend button{width:100%;height:46px;border:2px solid var(--ink);border-radius:11px;background:var(--pri);color:#fff;font:17px Jua,sans-serif;cursor:pointer}
+.tdbox{height:calc(var(--vis,100vh) - 24px);max-height:calc(var(--vis,100vh) - 24px);overflow:hidden;padding:14px 12px 10px}#tdN{font-size:13px;color:#6b6876;margin:2px 0 8px}#tdList{position:relative;overflow:auto;flex:1;min-height:0;overscroll-behavior:contain}.tdc{border:2px solid #d8d3c8;border-radius:14px;background:#fff;padding:10px;margin-bottom:10px}.tdc .mph{margin:0 0 6px}.tdw{display:flex;gap:8px;justify-content:space-between;font-size:12px;color:#6b6876;margin-bottom:4px}.tdl{flex:none;display:flex;gap:10px;align-items:center}.tdl a{color:var(--blue);padding:6px 0}.tdmap{font:inherit;font-weight:700;color:#fff;background:var(--blue);border:0;border-radius:8px;padding:6px 10px;cursor:pointer}.tdc .fin{user-select:text;-webkit-user-select:text}.tdc .fin.bad{border-color:var(--pri)}.tdn{font-weight:700}.tdb{display:flex;align-items:center;gap:10px;margin-top:6px}.tdb .tds{flex:1;height:44px;border:2px solid var(--ink);border-radius:11px;background:var(--pri);color:#fff;font:17px Jua,sans-serif;cursor:pointer}.tdb .tdx{flex:none;height:44px;padding:0 10px;border:0;background:none;color:#a33;font-size:13px;text-decoration:underline;cursor:pointer}.tdend{text-align:center;padding:36px 10px}.tdend div{font-size:46px;line-height:1.2}.tdend b{display:block;font:400 24px Jua,sans-serif;margin:4px 0}.tdend p{margin:0 0 16px;color:#6b6876;font-size:14px}.tdend button{width:100%;height:46px;border:2px solid var(--ink);border-radius:11px;background:var(--pri);color:#fff;font:17px Jua,sans-serif;cursor:pointer}
 #bkdGo{display:block;width:100%;height:44px;margin-top:12px;border:2px solid var(--ink);border-radius:11px;background:#ffcf5a;color:var(--ink);font:16px Jua,sans-serif;cursor:pointer}#bkdGo[hidden]{display:none}#bkdGo+#bkdOk{margin-top:8px;background:#fff;color:var(--ink)}
 #mList{overflow:auto;flex:1;min-height:120px}#mFlagBar{display:flex;gap:6px;align-items:center;margin:2px 0 4px}#mFlagBar[hidden]{display:none}#mQ{flex:1;min-width:0;width:auto;margin:0;height:38px;user-select:text;-webkit-user-select:text}.mview{flex:none;display:flex;border:2px solid var(--ink);border-radius:10px;overflow:hidden}.mview button{height:34px;padding:0 8px;border:0;background:#fff;color:var(--ink);font:13px Jua,sans-serif;cursor:pointer;white-space:nowrap}.mview button.on{background:var(--ink);color:#fff}
 .mg{margin:10px 0 4px;font-family:Jua,sans-serif;font-size:17px;display:flex;align-items:center;gap:8px}
@@ -641,6 +641,7 @@ const HINT = t => `<div class="hint" hidden>${t}</div>`;   // 사용법은 숨�
 // 내 마커 창·고치기 창만 넓게 — 다른 창은 확대 막대가 쓸 수 있게 예전 높이
 const SHEET_TALL = new Set(['flag', 'flagform']);
 function openSheet(head, body, key, kind) {
+  if (key !== 'tdmap') todoMapEnd();   // 지도로 보다 다른 창(찾기 등)으로 넘어가면 보기만 끝냄
   locT = 0; const sh = $('sheet');
   const info = body.includes('class="hint"') ? `<button class="info" onclick="toggleHint()" aria-label="사용법">i</button>` : '';
   const i = head.indexOf('<button class="cbtn"'), title = i < 0 ? head : head.slice(0, i), cb = i < 0 ? '' : head.slice(i);
@@ -648,7 +649,7 @@ function openSheet(head, body, key, kind) {
   sh.classList.toggle('tall', SHEET_TALL.has(kind));
   sh.hidden = false; sh.scrollTop = 0; sh.style.transform = ''; P.sheetFor = key; P.sheetKind = kind; P.closedFor = null;
 }
-function closeSheet() { $('sheet').hidden = true; P.sheetFor = null; P.sheetKind = null; P.pinned = false; P.pick = null; }
+function closeSheet() { $('sheet').hidden = true; P.sheetFor = null; P.sheetKind = null; P.pinned = false; P.pick = null; todoMapBack(); }
 window.xClose = () => { const c = P.sheetFor; closeSheet(); P.closedFor = c; $('sheet').style.transform = ''; };
 window.toggleHint = () => { const h = $('sheet').querySelector('.hint'), b = $('sheet').querySelector('.info'); if (h) { h.hidden = !h.hidden; b.classList.toggle('on', !h.hidden); } };
 
@@ -928,6 +929,7 @@ function step(dt) {
     pickStep(dt, ix, iy); stepFX(dt);
     CAM.z *= Math.exp((Math.log(Math.min(W, H) / S.span.walk) - Math.log(CAM.z)) * (1 - Math.exp(-dt * 3)));
     CAM.x += (P.pick.x - CAM.x) * (1 - Math.exp(-dt * 6)); CAM.y += (P.pick.y - CAM.y) * (1 - Math.exp(-dt * 6));
+    zMark(Math.min(W, H) / CAM.z);
     return;
   }
   const bridge = (x, y) => AIR.some(a => a.c === S.country && Math.hypot(a.x - x, a.y - y) < 22);
@@ -2158,6 +2160,11 @@ function pickStep(dt, ix, iy) {
 }
 function drawPick(g, cx, cy, t) {
   if (!P.pick) return;
+  if (P.pick.at) {   // 📥 정리할 곳에서 온 지도: 십자선 대신 그 마커 둘레 고리(지도를 끌어도 마커에 붙어 있음)
+    const ax = cx + (P.pick.at.x - CAM.x) * CAM.z, ay = cy + (P.pick.at.y - CAM.y) * CAM.z, ak = (Math.sin(t * 4) + 1) / 2;
+    g.strokeStyle = '#e8594f'; g.lineWidth = 3; g.globalAlpha = .9 - .5 * ak; g.beginPath(); g.arc(ax, ay - 18, 26 + 8 * ak, 0, 6.29); g.stroke(); g.globalAlpha = 1;
+    return;
+  }
   const x = cx + (P.pick.x - CAM.x) * CAM.z, y = cy + (P.pick.y - CAM.y) * CAM.z, k = (Math.sin(t * 5) + 1) / 2;
   g.strokeStyle = '#e8594f'; g.lineWidth = 2.5;
   g.beginPath(); g.arc(x, y, 16 + 3 * k, 0, 6.29); g.stroke();
@@ -2322,7 +2329,7 @@ const todoThumbs = id => phList(id).map((r, i) => phCell(r, i, `data-ph="${i}"`)
 function todoCard(f) {
   const g = flagGeo(f), where = [new Date(todoTaken(f)).toLocaleDateString('ko-KR'), g.pref, g.city].filter(Boolean).join(' · ');
   return `<article class="tdc" data-id="${f.id}" data-cat="${f.cat}"><div class="mph">${todoThumbs(f.id)}</div>`
-    + `<div class="tdw"><span>${esc(where)}</span><a href="https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}" target="_blank" rel="noopener">🧭 지도</a></div>`
+    + `<div class="tdw"><span>${esc(where)}</span><span class="tdl">${S.mode === 'walk' ? '<button type="button" class="tdmap">🗺️ 지도</button>' : ''}<a href="https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}" target="_blank" rel="noopener">🧭 구글</a></span></div>`
     + `<input class="fin tdn" maxlength="120" aria-label="이름" placeholder="이름" value="${esc(f.name)}">`
     + `<div class="cats">${Object.entries(CATS).map(([k, c]) => `<button type="button" data-c="${k}" class="${k === f.cat ? 'on' : ''}">${c[0]}<span>${c[1]}</span></button>`).join('')}</div>`
     + `<input class="fin tdm" maxlength="200" aria-label="메모" placeholder="메모 (선택)" value="${esc(f.memo)}">`
@@ -2338,7 +2345,31 @@ function todoCount() {
   $('tdN').textContent = n ? `남은 곳 ${n}곳 · 찍은 날짜순 · 저장하면 지역별 목록에서 고른 종류로 분류돼요` : '';
   return n;
 }
+// 🗺️ 지도: 정리 창을 잠깐 내리고 게임 지도에서 그 마커를 봄. 사람은 제자리, 적던 글은 그대로, 돌아오면 보던 칸
+let TDV = null;
+function todoMapOpen(f, card) {
+  const p = proj(f.lon, f.lat), name = card.querySelector('.tdn').value.trim() || f.name;
+  closeSheet(); $('peek').hidden = true;
+  TDV = { scroll: $('tdList').scrollTop, medals: !$('medals').hidden, span: S.span.walk };
+  $('todo').hidden = true; $('medals').hidden = true;
+  P.look = null; P.pick = { x: p.x, y: p.y, name, gid: '', at: p };
+  setSpan('walk', Math.min(S.span.walk, 1)); CAM.x = p.x; CAM.y = p.y; CAM.z = Math.min(W, H) / S.span.walk;
+  const g = flagGeo(f), where = [g.pref, g.city].filter(Boolean).join(' · ');
+  openSheet(`<h2>🗺️ ${esc(name)}</h2><button class="cbtn" onclick="closeSheet()">↩ 돌아가기</button>`, `<div class="sub">${esc(where)}</div><button class="go" style="margin-top:6px;height:48px" onclick="closeSheet()">↩ 정리로 돌아가기</button>` + HINT('화면을 끌면 지도가 움직여요 · 두 손가락이나 확대 막대로 확대 · 내 위치는 안 바뀌어요'), 'tdmap', 'flagform');
+  SFX.pop();
+}
+function todoMapEnd() {
+  if (!TDV) return null;
+  const v = TDV; TDV = null; P.pick = null; S.span.walk = v.span;
+  return v;
+}
+function todoMapBack() {
+  const v = todoMapEnd(); if (!v) return;
+  $('medals').hidden = !v.medals; $('todo').hidden = false; $('tdList').scrollTop = v.scroll;
+  CAM.x = P.x; CAM.y = P.y;
+}
 function openTodo() {
+  todoMapEnd();
   TD.ids = S.flags.filter(f => f.todo).sort((a, b) => todoTaken(a) - todoTaken(b)).map(f => f.id); TD.next = 0; TD.done = 0;
   $('tdList').textContent = ''; $('tdList').scrollTop = 0; todoMore(); todoCount(); $('todo').hidden = false;
 }
@@ -2365,6 +2396,7 @@ $('tdList').onclick = e => {
   const card = e.target.closest('.tdc'); if (!card) return;
   const f = S.flags.find(x => x.id === card.dataset.id); if (!f) { card.remove(); return; }
   const ph = e.target.closest('[data-ph]'); if (ph) return phView(f.id, +ph.dataset.ph);
+  if (e.target.closest('.tdmap')) return todoMapOpen(f, card);
   const cb = e.target.closest('.cats button');
   if (cb) { card.dataset.cat = cb.dataset.c; card.querySelectorAll('.cats button').forEach(b => b.classList.toggle('on', b === cb)); SFX.pop(); return; }
   if (e.target.closest('.tds')) {

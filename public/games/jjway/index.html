@@ -1234,6 +1234,15 @@ const kCtx = () => (P.pick || P.look) ? countryAt(CAM.x, CAM.y) === 'KOR' && lan
   : S.mode === 'landing' ? !!(P.anim && P.anim.a && P.anim.a.c === 'KOR') : S.country === 'KOR' && S.mode !== 'plane';
 function kOn() { if (!kCtx()) return false; kLoad(); return KM.st === 2; }
 function kAlpha(span) { return kOn() ? Math.max(0, Math.min(1, (260 - span) / 140)) : 0; }
+function kCal(o) {
+  const K = kakao.maps, pr = o.map.getProjection(), sc = 2.5 * 2 ** (o.map.getLevel() - 3), c = o.map.getCenter().toCoords();
+  let x = 0, y = 0, n = 0;
+  for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) {
+    const X = c.getX() + i * 37.3 * sc, Y = c.getY() + j * 41.7 * sc, p = pr.containerPointFromCoords(new K.Coords(X, Y).toLatLng());
+    x += X - p.x * sc; y += Y + p.y * sc; n++;
+  }
+  return { s: sc, x: x / n, y: y / n };
+}
 function kSync(cx, cy, alpha) {   // 카카오 지도를 지금 카메라에 맞춤. 반환: 그린 진하기(0이면 안 보임)
   const box = $('kmap');
   if (alpha <= 0 || KM.st !== 2) { if (box.style.display !== 'none') box.style.display = 'none'; return 0; }
@@ -1251,11 +1260,13 @@ function kSync(cx, cy, alpha) {   // 카카오 지도를 지금 카메라에 맞
     });
     KM.w = w; KM.h = h;
   }
-  if (w !== KM.w || h !== KM.h) { KM.L.forEach(o => { o.el.style.width = w + 'px'; o.el.style.height = h + 'px'; o.map.relayout(); }); KM.w = w; KM.h = h; }
+  if (w !== KM.w || h !== KM.h) { KM.L.forEach(o => { o.el.style.width = w + 'px'; o.el.style.height = h + 'px'; o.map.relayout(); o.cal = null; }); KM.w = w; KM.h = h; }
   // 뒤 지도를 다 받았으면(또는 1.5초 넘으면) 앞으로
   if (KM.pend && (KM.pend.ok || now - KM.pend.t > 1500)) { KM.f = 1 - KM.f; KM.pend = null; }
   const F = KM.L[KM.f], B = KM.L[1 - KM.f];
-  const pt = (o, lon, lat) => o.map.getProjection().containerPointFromCoords(new K.LatLng(lat, lon));
+  // 화면 좌표(containerPointFromCoords)는 정수 px로 반올림돼 나와 움직일 때 떨림 → 카카오 내부 좌표(WCONGNAMUL, 소수)로 직접 계산.
+  // 1px = 2.5 × 2^(단계-3) 단위, 판의 기준점은 지도를 옮기거나 단계를 바꿀 때 한 번만 25점 평균으로 맞춤(kCal)
+  const pt = (o, lon, lat) => { if (!o.cal) o.cal = kCal(o); const c = new K.LatLng(lat, lon).toCoords(); return { x: (c.getX() - o.cal.x) / o.cal.s, y: (o.cal.y - c.getY()) / o.cal.s }; };
   // 단계는 0.65 넘게 어긋날 때만 바꿈(경계에서 왔다 갔다 안 하게), 가운데가 판 가운데에서 많이 벗어나도 다시 받음
   if (!KM.pend) {
     const q = pt(F, mid.lon, mid.lat);
@@ -1263,7 +1274,7 @@ function kSync(cx, cy, alpha) {   // 카카오 지도를 지금 카메라에 맞
     if (out || F.lv - want > .65 || Math.abs(q.x - w / 2) > W * .3 || Math.abs(q.y - h / 2) > H * .3) {
       const lv = Math.min(14, out ? Math.ceil(want + .25) : Math.round(want));
       if (lv !== B.lv) { B.map.setLevel(lv); B.lv = lv; }
-      B.map.setCenter(new K.LatLng(mid.lat, mid.lon));
+      B.map.setCenter(new K.LatLng(mid.lat, mid.lon)); B.cal = null;
       KM.pend = { t: now, ok: false };
     }
   }

@@ -17,7 +17,8 @@
 html,body{margin:0;height:100%;overflow:hidden;background:var(--sea);color:var(--ink);font-family:Jua,system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
 :root{--sb:0px;--sbi:calc(env(safe-area-inset-bottom,0px) + var(--sb))}#lh{position:fixed;top:0;bottom:0;left:0;width:0;pointer-events:none;visibility:hidden}#vp{position:fixed;inset:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);pointer-events:none;height:100dvh}
 #cv{position:fixed;left:0;top:0;touch-action:none}
-#kmap{position:fixed;left:0;top:0;transform-origin:0 0;pointer-events:none;display:none;will-change:transform}
+#kmap{position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;display:none}
+#kmap .kl{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform,opacity}
 button,input,select{font-family:inherit;color:inherit}
 .chip{position:fixed;background:rgba(255,253,247,.94);border:2px solid var(--ink);border-radius:999px;padding:5px 12px;font-size:15px;box-shadow:0 3px 0 rgba(44,43,53,.25);z-index:20}
 #loc{left:calc(10px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));max-width:calc(100vw - var(--pipw, 150px) - 34px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
@@ -215,7 +216,7 @@ button,input,select{font-family:inherit;color:inherit}
 </head>
 <body>
 <div id="vp"></div><div id="lh"></div>
-<div id="kmap" aria-hidden="true"></div>
+<div id="kmap" aria-hidden="true"><div class="kl"></div><div class="kl"></div></div>
 <canvas id="cv" aria-label="한국·일본 여행 지도"></canvas>
 <div id="loc" class="chip" role="button" title="새로 읽기">📍 불러오는 중…</div>
 <div id="pts" class="chip" title="여행 포인트">🏅 <b id="ptsN">0</b></div>
@@ -1219,9 +1220,10 @@ function tileImg(z, x, y, want) {
 /* ---------- 카카오 지도(한국, 확대할 때) ---------- */
 // 공식 지도 SDK를 캔버스 밑(#kmap)에 깔고 게임 카메라에 맞춰 옮김. 카카오는 확대 단계가 정수(1~14, 단계마다 2배)라
 // 가장 가까운 단계로 그리고 CSS 변환으로 나머지(0.7~1.4배)와 우리 좌표(경도 132·위도 35 기준 km)와의 차이(가로 약 3%·살짝 돎)를 맞춤.
+// 지도 두 장(앞·뒤): 단계를 바꾸거나 많이 옮길 땐 뒤 지도에서 새로 받고, 다 받으면(tilesloaded) 바꿔 끼움 — 한 장이면 받는 동안 0.2초 빈 화면이 깜빡였음.
 // 키는 자바스크립트 지도 키 — 원래 페이지에 보이는 키이고 카카오 콘솔에서 도메인(wowhit.org)으로 막아 둠. 지도 로고가 화면 밖이라 출처는 #attr에
 const KAKAO_JS = '161a5a1e0637e01ec83d173378f3ba07';
-const KM = { st: 0, map: null, lv: 0, w: 0, h: 0, cx: 0, cy: 0 };
+const KM = { st: 0, L: [], f: 0, pend: null, w: 0, h: 0 };
 function kLoad() {
   if (KM.st) return; KM.st = 1;
   const s = document.createElement('script'); s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_JS}&autoload=false`;
@@ -1233,31 +1235,56 @@ const kCtx = () => (P.pick || P.look) ? countryAt(CAM.x, CAM.y) === 'KOR' && lan
 function kOn() { if (!kCtx()) return false; kLoad(); return KM.st === 2; }
 function kAlpha(span) { return kOn() ? Math.max(0, Math.min(1, (260 - span) / 140)) : 0; }
 function kSync(cx, cy, alpha) {   // 카카오 지도를 지금 카메라에 맞춤. 반환: 그린 진하기(0이면 안 보임)
-  const el = $('kmap');
-  if (alpha <= 0 || KM.st !== 2) { if (el.style.display !== 'none') el.style.display = 'none'; return 0; }
-  const K = kakao.maps, w = Math.ceil(W * 2.2), h = Math.ceil(H * 2.2);
+  const box = $('kmap');
+  if (alpha <= 0 || KM.st !== 2) { if (box.style.display !== 'none') box.style.display = 'none'; return 0; }
+  const K = kakao.maps, w = Math.ceil(W * 2.2), h = Math.ceil(H * 2.2), now = performance.now();
   const mid = unproj(CAM.x + (W / 2 - cx) / CAM.z, CAM.y + (H / 2 - cy) / CAM.z);   // 화면 가운데 자리
-  const lv = Math.max(1, Math.min(14, Math.round(Math.log2(1000 / CAM.z)) + 3));      // 단계 L ≈ 2^(L-3) m/px
-  if (el.style.display !== 'block') el.style.display = 'block';
-  if (w !== KM.w || h !== KM.h) { el.style.width = w + 'px'; el.style.height = h + 'px'; KM.w = w; KM.h = h; if (KM.map) KM.map.relayout(); }
-  if (!KM.map) {
-    KM.map = new K.Map(el, { center: new K.LatLng(mid.lat, mid.lon), level: lv, draggable: false, scrollwheel: false, disableDoubleClick: true, disableDoubleClickZoom: true, keyboardShortcuts: false, tileAnimation: false });
-    KM.lv = lv;
+  const want = Math.max(1, Math.min(14, Math.log2(1000 / CAM.z) + 3));                // 단계 L ≈ 2^(L-3) m/px (소수)
+  if (box.style.display !== 'block') box.style.display = 'block';
+  if (!KM.L.length) {
+    [...box.children].forEach((el, i) => {
+      el.style.width = w + 'px'; el.style.height = h + 'px';
+      const lv = Math.round(want), map = new K.Map(el, { center: new K.LatLng(mid.lat, mid.lon), level: lv, draggable: false, scrollwheel: false, disableDoubleClick: true, disableDoubleClickZoom: true, keyboardShortcuts: false, tileAnimation: false });
+      const o = { el, map, lv };
+      K.event.addListener(map, 'tilesloaded', () => { if (KM.pend && KM.L[1 - KM.f] === o) KM.pend.ok = true; });
+      KM.L.push(o);
+    });
+    KM.w = w; KM.h = h;
   }
-  const pr = KM.map.getProjection(), pt = (lon, lat) => pr.containerPointFromCoords(new K.LatLng(lat, lon));
-  let q = pt(mid.lon, mid.lat);
-  // 화면 가운데가 카카오 판 가운데에서 많이 벗어났거나 단계가 바뀌면 다시 맞춤(판이 화면의 2.2배라 그 안에선 옮기기만)
-  if (lv !== KM.lv || Math.abs(q.x - w / 2) > W * .3 || Math.abs(q.y - h / 2) > H * .3) {
-    if (lv !== KM.lv) { KM.map.setLevel(lv); KM.lv = lv; }
-    KM.map.setCenter(new K.LatLng(mid.lat, mid.lon)); q = pt(mid.lon, mid.lat);
+  if (w !== KM.w || h !== KM.h) { KM.L.forEach(o => { o.el.style.width = w + 'px'; o.el.style.height = h + 'px'; o.map.relayout(); }); KM.w = w; KM.h = h; }
+  // 뒤 지도를 다 받았으면(또는 1.5초 넘으면) 앞으로
+  if (KM.pend && (KM.pend.ok || now - KM.pend.t > 1500)) { KM.f = 1 - KM.f; KM.pend = null; }
+  const F = KM.L[KM.f], B = KM.L[1 - KM.f];
+  const pt = (o, lon, lat) => o.map.getProjection().containerPointFromCoords(new K.LatLng(lat, lon));
+  // 단계는 0.65 넘게 어긋날 때만 바꿈(경계에서 왔다 갔다 안 하게), 가운데가 판 가운데에서 많이 벗어나도 다시 받음
+  if (!KM.pend) {
+    const q = pt(F, mid.lon, mid.lat);
+    const out = want - F.lv > .5;   // 축소 중: 앞 지도가 점점 작아져 화면을 못 덮으니 한 단계 더 넓게 미리 받음
+    if (out || F.lv - want > .65 || Math.abs(q.x - w / 2) > W * .3 || Math.abs(q.y - h / 2) > H * .3) {
+      const lv = Math.min(14, out ? Math.ceil(want + .25) : Math.round(want));
+      if (lv !== B.lv) { B.map.setLevel(lv); B.lv = lv; }
+      B.map.setCenter(new K.LatLng(mid.lat, mid.lon));
+      KM.pend = { t: now, ok: false };
+    }
   }
-  // 우리 좌표 1km(동·남)가 카카오 판에서 몇 px인지 → 그 역행렬 × 화면 배율
-  const e = pt(mid.lon + 1 / M.proj.kx, mid.lat), sth = pt(mid.lon, mid.lat - 1 / M.proj.ky);
-  const ax = e.x - q.x, ay = e.y - q.y, bx = sth.x - q.x, by = sth.y - q.y, det = ax * by - bx * ay;
-  if (!det) return 0;
-  const z = CAM.z, a = z * by / det, b = -z * ay / det, c = -z * bx / det, d = z * ax / det;
-  el.style.transform = `matrix(${a},${b},${c},${d},${W / 2 - (a * q.x + c * q.y)},${H / 2 - (b * q.x + d * q.y)})`;
-  el.style.opacity = alpha;
+  // 카카오 위치는 정수 px로 반올림돼 나옴 → 짧은 거리(1km)로 배율을 재면 프레임마다 몇 % 출렁여 흔들림.
+  // 화면 절반 거리 네 점(동·서·남·북)으로 배율을 재고 가운데는 네 점 평균으로.
+  const d = .5 * Math.min(W, H) / CAM.z, z = CAM.z;
+  const fit = o => {
+    const pe = pt(o, mid.lon + d / M.proj.kx, mid.lat), pw = pt(o, mid.lon - d / M.proj.kx, mid.lat);
+    const ps = pt(o, mid.lon, mid.lat - d / M.proj.ky), pn = pt(o, mid.lon, mid.lat + d / M.proj.ky);
+    const ax = (pe.x - pw.x) / (2 * d), ay = (pe.y - pw.y) / (2 * d), bx = (ps.x - pn.x) / (2 * d), by = (ps.y - pn.y) / (2 * d), det = ax * by - bx * ay;
+    if (!det) return false;
+    const qx = (pe.x + pw.x + ps.x + pn.x) / 4, qy = (pe.y + pw.y + ps.y + pn.y) / 4;
+    const a = z * by / det, b = -z * ay / det, c = -z * bx / det, e = z * ax / det;
+    o.el.style.transform = `matrix(${a},${b},${c},${e},${W / 2 - (a * qx + c * qy)},${H / 2 - (b * qx + e * qy)})`;
+    return true;
+  };
+  if (!fit(F)) return 0;
+  F.el.style.opacity = 1; F.el.style.zIndex = 1;
+  // 받는 중인 뒤 지도도 밑에 깔아 둠 — 빨리 축소해서 앞 지도가 화면을 다 못 덮을 때 바깥은 받아지는 대로 보이게
+  if (KM.pend && fit(B)) { B.el.style.opacity = 1; B.el.style.zIndex = 0; } else B.el.style.opacity = 0;
+  box.style.opacity = alpha;
   return alpha;
 }
 function tileAlpha(span) {

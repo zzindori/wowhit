@@ -91,7 +91,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
 #fire svg{width:34px;height:34px}
 #fire:active{transform:scale(.94)}
 #fire.dis{filter:grayscale(1) brightness(.6)}
-.mid{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;font:700 9.5px var(--num);letter-spacing:.12em;gap:1px}
+.mid{width:58px;height:58px;border-radius:50%;white-space:nowrap;display:flex;align-items:center;justify-content:center;flex-direction:column;font:700 9.5px var(--num);letter-spacing:.12em;gap:1px}
 .mid svg{width:24px;height:24px}
 #scopeB.on{background:rgba(255,181,71,.25);border-color:var(--amb)}
 #breathB{position:relative}
@@ -165,6 +165,17 @@ table.dope{width:100%;border-collapse:collapse;margin-top:10px;font:600 15px var
   #wind{width:80px}#wind svg{width:46px;height:46px}
 }
 @media (max-width:640px){ #title .ver{display:none} }
+/* 세로 폰: 오른쪽 버튼을 좁게 쌓아 왼쪽 터릿 칸과 안 겹치게(탄 → 숨·SCOPE 가로 → 쏘기) */
+@media (orientation:portrait) and (max-width:560px){
+  body.touch #br{grid-template-columns:auto;max-width:136px}
+  body.touch #ammo{grid-column:auto;flex-wrap:wrap;justify-content:flex-end;row-gap:5px}
+  body.touch #rcol{flex-direction:row}
+  #spot{bottom:250px}
+}
+@media (orientation:portrait) and (max-width:350px){
+  .db{width:32px;height:32px}.dial .lab{width:40px}.knob{width:26px;height:26px}
+  body.touch #br{max-width:118px} .mid{width:52px;height:52px} #hud #mis{max-width:calc(100% - 184px)}
+}
 @media (max-width:420px){
   #mis{max-width:52%}
   .brief .facts{grid-template-columns:repeat(3,1fr)}

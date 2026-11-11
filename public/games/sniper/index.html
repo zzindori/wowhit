@@ -1172,7 +1172,7 @@ function arcBrief() {
   S.pendArc = true; S.mode = 'brief'; S.free = null;
   $('bK').textContent = 'CASUAL · 60초';
   $('bT').textContent = '맞추기 놀이';
-  $('bD').textContent = '바람·낙차 계산은 없어요. 십자선 가운데에 대고 쏘면 맞아요. 표적 가까이 대면 십자선이 살짝 달라붙어요.';
+  $('bD').textContent = '바람·낙차 계산은 없어요. 십자선 가운데에 대고 쏘면 맞아요. 조준경을 켜면 표적 바로 옆으로 가니, 끌어서 가운데에 맞추고 쏘세요.';
   $('bN').innerHTML = '계속<span style="font-size:12px;color:var(--sub)"> 나와요</span>';
   $('bA').textContent = '∞';
   $('bW').textContent = '자동';
@@ -1196,7 +1196,8 @@ function startArcade() {
   updHud(); updTurret();
   if (!TOUCH) tryLock();
 }
-// 조준경을 켜면 십자선 가까운 표적(약 9° 안)으로 시선을 옮기고 거리에 맞는 배율로
+// 조준경을 켜면 십자선 가까운 표적(약 9° 안) 근처로 시선을 옮기고 거리에 맞는 배율로
+// — 딱 가운데가 아니라 표적 반지름 3~4.5배 옆(맞는 범위 밖)에 놓아서 마지막 맞추기는 손으로
 function arcSnap() {
   let best = null, bestA = 0.16;
   for (const t of TG) {
@@ -1207,7 +1208,8 @@ function arcSnap() {
     if (ang < bestA) { bestA = ang; best = { t, dy, tp, hd }; }
   }
   if (!best) return;
-  S.yaw += best.dy; S.pitch = best.tp;
+  const off = (3 + Math.random() * 1.5) * best.t.r / best.hd, oa = Math.random() * Math.PI * 2;
+  S.yaw += best.dy + Math.cos(oa) * off / Math.cos(best.tp); S.pitch = best.tp + Math.sin(oa) * off;
   // 표적이 화면에서 반지름 약 22px가 되는 배율
   const want = (FOV0 * Math.PI / 180) / (best.t.r / best.hd * VH / 22), Z = [4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 25];
   S.zoom = Z.reduce((a, z) => Math.abs(z - want) < Math.abs(a - want) ? z : a, 8);
@@ -1263,10 +1265,11 @@ function arcTick(dt) {
       const ty = Math.atan2(-dx, -dz), tp = Math.atan2(p.y - EYE.y, hd);
       let dy = ty - S.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
       const ang = Math.hypot(dy * Math.cos(S.pitch), tp - S.pitch), ar = t.r / hd;
-      const lim = Math.max(ar * 3, S.scoped ? 0.004 : 0.025);
+      // 맨눈은 넓게 끌고, 조준경에선 표적 위(반지름 1.2배 안)에 올렸을 때만 살짝 붙음 — 맞추는 건 손으로
+      const lim = S.scoped ? ar * 1.2 : Math.max(ar * 3, 0.025);
       if (ang < lim && ang < bestA) { bestA = ang; best = { dy, dp: tp - S.pitch }; }
     }
-    if (best) { const k = 1 - Math.exp(-dt * (S.scoped ? 5 : 3)); S.yaw += best.dy * k; S.pitch += best.dp * k; }
+    if (best) { const k = 1 - Math.exp(-dt * (S.scoped ? 1.5 : 3)); S.yaw += best.dy * k; S.pitch += best.dp * k; }
   }
   // 글자
   for (const p of A.pops) p.t += dt;

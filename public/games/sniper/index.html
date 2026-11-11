@@ -165,8 +165,8 @@ table.dope{width:100%;border-collapse:collapse;margin-top:10px;font:600 15px var
   #wind{width:80px}#wind svg{width:46px;height:46px}
 }
 @media (max-width:640px){ #title .ver{display:none} }
-/* 캐주얼: 계산 버튼 숨김(엘리베이션·윈디지·카드·숨·거리 재기·풍속계) */
-body.arc #bl .dial:nth-child(1),body.arc #bl .dial:nth-child(2),body.arc #breathB,body.arc #rfB,body.arc #wind,body.arc #cardB2{display:none}
+/* 캐주얼: 계산 버튼 숨김(엘리베이션·윈디지·카드·거리 재기·풍속계) */
+body.arc #bl .dial:nth-child(1),body.arc #bl .dial:nth-child(2),body.arc #rfB,body.arc #wind,body.arc #cardB2{display:none}
 body.arc #misT{font:700 30px var(--num);letter-spacing:.02em}
 .tg.cb{color:#1a0f02;background:var(--amb);border-color:#ffcb7a}
 /* 세로 폰: 오른쪽 버튼을 좁게 쌓아 왼쪽 터릿 칸과 안 겹치게(탄 → 숨·SCOPE 가로 → 쏘기) */
@@ -1186,7 +1186,7 @@ function startArcade() {
   document.body.classList.add('arc');
   for (let i = 0; i < 3; i++) { const t = arcSpawn(ARC_KINDS[i]); if (t) t.born -= i * 0.15; }
   $('misK').textContent = 'CASUAL · SCORE'; $('timer').hidden = false;
-  $('keys').innerHTML = '<b>클릭</b>쏘기 <b>우클릭</b>조준경 <b>휠</b>배율 <b>Esc</b>멈춤';
+  $('keys').innerHTML = '<b>클릭</b>쏘기 <b>우클릭</b>조준경 <b>Space</b>숨 <b>휠</b>배율 <b>Esc</b>멈춤';
   hideAll(); $('hud').classList.remove('off');
   updHud(); updTurret();
   if (!TOUCH) tryLock();
@@ -1649,7 +1649,7 @@ function drawOverlay() {
   c.restore();
   const br = S.breath;
   c.lineWidth = 3 * DPR; c.lineCap = 'round';
-  if (!S.arc) {
+  {
     c.strokeStyle = 'rgba(255,255,255,.12)'; c.beginPath(); c.arc(cx, cy, R + 10 * DPR, Math.PI * 0.62, Math.PI * 0.88); c.stroke();
     c.strokeStyle = S.holding ? (S.holdT > 5 ? '#ff5d52' : '#6fc3ff') : 'rgba(111,195,255,.55)';
     c.beginPath(); c.arc(cx, cy, R + 10 * DPR, Math.PI * 0.62, Math.PI * (0.62 + 0.26 * br)); c.stroke();
@@ -1705,7 +1705,8 @@ function frame(now) {
     if (S.beatT <= 0) { S.beatT = 60 / bpm; S.pulse = 1; if (S.holding && S.scoped && S.holdT > 1.5) sBeat(); }
     S.pulse = (S.pulse || 0) * Math.exp(-dt * 12); pulse = S.pulse;
     // 흔들림(조준경이면 mil 단위로 실제처럼)
-    const st = S.scoped ? 1 : 2.2, hold = S.arc ? 0.3 : S.holding ? 0.12 + S.fatigue * 0.9 : 1, bw = S.arc ? 0.25 : 1;
+    // 캐주얼: 잔 흔들림은 30%, 숨 오르내림은 실전 그대로(숨 참으면 멈춤, 오래 참아도 덜 흔들림)
+    const st = S.scoped ? 1 : 2.2, hold = S.holding ? (S.arc ? 0.08 + S.fatigue * 0.25 : 0.12 + S.fatigue * 0.9) : S.arc ? 0.3 : 1, bw = 1;
     const amp = 0.0011 * st * hold;
     const tt = S.t;
     S.sway.x = amp * (Math.sin(tt * 0.83) * 0.7 + Math.sin(tt * 1.91 + 1) * 0.3) + (S.holding ? 0 : bw * 0.0002 * Math.sin(S.breathPh * 0.5));

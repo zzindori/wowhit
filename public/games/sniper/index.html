@@ -172,7 +172,18 @@ table.dope{width:100%;border-collapse:collapse;margin-top:10px;font:600 15px var
 @media (max-width:640px){ #title .ver{display:none} }
 /* 캐주얼: 계산 버튼 숨김(엘리베이션·윈디지·카드·거리 재기·풍속계) */
 body.arc #bl .dial:nth-child(1),body.arc #bl .dial:nth-child(2),body.arc #rfB,body.arc #wind,body.arc #cardB2{display:none}
-body.arc #misT{font:700 30px var(--num);letter-spacing:.02em}
+body.arc #misT,body.mg #misT{font:700 30px var(--num);letter-spacing:.02em}
+/* M60: 계산 버튼 전부 숨기고 장전 버튼 */
+body.mg #bl,body.mg #rfB,body.mg #wind,body.mg #cardB2,body.mg #breathB{display:none}
+#reloadB{display:none}
+body.touch.mg #reloadB{display:flex}
+#reloadB.on{background:rgba(255,181,71,.25);border-color:var(--amb)}
+#ammo .belt{font:700 20px var(--num);color:#ffd27a;min-width:44px;text-align:right}
+#ammo .belt small{font:600 11px var(--num);color:var(--sub);margin-left:2px}
+#ammo .heat{width:58px;height:8px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden;margin-left:8px}
+#ammo .heat i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffb547,#ff5d52)}
+#ammo .heat.over i{background:#ff2a1a}
+#ammo .st{font:700 11px var(--num);letter-spacing:.1em;color:var(--amb);margin-left:6px}
 .tg.cb{color:#1a0f02;background:var(--amb);border-color:#ffcb7a}
 /* 세로 폰: 오른쪽 버튼을 좁게 쌓아 왼쪽 터릿 칸과 안 겹치게(탄 → 숨·SCOPE 가로 → 쏘기) */
 @media (orientation:portrait) and (max-width:560px){
@@ -243,6 +254,7 @@ body.arc #misT{font:700 30px var(--num);letter-spacing:.02em}
       <div id="ammo" class="gl"></div>
       <div id="rcol">
         <button class="mid gl pe" id="breathB" aria-label="숨 참기 (누르고 있기)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h10a3 3 0 1 0-3-3M4 13h14a3 3 0 1 1-3 3M4 17h6"/></svg>숨</button>
+        <button class="mid gl pe" id="reloadB" aria-label="탄띠 교체 (R)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="9" width="4" height="9" rx="1"/><rect x="10" y="9" width="4" height="9" rx="1"/><rect x="17" y="9" width="4" height="9" rx="1"/><path d="M5 9V6M12 9V6M19 9V6"/></svg>장전</button>
         <button class="mid gl pe" id="scopeB" aria-label="조준경"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/></svg>SCOPE</button>
       </div>
       <button class="big pe" id="fire" aria-label="쏘기"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="#fff"/><path d="M12 1v5M12 18v5M1 12h5M18 12h5"/></svg>FIRE</button>
@@ -258,9 +270,10 @@ body.arc #misT{font:700 30px var(--num);letter-spacing:.02em}
     <div>
       <div class="logo">LONG<span>SHOT</span></div>
       <div class="kr">롱샷 — 바람을 읽고, 숨을 참고, 한 발</div>
-      <div class="tag">캐주얼: 대고 쏘면 맞는 60초 점수판 · 실전: 실제 탄도로 100m부터 1,150m까지</div>
+      <div class="tag">캐주얼: 대고 쏘면 맞는 60초 점수판 · M60: 엎드려 끊어 쏘는 기관총 · 실전: 실제 탄도로 100m부터 1,150m까지</div>
       <div class="row" style="margin-top:0">
         <button class="btn pri" id="arcB">🎯 캐주얼 60초</button>
+        <button class="btn pri" id="mgB">🔥 M60 기관총</button>
         <button class="btn" id="goB">실전 임무</button>
         <button class="btn" id="listB">임무 고르기</button>
         <button class="btn" id="freeB">자유 사격장</button>
@@ -633,6 +646,8 @@ const M = {
   canRed: new THREE.MeshPhongMaterial({ color: C('#d8262c'), shininess: 100, specular: C('#ffffff') }),
   silver: new THREE.MeshPhongMaterial({ color: C('#c9ced4'), shininess: 120, specular: C('#ffffff') }),
   wood: new THREE.MeshLambertMaterial({ color: C('#9a7a52'), flatShading: true }),
+  olive: new THREE.MeshLambertMaterial({ color: C('#6d6b3c') }),
+  tire: new THREE.MeshBasicMaterial({ color: C('#1c1d1f') }),
 };
 M.melon = (() => {
   const c = document.createElement('canvas'); c.width = 128; c.height = 64; const x = c.getContext('2d');
@@ -656,6 +671,18 @@ function deerShape() {
   const g = new THREE.ExtrudeGeometry(s, { depth: 0.03, bevelEnabled: false }); g.translate(0, 0, -0.015); return g;
 }
 const DEER = deerShape();
+const POPPER = (() => {
+  const s = new THREE.Shape();
+  s.moveTo(-0.25, 0); s.lineTo(0.25, 0); s.lineTo(0.29, 0.5); s.lineTo(0.22, 0.68); s.lineTo(0.09, 0.76);
+  s.absarc(0, 0.93, 0.17, -1.0, Math.PI + 1.0, false);
+  s.lineTo(-0.22, 0.68); s.lineTo(-0.29, 0.5); s.closePath();
+  const g = new THREE.ExtrudeGeometry(s, { depth: 0.025, bevelEnabled: false }); g.translate(0, 0, -0.0125); return g;
+})();
+const TRUCK = (() => {
+  const s = new THREE.Shape(), P = [[-1.3, 0.25], [1.25, 0.25], [1.25, 0.7], [1.05, 1.0], [0.6, 1.02], [0.55, 1.28], [-1.3, 1.28]];
+  s.moveTo(P[0][0], P[0][1]); for (const p of P.slice(1)) s.lineTo(p[0], p[1]); s.closePath();
+  const g = new THREE.ExtrudeGeometry(s, { depth: 0.04, bevelEnabled: false }); g.translate(0, 0, -0.02); return g;
+})();
 
 function addTarget(def, i) {
   const t = Object.assign({ hit: false, i, x: 0, ph: hash(i, def.d) * 6, size: 1 }, def);
@@ -713,6 +740,21 @@ function addTarget(def, i) {
     const dz = new THREE.Group(); dz.position.y = 0.1;
     const body = new THREE.Mesh(DEER, M.orange); dz.add(body);
     g.add(dz); t.dz = dz; t.face = body; cy = 0.1 + 0.85; r = 0.62;
+  } else if (t.type === 'popper') {
+    // 사람 모양 철판(포퍼): 받침 축에서 일어섰다가 맞으면 뒤로 넘어감
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.08, 0.3), M.dark); base.position.y = 0.04; g.add(base);
+    const pv = new THREE.Group(); pv.position.y = 0.08; g.add(pv);
+    const plate = new THREE.Mesh(POPPER, t.i % 3 ? M.steel : M.orange); pv.add(plate);
+    t.pv = pv; t.face = plate; cy = 0.08 + 0.55; r = 0.42;
+  } else if (t.type === 'truck') {
+    // 합판 트럭 표적: 레일 위를 오가며 여러 발 맞아야 넘어감
+    const rail = new THREE.Mesh(new THREE.BoxGeometry((t.amp * 2 + 4) / (t.sc || 1), 0.08, 0.14), M.dark); rail.position.y = 0.04; g.add(rail);
+    const dz = new THREE.Group(); dz.position.y = 0.1;
+    const body = new THREE.Mesh(TRUCK, M.olive); dz.add(body);
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.22), M.dark); win.position.set(0.86, 0.8, 0.026); dz.add(win);
+    const star = new THREE.Mesh(new THREE.CircleGeometry(0.17, 5), M.white); star.position.set(-0.4, 0.75, 0.026); dz.add(star);
+    for (const wx of [-0.85, -0.35, 0.85]) { const w = new THREE.Mesh(new THREE.CircleGeometry(0.24, 18), M.tire); w.position.set(wx, 0.25, 0.03); dz.add(w); }
+    g.add(dz); t.dz = dz; t.face = body; cy = 0.1 + 0.72; r = 1.0;
   }
   // 캐주얼: 멀어도 잘 보이게 통째로 키움
   if (t.sc && t.sc !== 1) { const inner = new THREE.Group(); while (g.children.length) inner.add(g.children[0]); inner.scale.setScalar(t.sc); g.add(inner); cy *= t.sc; r *= t.sc; }
@@ -742,7 +784,7 @@ function addTarget(def, i) {
 const _tp = new THREE.Vector3();
 function tgPos(t, time, out = _tp) {
   out.set(t.x, t.cy, -t.d);
-  if (t.type === 'deer') out.x = t.x + t.amp * Math.sin(time * t.spd / t.amp + t.ph);
+  if (t.type === 'deer' || t.type === 'truck') out.x = t.x + t.amp * Math.sin(time * t.spd / t.amp + t.ph);
   if (t.type === 'balloon') { out.y += 0.22 * Math.sin(time * 1.3 + t.ph); out.x += 0.18 * Math.sin(time * 0.7 + t.ph); }
   return out;
 }
@@ -751,8 +793,14 @@ function clearTargets() { for (const t of TG) { tgGroup.remove(t.g); } TG.length
 // ───────── 효과(입자) ─────────
 const dotTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.4, 'rgba(255,255,255,.6)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
 const PARTS = [];
-function burst(p, kind, dist) {
-  const n = kind === 'dust' ? 22 : kind === 'spark' ? 14 : 18;
+function burst(p, kind, dist, ns = 1) {
+  if (kind === 'smoke') {   // 달아오른 총열 연기(천천히 올라감)
+    const m = new THREE.SpriteMaterial({ map: dotTex, color: C('#a9a7a2'), transparent: true, depthWrite: false, opacity: 0.3, fog: false });
+    const s = new THREE.Sprite(m); s.position.copy(p); s.scale.setScalar(0.05); scene.add(s);
+    PARTS.push({ s, v: new THREE.Vector3((Math.random() - 0.5) * 0.15, 0.35 + Math.random() * 0.2, (Math.random() - 0.5) * 0.15), life: 1.6 + Math.random() * 0.6, t: 0, grow: 0.22, g: -0.05, op: 0.3 });
+    return;
+  }
+  const n = Math.max(2, Math.round((kind === 'dust' ? 22 : kind === 'spark' ? 14 : 18) * ns));
   const sz = 1 + dist / 260;
   for (let i = 0; i < n; i++) {
     const col = kind === 'dust' ? C('#a58b63') : kind === 'spark' ? C('#ffd27a') : kind === 'glass' ? C('#9be0b5') : kind === 'green' ? C(i % 3 ? '#3f8f33' : '#c9e8a0') : C('#ff3b30');
@@ -772,7 +820,7 @@ function updParts(dt) {
     p.v.y -= p.g * dt; p.v.multiplyScalar(1 - dt * 1.2);
     p.s.position.addScaledVector(p.v, dt);
     p.s.scale.addScalar(p.grow * dt);
-    p.s.material.opacity = 0.9 * (1 - p.t / p.life);
+    p.s.material.opacity = (p.op || 0.9) * (1 - p.t / p.life);
     if (p.t >= p.life) { scene.remove(p.s); p.s.material.dispose(); PARTS.splice(i, 1); }
   }
 }
@@ -909,6 +957,7 @@ const fovNow = () => S.scoped ? 2 * Math.atan(Math.tan(FOV0 * Math.PI / 360) / S
 
 function arcOff() {
   S.arc = null; S.pendArc = false; S.slowT = 0; document.body.classList.remove('arc');
+  S.mg = null; S.pendMg = false; document.body.classList.remove('mg'); setScopeLabel('SCOPE');
   $('keys').innerHTML = '<b>우클릭</b>조준경 <b>클릭</b>쏘기 <b>Space</b>숨 <b>W</b><b>S</b>엘리베이션 <b>A</b><b>D</b>윈디지 <b>휠</b>배율 <b>F</b>거리 <b>Tab</b>카드';
 }
 function startStage(i, free) {
@@ -978,6 +1027,7 @@ function dryShot(yaw, pitch, elev, wt, t0) {
 // ───────── 쏘기 ─────────
 const _f = new THREE.Vector3(), _r = new THREE.Vector3(), _u = new THREE.Vector3(), _q = new THREE.Quaternion();
 function fire() {
+  if (S.mg) return;
   if (S.mode !== 'play' || S.bolt > 0 || S.ammo <= 0 || S.done) { if (S.mode === 'play' && S.ammo <= 0) sClick(0, 1200, 0.3); return; }
   audio();
   cam.position.copy(EYE);
@@ -1027,6 +1077,7 @@ function fire() {
 function report(shot) {
   shot.reported = true;
   if (S.arc) { arcReport(shot); return; }
+  if (S.mg) { mgReport(shot); return; }
   const tg = shot.hit ? shot.hit.tg : null;
   const d = Math.round(shot.dist);
   if (tg) {
@@ -1064,7 +1115,7 @@ function report(shot) {
   updHud();
 }
 function checkOut() {
-  if (S.free || S.arc || S.done) return;
+  if (S.free || S.arc || S.mg || S.done) return;
   if (S.ammo <= 0 && S.inFlight.every(s => s.reported) && TG.some(x => !x.hit)) { S.done = true; setTimeout(() => finish(false, '탄을 다 썼어요'), 1800); }
 }
 function respawnFree() {
@@ -1077,6 +1128,18 @@ function respawnFree() {
 
 function impactFx(shot) {
   const d = shot.dist, at = S.arc ? 0 : d / SOUND;
+  if (S.mg) {   // 기관총: 자잘하게, 소리도 몇 발에 한 번
+    if (shot.hit) {
+      const tg = shot.hit.tg;
+      burst(shot.endP, 'spark', d, 0.5);
+      if (tg.type === 'popper') { if (tg.fallT == null) { tg.fallT = 0; sDing(at, d, false); } }
+      else if (Math.random() < 0.6) sDing(at, d, false);
+      return;
+    }
+    burst(shot.endP, 'dust', d, shot.tr ? 0.5 : 0.3);
+    if (shot.tr || Math.random() < 0.2) sThud(at, d);
+    return;
+  }
   if (shot.hit) {
     const tg = shot.hit.tg;
     if (S.arc) shot.endP = tgPos(tg, S.t).clone().add(shot.hit.local);   // 쏜 순간 자리로 판정했으니 지금 자리에 맞은 것처럼
@@ -1215,8 +1278,8 @@ function arcSnap() {
   S.zoom = Z.reduce((a, z) => Math.abs(z - want) < Math.abs(a - want) ? z : a, 8);
   updTurret();
 }
-function arcPop(p, text, col, sub) { S.arc.pops.push({ p: p.clone(), text, col, sub, t: 0 }); }
-function arcBanner(text, col) { S.arc.banner = { text, col, t: 0 }; }
+function arcPop(p, text, col, sub) { (S.arc || S.mg).pops.push({ p: p.clone(), text, col, sub, t: 0 }); }
+function arcBanner(text, col) { (S.arc || S.mg).banner = { text, col, t: 0 }; }
 function arcReport(shot) {
   const A = S.arc, tg = shot.hit ? shot.hit.tg : null;
   if (!tg) { if (A.combo >= 3) arcBanner('콤보 끊김', '#ff8a7a'); A.combo = 0; arcPop(shot.endP, '빗나감', '#c9d2da'); updHud(); return; }
@@ -1299,14 +1362,25 @@ function arcFinish() {
 const _pv = new THREE.Vector3(), _pv2 = new THREE.Vector3();
 function scr(p, out) { _pv.copy(p).project(cam); out.x = (_pv.x * 0.5 + 0.5) * ov.width; out.y = (-_pv.y * 0.5 + 0.5) * ov.height; out.z = _pv.z; return out; }
 function drawArc(c, R) {
-  const A = S.arc, W = ov.width, Hh = ov.height, cx = W / 2, cy = Hh / 2, q = {}, q2 = {};
+  const A = S.arc || S.mg, mg = !!S.mg, W = ov.width, Hh = ov.height, cx = W / 2, cy = Hh / 2, q = {}, q2 = {}, seenSq = new Set();
   c.save(); c.textAlign = 'center'; c.textBaseline = 'middle';
   for (const t of TG) {
     if (t.hit || t.gone) continue;
+    if (mg && S.t < t.born) continue;
     const p = tgPos(t, S.t), col = t.type === 'noshoot' ? '#4f8dff' : t.type === 'gold' ? '#ffd24a' : '#ffb547';
     scr(p, q);
     const behind = q.z > 1;
     let inside = !behind && (R ? Math.hypot(q.x - cx, q.y - cy) < R * 0.94 : q.x > 0 && q.x < W && q.y > 0 && q.y < Hh);
+    if (inside && mg) {   // 기관총: 조는 그대로 보이니 표시 없음, 트럭만 남은 힘
+      if (t.type === 'truck') {
+        _pv2.copy(p); _pv2.y += t.r * 0.95; scr(_pv2, q2);
+        const w = 44 * DPR, h = 6 * DPR, x0 = q2.x - w / 2, y0 = q2.y - 12 * DPR;
+        c.fillStyle = 'rgba(0,0,0,.55)'; c.fillRect(x0 - 2, y0 - 2, w + 4, h + 4);
+        c.fillStyle = '#ff5d52'; c.fillRect(x0, y0, w * t.hp / t.hp0, h);
+        c.font = `700 ${Math.round(11 * DPR)}px 'Noto Sans KR', sans-serif`; c.fillStyle = '#ffd0c8'; c.fillText('트럭', q2.x, y0 - 9 * DPR);
+      }
+      continue;
+    }
     if (inside) {
       _pv2.copy(p); _pv2.y += t.r * 1.15; scr(_pv2, q2);
       const y = Math.min(q2.y, q.y - 10 * DPR) - 8 * DPR, s = 7 * DPR, life = clamp(1 - (S.t - t.born) / t.life, 0, 1);
@@ -1316,6 +1390,7 @@ function drawArc(c, R) {
       c.beginPath(); c.arc(q.x, y - s * 2.6, 5 * DPR, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * life); c.stroke(); c.globalAlpha = 1;
       if (t.type !== 'can' && t.type !== 'melon' && t.type !== 'bottle' && t.type !== 'balloon' && t.type !== 'plate' && t.type !== 'deer') { c.font = `700 ${Math.round(12 * DPR)}px sans-serif`; c.fillStyle = col; c.fillText(t.type === 'noshoot' ? '✕ 쏘지 마' : '★ ×3', q.x, y - s * 4.4); }
     } else if (t.type !== 'noshoot') {
+      if (mg && t.sq) { if (seenSq.has(t.sq)) continue; seenSq.add(t.sq); }
       let dx = q.x - cx, dy = q.y - cy; if (behind) { dx = -dx; dy = -dy; }
       const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
       const m = 26 * DPR, tt = R ? R * 0.86 : Math.min((W / 2 - m) / Math.max(Math.abs(dx), 1e-3), (Hh / 2 - m) / Math.max(Math.abs(dy), 1e-3)), ax = cx + dx * tt, ay = cy + dy * tt;
@@ -1340,6 +1415,363 @@ function drawArc(c, R) {
     const y = Hh * 0.24; c.strokeText(b.text, cx, y); c.fillStyle = b.col; c.fillText(b.text, cx, y);
   }
   c.restore();
+}
+
+
+// ───────── M60 기관총 60초: 엎드려 양각대 · 끊어 쏘기 · 예광탄 보고 옮기기 ─────────
+// 같은 7.62mm(.308) 탄도 — 가늠자는 300m 영점(멀면 예광탄이 떨어지는 게 보임)
+const MG_ZERO = (() => { let lo = 0, hi = 0.02; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (sim2(m, 300).y < 0) lo = m; else hi = m; } return lo; })();
+const MG_RPM = 550, MG_BELT = 100, MG_RELOAD = 3.2, MG_OVER = 3, MG_ZOOM = 5, MG_TIME = 60, MG_STARS = [3000, 7000, 11000];
+function setScopeLabel(txt) { const b = $('scopeB'); if (b && b.lastChild) b.lastChild.textContent = txt; }
+
+// 손에 든(엎드려 거치한) M60 — 조준 안 할 때 화면 오른쪽 아래
+const mgGun = new THREE.Group();
+const MGP = {};
+{
+  const park = new THREE.MeshPhongMaterial({ color: C('#33373a'), emissive: C('#101214'), shininess: 35, specular: C('#7d868f') });
+  const dark = new THREE.MeshPhongMaterial({ color: C('#1f2225'), emissive: C('#0a0b0c'), shininess: 25, specular: C('#555c63') });
+  const barrelM = new THREE.MeshPhongMaterial({ color: C('#2b2e31'), emissive: C('#000000'), shininess: 50, specular: C('#8a939c') });
+  const brassM = new THREE.MeshPhongMaterial({ color: C('#d9a441'), emissive: C('#3a2606'), shininess: 110, specular: C('#fff0c0') });
+  const tipM = new THREE.MeshPhongMaterial({ color: C('#b8673a'), shininess: 100, specular: C('#ffd0a8') });
+  const tipT = new THREE.MeshPhongMaterial({ color: C('#d03a2a'), shininess: 60 });   // 예광탄 탄두 끝 빨강
+  const add = (geo, mat, x, y, z, rx = 0, rz = 0, par = mgGun) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.x = rx; m.rotation.z = rz; par.add(m); return m; };
+  const cyl = (r1, r2, L, n = 14) => new THREE.CylinderGeometry(r1, r2, L, n);
+  // 몸통·덮개·가늠자
+  add(new THREE.BoxGeometry(0.068, 0.085, 0.4), park, 0, 0, 0.02);
+  add(new THREE.BoxGeometry(0.074, 0.028, 0.2), park, 0, 0.055, -0.03);
+  add(new THREE.BoxGeometry(0.05, 0.012, 0.16), dark, 0, 0.072, -0.03);
+  add(new THREE.BoxGeometry(0.03, 0.03, 0.02), dark, 0, 0.083, 0.11);
+  add(new THREE.BoxGeometry(0.012, 0.012, 0.05), dark, 0.04, 0.012, 0.06);   // 장전 손잡이
+  // 총열·가스관·덮개·운반 손잡이·가늠쇠·소염기
+  const barrel = add(cyl(0.016, 0.016, 0.62), barrelM, 0, 0.012, -0.5, Math.PI / 2);
+  add(cyl(0.024, 0.024, 0.06), park, 0, 0.012, -0.21, Math.PI / 2);
+  add(cyl(0.011, 0.011, 0.44, 10), park, 0, -0.026, -0.42, Math.PI / 2);
+  add(new THREE.BoxGeometry(0.07, 0.055, 0.2), dark, 0, -0.012, -0.29);
+  for (let i = 0; i < 5; i++) add(new THREE.BoxGeometry(0.072, 0.004, 0.012), park, 0, 0.012, -0.21 - i * 0.04);
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.006, 6, 14, Math.PI), dark); handle.rotation.y = Math.PI / 2; handle.position.set(0.0, 0.03, -0.46); mgGun.add(handle);
+  add(new THREE.BoxGeometry(0.006, 0.034, 0.012), dark, 0, 0.042, -0.79);
+  add(new THREE.BoxGeometry(0.03, 0.016, 0.03), park, 0, 0.026, -0.79);
+  add(cyl(0.021, 0.019, 0.1), dark, 0, 0.012, -0.86, Math.PI / 2);
+  // 양각대
+  for (const sx of [-1, 1]) add(cyl(0.006, 0.006, 0.34, 6), park, sx * 0.07, -0.16, -0.7, 0.25, sx * -0.42);
+  add(new THREE.BoxGeometry(0.05, 0.02, 0.03), park, 0, -0.03, -0.72);
+  // 손잡이·방아쇠울·개머리
+  add(new THREE.BoxGeometry(0.034, 0.11, 0.05), dark, 0, -0.09, 0.1, 0.3);
+  add(new THREE.BoxGeometry(0.008, 0.02, 0.07), dark, 0, -0.06, 0.05);
+  add(new THREE.BoxGeometry(0.058, 0.095, 0.3), dark, 0, -0.025, 0.36);
+  // 탄띠: 왼쪽에서 들어감(탄은 총열과 나란히, 띠는 옆으로)
+  const belt = new THREE.Group(); belt.position.set(-0.04, 0.045, -0.035); mgGun.add(belt);
+  const caseG = cyl(0.0062, 0.0058, 0.05, 10).rotateX(Math.PI / 2), tipG = new THREE.ConeGeometry(0.0045, 0.022, 10).rotateX(-Math.PI / 2), linkG = new THREE.BoxGeometry(0.004, 0.016, 0.03);
+  const rounds = [];
+  for (let i = 0; i < 16; i++) {
+    const r = new THREE.Group();
+    const cs = new THREE.Mesh(caseG, brassM); r.add(cs);
+    const tp = new THREE.Mesh(tipG, i % 5 === 4 ? tipT : tipM); tp.position.z = -0.036; r.add(tp);
+    const lk = new THREE.Mesh(linkG, dark); lk.position.set(0.0065, 0, 0.004); r.add(lk);
+    belt.add(r); rounds.push(r);
+  }
+  // 소염기 불꽃·탄피
+  const flashS = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: C('#ffb04a'), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  flashS.position.set(0, 0.012, -0.95); flashS.visible = false; mgGun.add(flashS);
+  const flashX = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.05), new THREE.MeshBasicMaterial({ map: dotTex, color: C('#ffd27a'), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+  flashX.position.copy(flashS.position); flashX.visible = false; mgGun.add(flashX);
+  const muzzle = new THREE.Object3D(); muzzle.position.set(0, 0.012, -0.92); mgGun.add(muzzle);
+  const brass = [];
+  for (let i = 0; i < 10; i++) { const b = new THREE.Mesh(caseG, brassM); b.visible = false; mgGun.add(b); brass.push({ m: b, v: new THREE.Vector3(), t: 9 }); }
+  Object.assign(MGP, { barrel, barrelM, rounds, belt, flashS, flashX, muzzle, brass, bi: 0 });
+  mgGun.position.set(0.17, -0.2, -0.36); mgGun.rotation.set(0.02, 0.07, 0);
+  mgGun.visible = false;
+}
+cam.add(mgGun);
+const MG_BASE = mgGun.position.clone();
+
+function trig(on) {
+  if (S.mg) { if (S.mode !== 'play' || S.done) on = false; if (on && !S.mg.trig) S.mg.burst = 0; S.mg.trig = on; return; }
+  if (on) fire();
+}
+function mgBrief() {
+  arcOff();
+  S.pendMg = true; S.mode = 'brief'; S.free = null;
+  $('bK').textContent = 'M60 · 60초';
+  $('bT').textContent = '제압 사격';
+  $('bD').textContent = '엎드려 양각대에 걸친 M60. 누르고 있으면 분당 550발로 나가요. 길게 쏘면 총구가 들려 흩어지니 3~6발씩 끊어 쏘고, 5발마다 나가는 빨간 예광탄을 보고 탄을 옮기세요.';
+  $('bN').innerHTML = '조<span style="font-size:12px;color:var(--sub)"> 단위</span>';
+  $('bA').textContent = '100발 띠';
+  $('bW').textContent = '약함';
+  $('bTip').innerHTML = '한 조를 다 쓰러뜨리면 <b>제압 +300</b>, 트럭은 <b>8발에 격파 +800</b>. 계속 쏘면 총열이 달아올라 <b style="color:#ff8a7a">과열되면 3초 못 쏴요</b>. 탄띠가 비면 3초 교체(장전·R). 가늠자는 300m에 맞춰져 있어 멀면 조금 위를 겨눠요.';
+  $('bGo').textContent = '▶ 엎드려 거치'; $('bCard').hidden = true; $('bList').textContent = '돌아가기';
+  clearTargets();
+  show('brief');
+}
+function startMg() {
+  arcOff();
+  S.free = null;
+  clearTargets();
+  WIND = { s: 1.2, clock: 9, gust: 0.25, grad: 0.2 };
+  S.mg = { score: 0, belt: MG_BELT, heat: 0, over: 0, reload: 0, cd: 0, trig: false, burst: 0, n: 0, sqT: 1.2, sqN: 0, truckT: 11, cleared: 0, kills: 0, bh: 0, trucks: 0, pops: [], banner: null, beltPh: 0, flashT: 0, kick: 0, smokeT: 0 };
+  Object.assign(S, { mode: 'play', t: 0, ammo: 999, shots: 0, hits: 0, bolt: 0, inFlight: [], elev: 0, windT: 0, breath: 1, holding: false, fatigue: 0, recoil: 0, recoilY: 0, scoped: false, rf: 0, timeLeft: MG_TIME, longest: 0, done: false, bcam: null, slowT: 0, timeScale: 1 });
+  S.yaw = 0; S.pitch = -0.03; S.zoom = MG_ZOOM;
+  document.body.classList.add('mg');
+  setScopeLabel('조준');
+  mgSquad(170);
+  $('misK').textContent = 'M60 · SUPPRESS'; $('timer').hidden = false;
+  $('keys').innerHTML = '<b>클릭(누르고 있기)</b>연사 <b>우클릭</b>조준 <b>R</b>탄띠 교체 <b>Esc</b>멈춤';
+  hideAll(); $('hud').classList.remove('off');
+  updHud();
+  if (!TOUCH) tryLock();
+}
+// 한 조(3~5개) — 시간이 갈수록 멀리
+function mgSquad(dFix) {
+  const A = S.mg, far = clamp(S.t / 45, 0, 1);
+  for (let tries = 0; tries < 8; tries++) {
+    const d0 = dFix || Math.round(lerp(150, 320, Math.random()) + far * lerp(60, 330, Math.random()));
+    const a0 = dFix ? (Math.random() - 0.5) * 0.25 : (Math.random() - 0.5) * 0.85;
+    if (TG.some(t => !t.gone && !t.hit && Math.abs(Math.atan2(t.x, t.d) - a0) < 0.09)) continue;
+    const n = 3 + Math.floor(Math.random() * 3), id = ++A.sqN, sc = Math.max(1, 0.0055 * d0 / 0.42), gap = 0.8 * sc;
+    for (let i = 0; i < n; i++) {
+      const d = Math.round(d0 + (Math.random() - 0.5) * 8 * sc);
+      const x = clamp(Math.tan(a0) * d0 + (i - (n - 1) / 2) * gap + (Math.random() - 0.5) * 0.3 * sc, -(lane(d) - 12), lane(d) - 12);
+      const t = addTarget({ type: 'popper', d, x, sc, sq: id }, ++arcId);
+      t.born = S.t + i * 0.12; t.life = 8 + n * 0.7;
+    }
+    return true;
+  }
+  return false;
+}
+function mgTruck() {
+  for (let tries = 0; tries < 6; tries++) {
+    const d = Math.round(lerp(230, 480, Math.random())), a = (Math.random() - 0.5) * 0.6;
+    if (TG.some(t => !t.gone && !t.hit && t.type === 'truck')) return;
+    const sc = Math.max(1, 0.005 * d / 1.0), amp = d * 0.06;
+    const t = addTarget({ type: 'truck', d, x: Math.tan(a) * d, sc, amp, spd: 5 + Math.random() * 2.5, hp: 8, hp0: 8, pend: 0 }, ++arcId);
+    t.born = S.t; t.life = 15;
+    return;
+  }
+}
+function mgReload() {
+  const A = S.mg; if (!A || S.mode !== 'play' || A.reload > 0 || A.belt >= MG_BELT || S.done) return;
+  A.reload = MG_RELOAD; A.trig = false; sMgReload(); arcBanner('탄띠 교체', '#ffd27a'); updHud();
+}
+function mgShot() {
+  const A = S.mg;
+  cam.position.copy(EYE);
+  cam.rotation.set(S.pitch + S.sway.y + S.recoil, S.yaw + S.sway.x + S.recoilY, 0);
+  cam.updateMatrixWorld(); cam.getWorldQuaternion(_q);
+  _f.set(0, 0, -1).applyQuaternion(_q); _r.set(1, 0, 0).applyQuaternion(_q); _u.set(0, 1, 0).applyQuaternion(_q);
+  // 흩어짐: 거치 조준 약 1.1 mil, 허리 3 mil, 첫 두 발은 덜, 달아오르면 더
+  const spread = (S.scoped ? 1.1e-3 : 3e-3) * (A.burst < 2 ? 0.6 : 1) * (1 + A.heat * 1.3);
+  const gs = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
+  const dir = _f.clone().addScaledVector(_u, Math.tan(MG_ZERO) + gs() * spread).addScaledVector(_r, gs() * spread).normalize();
+  const tr = (A.n % 5) === 4;
+  const res = trace(EYE.clone().addScaledVector(_u, -HS), dir.multiplyScalar(V0 * (1 + (Math.random() - 0.5) * 0.006)), S.t, tr);
+  if (res.hit) {
+    const tg = res.hit.tg;
+    if (tg.type === 'truck') { tg.pend++; if (tg.hp - tg.pend <= 0) tg.claimed = true; }
+    else tg.claimed = true;
+  }
+  S.inFlight.push({ path: res.path, times: res.times, t0: S.t, hit: res.hit, ground: res.ground, endP: res.endP, endT: res.endT, done: false, reported: false, dist: EYE.distanceTo(res.endP), tr });
+  A.n++; A.burst++; A.belt--; S.shots++;
+  A.heat = Math.min(1.05, A.heat + 0.0135);
+  // 반동: 총구가 들리고 좌우로 조금씩 — 양각대라 쉬면 금방 돌아옴
+  S.recoil += 0.0019 + Math.random() * 0.0012; S.recoilY += (Math.random() - 0.5) * 0.0028;
+  A.kick = 1; A.flashT = 0.045; A.beltPh = 1;
+  flashL.intensity = 5;
+  sMg(tr); if (A.n % 2) sBrass(0.35 + Math.random() * 0.3);
+  if (A.n % 3 === 0) vib(18);
+  const b = MGP.brass[MGP.bi++ % MGP.brass.length];
+  b.t = 0; b.m.visible = true; b.m.position.set(0.04, 0.02, -0.02); b.v.set(1.2 + Math.random() * 0.6, 0.9 + Math.random() * 0.5, 0.25 + Math.random() * 0.3);
+  if (A.heat >= 1) { A.over = MG_OVER; A.trig = false; arcBanner('총열 과열!', '#ff5d52'); sHiss(); vib([80, 40, 80]); }
+  else if (A.belt <= 0) { A.reload = MG_RELOAD; A.trig = false; sMgReload(); arcBanner('탄띠 교체', '#ffd27a'); }
+  updHud();
+}
+function mgReport(shot) {
+  const A = S.mg, tg = shot.hit ? shot.hit.tg : null;
+  if (!A || !tg) return;
+  A.bh++;
+  if (tg.type === 'truck') {
+    tg.hp--; tg.pend--;
+    if (tg.hp <= 0 && !tg.hit) {
+      tg.hit = true; tg.hitT = S.t; tg.fall = 0.001; A.trucks++; S.hits++;
+      const pts = 800 + Math.round(tg.dist / 50) * 10; A.score += pts;
+      arcPop(tgPos(tg, S.t), '+' + pts, '#ff8a6a', '트럭 격파!'); arcBanner('🚚 트럭 격파!', '#ff8a6a'); sCombo(6); vib([40, 30, 60]);
+    } else { A.score += 20; }
+    updHud(); return;
+  }
+  tg.hit = true; tg.hitT = S.t; if (tg.fallT == null) tg.fallT = 0;
+  S.hits++; A.kills++; S.longest = Math.max(S.longest, tg.dist);
+  const pts = 100 + Math.round(tg.dist / 50) * 10;
+  A.score += pts;
+  arcPop(tgPos(tg, S.t), '+' + pts, '#ffffff');
+  const mates = TG.filter(t => t.sq === tg.sq);
+  if (mates.every(t => t.hit)) {
+    A.score += 300; A.cleared++;
+    arcPop(tgPos(tg, S.t).clone().add(new THREE.Vector3(0, tg.r * 2.2, 0)), '+300', '#ffb547', '제압!');
+    arcBanner(`제압! ${A.cleared}조`, '#ffb547'); sCombo(3);
+  }
+  updHud();
+}
+function mgTick(dt) {
+  const A = S.mg;
+  // 조·트럭 내보내기
+  const aliveSq = new Set(TG.filter(t => !t.hit && !t.gone && t.sq).map(t => t.sq)).size;
+  A.sqT -= dt;
+  if (A.sqT <= 0 && aliveSq < (S.t < 15 ? 2 : 3)) { mgSquad(); A.sqT = 2.2 + Math.random() * 1.8; }
+  A.truckT -= dt;
+  if (A.truckT <= 0) { mgTruck(); A.truckT = 15 + Math.random() * 6; }
+  for (const t of TG.slice()) {
+    if (t.hit) { if (S.t - t.hitT > 2.4) dropTarget(t); continue; }
+    if (!t.gone && S.t - t.born > t.life && !t.claimed) t.gone = S.t;
+    if (t.gone && S.t - t.gone > 0.5) dropTarget(t);
+  }
+  // 장전·과열
+  if (A.reload > 0) { A.reload -= dt; if (A.reload <= 0) { A.reload = 0; A.belt = MG_BELT; A.burst = 0; updHud(); } }
+  if (A.over > 0) { A.over -= dt; if (A.over <= 0) { A.over = 0; A.heat = 0.55; updHud(); } }
+  // 쏘기: 누르고 있는 동안 분당 550발
+  const can = A.trig && A.reload <= 0 && A.over <= 0 && A.belt > 0 && !S.done;
+  if (can) { A.cd -= dt; while (A.cd <= 0 && A.belt > 0 && A.over <= 0 && A.reload <= 0) { mgShot(); A.cd += 60 / MG_RPM; } }
+  else A.cd = Math.max(0, A.cd - dt);
+  A.heat = Math.max(0, A.heat - dt * (can ? 0.03 : A.over > 0 ? 0.05 : 0.12));
+  const hb = document.querySelector('#ammo .heat i'); if (hb) hb.style.width = Math.min(100, A.heat * 100) + '%';
+  if (S.inFlight.length > 60) S.inFlight = S.inFlight.filter(s => !s.done);
+  for (const p of A.pops) p.t += dt;
+  A.pops = A.pops.filter(p => p.t < 1.1);
+  if (A.banner) { A.banner.t += dt; if (A.banner.t > 1.4) A.banner = null; }
+  if (S.timeLeft <= 0 && !S.done) { S.done = true; S.timeLeft = 0; A.trig = false; setTimeout(mgFinish, 1200); }
+}
+function mgHud() {
+  const A = S.mg;
+  $('misT').textContent = A.score.toLocaleString();
+  $('tgs').innerHTML = `<span class="tg hit"><i></i>${A.kills}</span><span class="tg ${A.cleared ? 'cb' : ''}">제압 ${A.cleared}</span>${A.trucks ? `<span class="tg cb">트럭 ${A.trucks}</span>` : ''}`;
+  const st = A.reload > 0 ? '탄띠 교체' : A.over > 0 ? '과열' : '';
+  $('ammo').innerHTML = `<span class="belt">${A.belt}<small>/${MG_BELT}</small></span><span class="heat ${A.over > 0 ? 'over' : ''}"><i style="width:${Math.min(100, A.heat * 100)}%"></i></span>${st ? `<span class="st">${st}</span>` : ''}`;
+  $('fire').classList.toggle('dis', A.reload > 0 || A.over > 0);
+  $('reloadB').classList.toggle('on', A.reload > 0);
+  $('scopeB').classList.toggle('on', S.scoped);
+}
+function mgFinish() {
+  if (S.mode !== 'play' && S.mode !== 'pause') return;
+  S.mode = 'result'; unlock();
+  $('hud').classList.add('off'); S.scoped = false;
+  const A = S.mg;
+  save.mg = save.mg || { best: 0, plays: 0 };
+  const best0 = save.mg.best, nb = A.score > best0;
+  save.mg.plays++; if (nb) save.mg.best = A.score; store();
+  const stars = MG_STARS.filter(v => A.score >= v).length;
+  $('rK').textContent = 'M60 · 60초 끝';
+  $('rT').textContent = A.score.toLocaleString() + '점';
+  $('rS').innerHTML = [0, 1, 2].map(i => `<span class="${i < stars ? 'on' : ''}">★</span>`).join('');
+  const acc = S.shots ? Math.round(A.bh / S.shots * 100) : 0;
+  $('rStats').innerHTML = `<div class="fact"><small>쓰러뜨림</small><b>${A.kills}</b></div><div class="fact"><small>제압 · 트럭</small><b>${A.cleared} · ${A.trucks}</b></div><div class="fact"><small>쏜 탄 · 명중률</small><b>${S.shots} · ${acc}%</b></div>`;
+  $('rTip').textContent = nb ? (best0 ? `🏆 최고 기록! (전 기록 ${best0.toLocaleString()}점)` : '🏆 첫 기록!') : `최고 기록 ${best0.toLocaleString()}점 · 별 ${MG_STARS.map(v => v.toLocaleString()).join(' / ')}점`;
+  $('rNext').hidden = true; $('rAgain').textContent = '다시'; $('rList').textContent = '처음 화면';
+  show('result');
+}
+// 예광탄(5발에 1발) 빛줄기 — 여러 개가 동시에 날아감
+const TRC = [];
+for (let i = 0; i < 12; i++) { const m = new THREE.Mesh(tracer.geometry, new THREE.MeshBasicMaterial({ color: C('#ff5a2a'), transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); m.visible = false; scene.add(m); TRC.push(m); }
+function mgTracers() {
+  let k = 0;
+  if (S.mg && !S.bcam) for (const sh of S.inFlight) {
+    if (!sh.tr || sh.impacted || k >= TRC.length) continue;
+    const tt = S.t - sh.t0, p = pathAt(sh, tt, _tmp), q = pathAt(sh, Math.max(0, tt - 0.03), _tmp2), dist = EYE.distanceTo(p);
+    if (dist < 6) continue;
+    const m = TRC[k++]; m.visible = true;
+    m.position.copy(p).add(q).multiplyScalar(0.5); m.lookAt(p);
+    const w = 0.03 + dist * 0.00022; m.scale.set(w, w, Math.max(0.5, p.distanceTo(q)));
+  }
+  for (; k < TRC.length; k++) TRC[k].visible = false;
+}
+// 총 움직임: 반동으로 뒤로·떨림, 탄띠 들어감, 탄피 튐, 불꽃, 총열 달아오름·연기
+const _mz = new THREE.Vector3();
+function mgGunTick(rdt) {
+  const A = S.mg;
+  A.kick *= Math.exp(-rdt * 22); A.flashT -= rdt; A.beltPh *= Math.exp(-rdt * 30);
+  mgGun.position.set(MG_BASE.x + (Math.random() - 0.5) * 0.004 * A.kick, MG_BASE.y + 0.006 * A.kick, MG_BASE.z + 0.03 * A.kick);
+  mgGun.rotation.x = 0.02 + 0.03 * A.kick;
+  const on = A.flashT > 0;
+  MGP.flashS.visible = MGP.flashX.visible = on;
+  if (on) { const sc = 0.14 + Math.random() * 0.1; MGP.flashS.scale.setScalar(sc); MGP.flashX.rotation.z = Math.random() * Math.PI; MGP.flashX.scale.setScalar(0.8 + Math.random() * 0.5); }
+  // 탄띠: 왼쪽 아래로 늘어진 줄, 쏠 때마다 한 칸 끌려 들어감
+  const pitch = 0.0125, shown = A.reload > 0 ? 0 : Math.min(MGP.rounds.length, A.belt);
+  MGP.rounds.forEach((r, i) => {
+    r.visible = i < shown;
+    const s = (i + A.beltPh) * pitch;
+    r.position.set(-s * 0.85, -s * s * 6 - s * 0.35, s * 0.15);
+    r.rotation.z = -Math.min(1.2, s * 7);
+  });
+  // 탄피
+  for (const b of MGP.brass) {
+    if (b.t > 0.7) { b.m.visible = false; continue; }
+    b.t += rdt; b.v.y -= 6 * rdt;
+    b.m.position.addScaledVector(b.v, rdt); b.m.rotation.x += 18 * rdt; b.m.rotation.y += 11 * rdt;
+  }
+  // 총열 열: 0.4부터 빨갛게
+  const h = clamp((A.heat - 0.4) / 0.6, 0, 1);
+  MGP.barrelM.emissive.setRGB(0.75 * h, 0.12 * h * h, 0);
+  A.smokeT -= rdt;
+  if (A.heat > 0.5 && A.smokeT <= 0 && !S.noRender) { MGP.muzzle.getWorldPosition(_mz); burst(_mz, 'smoke', 0); A.smokeT = 0.35 - A.heat * 0.22; }
+}
+// 조준(가늠자 구멍 + 가늠쇠) — 허리 사격이면 점 + 흩어짐 원
+function drawMgSight(c, W, Hh) {
+  const A = S.mg, cx = W / 2, cy = Hh / 2;
+  if (!S.scoped) {
+    const ppm = Hh / (fovNow() * Math.PI / 180 * 1000), r = Math.max(10 * DPR, 3 * ppm * (1 + A.heat * 1.3));
+    c.strokeStyle = 'rgba(255,255,255,.8)'; c.lineWidth = 1.5 * DPR;
+    c.beginPath(); c.arc(cx, cy, 2.2 * DPR, 0, 7); c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.arc(cx, cy, r, 0, 7); c.stroke();
+    return;
+  }
+  const m = Math.min(W, Hh), R0 = m * 0.34;
+  // 뒤 가늠자 구멍(흐릿하게) 바깥은 어둡게
+  let g = c.createRadialGradient(cx, cy, R0 * 0.62, cx, cy, R0 * 1.3);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.45, 'rgba(8,9,10,.22)'); g.addColorStop(0.75, 'rgba(8,9,10,.66)'); g.addColorStop(1, 'rgba(8,9,10,.82)');
+  c.fillStyle = g; c.fillRect(0, 0, W, Hh);
+  // 총열 덮개·총열(아래에서 가늠쇠까지) — 달아오르면 붉게
+  const h = clamp((A.heat - 0.4) / 0.6, 0, 1), base = cy + m * 0.12;
+  g = c.createLinearGradient(cx - m * 0.09, 0, cx + m * 0.09, 0);
+  g.addColorStop(0, '#0f1113'); g.addColorStop(0.5, `rgb(${40 + 70 * h},${42 + 6 * h},${45 - 10 * h})`); g.addColorStop(1, '#0f1113');
+  c.fillStyle = g;
+  c.beginPath(); c.moveTo(cx - 9 * DPR, base); c.lineTo(cx + 9 * DPR, base); c.lineTo(cx + m * 0.09, Hh); c.lineTo(cx - m * 0.09, Hh); c.closePath(); c.fill();
+  if (h > 0) { c.strokeStyle = `rgba(255,${90 + 60 * h},40,${0.25 + 0.45 * h})`; c.lineWidth = 1.5 * DPR; c.beginPath(); c.moveTo(cx, base + 6 * DPR); c.lineTo(cx, Hh); c.stroke(); }
+  // 가늠쇠 받침
+  c.fillStyle = '#16191c';
+  c.beginPath(); c.moveTo(cx - 20 * DPR, base + 2 * DPR); c.lineTo(cx + 20 * DPR, base + 2 * DPR); c.lineTo(cx + 13 * DPR, cy + 7 * DPR); c.lineTo(cx - 13 * DPR, cy + 7 * DPR); c.closePath(); c.fill();
+  // 가늠쇠 날(위 끝이 화면 가운데 = 겨누는 곳)
+  const pw = 5 * DPR;
+  c.fillRect(cx - pw / 2, cy, pw, base - cy + 4 * DPR);
+  c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(cx - pw / 2, cy, 1.2 * DPR, base - cy);
+  // 덮개 뒤쪽(화면 맨 아래 양옆)
+  c.fillStyle = '#121416';
+  c.beginPath(); c.moveTo(0, Hh); c.lineTo(cx - m * 0.2, Hh - m * 0.05); c.lineTo(cx - m * 0.12, Hh); c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(W, Hh); c.lineTo(cx + m * 0.2, Hh - m * 0.05); c.lineTo(cx + m * 0.12, Hh); c.closePath(); c.fill();
+  // 불꽃(가늠쇠 너머)
+  if (A.flashT > 0) {
+    const fr = (26 + Math.random() * 22) * DPR, fy = cy - 4 * DPR;
+    g = c.createRadialGradient(cx, fy, 0, cx, fy, fr); g.addColorStop(0, 'rgba(255,240,200,.95)'); g.addColorStop(0.35, 'rgba(255,170,60,.65)'); g.addColorStop(1, 'rgba(255,120,30,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(cx, fy, fr, 0, 7); c.fill();
+  }
+}
+// 소리: 짧고 거친 연발, 탄피 짤랑, 탄띠 교체, 과열 치익
+function sMg(tr) {
+  if (!audio()) return; const t = AC.currentTime;
+  const n = noise(), f = AC.createBiquadFilter(), g = AC.createGain(); f.type = 'lowpass'; f.frequency.setValueAtTime(4600, t); f.frequency.exponentialRampToValueAtTime(520, t + 0.16);
+  env(g, t, 0.001, 0.75, 0.19); n.connect(f).connect(g); g.connect(master); g.connect(verb); n.start(t, Math.random()); n.stop(t + 0.3);
+  const o = AC.createOscillator(), og = AC.createGain(); o.frequency.setValueAtTime(125 + Math.random() * 15, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
+  env(og, t, 0.002, 0.95, 0.16); o.connect(og).connect(master); o.start(t); o.stop(t + 0.25);
+  const c = noise(), cf = AC.createBiquadFilter(), cg = AC.createGain(); cf.type = 'highpass'; cf.frequency.value = 2800;
+  env(cg, t, 0.001, 0.45, 0.03); c.connect(cf).connect(cg).connect(master); c.start(t, Math.random()); c.stop(t + 0.06);
+  sClick(0.03, 1300 + Math.random() * 300, 0.12);
+}
+function sBrass(at) { sClick(at, 5200 + Math.random() * 1800, 0.05); sClick(at + 0.07 + Math.random() * 0.05, 6400 + Math.random() * 1500, 0.035); }
+function sMgReload() {
+  sClick(0.05, 1300, 0.5); sClick(0.25, 900, 0.45);
+  for (let i = 0; i < 6; i++) sClick(0.8 + i * 0.09 + Math.random() * 0.03, 3600 + Math.random() * 2400, 0.16);
+  sClick(2.55, 700, 0.65); sClick(2.62, 1100, 0.4); sClick(2.95, 1600, 0.5); sClick(3.08, 2300, 0.45);
+}
+function sHiss() {
+  if (!audio()) return; const t = AC.currentTime;
+  const n = noise(), f = AC.createBiquadFilter(), g = AC.createGain(); f.type = 'highpass'; f.frequency.value = 3200;
+  env(g, t, 0.05, 0.22, 1.6); n.connect(f).connect(g).connect(master); n.start(t); n.stop(t + 1.8);
 }
 
 // ───────── 화면 맞춤(폰 아래 막대에 안 가리게) ─────────
@@ -1391,18 +1823,20 @@ $('touch').addEventListener('mousedown', e => {
   if (S.bcam) { skipBcam(); return; }
   if (S.mode !== 'play') return;
   if (!locked) { tryLock(); return; }
-  if (e.button === 0) fire();
+  if (e.button === 0) trig(true);
   if (e.button === 2) toggleScope();
 });
+document.addEventListener('mouseup', e => { if (e.button === 0) trig(false); });
 $('touch').addEventListener('contextmenu', e => e.preventDefault());
-addEventListener('wheel', e => { if (S.mode === 'play' && S.scoped) { zoomBy(e.deltaY < 0 ? 1 : -1); } }, { passive: true });
+addEventListener('wheel', e => { if (S.mode === 'play' && S.scoped && !S.mg) { zoomBy(e.deltaY < 0 ? 1 : -1); } }, { passive: true });
 const KEYS = {};
 addEventListener('keydown', e => {
   if (e.repeat && !['KeyW', 'KeyS', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) return;
   KEYS[e.code] = true;
-  if (e.code === 'Tab') { e.preventDefault(); if (S.mode === 'play' && !S.arc) toggleCard(); return; }
+  if (e.code === 'Tab') { e.preventDefault(); if (S.mode === 'play' && !S.arc && !S.mg) toggleCard(); return; }
   if (S.bcam && (e.code === 'Space' || e.code === 'Enter')) { skipBcam(); return; }
   if (S.mode !== 'play') return;
+  if (S.mg) { if (e.code === 'KeyR') mgReload(); else if (e.code === 'KeyC' || e.code === 'KeyZ') toggleScope(); return; }
   const big = e.shiftKey ? 10 : 1;
   if (e.code === 'Space') { e.preventDefault(); setHold(true); }
   else if (e.code === 'KeyW' || e.code === 'ArrowUp') turret('e', big);
@@ -1439,7 +1873,8 @@ function hold(el, on, off) {
   el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); audio(); on(); });
   if (off) { const f = e => { off(); }; el.addEventListener('pointerup', f); el.addEventListener('pointercancel', f); el.addEventListener('pointerleave', f); }
 }
-hold($('fire'), fire);
+hold($('fire'), () => trig(true), () => trig(false));
+hold($('reloadB'), () => mgReload());
 hold($('scopeB'), toggleScope);
 hold($('breathB'), () => setHold(true), () => setHold(false));
 hold($('rfB'), rangefind);
@@ -1454,7 +1889,7 @@ document.querySelectorAll('.db[data-t]').forEach(b => {
   b.addEventListener('pointerup', stop); b.addEventListener('pointercancel', stop); b.addEventListener('pointerleave', stop);
 });
 
-function toggleScope() { if (S.mode !== 'play') return; S.scoped = !S.scoped; if (S.scoped && S.arc) arcSnap(); S.eyeOff.x = (Math.random() - 0.5) * 0.6; S.eyeOff.y = 0.5; sClick(0, 900, 0.2); updHud(); }
+function toggleScope() { if (S.mode !== 'play') return; S.scoped = !S.scoped; if (S.scoped && S.arc) arcSnap(); if (S.mg) S.zoom = MG_ZOOM; S.eyeOff.x = (Math.random() - 0.5) * 0.6; S.eyeOff.y = 0.5; sClick(0, 900, 0.2); updHud(); }
 function zoomBy(d) { const Z = [4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 25]; let i = Z.findIndex(z => z >= S.zoom); if (i < 0) i = Z.length - 1; S.zoom = Z[clamp(i + d, 0, Z.length - 1)]; sClick(0, 3000, 0.08); updTurret(); }
 function turret(t, d) {
   if (t === 'e') S.elev = clamp(Math.round((S.elev + d * 0.1) * 10) / 10, 0, 22);
@@ -1474,7 +1909,7 @@ let back = 'title';
 function hideAll() { SCR.forEach(id => $(id).hidden = true); }
 function show(id) { hideAll(); $(id).hidden = false; }
 document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => { const to = b.dataset.back; if (to) { show(to); return; } if (back === 'play') resume(); else show(['card', 'help', 'settings'].includes(back) ? 'title' : back); });
-function pause() { if (S.mode !== 'play') return; S.mode = 'pause'; setHold(false); unlock(); $('pCard').hidden = !!S.arc; show('pause'); }
+function pause() { if (S.mode !== 'play') return; S.mode = 'pause'; setHold(false); unlock(); if (S.mg) S.mg.trig = false; $('pCard').hidden = !!(S.arc || S.mg); show('pause'); }
 function resume() { hideAll(); S.mode = 'play'; $('hud').classList.remove('off'); tryLock(); }
 function toggleCard() {
   if (S.mode === 'play') { S.mode = 'pause'; unlock(); back = 'play'; renderDope(); hideAll(); $('card').hidden = false; return; }
@@ -1484,23 +1919,24 @@ $('pGo').onclick = resume;
 $('pCard').onclick = () => { renderDope(); back = 'play'; hideAll(); $('card').hidden = false; };
 $('pHelp').onclick = () => { back = 'play'; hideAll(); $('help').hidden = false; };
 $('pSet').onclick = () => { back = 'play'; settingsUi(); hideAll(); $('settings').hidden = false; };
-$('pAgain').onclick = () => S.arc ? startArcade() : S.free ? startStage(0, Object.assign(S.free, { d: S.free.d0 })) : brief(S.stage);
+$('pAgain').onclick = () => S.mg ? startMg() : S.arc ? startArcade() : S.free ? startStage(0, Object.assign(S.free, { d: S.free.d0 })) : brief(S.stage);
 $('pQuit').onclick = toTitle;
 $('goB').onclick = () => { audio(); const n = STAGES.findIndex((_, i) => !save.stars[i]); brief(n < 0 ? 0 : n); };
 $('listB').onclick = () => { audio(); listUi(); show('list'); };
 $('helpB').onclick = () => { back = 'title'; hideAll(); $('help').hidden = false; };
 $('setB').onclick = () => { back = 'title'; settingsUi(); hideAll(); $('settings').hidden = false; };
 $('freeB').onclick = () => { audio(); freeUi(); show('free'); };
-$('bGo').onclick = () => S.pendArc ? startArcade() : startStage(S.stage);
+$('bGo').onclick = () => S.pendMg ? startMg() : S.pendArc ? startArcade() : startStage(S.stage);
 $('arcB').onclick = () => { audio(); arcBrief(); };
+$('mgB').onclick = () => { audio(); mgBrief(); };
 $('bCard').onclick = () => { renderDope(); back = 'brief'; hideAll(); $('card').hidden = false; };
 $('rNext').onclick = () => brief(S.stage + 1);
-$('rAgain').onclick = () => S.arc ? startArcade() : brief(S.stage);
-$('rList').onclick = () => { if (S.arc) { toTitle(); return; } listUi(); show('list'); };
-$('bList').onclick = () => { if (S.pendArc) { toTitle(); return; } listUi(); show('list'); };
+$('rAgain').onclick = () => S.mg ? startMg() : S.arc ? startArcade() : brief(S.stage);
+$('rList').onclick = () => { if (S.arc || S.mg) { toTitle(); return; } listUi(); show('list'); };
+$('bList').onclick = () => { if (S.pendArc || S.pendMg) { toTitle(); return; } listUi(); show('list'); };
 $('rfB').title = '거리 재기 (F)';
 
-function titleUi() { const b = save.arc && save.arc.best; $('arcB').textContent = '🎯 캐주얼 60초' + (b ? ` · 최고 ${b.toLocaleString()}` : ''); }
+function titleUi() { const b = save.arc && save.arc.best, m = save.mg && save.mg.best; $('arcB').textContent = '🎯 캐주얼 60초' + (b ? ` · 최고 ${b.toLocaleString()}` : ''); $('mgB').textContent = '🔥 M60 기관총' + (m ? ` · 최고 ${m.toLocaleString()}` : ''); }
 function toTitle() { arcOff(); titleUi(); S.mode = 'title'; S.free = null; clearTargets(); $('hud').classList.add('off'); unlock(); show('title'); }
 function brief(i) {
   arcOff();
@@ -1552,6 +1988,7 @@ $('fGo').onclick = () => { const f = { d: +$('fD').value, w: +$('fW').value, c: 
 
 // ───────── HUD ─────────
 function updHud() {
+  if (S.mg) { mgHud(); return; }
   if (S.arc) {
     const A = S.arc, mult = A.combo >= 6 ? 3 : A.combo >= 3 ? 2 : 1;
     $('misT').textContent = A.score.toLocaleString();
@@ -1597,6 +2034,7 @@ function drawOverlay() {
   if (S.mode !== 'play' && S.mode !== 'pause') return;
   if (S.bcam) return;
   const cx = W / 2, cy = Hh / 2;
+  if (S.mg) { drawMgSight(c, W, Hh); drawArc(c, 0); return; }
   if (!S.scoped) {
     c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 1.5 * DPR;
     c.beginPath(); c.arc(cx, cy, 2.2 * DPR, 0, 7); c.stroke();
@@ -1688,7 +2126,7 @@ function frame(now) {
     cam.position.set(EYE.x + Math.sin(titleT * 0.03) * 6, EYE.y + 3.5, EYE.z + 6);
     cam.rotation.set(-0.035, a, 0);
     cam.fov = FOV0; cam.updateProjectionMatrix();
-    rifle.visible = false; near.visible = true;
+    rifle.visible = false; near.visible = true; mgGun.visible = false;
     draw3d(); drawOverlay();
     return;
   }
@@ -1696,7 +2134,7 @@ function frame(now) {
   if (playing) {
     // 노리쇠·반동
     if (S.bolt > 0) { S.bolt -= dt; if (S.bolt <= 0) { S.bolt = 0; updHud(); checkOut(); } }
-    S.recoil *= Math.exp(-dt * 7); S.recoilY *= Math.exp(-dt * 7);
+    const rd = S.mg ? 3.2 : 7; S.recoil *= Math.exp(-dt * rd); S.recoilY *= Math.exp(-dt * rd);
     S.eyeOff.x *= Math.exp(-dt * 2.5); S.eyeOff.y *= Math.exp(-dt * 2.5);
     flashL.intensity *= Math.exp(-dt * 30);
     rifle.position.z = lerp(rifle.position.z, -0.8, 1 - Math.exp(-dt * 8));
@@ -1714,7 +2152,7 @@ function frame(now) {
     S.pulse = (S.pulse || 0) * Math.exp(-dt * 12); pulse = S.pulse;
     // 흔들림(조준경이면 mil 단위로 실제처럼)
     // 캐주얼: 잔 흔들림은 30%, 숨 오르내림은 실전 그대로(숨 참으면 멈춤, 오래 참아도 덜 흔들림)
-    const st = S.scoped ? 1 : 2.2, hold = S.holding ? (S.arc ? 0.08 + S.fatigue * 0.25 : 0.12 + S.fatigue * 0.9) : S.arc ? 0.3 : 1, bw = 1;
+    const st = S.scoped ? 1 : 2.2, hold = S.mg ? 0.35 : S.holding ? (S.arc ? 0.08 + S.fatigue * 0.25 : 0.12 + S.fatigue * 0.9) : S.arc ? 0.3 : 1, bw = S.mg ? 0.3 : 1;
     const amp = 0.0011 * st * hold;
     const tt = S.t;
     S.sway.x = amp * (Math.sin(tt * 0.83) * 0.7 + Math.sin(tt * 1.91 + 1) * 0.3) + (S.holding ? 0 : bw * 0.0002 * Math.sin(S.breathPh * 0.5));
@@ -1724,9 +2162,10 @@ function frame(now) {
       S.timeLeft -= dt;
       $('timer').textContent = `⏱ ${Math.max(0, S.timeLeft).toFixed(1)}s`;
       $('timer').classList.toggle('low', S.timeLeft < (S.arc ? 10 : 15));
-      if (S.timeLeft <= 0 && !S.done && !S.arc) { S.done = true; finish(false, '시간이 다 됐어요'); }
+      if (S.timeLeft <= 0 && !S.done && !S.arc && !S.mg) { S.done = true; finish(false, '시간이 다 됐어요'); }
     }
     if (S.arc) arcTick(dt);
+    if (S.mg) mgTick(dt);
     if (S.rf > 0) { S.rf -= dt; if (S.rf <= 0) $('rf').classList.remove('on'); }
     updWindHud();
   }
@@ -1740,7 +2179,8 @@ function frame(now) {
     if (tt > sh.endT + 3.5) sh.done = true;
   }
   // 빛줄기: 가장 최근 총알
-  const live = S.inFlight.filter(s => !s.impacted);
+  const live = S.mg ? [] : S.inFlight.filter(s => !s.impacted);
+  mgTracers();
   if (live.length && !S.bcam) {
     const sh = live[live.length - 1], tt = S.t - sh.t0;
     const p = pathAt(sh, tt, _tmp), q = pathAt(sh, Math.max(0, tt - 0.012), _tmp2);
@@ -1758,7 +2198,13 @@ function frame(now) {
   for (const t of TG) {
     if (t.kick) { t.kv = (t.kv || 0) + t.kick * 6; t.kick = 0; }
     if (t.swing) { t.kv = (t.kv || 0) - (t.sw || 0) * 30 * dt - (t.kv || 0) * 1.4 * dt; t.sw = (t.sw || 0) + (t.kv || 0) * dt; t.swing.rotation.x = -clamp(t.sw, -1.2, 1.2) * 0.6; }
-    if (t.type === 'deer') {
+    if (t.type === 'popper') {   // 일어서기·맞으면 뒤로 넘어감·시간 지나면 눕기
+      const up = clamp((S.t - t.born) / 0.28, 0, 1); let rx = -(1 - up) * 1.5;
+      if (t.fallT != null) { t.fallT += dt; rx = -Math.min(1.5, 2.5 * t.fallT + 12 * t.fallT * t.fallT); }
+      else if (t.gone) rx = -clamp((S.t - t.gone) / 0.35, 0, 1) * 1.5;
+      t.pv.rotation.x = rx;
+    }
+    if (t.type === 'deer' || t.type === 'truck') {
       const p = tgPos(t, S.t);
       if (t.fall) { t.fall = Math.min(1.4, t.fall + dt * 2.5); t.dz.rotation.x = -t.fall; }
       else { t.dz.position.x = (p.x - t.x) / (t.sc || 1); t.dz.scale.x = Math.cos(S.t * t.spd / t.amp + t.ph) >= 0 ? 1 : -1; }
@@ -1775,6 +2221,8 @@ function frame(now) {
   const f = fovNow();
   if (Math.abs(cam.fov - f) > 0.01) { cam.fov = f; cam.updateProjectionMatrix(); }
   rifle.visible = false;
+  mgGun.visible = !!S.mg && !S.scoped;
+  if (S.mg) mgGunTick(rdt);
   if (!S.scoped) { rifle.rotation.set(-S.recoil * 3, 0, 0); }
   draw3d();
   drawOverlay();
@@ -1835,7 +2283,7 @@ titleUi();
 show('title');
 requestAnimationFrame(frame);
 // 시험용(화면 시험이 탄도·명중을 확인할 때)
-window.LS = { startArcade, arcSpawn, ARC_KINDS, dryShot, trace, S, TG, STAGES, DOPE, ZERO, startStage, brief, fire, turret, tgPos, EYE, H, windAt, toggleScope, rangefind, finish, setHold, skipBcam,
+window.LS = { startMg, trig, mgReload, mgSquad, MG_ZERO, startArcade, arcSpawn, ARC_KINDS, dryShot, trace, S, TG, STAGES, DOPE, ZERO, startStage, brief, fire, turret, tgPos, EYE, H, windAt, toggleScope, rangefind, finish, setHold, skipBcam,
   aimAt(t, eMil = 0, wMil = 0) { const p = tgPos(t, S.t); S.yaw = Math.atan2(-(p.x - EYE.x), -(p.z - EYE.z)) - wMil / 1000; S.pitch = Math.atan2(p.y - EYE.y, Math.hypot(p.x - EYE.x, p.z - EYE.z)) + eMil / 1000; } };
 </script>
 </body>

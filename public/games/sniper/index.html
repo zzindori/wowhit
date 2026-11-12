@@ -181,6 +181,7 @@ body.sm #bl,body.sm #rfB,body.sm #wind,body.sm #cardB2,body.sm #breathB,body.sm 
 body.sm #misT{font:700 24px var(--num);letter-spacing:.01em}
 body.sm #br{max-width:none!important}
 body.sm #ammo{gap:5px;padding:5px}
+body.sm .keys{left:12px;transform:none;white-space:normal;max-width:calc(100% - 290px);text-align:left;line-height:1.9}
 .wc{height:38px;padding:0 10px;border-radius:10px;font:700 13.5px var(--kr);background:rgba(255,255,255,.07);border:1px solid var(--line);display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
 .wc.on{background:rgba(255,138,58,.32);border-color:#ff9a4a;color:#fff;box-shadow:0 0 14px rgba(255,120,40,.3)}
 .wc.lk{opacity:.42}
@@ -2111,6 +2112,7 @@ function smBuild() {
   roomG.updateMatrixWorld(true);
   for (const o of OBJ) { o.box = new THREE.Box3().setFromObject(o.g); o.box.min.sub(RO); o.box.max.sub(RO); o.c = o.box.getCenter(new THREE.Vector3()); o.p0 = o.g.position.clone(); o.r0 = o.g.rotation.clone(); if (o.on) o.on.kids.push(o); }
 }
+function smOv(o, q) { return q !== o && !q.dead && q.type !== 'lamp' && q.box.max.y > 0.3 && q.box.min.y < 1.0 && o.box.min.x + 0.05 < q.box.max.x && o.box.max.x - 0.05 > q.box.min.x && o.box.min.z + 0.05 < q.box.max.z && o.box.max.z - 0.05 > q.box.min.z; }
 function smBoxUpd(o) { o.g.updateMatrixWorld(true); o.box.setFromObject(o.g); o.box.min.sub(RO); o.box.max.sub(RO); o.box.getCenter(o.c); }
 
 // ───── 조각(직접 만든 간단 물리: 떨어지고·튀고·미끄러지고·눕고·잠듦) ─────
@@ -2463,7 +2465,8 @@ function smAll() {
 function smTick(dt) {
   const A = S.sm;
   roomG.updateMatrixWorld(true);
-  S.yaw = clamp(S.yaw, -1.55, 1.55); A.sndN = 0;
+  A.sndN = 0;
+  smWalk(dt);
   for (let i = A.pend.length - 1; i >= 0; i--) { const p = A.pend[i]; p.t -= dt; if (p.t <= 0) { A.pend.splice(i, 1); p.f(); } }
   // 쏘기(누르고 있으면 계속)
   const W = WP[A.wpn], on = A.trig && !S.done;
@@ -2488,10 +2491,14 @@ function smTick(dt) {
   for (const o of OBJ) {
     if (o.dead) continue;
     if (o.vx || o.vz || o.vr) {
-      o.g.position.x = clamp(o.g.position.x + (o.vx || 0) * dt, -RW + 0.35, RW - 0.35); o.g.position.z = clamp(o.g.position.z + (o.vz || 0) * dt, -RD + 0.35, -0.4); o.g.rotation.y += (o.vr || 0) * dt;
+      const ox = o.g.position.x, oz = o.g.position.z, or = o.g.rotation.y, was = OBJ.filter(q => smOv(o, q));
+      o.g.position.x = clamp(ox + (o.vx || 0) * dt, -RW + 0.35, RW - 0.35); o.g.position.z = clamp(oz + (o.vz || 0) * dt, -RD + 0.35, -0.4); o.g.rotation.y += (o.vr || 0) * dt;
+      smBoxUpd(o);
+      // 다른 물건(책상·유리벽 등)에 닿으면 그 자리에서 멈춤 — 뚫고 지나가지 않게
+      const hitO = OBJ.some(q => !was.includes(q) && smOv(o, q));
+      if (hitO) { o.g.position.x = ox; o.g.position.z = oz; o.g.rotation.y = or; o.vx = -(o.vx || 0) * 0.2; o.vz = -(o.vz || 0) * 0.2; smBoxUpd(o); }
       const f = Math.exp(-dt * 2.6); o.vx = (o.vx || 0) * f; o.vz = (o.vz || 0) * f; o.vr = (o.vr || 0) * f;
-      if (Math.abs(o.vx) + Math.abs(o.vz) + Math.abs(o.vr) < 0.03) o.vx = o.vz = o.vr = 0;
-      smBoxUpd(o); o.p0.copy(o.g.position); o.r0.copy(o.g.rotation);
+      if (Math.abs(o.vx) + Math.abs(o.vz) + Math.abs(o.vr) < 0.03) o.vx = o.vz = o.vr = 0; o.p0.copy(o.g.position); o.r0.copy(o.g.rotation);
     } else if (o.jit > 0) {
       o.jit = Math.max(0, o.jit - dt * 5); const j = Math.sin(S.t * 80) * o.jit;
       o.g.position.x = o.p0.x + j * 0.01; o.g.rotation.z = o.r0.z + j * 0.025;
@@ -2507,6 +2514,40 @@ function smTick(dt) {
     if (S.timeLeft <= 0) { S.done = true; S.timeLeft = 0; A.trig = false; arcBanner('그만! 피해액 집계', '#ffffff'); setTimeout(smFinish, 1800); }
   }
 }
+// 걷기(WASD·Shift 달리기)·방향키 겨누기 — 물건·유리벽에 막히고, 깬 유리 자리는 지나가고, 의자는 밀리고, 바닥 조각은 발에 차임
+const P_R = 0.3, _mv = new THREE.Vector3();
+function smWalk(dt) {
+  const A = S.sm, K = KEYS;
+  const ly = (K.ArrowLeft ? 1 : 0) - (K.ArrowRight ? 1 : 0), lp = (K.ArrowUp ? 1 : 0) - (K.ArrowDown ? 1 : 0);
+  if (ly || lp) { S.yaw += ly * 1.9 * dt; S.pitch = clamp(S.pitch + lp * 1.4 * dt, -0.75, 0.7); }
+  const fw = (K.KeyW ? 1 : 0) - (K.KeyS ? 1 : 0), st = (K.KeyD ? 1 : 0) - (K.KeyA ? 1 : 0);
+  const run = K.ShiftLeft || K.ShiftRight, sp = run ? 5.2 : 3.1;
+  const fx = -Math.sin(S.yaw), fz = -Math.cos(S.yaw);
+  _mv.set(fx * fw + -fz * st, 0, fz * fw + fx * st); if (_mv.lengthSq() > 1) _mv.normalize();
+  const tv = _mv.multiplyScalar(sp); A.mv = A.mv || new THREE.Vector3();
+  A.mv.lerp(tv, 1 - Math.exp(-dt * 12));
+  const moving = A.mv.lengthSq() > 0.04;
+  if (!moving) { A.bobA = Math.max(0, (A.bobA || 0) - dt * 4); return; }
+  const p = SM_EYE;
+  p.x += A.mv.x * dt; p.z += A.mv.z * dt;
+  for (let it = 0; it < 2; it++) for (const o of OBJ) {
+    if (o.dead || o.type === 'lamp' || o.box.max.y < 0.3 || o.box.min.y > 1.7) continue;
+    const b = o.box, qx = clamp(p.x, b.min.x, b.max.x), qz = clamp(p.z, b.min.z, b.max.z), dx = p.x - qx, dz = p.z - qz, d2 = dx * dx + dz * dz;
+    if (d2 >= P_R * P_R) continue;
+    if (o.type === 'chair' || o.type === 'bchair') { o.vx = A.mv.x * 1.15; o.vz = A.mv.z * 1.15; o.vr = (o.vr || 0) + (Math.random() - 0.5) * 0.5; }
+    if (d2 > 1e-8) { const d = Math.sqrt(d2); p.x = qx + dx / d * P_R; p.z = qz + dz / d * P_R; }
+    else { const pen = [p.x - b.min.x, b.max.x - p.x, p.z - b.min.z, b.max.z - p.z], m = Math.min(...pen), k = pen.indexOf(m); if (k === 0) p.x = b.min.x - P_R; else if (k === 1) p.x = b.max.x + P_R; else if (k === 2) p.z = b.min.z - P_R; else p.z = b.max.z + P_R; }
+  }
+  p.x = clamp(p.x, -RW + P_R, RW - P_R); p.z = clamp(p.z, -RD + P_R + 0.1, -P_R);
+  // 발에 차이는 조각
+  let crunch = false;
+  for (const d of DEB) { const q = d.m.position; if (q.y > 0.5 || d.inside === false) continue; const dx = q.x - p.x, dz = q.z - p.z, dd = dx * dx + dz * dz; if (dd > 0.2) continue;
+    if (d.mat === 'glass') crunch = true; const k = 1 / Math.sqrt(d.mass); if (k < 0.25) continue; wake(d); d.v.x += A.mv.x * 0.9 * k * dt * 8; d.v.z += A.mv.z * 0.9 * k * dt * 8; d.v.y += 0.6 * k * dt * 8; }
+  // 걸음 흔들림·발소리
+  A.bobA = Math.min(1, (A.bobA || 0) + dt * 4); A.bobP = (A.bobP || 0) + dt * (run ? 11 : 8);
+  A.stepT = (A.stepT || 0) - dt; if (A.stepT <= 0) { A.stepT = run ? 0.32 : 0.45; sStep(crunch); }
+}
+function sStep(crunch) { if (!smBus()) return; const t = AC.currentTime; nz(t, 'lowpass', 320, 0, 0.004, 0.22, 0.08, 0, true); if (crunch) for (let i = 0; i < 4; i++) tone(t + Math.random() * 0.06, 'sine', 3200 + Math.random() * 3500, 0, 0.001, 0.035, 0.06, true); }
 function smFrame(rdt, dt) {
   const A = S.sm, playing = S.mode === 'play';
   if (playing) smTick(dt);
@@ -2516,7 +2557,7 @@ function smFrame(rdt, dt) {
   A.shake *= Math.exp(-rdt * 7); A.punch *= Math.exp(-rdt * 12); A.hm -= rdt; A.hmK -= rdt;
   S.recoil *= Math.exp(-dt * (A.wpn === 'mg' ? 9 : 6)); S.recoilY *= Math.exp(-dt * 6);
   const sh = A.shake * 0.045, rn = () => (Math.random() - 0.5) * sh;
-  cam.position.copy(RO).add(SM_EYE); cam.position.x += rn(); cam.position.y += rn(); cam.position.z += rn();
+  cam.position.copy(RO).add(SM_EYE); cam.position.x += rn(); cam.position.y += rn() + Math.sin(A.bobP || 0) * 0.022 * (A.bobA || 0); cam.position.z += rn();
   cam.rotation.set(S.pitch + S.recoil + rn() * 0.35, S.yaw + S.recoilY + rn() * 0.35, rn() * 0.25);
   const f = fovNow(); if (Math.abs(cam.fov - f) > 0.01) { cam.fov = f; cam.updateProjectionMatrix(); }
   rifle.visible = false; mgGun.visible = false;
@@ -2546,7 +2587,7 @@ function smBrief() {
   $('bD').textContent = '층층 상사 30층 사무실. 모니터·유리벽·자판기·복합기·사장님 책상까지, 보이는 건 전부 부숴도 돼요. 부순 만큼 피해액이 쌓여요.';
   $('bN').innerHTML = '90<span style="font-size:12px;color:var(--sub)"> 개</span>';
   $('bA').textContent = '∞'; $('bW').textContent = '실내';
-  $('bTip').innerHTML = '샷건으로 시작 → 피해액 <b>₩800만</b>에 <b>미니건</b>, <b>₩2,200만</b>에 <b>유탄</b>. 1.6초 안에 연달아 부수면 <b>연쇄 ×1.5 · ×2 · ×3</b>. <b style="color:#ff6a4a">빨간 드럼통</b>은 터지면서 옆까지 날리고, <b>소화기</b>는 맞으면 날아다녀요. 다 부수면 남은 시간만큼 보너스.';
+  $('bTip').innerHTML = '샷건으로 시작 → 피해액 <b>₩800만</b>에 <b>미니건</b>, <b>₩2,200만</b>에 <b>유탄</b>. 1.6초 안에 연달아 부수면 <b>연쇄 ×1.5 · ×2 · ×3</b>. <b style="color:#ff6a4a">빨간 드럼통</b>은 터지면서 옆까지 날리고, <b>소화기</b>는 맞으면 날아다녀요. 다 부수면 남은 시간만큼 보너스.' + (TOUCH ? '' : '<br>키보드: <b>WASD</b> 걷기(Shift 달리기) · <b>방향키</b> 겨누기 · <b>Space</b> 쏘기 · <b>1 2 3</b> 무기');
   $('bGo').textContent = '▶ 들어가기'; $('bCard').hidden = true; $('bList').textContent = '돌아가기';
   clearTargets(); show('brief');
 }
@@ -2556,11 +2597,11 @@ function startSmash() {
   smMats(); smVM(); smBuild();
   S.sm = { dmg: 0, kills: 0, combo: 0, maxCombo: 0, lastKill: -9, wpn: 'sg', have: { sg: 1 }, trig: false, cd: 0, spin: 0, heat: 0, pops: [], banner: null, pend: [], shake: 0, punch: 0, stop: 0, vk: 0, sw: 1, hm: 0, hmK: 0, flashT: 0, pumpT: 9, shellOut: true, drumA: 0, booms: 0, chainT: -9, chainN: 0, pyaw: 0, ppitch: 0, vx: 0, vy: 0, bonus: 0, lampsOn: 8, flick: 0, sndN: 0, boomT: -9, boomPop: null };
   Object.assign(S, { mode: 'play', t: 0, ammo: 999, shots: 0, hits: 0, bolt: 0, inFlight: [], scoped: false, rf: 0, timeLeft: SM_T, done: false, bcam: null, slowT: 0, timeScale: 1, recoil: 0, recoilY: 0, holding: false });
-  S.yaw = 0; S.pitch = -0.14; S.sm.pyaw = S.yaw; S.sm.ppitch = S.pitch;
+  SM_EYE.set(0, 1.62, -0.9); S.yaw = 0; S.pitch = -0.14; S.sm.pyaw = S.yaw; S.sm.ppitch = S.pitch;
   document.body.classList.add('sm');
   sun.intensity = 0.55; hemi.color.set('#f4f6ff'); hemi.groundColor.set('#8a8478'); hemi.intensity = 1.35;
   $('misK').textContent = 'SMASH ROOM · 피해액'; $('timer').hidden = false;
-  $('keys').innerHTML = '<b>클릭(누르고 있기)</b>쏘기 <b>1</b><b>2</b><b>3</b>·<b>휠</b>·<b>우클릭</b>무기 <b>Esc</b>멈춤';
+  $('keys').innerHTML = '<b>W</b><b>A</b><b>S</b><b>D</b>걷기 <b>Shift</b>달리기 <b>마우스</b>·<b>방향키</b>겨누기 <b>클릭</b>·<b>Space</b>쏘기 <b>1</b><b>2</b><b>3</b>무기 <b>Esc</b>멈춤';
   hideAll(); $('hud').classList.remove('off');
   smHud(); arcBanner('다 부숴!', '#ff8a3a');
   if (!TOUCH) tryLock();
@@ -2820,7 +2861,7 @@ addEventListener('keydown', e => {
   if (e.code === 'Tab') { e.preventDefault(); if (S.mode === 'play' && !S.arc && !S.mg) toggleCard(); return; }
   if (S.bcam && (e.code === 'Space' || e.code === 'Enter')) { skipBcam(); return; }
   if (S.mode !== 'play') return;
-  if (S.sm) { const k = { Digit1: 'sg', Digit2: 'mg', Digit3: 'gl', Numpad1: 'sg', Numpad2: 'mg', Numpad3: 'gl' }[e.code]; if (k) smWeapon(k); else if (e.code === 'KeyQ' || e.code === 'KeyE') smCycle(e.code === 'KeyQ' ? -1 : 1); if (e.code === 'Space') e.preventDefault(); return; }
+  if (S.sm) { const k = { Digit1: 'sg', Digit2: 'mg', Digit3: 'gl', Numpad1: 'sg', Numpad2: 'mg', Numpad3: 'gl' }[e.code]; if (k) smWeapon(k); else if (e.code === 'KeyQ' || e.code === 'KeyE') smCycle(e.code === 'KeyQ' ? -1 : 1); if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); trig(true); } if (e.code.startsWith('Arrow')) e.preventDefault(); return; }
   if (S.mg) { if (e.code === 'KeyR') mgReload(); else if (e.code === 'KeyC' || e.code === 'KeyZ') toggleScope(); return; }
   const big = e.shiftKey ? 10 : 1;
   if (e.code === 'Space') { e.preventDefault(); setHold(true); }
@@ -2834,8 +2875,8 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyC' || e.code === 'KeyZ') toggleScope();
   else if (e.code === 'KeyX') { S.elev = 0; S.windT = 0; sTurret(); updTurret(); }
 });
-addEventListener('keyup', e => { KEYS[e.code] = false; if (e.code === 'Space') setHold(false); });
-addEventListener('blur', () => { setHold(false); if (S.mode === 'play') pause(); });
+addEventListener('keyup', e => { KEYS[e.code] = false; if (e.code === 'Space') setHold(false); if (S.sm && (e.code === 'Space' || e.code === 'Enter')) trig(false); });
+addEventListener('blur', () => { for (const k in KEYS) KEYS[k] = false; setHold(false); if (S.mode === 'play') pause(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && S.mode === 'play') pause(); });
 
 // 손가락: 빈 곳을 끌면 시선

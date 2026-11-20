@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14182a">
+<title>숭례문의 하루</title>
+<meta name="description" content="펜으로 그려진 숭례문 앞에서 낮과 밤, 계절이 끝없이 흘러가요.">
+<style>
+html,body{margin:0;height:100%;background:#14182a;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+#tag{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%);padding:6px 14px;border-radius:99px;
+  background:rgba(20,22,34,.55);color:#f3ece0;font:500 13px/1.4 system-ui,"Noto Sans KR",sans-serif;letter-spacing:.02em;opacity:0;transition:opacity .6s;pointer-events:none;white-space:nowrap;backdrop-filter:blur(6px)}
+#tip{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);color:rgba(60,52,48,.75);
+  font:400 12px/1.4 system-ui,"Noto Sans KR",sans-serif;opacity:0;transition:opacity 1s;pointer-events:none;white-space:nowrap}
+</style>
+</head><body>
+<canvas id="c"></canvas>
+<div id="tag"></div>
+<div id="tip">화면을 누르면 시간과 계절이 보여요 · 화면도 안 꺼져요</div>
+<script>
+'use strict';
+// ================= 기본 =================
+const WW = 1080, GY = 1300, XL0 = -1700, XR0 = 2780;
+const DAY = 300;                 // 하루 = 5분
+const INTRO = 17.5;              // 그리는 시간
+let seed = 11;
+const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const R = (a, b) => a + rnd() * (b - a);
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const ease = p => p < .5 ? 2 * p * p : 1 - 2 * (1 - p) * (1 - p);
+const sm = (a, b, t) => { const x = clamp((t - a) / (b - a)); return x * x * (3 - 2 * x); };
+const lerp = (a, b, t) => a + (b - a) * t;
+const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const mix = (a, b, t) => a.map((v, i) => Math.round(lerp(v, b[i], t)));
+const rgb = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+const INK = '#2b2830', INK2 = '#5b5660', INK3 = '#8e8890';
+
+// ================= 선 도구 =================
+function smooth(c, seg = 10) {
+  const o = [];
+  for (let i = 0; i < c.length - 1; i++) {
+    const p0 = c[Math.max(0, i - 1)], p1 = c[i], p2 = c[i + 1], p3 = c[Math.min(c.length - 1, i + 2)];
+    for (let k = 0; k < seg; k++) {
+      const t = k / seg, t2 = t * t, t3 = t2 * t;
+      o.push([.5 * (2 * p1[0] + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+              .5 * (2 * p1[1] + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)]);
+    }
+  }
+  o.push(c[c.length - 1]); return o;
+}
+function resample(pts, step) {
+  const o = [pts[0]]; let acc = 0;
+  for (let i = 1; i < pts.length; i++) {
+    let [x0, y0] = pts[i - 1]; const [x1, y1] = pts[i];
+    let d = Math.hypot(x1 - x0, y1 - y0);
+    while (d > 0 && acc + d >= step) {
+      const r = (step - acc) / d; x0 += (x1 - x0) * r; y0 += (y1 - y0) * r;
+      o.push([x0, y0]); d = Math.hypot(x1 - x0, y1 - y0); acc = 0;
+    }
+    acc += d;
+  }
+  const L = pts[pts.length - 1], P = o[o.length - 1];
+  if (Math.hypot(L[0] - P[0], L[1] - P[1]) > .3) o.push(L);
+  return o;
+}
+function wobble(pts, amp) {
+  if (!amp) return pts;
+  const p1 = R(0, 6.28), p2 = R(0, 6.28), f1 = R(.008, .014), f2 = R(.03, .045);
+  let s = 0;
+  return pts.map((p, i) => {
+    if (i) s += Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]);
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+    const nx = -(b[1] - a[1]), ny = b[0] - a[0], l = Math.hypot(nx, ny) || 1;
+    const o = amp * (Math.sin(s * f1 + p1) * .65 + Math.sin(s * f2 + p2) * .35);
+    return [p[0] + nx / l * o, p[1] + ny / l * o];
+  });
+}
+const LAYERS = { bg: [], fg: [] };
+function line(pts, o) {
+  const s = Object.assign({ t0: 0, dur: 1, w: 2.2, col: INK, wob: 1, L: 'fg', head: false, seed: R(0, 99) }, o);
+  s.pts = wobble(resample(pts, o.step || 3), s.wob);
+  if (s.pts.length < 2) return;
+  s.k = 0; LAYERS[s.L].push(s); return s;
+}
+const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]];
+const arc = (cx, cy, r, a0, a1, n = 40) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; });
+// 여러 획을 시간 구간에 고르게 나눠 그리기
+function many(list, t0, t1, o) {
+  list.forEach((p, i) => line(p, Object.assign({ t0: t0 + (t1 - t0) * i / Math.max(1, list.length) * .9, dur: Math.max(.08, (t1 - t0) / list.length * 2.2) }, o)));
+}
+
+// ================= 숭례문 모양 =================
+const xl = y => 150 + (GY - y) / 238 * 45, xr = y => 930 - (GY - y) / 238 * 45;
+const eaveLo = x => 893 - 26 * Math.pow(Math.abs(x - 540) / 310, 3);
+const eaveHi = x => 662 - 44 * Math.pow(Math.abs(x - 540) / 345, 3);
+const ARCH = { cx: 540, cy: 1182, r: 62 };
+// 추녀마루(대각 마루) — 위 지붕: 용마루 끝 → 처마 끝, 살짝 오목
+const hipHi = (side, u) => { const x0 = side < 0 ? 405 : 675, x1 = side < 0 ? 198 : 882, y0 = 522, y1 = eaveHi(x1) - 4; return [lerp(x0, x1, u), lerp(y0, y1, u) + Math.sin(Math.PI * u) * 16]; };
+const hipLo = (side, u) => { const x0 = side < 0 ? 352 : 728, x1 = side < 0 ? 232 : 848, y0 = 842, y1 = eaveLo(x1) - 3; return [lerp(x0, x1, u), lerp(y0, y1, u) + Math.sin(Math.PI * u) * 7]; };
+function hipY(hipFn, side, x) {           // 대각 마루 위 x에서의 y
+  let best = 0, bd = 1e9;
+  for (let i = 0; i <= 40; i++) { const p = hipFn(side, i / 40), d = Math.abs(p[0] - x); if (d < bd) { bd = d; best = p[1]; } }
+  return best;
+}
+
+// ---------- 뒤 배경: 남산·타워·빌딩 ----------
+const NAMSAN = []; for (let x = 640; x <= 1500; x += 20) NAMSAN.push([x, 905 - 120 * Math.exp(-Math.pow((x - 960) / 210, 2)) - 20 * Math.exp(-Math.pow((x - 1230) / 120, 2))]);
+const TOWER = { x: 935, base: 790 };
+const BLD = [];
+const PINE_HIDE = (x, y) => [70, 1010, -260, 1340].some(px => Math.abs(x - px) < 110 && y > 980);
+(function () {
+  let x = XL0;
+  while (x < XR0) {
+    const w = R(70, 170), near = Math.abs(x + w / 2 - 540) < 520;
+    const h = near ? R(80, 260) : R(160, 520);
+    BLD.push({ x, w, top: 1190 - h, win: [] });
+    x += w + R(-10, 26);
+  }
+  BLD.forEach(b => {                    // 창문 (밤에 켜짐)
+    for (let y = b.top + 18; y < 1140; y += 22) for (let xx = b.x + 10; xx < b.x + b.w - 14; xx += 18) if (rnd() < .55 && !(xx > 140 && xx < 940 && y > 470) && !PINE_HIDE(xx, y)) b.win.push([xx, y, R(0, 1), R(.2, 1)]);
+  });
+})();
+// 배경 획
+NAMSAN.length && line(NAMSAN, { L: 'bg', t0: .3, dur: 1.4, w: 1.8, col: INK2 });
+line([[TOWER.x - 5, TOWER.base], [TOWER.x - 4, 650]], { L: 'bg', t0: 1.0, dur: .4, w: 1.8, col: INK2 });
+line([[TOWER.x + 5, TOWER.base], [TOWER.x + 4, 650]], { L: 'bg', t0: 1.0, dur: .4, w: 1.8, col: INK2 });
+line(rect(TOWER.x - 16, 632, TOWER.x + 16, 652), { L: 'bg', t0: 1.3, dur: .3, w: 1.6, col: INK2 });
+line([[TOWER.x - 22, 632], [TOWER.x + 22, 632]], { L: 'bg', t0: 1.4, dur: .2, w: 1.6, col: INK2 });
+line([[TOWER.x, 632], [TOWER.x, 560]], { L: 'bg', t0: 1.5, dur: .3, w: 1.4, col: INK2 });
+BLD.forEach((b, i) => {
+  const t0 = .4 + Math.abs(b.x + b.w / 2 - 540) / 2200 * 1.8;
+  line([[b.x, 1190], [b.x, b.top], [b.x + b.w, b.top], [b.x + b.w, 1190]], { L: 'bg', t0, dur: .5, w: 1.3, col: INK3, wob: .5 });
+  for (let y = b.top + 28; y < 1180; y += 44) if (rnd() < .6) line([[b.x + 6, y], [b.x + b.w - 6, y]], { L: 'bg', t0: t0 + .4, dur: .2, w: .9, col: INK3, wob: .3 });
+});
+
+// ---------- 석축 ----------
+line([[150, GY], [195, 1062], [885, 1062], [930, GY]], { t0: 1.6, dur: 1.2, w: 2.8, wob: .8 });
+line([[184, 1062], [184, 1052], [896, 1052], [896, 1062]], { t0: 2.3, dur: .6, w: 1.8, wob: .4 });
+(function stones() {
+  const segs = [];
+  let y = GY, k = 0;
+  while (y > 1068) {
+    const h = Math.max(30, 48 - k * 3), y2 = Math.max(1062, y - h);
+    // 가로 이음
+    const a0 = xl(y2), a1 = xr(y2);
+    if (y2 > 1062) {
+      if (y2 > ARCH.cy - ARCH.r - 26) { segs.push([[a0, y2], [ARCH.cx - ARCH.r - 26, y2]]); segs.push([[ARCH.cx + ARCH.r + 26, y2], [a1, y2]]); }
+      else segs.push([[a0, y2], [a1, y2]]);
+    }
+    // 세로 이음
+    let x = xl(y) + R(10, 60);
+    while (x < xr(y) - 30) {
+      const inArch = Math.abs(x - ARCH.cx) < ARCH.r + 30 && y2 > ARCH.cy - ARCH.r - 40;
+      if (!inArch) segs.push([[x, y], [x + R(-2, 2), y2]]);
+      x += R(66, 128);
+    }
+    y = y2; k++;
+  }
+  many(segs, 2.0, 4.6, { w: 1.3, col: INK2, wob: .7 });
+})();
+// 홍예문
+line([[ARCH.cx - ARCH.r, GY], [ARCH.cx - ARCH.r, ARCH.cy], ...arc(ARCH.cx, ARCH.cy, ARCH.r, Math.PI, Math.PI * 2, 30).slice(1), [ARCH.cx + ARCH.r, GY]], { t0: 3.4, dur: 1.2, w: 2.8, wob: .5, head: true });
+line(arc(ARCH.cx, ARCH.cy, ARCH.r + 26, Math.PI, Math.PI * 2, 34), { t0: 3.9, dur: .9, w: 2, wob: .5 });
+for (let i = 0; i <= 12; i++) { const a = Math.PI + Math.PI * i / 12; line([[ARCH.cx + Math.cos(a) * ARCH.r, ARCH.cy + Math.sin(a) * ARCH.r], [ARCH.cx + Math.cos(a) * (ARCH.r + 26), ARCH.cy + Math.sin(a) * (ARCH.r + 26)]], { t0: 4.3 + i * .04, dur: .12, w: 1.3, col: INK2, wob: .2 }); }
+line([[ARCH.cx - ARCH.r - 26, ARCH.cy], [ARCH.cx - ARCH.r - 26, GY]], { t0: 4.2, dur: .4, w: 1.3, col: INK2 });
+line([[ARCH.cx + ARCH.r + 26, ARCH.cy], [ARCH.cx + ARCH.r + 26, GY]], { t0: 4.2, dur: .4, w: 1.3, col: INK2 });
+// 여장 (석축 위 낮은 담)
+[[195, 326], [754, 885]].forEach(([a, b], j) => {
+  line([[a, 1052], [a, 1026], [b, 1026], [b, 1052]], { t0: 4.6 + j * .2, dur: .5, w: 1.8, wob: .4 });
+  for (let x = a + 34; x < b - 20; x += 44) line(rect(x, 1026, x + 8, 1038), { t0: 4.9 + j * .2, dur: .15, w: 1.1, col: INK2, wob: 0 });
+  line(rect((a + b) / 2 - 5, 1036, (a + b) / 2 + 5, 1044), { t0: 5.0, dur: .12, w: 1, col: INK2, wob: 0 });
+});
+
+// ---------- 성벽 ----------
+function wall(side) {
+  const x0 = side < 0 ? XL0 : xr(1185), x1 = side < 0 ? xl(1185) : XR0;
+  const ord = (a, b) => side < 0 ? [[b, 0], [a, 0]] : [[a, 0], [b, 0]];
+  line(ord(x0, x1).map(p => [p[0], 1185]), { t0: 4.3, dur: 1.2, w: 2.2, wob: .8 });
+  line(ord(x0, x1).map(p => [p[0], 1158]), { t0: 4.6, dur: 1.2, w: 1.8, wob: .8 });
+  const segs = [];
+  for (let y = GY - 38; y > 1190; y -= 38) segs.push([[x0, y], [x1, y]]);
+  for (let y = GY; y > 1190; y -= 38) for (let x = x0 + R(0, 80); x < x1; x += R(70, 120)) segs.push([[x, y], [x, Math.max(1185, y - 38)]]);
+  for (let x = x0 + 20; x < x1 - 20; x += 48) segs.push([[x, 1158], [x, 1172]]);
+  if (side < 0) segs.sort((a, b) => b[0][0] - a[0][0]); else segs.sort((a, b) => a[0][0] - b[0][0]);
+  many(segs, 4.8, 6.4, { w: 1.1, col: INK2, wob: .5 });
+}
+wall(-1); wall(1);
+
+// ---------- 아래층 ----------
+const COL_LO = [328, 408, 484, 596, 672, 752];
+line([[310, 1052], [770, 1052]], { t0: 5.4, dur: .5, w: 2.2 });
+COL_LO.forEach((x, i) => { line([[x - 6, 1052], [x - 6, 942]], { t0: 5.6 + i * .08, dur: .35, w: 2, wob: .4 }); line([[x + 6, 1052], [x + 6, 942]], { t0: 5.65 + i * .08, dur: .35, w: 2, wob: .4 }); });
+line(rect(314, 932, 766, 944), { t0: 6.2, dur: .5, w: 1.9 });
+for (let i = 0; i < 5; i++) {               // 칸마다 판문·살
+  const a = COL_LO[i] + 6, b = COL_LO[i + 1] - 6;
+  line([[a, 962], [b, 962]], { t0: 6.4 + i * .05, dur: .2, w: 1.3, col: INK2, wob: .2 });
+  if (i !== 2) for (let x = a + 10; x < b - 4; x += 12) line([[x, 966], [x, 1048]], { t0: 6.5 + i * .05, dur: .15, w: .9, col: INK3, wob: 0 });
+  else { line([[540, 962], [540, 1052]], { t0: 6.6, dur: .2, w: 1.3, col: INK2, wob: 0 }); for (let j = 0; j < 2; j++) line(rect(a + 8 + j * 52, 976, a + 44 + j * 52, 1040), { t0: 6.7, dur: .2, w: 1, col: INK3, wob: 0 }); }
+}
+function brackets(x0, x1, yb, t0, t1) {     // 다포 공포
+  const segs = [];
+  for (let x = x0; x <= x1; x += 22) {
+    segs.push(rect(x - 6, yb - 10, x + 6, yb - 2));
+    segs.push(rect(x - 11, yb - 19, x + 11, yb - 13));
+    segs.push(rect(x - 5, yb - 28, x + 5, yb - 22));
+  }
+  segs.push([[x0 - 12, yb - 30], [x1 + 12, yb - 30]]);
+  many(segs, t0, t1, { w: 1, col: INK2, wob: 0, step: 2 });
+}
+brackets(322, 758, 932, 6.8, 7.8);
+// 아래 지붕
+(function () {
+  const eave = []; for (let x = 228; x <= 852; x += 6) eave.push([x, eaveLo(x)]);
+  line(eave, { t0: 7.8, dur: .9, w: 2.8, head: true });
+  line(eave.map(p => [p[0], p[1] + 9]), { t0: 8.1, dur: .8, w: 1.4, col: INK2 });
+  line([[352, 842], [728, 842]], { t0: 8.0, dur: .5, w: 2 });
+  [-1, 1].forEach(sd => line(Array.from({ length: 21 }, (_, i) => hipLo(sd, i / 20)), { t0: 8.3, dur: .5, w: 2.4 }));
+  const tiles = [];
+  for (let x = 236; x <= 844; x += 11) {
+    let top = 842;
+    if (x < 352) top = hipY(hipLo, -1, x); else if (x > 728) top = hipY(hipLo, 1, x);
+    const e = eaveLo(x) - 3; if (e - top > 6) tiles.push([[x, e], [x, top + 3]]);
+  }
+  many(tiles, 8.5, 9.3, { w: 1, col: INK2, wob: .2 });
+  const caps = []; for (let x = 236; x <= 844; x += 11) caps.push(arc(x, eaveLo(x) - 1, 4, Math.PI, Math.PI * 2, 6));
+  many(caps, 8.6, 9.3, { w: 1, col: INK, wob: 0, step: 1.5 });
+  const raf = []; for (let x = 244; x <= 836; x += 13) raf.push(arc(x, eaveLo(x) + 13, 2.6, 0, Math.PI * 2, 8));
+  many(raf, 8.7, 9.4, { w: .9, col: INK2, wob: 0, step: 1.5 });
+})();
+// ---------- 위층 ----------
+line(rect(362, 812, 718, 842), { t0: 9.1, dur: .5, w: 1.8 });
+(function () { const s = []; for (let x = 370; x < 714; x += 13) s.push([[x, 816], [x, 838]]); many(s, 9.3, 9.8, { w: .9, col: INK2, wob: 0 }); })();
+const COL_HI = [382, 445, 508, 572, 635, 698];
+COL_HI.forEach((x, i) => { line([[x - 5, 812], [x - 5, 708]], { t0: 9.5 + i * .06, dur: .3, w: 1.8, wob: .3 }); line([[x + 5, 812], [x + 5, 708]], { t0: 9.55 + i * .06, dur: .3, w: 1.8, wob: .3 }); });
+line(rect(366, 698, 714, 708), { t0: 9.9, dur: .4, w: 1.8 });
+for (let i = 0; i < 5; i++) {
+  const a = COL_HI[i] + 5, b = COL_HI[i + 1] - 5, s = [];
+  for (let x = a + 9; x < b - 3; x += 10) s.push([[x, 724], [x, 796]]);
+  for (let y = 732; y < 796; y += 12) s.push([[a + 3, y], [b - 3, y]]);
+  many(s, 9.9 + i * .05, 10.3 + i * .05, { w: .7, col: INK3, wob: 0 });
+}
+brackets(372, 708, 698, 10.2, 11.0);
+// 현판
+line(rect(519, 712, 561, 796), { t0: 10.4, dur: .4, w: 2.2, wob: .2, head: true });
+line(rect(524, 717, 556, 791), { t0: 10.6, dur: .3, w: 1, col: INK2, wob: 0 });
+// 위 지붕
+(function () {
+  const eave = []; for (let x = 194; x <= 886; x += 6) eave.push([x, eaveHi(x)]);
+  line(eave, { t0: 11.0, dur: 1.0, w: 3, head: true });
+  line(eave.map(p => [p[0], p[1] + 10]), { t0: 11.3, dur: .9, w: 1.4, col: INK2 });
+  [-1, 1].forEach(sd => line(Array.from({ length: 31 }, (_, i) => hipHi(sd, i / 30)), { t0: 11.5, dur: .7, w: 2.8 }));
+  line(rect(400, 504, 680, 522), { t0: 11.7, dur: .6, w: 2.4 });
+  line([[404, 513], [676, 513]], { t0: 11.9, dur: .4, w: 1, col: INK2 });
+  // 취두
+  [-1, 1].forEach(sd => { const x = sd < 0 ? 400 : 680, d = sd; line([[x, 522], [x - d * 4, 488], [x - d * 14, 480], [x - d * 22, 490], [x - d * 16, 500], [x - d * 22, 504]], { t0: 12.1, dur: .4, w: 2.2, wob: .2 }); });
+  const tiles = [];
+  for (let x = 204; x <= 876; x += 12) {
+    let top = 522;
+    if (x < 405) top = hipY(hipHi, -1, x); else if (x > 675) top = hipY(hipHi, 1, x);
+    const e = eaveHi(x) - 3; if (e - top > 6) tiles.push([[x, e], [x + (x - 540) * .02, top + 3]]);
+  }
+  many(tiles, 12.0, 13.0, { w: 1, col: INK2, wob: .3 });
+  const caps = []; for (let x = 204; x <= 876; x += 12) caps.push(arc(x, eaveHi(x) - 1, 4.4, Math.PI, Math.PI * 2, 6));
+  many(caps, 12.2, 13.0, { w: 1.1, col: INK, wob: 0, step: 1.5 });
+  const raf = []; for (let x = 210; x <= 870; x += 13) raf.push(arc(x, eaveHi(x) + 15, 2.8, 0, Math.PI * 2, 8));
+  many(raf, 12.3, 13.1, { w: .9, col: INK2, wob: 0, step: 1.5 });
+  // 잡상
+  [-1, 1].forEach(sd => { for (let i = 0; i < 7; i++) { const [x, y] = hipHi(sd, .5 + i * .055); line([...arc(x, y - 9, 3.2, 0, Math.PI * 2, 8), [x - 4 * sd, y - 1], [x + 3 * sd, y - 1]], { t0: 12.6 + i * .05, dur: .12, w: 1.1, wob: 0, step: 1.5 }); } });
+  [-1, 1].forEach(sd => { for (let i = 0; i < 3; i++) { const [x, y] = hipLo(sd, .45 + i * .12); line([...arc(x, y - 7, 2.6, 0, Math.PI * 2, 8)], { t0: 12.8 + i * .05, dur: .1, w: 1, wob: 0, step: 1.5 }); } });
+})();
+
+// ---------- 앞마당·길 ----------
+const ROAD_TOP = 1392, LANE = 1478, ROAD_BOT = 1566, WALK_BOT = 1652;
+[[540, XL0], [540, XR0]].forEach(([a, b], i) => line([[a, GY], [b, GY]], { t0: 12.8, dur: 1.2, w: 2, wob: .8 }));
+[[540, XL0], [540, XR0]].forEach(([a, b]) => line([[a, ROAD_TOP], [b, ROAD_TOP]], { t0: 13.0, dur: 1.2, w: 2.2, wob: .8 }));
+[[540, XL0], [540, XR0]].forEach(([a, b]) => line([[a, ROAD_BOT], [b, ROAD_BOT]], { t0: 13.2, dur: 1.2, w: 2.2, wob: .8 }));
+(function () { const s = []; for (let x = XL0; x < XR0; x += 70) s.push([[x, LANE], [x + 36, LANE]]); s.sort((a, b) => Math.abs(a[0][0] - 540) - Math.abs(b[0][0] - 540)); many(s, 13.3, 14.4, { w: 2, col: INK2, wob: 0 }); })();
+(function () { const s = []; for (let x = XL0; x < XR0; x += 64) s.push([[x, ROAD_BOT + 4], [x - 14, WALK_BOT]]); s.sort((a, b) => Math.abs(a[0][0] - 540) - Math.abs(b[0][0] - 540)); many(s, 13.5, 14.6, { w: .9, col: INK3, wob: 0 }); })();
+(function () { const s = []; for (let x = XL0; x < XR0; x += 96) s.push([[x, GY + 4], [x - 24, ROAD_TOP - 4]]); for (let y = GY + 30; y < ROAD_TOP; y += 30) s.push([[XL0, y], [XR0, y]]); many(s, 13.4, 14.5, { w: .8, col: INK3, wob: .4 }); })();
+// 가로등
+const LAMPS = []; for (let x = XL0 + 120; x < XR0; x += 300) LAMPS.push(x);
+LAMPS.forEach(x => {
+  const t0 = 13.6 + Math.abs(x - 540) / 2200;
+  line([[x, ROAD_BOT + 2], [x, ROAD_BOT - 168]], { t0, dur: .35, w: 2.2, wob: .2 });
+  line([[x, ROAD_BOT - 168], [x + 6, ROAD_BOT - 178], [x + 26, ROAD_BOT - 178]], { t0: t0 + .3, dur: .2, w: 1.8, wob: 0 });
+  line(rect(x + 18, ROAD_BOT - 178, x + 36, ROAD_BOT - 168), { t0: t0 + .4, dur: .15, w: 1.4, wob: 0 });
+});
+// 소나무
+const PINES = [[70, GY + 6, 1], [1010, GY + 6, -1], [-260, GY + 6, 1], [1340, GY + 6, -1]];
+function pine(bx, by, d, t0) {
+  const trunk = [[bx, by], [bx + d * 10, by - 70], [bx - d * 6, by - 140], [bx + d * 18, by - 210], [bx + d * 8, by - 260]];
+  line(smooth(trunk, 8), { t0, dur: .6, w: 3.6, wob: .6 });
+  line(smooth(trunk.map(p => [p[0] + 9, p[1]]), 8), { t0: t0 + .1, dur: .6, w: 2, wob: .6 });
+  const pads = [[bx + d * 60, by - 160, 62], [bx - d * 40, by - 205, 54], [bx + d * 30, by - 262, 70], [bx - d * 10, by - 300, 44]];
+  pads.forEach(([x, y, r], i) => {
+    const pts = [];
+    for (let k = 0; k <= 24; k++) { const a = Math.PI + Math.PI * k / 24; pts.push([x + Math.cos(a) * r, y + Math.sin(a) * r * .38 + Math.sin(k * 1.9) * 3]); }
+    pts.push([x - r, y + 4]);
+    line(pts, { t0: t0 + .4 + i * .15, dur: .35, w: 1.8, wob: .3 });
+    for (let k = 0; k < 6; k++) line([[x - r * .7 + k * r * .28, y + 2], [x - r * .62 + k * r * .28, y - r * .25]], { t0: t0 + .6 + i * .15, dur: .1, w: .9, col: INK2, wob: 0 });
+  });
+  return pads;
+}
+const PINE_PADS = PINES.map(([x, y, d], i) => pine(x, y, d, 13.0 + i * .3));
+// 앞 생울타리
+(function () { const p = []; for (let x = XL0; x <= XR0; x += 12) p.push([x, WALK_BOT + 18 - Math.abs(Math.sin(x * .05)) * 12]); line(p, { t0: 14.2, dur: 1.4, w: 1.8, wob: .4 }); })();
+
+// ================= 화면 =================
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const L = { bgWash: null, bgInk: null, wash: null, ink: null, lit: null, scene: null };
+let cw, ch, dpr, S, TX, TY;
+function mk() { const c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height; return c; }
+function setT(c) { c.setTransform(S * dpr, 0, 0, S * dpr, TX * dpr, TY * dpr); }
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1); cw = innerWidth; ch = innerHeight;
+  cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+  S = Math.min(cw / 840, ch / 1300);
+  TX = cw / 2 - 540 * S;
+  const extra = ch / S - 1230;           // 숭례문(지붕 470 ~ 울타리 1700) 말고 남는 높이: 하늘 60% · 아래 40%
+  TY = -(470 - extra * .6) * S;
+  for (const k in L) L[k] = mk();
+  for (const k in LAYERS) LAYERS[k].forEach(s => s.k = 0);
+  buildWash(); lastI = -1;
+}
+const vis = () => [(-TX) / S, (cw - TX) / S, (-TY) / S, (ch - TY) / S];
+
+// ---------- 색칠 (계절마다 다시) ----------
+const SEASONS = ['봄', '여름', '가을', '겨울'];
+const LEAF = { 봄: '#9bbf73', 여름: '#5f8f4c', 가을: '#6f8a4f', 겨울: '#62785a' };
+let season = 2;
+function poly(c, pts) { c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); }
+function buildWash() {
+  const b = L.bgWash.getContext('2d'); setT(b); b.clearRect(-5000, -5000, 1e4, 1e4);
+  b.fillStyle = '#9fae96'; poly(b, [...NAMSAN, [1500, 1200], [640, 1200]]); b.fill();
+  b.fillStyle = '#d9d6d0'; b.fillRect(TOWER.x - 5, 650, 10, TOWER.base - 650); b.fillRect(TOWER.x - 16, 632, 32, 20);
+  BLD.forEach((bd, i) => { const g = 210 + (i * 37 % 26); b.fillStyle = `rgb(${g - 6},${g},${g + 8})`; b.fillRect(bd.x, bd.top, bd.w, 1200 - bd.top); });
+  const w = L.wash.getContext('2d'); setT(w); w.clearRect(-5000, -5000, 1e4, 1e4);
+  // 땅
+  w.fillStyle = '#d4cbb8'; w.fillRect(XL0, GY, XR0 - XL0, ROAD_TOP - GY);
+  w.fillStyle = '#74777e'; w.fillRect(XL0, ROAD_TOP, XR0 - XL0, ROAD_BOT - ROAD_TOP);
+  w.fillStyle = '#c4baa8'; w.fillRect(XL0, ROAD_BOT, XR0 - XL0, WALK_BOT - ROAD_BOT);
+  w.fillStyle = season === 3 ? '#e9eef2' : season === 2 ? '#7a8a52' : '#6d8f58'; w.fillRect(XL0, WALK_BOT, XR0 - XL0, 3000);
+  // 성벽·석축
+  w.fillStyle = '#bdb6aa'; w.fillRect(XL0, 1158, xl(1158) - XL0 + 20, GY - 1158); w.fillRect(xr(1158) - 20, 1158, XR0 - xr(1158), GY - 1158);
+  w.fillStyle = '#c3bcb0'; poly(w, [[150, GY], [195, 1062], [885, 1062], [930, GY]]); w.fill();
+  w.fillStyle = '#b4ada1'; w.fillRect(184, 1052, 712, 10); w.fillRect(195, 1026, 131, 26); w.fillRect(754, 1026, 131, 26);
+  const ag = w.createLinearGradient(0, ARCH.cy - ARCH.r, 0, GY); ag.addColorStop(0, '#2c2b34'); ag.addColorStop(1, '#4d4a52');
+  w.fillStyle = ag; w.beginPath(); w.moveTo(ARCH.cx - ARCH.r, GY); w.lineTo(ARCH.cx - ARCH.r, ARCH.cy); w.arc(ARCH.cx, ARCH.cy, ARCH.r, Math.PI, 0); w.lineTo(ARCH.cx + ARCH.r, GY); w.fill();
+  // 누각
+  w.fillStyle = '#c9a77c'; w.fillRect(314, 944, 452, 108);
+  w.fillStyle = '#a3382c'; COL_LO.forEach(x => w.fillRect(x - 6, 942, 12, 110)); COL_HI.forEach(x => w.fillRect(x - 5, 708, 10, 104));
+  w.fillStyle = '#3f7d6a'; w.fillRect(314, 900, 452, 44); w.fillRect(366, 668, 348, 40);
+  w.fillStyle = '#c94b3a'; w.fillRect(314, 932, 452, 12); w.fillRect(366, 698, 348, 10);
+  w.fillStyle = '#d6b88d'; w.fillRect(366, 708, 348, 104);
+  w.fillStyle = '#a8402f'; w.fillRect(362, 812, 356, 30);
+  // 지붕
+  const roof = (eave, hip, x0, x1, top, xa, xb) => {
+    const pts = []; for (let x = x0; x <= x1; x += 6) pts.push([x, eave(x) + 10]);
+    for (let i = 30; i >= 0; i--) pts.push(hip(1, i / 30));
+    for (let i = 0; i <= 30; i++) pts.push(hip(-1, i / 30));
+    return pts;
+  };
+  const rg = w.createLinearGradient(0, 500, 0, 680); rg.addColorStop(0, '#5d5e66'); rg.addColorStop(1, '#3e3f47');
+  w.fillStyle = '#2f5f55'; poly(w, (() => { const p = []; for (let x = 194; x <= 886; x += 6) p.push([x, eaveHi(x) + 2]); for (let x = 886; x >= 194; x -= 6) p.push([x, eaveHi(x) + 22]); return p; })()); w.fill();
+  w.fillStyle = '#2f5f55'; poly(w, (() => { const p = []; for (let x = 228; x <= 852; x += 6) p.push([x, eaveLo(x) + 2]); for (let x = 852; x >= 228; x -= 6) p.push([x, eaveLo(x) + 18]); return p; })()); w.fill();
+  w.fillStyle = rg; poly(w, roof(eaveHi, hipHi, 194, 886, 522, 405, 675).map(p => [p[0], p[1]]).filter(Boolean).slice(0)); w.fill();
+  const rg2 = w.createLinearGradient(0, 840, 0, 900); rg2.addColorStop(0, '#5d5e66'); rg2.addColorStop(1, '#3e3f47');
+  w.fillStyle = rg2; poly(w, roof(eaveLo, hipLo, 228, 852, 842, 352, 728)); w.fill();
+  w.fillStyle = '#6a6b72'; w.fillRect(400, 504, 280, 18);
+  // 현판
+  w.fillStyle = '#26324a'; w.fillRect(519, 712, 42, 84);
+  w.fillStyle = '#e8c46a'; w.font = '700 21px "Noto Serif KR","Noto Serif CJK KR","Batang",serif'; w.textAlign = 'center'; w.textBaseline = 'middle';
+  ['崇', '禮', '門'].forEach((c, i) => w.fillText(c, 540, 731 + i * 24));
+  // 소나무
+  w.fillStyle = LEAF[SEASONS[season]];
+  PINE_PADS.forEach(pads => pads.forEach(([x, y, r]) => { w.beginPath(); w.ellipse(x, y - r * .14, r, r * .4, 0, Math.PI, 0); w.fill(); }));
+  if (season === 3) { w.fillStyle = '#f4f7fa'; PINE_PADS.forEach(pads => pads.forEach(([x, y, r]) => { w.beginPath(); w.ellipse(x, y - r * .3, r * .9, r * .14, 0, Math.PI, 0); w.fill(); })); }
+  // 생울타리
+  w.fillStyle = season === 3 ? '#cfd8d4' : '#5e7f4c'; w.beginPath(); w.moveTo(XL0, WALK_BOT + 60); for (let x = XL0; x <= XR0; x += 12) w.lineTo(x, WALK_BOT + 18 - Math.abs(Math.sin(x * .05)) * 12); w.lineTo(XR0, WALK_BOT + 60); w.fill();
+  // 밤 조명용 (숭례문만 따뜻하게)
+  const l = L.lit.getContext('2d'); l.setTransform(1, 0, 0, 1, 0, 0); l.clearRect(0, 0, L.lit.width, L.lit.height);
+  setT(l); l.save(); l.beginPath(); l.moveTo(150, GY); l.lineTo(195, 1062); l.lineTo(194, 600); l.lineTo(400, 480); l.lineTo(680, 480); l.lineTo(886, 600); l.lineTo(885, 1062); l.lineTo(930, GY); l.closePath(); l.clip();
+  l.setTransform(1, 0, 0, 1, 0, 0); l.drawImage(L.wash, 0, 0);
+  l.globalCompositeOperation = 'multiply'; l.fillStyle = '#ffd39a'; l.fillRect(0, 0, L.lit.width, L.lit.height);
+  l.globalCompositeOperation = 'destination-in'; l.drawImage(L.wash, 0, 0);
+  l.restore();
+}
+
+// ---------- 잉크 (조금씩 쌓기) ----------
+function inkTo(canvas, list, I) {
+  const c = canvas.getContext('2d'); setT(c); c.lineCap = 'round';
+  for (const s of list) {
+    const p = clamp((I - s.t0) / s.dur); if (p <= 0 || s.k >= s.pts.length - 1 && s.done) continue;
+    const n = s.pts.length, m = ease(p) * (n - 1), k = Math.floor(m);
+    c.strokeStyle = s.col;
+    for (let i = s.k; i < Math.min(k, n - 1); i++) {
+      const u = i / (n - 1), tp = Math.min(1, .4 + u * 6, .4 + (1 - u) * 6);
+      c.lineWidth = s.w * tp * (.82 + .25 * Math.sin(i * .21 + s.seed));
+      c.beginPath(); c.moveTo(s.pts[i][0], s.pts[i][1]); c.lineTo(s.pts[i + 1][0], s.pts[i + 1][1]); c.stroke();
+    }
+    s.k = Math.max(s.k, Math.min(k, n - 1)); if (p >= 1) s.done = true;
+  }
+}
+function heads(I) {
+  for (const k in LAYERS) for (const s of LAYERS[k]) {
+    if (!s.head) continue;
+    const p = clamp((I - s.t0) / s.dur); if (p <= 0 || p >= 1) continue;
+    const n = s.pts.length, m = ease(p) * (n - 1), i = Math.min(n - 2, Math.floor(m)), r = m - i;
+    const a = s.pts[i], b = s.pts[i + 1];
+    ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(a[0] + (b[0] - a[0]) * r, a[1] + (b[1] - a[1]) * r, s.w * .8 + 1, 0, 7); ctx.fill();
+  }
+}
+
+// ================= 하늘·시간 =================
+const SKY = [[0, '#0a1230', '#1a2550'], [.21, '#0f1838', '#2a2f5a'], [.25, '#3d4a86', '#e8957a'], [.29, '#7aa6d8', '#f2d2b4'], [.36, '#6ea6df', '#d4e8f5'],
+  [.62, '#79a8dc', '#e6e6d8'], [.69, '#6c86c0', '#f6c98a'], [.735, '#4c5394', '#f08a5a'], [.77, '#262c62', '#a24d78'], [.81, '#121a42', '#3a3164'], [.86, '#0a1230', '#1a2550'], [1, '#0a1230', '#1a2550']]
+  .map(([t, a, b]) => [t, hex(a), hex(b)]);
+function skyAt(d) { let i = 0; while (SKY[i + 1][0] < d) i++; const [t0, a0, b0] = SKY[i], [t1, a1, b1] = SKY[i + 1], u = (d - t0) / (t1 - t0); return [mix(a0, a1, u), mix(b0, b1, u)]; }
+function lightAt(d) { return clamp(Math.sin((d - .25) * Math.PI * 2) * 2.2 + .45); }   // 1 낮 · 0 밤
+function goldAt(d) { return Math.max(0, 1 - Math.abs(d - .72) / .06) + Math.max(0, 1 - Math.abs(d - .27) / .04) * .7; }
+const STARS = Array.from({ length: 160 }, () => [R(XL0, XR0), R(-1400, 900), R(.4, 1.6), R(0, 6.28)]);
+const CLOUDS = Array.from({ length: 7 }, () => ({ x: R(XL0, XR0), y: R(-300, 420), s: R(.6, 1.3), v: R(4, 11) }));
+function cloudPath(c, x, y, s) {
+  const C = [[-150, -8, 46], [-95, -34, 58], [-25, -56, 72], [55, -40, 62], [120, -10, 44]];
+  c.beginPath();
+  for (let i = 0; i <= 60; i++) {
+    const a = Math.PI + Math.PI * i / 60, dx = Math.cos(a), dy = Math.sin(a); let best = 0;
+    C.forEach(([cx, cy, r]) => { const ux = cx * s, uy = (cy - 10) * s, b = dx * ux + dy * uy, q = b * b - (ux * ux + uy * uy - r * r * s * s); if (q >= 0) best = Math.max(best, b + Math.sqrt(q)); });
+    const px = x + dx * best, py = y + 10 * s + dy * best; i ? c.lineTo(px, py) : c.moveTo(px, py);
+  }
+}
+function drawSky(d, A, now) {
+  const [x0, x1, y0, y1] = vis();
+  const [top, bot] = skyAt(d), n = 1 - lightAt(d);
+  const g = ctx.createLinearGradient(0, y0, 0, 1190);
+  g.addColorStop(0, rgb(top)); g.addColorStop(1, rgb(bot));
+  ctx.globalAlpha = A; ctx.fillStyle = g; ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+  // 별
+  if (n > .3) STARS.forEach(([x, y, r, ph]) => { ctx.globalAlpha = A * (n - .3) / .7 * (.5 + .5 * Math.sin(now * 1.3 + ph)); ctx.fillStyle = '#fffbe8'; ctx.fillRect(x, y, r * 1.6, r * 1.6); });
+  // 해·달
+  const sa = (d - .25) / .5;                         // 0 동 → 1 서
+  if (sa > -.05 && sa < 1.05) {
+    const sx = lerp(x0 - 100, x1 + 100, sa), sy = 1150 - Math.sin(clamp(sa, 0, 1) * Math.PI) * 1250;
+    const gl = goldAt(d);
+    const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 220);
+    sg.addColorStop(0, `rgba(255,${Math.round(lerp(250, 190, gl))},${Math.round(lerp(220, 120, gl))},.55)`); sg.addColorStop(1, 'rgba(255,220,160,0)');
+    ctx.globalAlpha = A; ctx.fillStyle = sg; ctx.fillRect(sx - 220, sy - 220, 440, 440);
+    ctx.fillStyle = rgb(mix([255, 246, 220], [255, 150, 80], gl)); ctx.beginPath(); ctx.arc(sx, sy, 46, 0, 7); ctx.fill();
+  }
+  const ma = ((d + .5) % 1 - .25) / .5;
+  if (ma > -.05 && ma < 1.05) {
+    const mx = lerp(x0 - 100, x1 + 100, ma), my = 1150 - Math.sin(clamp(ma, 0, 1) * Math.PI) * 1200;
+    ctx.globalAlpha = A * clamp(n * 1.4); ctx.fillStyle = '#f5f0dc'; ctx.beginPath(); ctx.arc(mx, my, 34, 0, 7); ctx.fill();
+    ctx.fillStyle = rgb(skyAt(d)[0]); ctx.beginPath(); ctx.arc(mx + 14, my - 8, 30, 0, 7); ctx.fill();
+  }
+  // 구름
+  const cc = mix(mix([248, 244, 236], [255, 196, 160], goldAt(d)), [70, 80, 120], n);
+  CLOUDS.forEach(c => {
+    const span = XR0 - XL0, x = XL0 + ((c.x - XL0 + now * c.v) % span + span) % span;
+    if (x < x0 - 300 || x > x1 + 300) return;
+    cloudPath(ctx, x, c.y, c.s); ctx.globalAlpha = A * .85; ctx.fillStyle = rgb(cc); ctx.fill();
+    ctx.globalAlpha = A * .5; ctx.strokeStyle = rgb(mix(cc, [40, 40, 60], .45)); ctx.lineWidth = 1.6; ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+}
+
+// ================= 오가는 것 =================
+const ACT = [];
+const CAR_COL = ['#d9dbe0', '#3c3f47', '#f0f0ee', '#8b2f2f', '#2f4f7f', '#9aa3ad'];
+function spawnCar(dir, x) {
+  const r = rnd(), type = r < .14 ? 'bus' : r < .3 ? 'taxi' : 'car';
+  const col = type === 'bus' ? (rnd() < .5 ? '#3b6fc4' : '#4f9a52') : type === 'taxi' ? '#f0a040' : CAR_COL[Math.floor(R(0, CAR_COL.length))];
+  const [vx0, vx1] = vis();
+  ACT.push({ k: 'car', type, col, dir, y: dir > 0 ? ROAD_BOT - 10 : LANE - 8, v: R(150, 240) * (type === 'bus' ? .8 : 1), x: x != null ? x : dir > 0 ? vx0 - 300 : vx1 + 300, len: type === 'bus' ? 270 : 150 });
+}
+function spawnWalker(dir, x) {
+  const [vx0, vx1] = vis();
+  ACT.push({ k: 'walk', dir, y: R(ROAD_BOT + 30, WALK_BOT - 6), v: R(38, 62), x: x != null ? x : dir > 0 ? vx0 - 60 : vx1 + 60, ph: R(0, 6.28), h: R(52, 66),
+    top: ['#5b6b8c', '#a04a4a', '#e2d6c0', '#3f5f4f', '#c98a3a', '#7b5aa0'][Math.floor(R(0, 6))], bag: rnd() < .4, umb: rnd() });
+}
+function drawCar(c, a, lights) {
+  const d = a.dir, x = a.x, y = a.y, L = a.len, H = a.type === 'bus' ? 92 : 50;
+  c.save(); c.translate(x, y); c.scale(d, 1);
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  c.fillStyle = a.col; c.strokeStyle = INK; c.lineWidth = 2.2;
+  c.beginPath();
+  if (a.type === 'bus') { c.roundRect(-L / 2, -H, L, H - 8, 10); }
+  else { c.moveTo(-L / 2, -12); c.lineTo(-L / 2 + 4, -28); c.lineTo(-L / 2 + 30, -32); c.lineTo(-L / 2 + 48, -H); c.lineTo(L / 2 - 46, -H); c.lineTo(L / 2 - 22, -32); c.lineTo(L / 2 - 4, -28); c.lineTo(L / 2, -12); c.closePath(); }
+  c.fill(); c.stroke();
+  c.fillStyle = lights > .3 ? 'rgba(255,226,160,.9)' : '#b9cbd8'; c.lineWidth = 1.4;
+  if (a.type === 'bus') { for (let i = 0; i < 6; i++) { c.beginPath(); c.rect(-L / 2 + 14 + i * 40, -H + 12, 32, 30); c.fill(); c.stroke(); } }
+  else { c.beginPath(); c.moveTo(-L / 2 + 52, -H + 5); c.lineTo(-L / 2 + 36, -33); c.lineTo(-4, -33); c.lineTo(-4, -H + 5); c.closePath(); c.fill(); c.stroke(); c.beginPath(); c.moveTo(4, -H + 5); c.lineTo(4, -33); c.lineTo(L / 2 - 26, -33); c.lineTo(L / 2 - 48, -H + 5); c.closePath(); c.fill(); c.stroke(); }
+  if (a.type === 'taxi') { c.fillStyle = '#fff4d0'; c.fillRect(-12, -H - 8, 24, 8); c.strokeRect(-12, -H - 8, 24, 8); }
+  const wy = -8, wr = a.type === 'bus' ? 15 : 13, rot = a.x / wr * d;
+  [-L / 2 + (a.type === 'bus' ? 42 : 30), L / 2 - (a.type === 'bus' ? 42 : 30)].forEach(wx => {
+    c.fillStyle = '#2a2a30'; c.beginPath(); c.arc(wx, wy, wr, 0, 7); c.fill();
+    c.strokeStyle = '#9a9aa2'; c.lineWidth = 1.4; c.beginPath(); c.arc(wx, wy, wr * .45, 0, 7); c.stroke();
+    c.beginPath(); c.moveTo(wx + Math.cos(rot) * wr * .45, wy + Math.sin(rot) * wr * .45); c.lineTo(wx - Math.cos(rot) * wr * .45, wy - Math.sin(rot) * wr * .45); c.stroke();
+  });
+  c.restore();
+}
+function drawWalker(c, a, rain) {
+  const s = a.h / 60, x = a.x, y = a.y, w = Math.sin(a.ph) * 9 * s;
+  c.save(); c.translate(x, y); c.scale(a.dir * s, s); c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = INK;
+  c.lineWidth = 2.4; c.beginPath(); c.moveTo(0, -24); c.lineTo(w, 0); c.moveTo(0, -24); c.lineTo(-w, 0); c.stroke();
+  c.fillStyle = a.top; c.lineWidth = 2; c.beginPath(); c.moveTo(-7, -26); c.lineTo(-6, -46); c.quadraticCurveTo(0, -50, 6, -46); c.lineTo(7, -26); c.closePath(); c.fill(); c.stroke();
+  c.beginPath(); c.moveTo(0, -42); c.lineTo(-w * .7, -28); c.stroke();
+  c.fillStyle = '#f0dcc4'; c.beginPath(); c.arc(0, -55, 7, 0, 7); c.fill(); c.stroke();
+  c.fillStyle = '#2f2a2a'; c.beginPath(); c.arc(0, -57, 7, Math.PI * 1.05, Math.PI * 2.05); c.fill();
+  if (a.bag) { c.fillStyle = '#8a6a4a'; c.fillRect(-12, -40, 7, 11); c.strokeRect(-12, -40, 7, 11); }
+  if (rain && a.umb < .8) {
+    c.beginPath(); c.moveTo(4, -40); c.lineTo(4, -78); c.stroke();
+    c.fillStyle = ['#d8534a', '#3f6fb5', '#f2f2f2', '#2c2c34'][Math.floor(a.umb * 4) % 4];
+    c.beginPath(); c.moveTo(-24, -74); c.quadraticCurveTo(4, -100, 32, -74); c.closePath(); c.fill(); c.stroke();
+  }
+  c.restore();
+}
+
+// ---------- 날씨 ----------
+let weather = 'clear', weatherUntil = 0;
+const PART = [];
+function pickWeather(now) {
+  const r = rnd(), sn = SEASONS[season];
+  weather = r < .45 ? 'clear' : sn === '봄' ? 'petal' : sn === '여름' ? 'rain' : sn === '가을' ? 'leaf' : 'snow';
+  weatherUntil = now + R(40, 110);
+}
+function stepParticles(dt, now, n) {
+  const [x0, x1, y0, y1] = vis();
+  const want = { clear: 0, petal: 70, rain: 220, leaf: 40, snow: 160 }[weather];
+  while (PART.length < want && rnd() < .5) PART.push({ x: R(x0 - 100, x1 + 100), y: y0 - R(0, 400), v: weather === 'rain' ? R(900, 1300) : weather === 'snow' ? R(40, 90) : R(60, 120), ph: R(0, 6.28), s: R(.7, 1.4), k: weather });
+  for (let i = PART.length - 1; i >= 0; i--) {
+    const p = PART[i]; p.y += p.v * dt; p.ph += dt * (p.k === 'leaf' ? 3 : 1.6);
+    p.x += (p.k === 'rain' ? -120 : Math.sin(p.ph) * 40 + 18) * dt;
+    if (p.y > Math.min(y1, WALK_BOT + 200) || (p.k !== weather && rnd() < dt * .5)) PART.splice(i, 1);
+  }
+  const dark = 1 - n * .55;
+  PART.forEach(p => {
+    ctx.save(); ctx.translate(p.x, p.y);
+    if (p.k === 'rain') { ctx.strokeStyle = `rgba(200,215,235,${.5 * dark})`; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-5, 34); ctx.stroke(); }
+    else if (p.k === 'snow') { ctx.fillStyle = `rgba(255,255,255,${.9 * dark})`; ctx.beginPath(); ctx.arc(0, 0, 3.4 * p.s, 0, 7); ctx.fill(); }
+    else { ctx.rotate(p.ph); ctx.fillStyle = p.k === 'petal' ? `rgba(248,196,206,${dark})` : rgb(mix([214, 120, 50], [190, 70, 40], (p.s - .7) / .7), dark); ctx.beginPath(); ctx.ellipse(0, 0, 7 * p.s, 3.6 * p.s, 0, 0, 7); ctx.fill(); }
+    ctx.restore();
+  });
+}
+
+// ================= 돌리기 =================
+const START = performance.now() - (+new URLSearchParams(location.search).get('skip') || 0) * 1000;
+let lastI = -1, prev = START, dayT = .63, dayN = 0;
+const paper = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const p = c.getContext('2d'); p.fillStyle = '#f3ede1'; p.fillRect(0, 0, 256, 256); const id = p.getImageData(0, 0, 256, 256); for (let i = 0; i < id.data.length; i += 4) { const v = (rnd() - .5) * 16; id.data[i] += v; id.data[i + 1] += v; id.data[i + 2] += v; } p.putImageData(id, 0, 0); return c; })();
+function frame(nowMs) {
+  const now = (nowMs - START) / 1000, dt = Math.min(.1, (nowMs - prev) / 1000); prev = nowMs;
+  const I = Math.min(now, INTRO + 1);
+  if (I !== lastI) { inkTo(L.bgInk, LAYERS.bg, I); inkTo(L.ink, LAYERS.fg, I); lastI = I; }
+  const A = sm(14.2, 17.2, now);                       // 물감·하늘
+  if (now > INTRO) {
+    dayT += dt / DAY;
+    if (dayT >= 1) { dayT -= 1; dayN++; season = (season + 1) % 4; buildWash(); pickWeather(now); }
+  }
+  if (now > weatherUntil && now > INTRO + 20) pickWeather(now);
+  const lt = lightAt(dayT), n = 1 - lt, gl = goldAt(dayT);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  // 종이 → 하늘
+  ctx.fillStyle = ctx.createPattern(paper, 'repeat'); ctx.fillRect(0, 0, cv.width, cv.height);
+  setT(ctx); drawSky(dayT, A, now);
+  // 장면 (따로 그려서 어둡게)
+  const sc = L.scene.getContext('2d'); sc.setTransform(1, 0, 0, 1, 0, 0); sc.clearRect(0, 0, L.scene.width, L.scene.height);
+  sc.globalAlpha = A; sc.drawImage(L.bgWash, 0, 0); sc.globalAlpha = 1;
+  sc.drawImage(L.bgInk, 0, 0);
+  sc.globalAlpha = A; sc.drawImage(L.wash, 0, 0); sc.globalAlpha = 1;
+  sc.drawImage(L.ink, 0, 0);
+  // 차·사람
+  setT(sc);
+  const actA = sm(15, 18, now);
+  if (now > 15) {
+    const [vx0, vx1] = vis();
+    if (!frame.seeded) { frame.seeded = 1; for (let i = 0; i < 3; i++) spawnCar(i % 2 ? 1 : -1, R(vx0, vx1)); for (let i = 0; i < 4; i++) spawnWalker(i % 2 ? 1 : -1, R(vx0, vx1)); }
+    const busy = .35 + .65 * clamp(lt + .3);
+    if (rnd() < dt * .55 * busy) spawnCar(rnd() < .5 ? 1 : -1);
+    if (rnd() < dt * .45 * busy) spawnWalker(rnd() < .5 ? 1 : -1);
+    for (let i = ACT.length - 1; i >= 0; i--) {
+      const a = ACT[i]; a.x += a.v * a.dir * dt; if (a.k === 'walk') a.ph += dt * a.v / 9;
+      if (a.x < vx0 - 500 || a.x > vx1 + 500) ACT.splice(i, 1);
+    }
+    ACT.sort((a, b) => a.y - b.y);
+    sc.globalAlpha = actA;
+    ACT.forEach(a => a.k === 'car' ? drawCar(sc, a, n) : drawWalker(sc, a, weather === 'rain'));
+    sc.globalAlpha = 1;
+  }
+  // 어둡게 (하늘은 빼고)
+  sc.setTransform(1, 0, 0, 1, 0, 0); sc.globalCompositeOperation = 'source-atop';
+  if (A > 0) {
+    if (gl > 0) { sc.fillStyle = `rgba(255,150,70,${gl * .16 * A})`; sc.fillRect(0, 0, L.scene.width, L.scene.height); }
+    sc.fillStyle = `rgba(16,22,52,${n * .72 * A})`; sc.fillRect(0, 0, L.scene.width, L.scene.height);
+    if (n > .2) { const q = (n - .2) / .8 * A; sc.globalAlpha = q * .8; sc.drawImage(L.lit, 0, 0); sc.globalAlpha = q * .7; sc.drawImage(L.ink, 0, 0); sc.globalAlpha = 1; }
+  }
+  sc.globalCompositeOperation = 'source-over';
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(L.scene, 0, 0);
+  // 빛
+  setT(ctx);
+  if (n > .2 && A > 0) {
+    const on = clamp((n - .2) / .5) * A;
+    ctx.globalCompositeOperation = 'lighter';
+    BLD.forEach(b => b.win.forEach(([x, y, r, k]) => { if (r < .55 + .2 * Math.sin(now * .05 + k * 9)) { ctx.fillStyle = `rgba(255,214,140,${on * .5 * k})`; ctx.fillRect(x, y, 8, 10); } }));
+    let g = ctx.createRadialGradient(540, GY + 40, 0, 540, GY + 40, 520); g.addColorStop(0, `rgba(255,190,110,${on * .25})`); g.addColorStop(1, 'rgba(255,190,110,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 700, 1080, 900);
+    LAMPS.forEach(x => { const lx = x + 27, ly = ROAD_BOT - 168; const h = ctx.createRadialGradient(lx, ly, 0, lx, ly, 70); h.addColorStop(0, `rgba(255,224,160,${on * .55})`); h.addColorStop(.25, `rgba(255,214,150,${on * .18})`); h.addColorStop(1, 'rgba(255,224,160,0)'); ctx.fillStyle = h; ctx.fillRect(lx - 70, ly - 70, 140, 140);
+      const p = ctx.createRadialGradient(lx, ROAD_BOT + 20, 0, lx, ROAD_BOT + 20, 110); p.addColorStop(0, `rgba(255,214,150,${on * .22})`); p.addColorStop(1, 'rgba(255,214,150,0)'); ctx.fillStyle = p; ctx.fillRect(lx - 110, ROAD_BOT - 90, 220, 220); });
+    ctx.fillStyle = `rgba(150,200,255,${on * (.6 + .4 * Math.sin(now * 2))})`; ctx.beginPath(); ctx.arc(TOWER.x, 642, 9, 0, 7); ctx.fill();
+    ctx.fillStyle = `rgba(255,80,80,${on * (Math.sin(now * 3) > 0 ? .9 : .1)})`; ctx.beginPath(); ctx.arc(TOWER.x, 562, 4, 0, 7); ctx.fill();
+    ACT.forEach(a => { if (a.k !== 'car') return; const fx = a.x + a.dir * a.len / 2, fy = a.y - 22;
+      const hb = ctx.createLinearGradient(fx, fy, fx + a.dir * 260, fy); hb.addColorStop(0, `rgba(255,240,200,${on * .45 * actA})`); hb.addColorStop(1, 'rgba(255,240,200,0)');
+      ctx.fillStyle = hb; ctx.beginPath(); ctx.moveTo(fx, fy - 4); ctx.lineTo(fx + a.dir * 260, fy - 26); ctx.lineTo(fx + a.dir * 260, fy + 22); ctx.lineTo(fx, fy + 4); ctx.fill();
+      ctx.fillStyle = `rgba(255,70,60,${on * .8 * actA})`; ctx.beginPath(); ctx.arc(a.x - a.dir * a.len / 2, fy, 5, 0, 7); ctx.fill(); });
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  if (now > INTRO) stepParticles(dt, now, n);
+  if (now < INTRO) heads(I);
+  requestAnimationFrame(frame);
+}
+
+// ================= 누르기 =================
+const tag = document.getElementById('tag'), tip = document.getElementById('tip');
+let wl = null, tagT = 0, wantWL = false;
+function hhmm(d) { const m = Math.floor(d * 1440), h = Math.floor(m / 60), mm = m % 60; return `${h < 12 ? '오전' : '오후'} ${((h + 11) % 12) + 1}:${String(mm).padStart(2, '0')}`; }
+addEventListener('pointerdown', async () => {
+  const wn = { clear: '맑음', petal: '벚꽃', rain: '비', leaf: '낙엽', snow: '눈' }[weather];
+  tag.textContent = `${hhmm(dayT)} · ${SEASONS[season]} · ${wn}`; tag.style.opacity = 1; tip.style.opacity = 0;
+  clearTimeout(tagT); tagT = setTimeout(() => tag.style.opacity = 0, 2400);
+  wantWL = true;
+  try { if ('wakeLock' in navigator && !wl) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => wl = null); } } catch (e) {}
+});
+document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible' && wl === null && wantWL) try { wl = await navigator.wakeLock.request('screen'); } catch (e) {} });
+setTimeout(() => tip.style.opacity = 1, (INTRO + 1) * 1000);
+setTimeout(() => tip.style.opacity = 0, (INTRO + 9) * 1000);
+addEventListener('resize', resize);
+resize(); pickWeather(0); weatherUntil = INTRO + 60;
+requestAnimationFrame(frame);
+window.__dbg = { set day(v) { dayT = v; }, get day() { return dayT; }, set season(v) { season = v; buildWash(); }, set weather(v) { weather = v; weatherUntil = 1e9; } };
+</script></body></html>
